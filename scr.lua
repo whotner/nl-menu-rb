@@ -85,18 +85,30 @@ local LoadAcrylic = function()
 			Signal = nil
 		};
 
+		local lastQuality = nil
+		local lastTransparency = 0.8
+
+		local function syncQualityTransparency()
+			local qualityLevel, target = nil, nil
+			pcall(function()
+				local userSettings = UserSettings():GetService("UserGameSettings")
+				qualityLevel = userSettings.SavedQualityLevel.Value
+				target = qualityLevel < 8 and 1 or 0.8
+			end)
+			if type(qualityLevel) ~= "number" or type(target) ~= "number" then return end
+			if lastQuality == qualityLevel and math.abs(lastTransparency - target) < 0.001 then return end
+			lastQuality = qualityLevel
+			lastTransparency = target
+			local ok, tween = pcall(function()
+				return Twen:Create(Part,TweenInfo.new(1,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Transparency = target})
+			end)
+			if ok and tween then pcall(function() tween:Play() end) end
+		end
+
 		local Update = function()
 			local camera = workspace.CurrentCamera
 			if not frame.Parent or not camera or not camera.Parent or frame.AbsoluteSize.X <= 0 or frame.AbsoluteSize.Y <= 0 then return end
-			pcall(function()
-				local userSettings = UserSettings():GetService("UserGameSettings")
-				local qualityLevel = userSettings.SavedQualityLevel.Value
-				if qualityLevel < 8 then
-					Twen:Create(Part,TweenInfo.new(1,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Transparency = 1}):Play()
-				else
-					Twen:Create(Part,TweenInfo.new(1,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Transparency = 0.8}):Play()
-				end
-			end)
+			syncQualityTransparency()
 
 			local ok, result0, result1 = pcall(function()
 				local corner0 = frame.AbsolutePosition
@@ -401,7 +413,10 @@ end
 
 
 	local _openPopups = {}
+	local _popupClipRestore = {}
+	local _popupClipCounts = {}
 	local UnregisterPopup
+	local RestorePopupClipping
 
 	local function IsPopupAncestor(ancestor, descendant)
 		if not ancestor or not descendant or ancestor == descendant then return false end
@@ -415,6 +430,7 @@ end
 			local entry = _openPopups[i]
 			if not entry.frame or not entry.frame.Parent then
 				if entry.connection then pcall(function() entry.connection:Disconnect() end) end
+				RestorePopupClipping(entry.frame)
 				table.remove(_openPopups, i)
 			elseif entry.frame == frame then
 				entry.closeFn = closeFn
@@ -436,6 +452,7 @@ end
 	end
 
 	UnregisterPopup = function(frame)
+		RestorePopupClipping(frame)
 		for i = #_openPopups, 1, -1 do
 			if _openPopups[i].frame == frame then
 				if _openPopups[i].connection then pcall(function() _openPopups[i].connection:Disconnect() end) end
@@ -568,9 +585,26 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		BackgroundColor3 = Color3.fromRGB(3,3,14),
 		BackgroundTransparency = 0.2,
 		BorderSizePixel = 1,
-		ClipsDescendants = false,
+		ClipsDescendants = true,
 	}, NeverloseCS2)
 	local MainFrameUIScale
+	local Watermark = New("TextLabel", {
+		Name = "Watermark",
+		Position = UDim2.new(0.79, 0, 0.012, 0),
+		Size = UDim2.new(0.19, 0, 0.038, 0),
+		BackgroundTransparency = 1,
+		Text = tostring(hubTitle or "Neverlose") .. "  |  UI",
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextTransparency = 0.72,
+		TextScaled = true,
+		Font = Enum.Font.GothamBold,
+		TextXAlignment = Enum.TextXAlignment.Right,
+		ZIndex = 4,
+	}, MainFrame)
+	New("UITextSizeConstraint", {
+		MinTextSize = 8,
+		MaxTextSize = 12,
+	}, Watermark)
 	New("UICorner", {}, MainFrame)
 	local DragHandle = New("Frame", {
 		Name = "DragHandle",
@@ -641,9 +675,49 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		local y = maxY < minY and minY or math.clamp(popup.AbsolutePosition.Y, minY, maxY)
 		MovePopupToAbsolute(popup, x, y)
 	end
+		local function FindClippingAncestors(popup)
+			local ancestors = {}
+			local current = popup and popup.Parent
+			while current and current ~= MainFrame do
+				local ok, clips = pcall(function() return current.ClipsDescendants end)
+				if ok and clips == true then table.insert(ancestors, current) end
+				current = current.Parent
+			end
+			return ancestors
+		end
+
+		local function RememberPopupClipping(popup)
+			if not popup or not popup.Parent or _popupClipRestore[popup] then return end
+			local ancestors = FindClippingAncestors(popup)
+			if #ancestors == 0 then return end
+			local restored = {}
+			for _, ancestor in ipairs(ancestors) do
+				table.insert(restored, ancestor)
+				_popupClipCounts[ancestor] = (_popupClipCounts[ancestor] or 0) + 1
+				ancestor.ClipsDescendants = false
+			end
+			_popupClipRestore[popup] = restored
+		end
+
+		RestorePopupClipping = function(popup)
+			local ancestors = popup and _popupClipRestore[popup]
+			if not ancestors then return end
+			_popupClipRestore[popup] = nil
+			for _, ancestor in ipairs(ancestors) do
+				local count = (_popupClipCounts[ancestor] or 1) - 1
+				if count > 0 then
+					_popupClipCounts[ancestor] = count
+				else
+					_popupClipCounts[ancestor] = nil
+					if ancestor.Parent then ancestor.ClipsDescendants = true end
+				end
+			end
+		end
+
 
 	local function PositionPopupWithinMain(popup, preferBelow, margin)
 		if not popup or not popup.Parent then return end
+		RememberPopupClipping(popup)
 		if popup.Visible then ConstrainPopupToMainFrame(popup, margin) end
 		task.defer(function()
 			if not popup.Parent or not popup.Visible then return end
@@ -950,13 +1024,15 @@ Aspect.AspectRatio = 1.4
 	WindowSettings.Parent = Info
 
 local ImageLabel = Instance.new('ImageLabel')
-ImageLabel.Name = "WindowSettingsIcon"
+ImageLabel.Name = "UserSettingsArrow"
 ImageLabel.Position = UDim2.new(0.95, 0, 0.5, 0)
 ImageLabel.Size = UDim2.new(0.7, 0, 0.7, 0)
 ImageLabel.AnchorPoint = Vector2.new(1, 0.5)
 ImageLabel.BackgroundTransparency = 1
-ImageLabel.Image = "rbxassetid://134488580093972"
-ImageLabel.Rotation = 0
+ImageLabel.Image = "rbxassetid://10709790948"
+ImageLabel.ImageTransparency = 0.2
+ImageLabel.ScaleType = Enum.ScaleType.Fit
+ImageLabel.Rotation = -90
 ImageLabel.ZIndex = 102
 ImageLabel.Parent = WindowSettings
 
@@ -1504,8 +1580,29 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			return math.round(col.R*255) == 0 and math.round(col.G*255) == 0 and math.round(col.B*255) == 0
 		end
 
-		local function wsApplyColor(c)
+		local function wsSyncIndicators()
+			if not wsRGBCircle.Parent or not wsDarkCircle.Parent then return end
+			local h, s, v = wsColorHSV[1], wsColorHSV[2], wsColorHSV[3]
+			pcall(function()
+				local cx = wsRGBCircle.AbsoluteSize.X / 2
+				local cy = wsRGBCircle.AbsoluteSize.Y / 2
+				if cx <= 0 then cx = 7 end
+				if cy <= 0 then cy = 7 end
+				wsRGBCircle.Position = UDim2.new(math.clamp(1 - h, 0, 1), -cx, math.clamp(1 - s, 0, 1), -cy)
+			end)
+			pcall(function()
+				local dcy = wsDarkCircle.AbsoluteSize.Y / 2
+				if dcy <= 0 then dcy = 2.5 end
+				wsDarkCircle.Position = UDim2.new(0.5, 0, math.clamp(1 - v, 0, 1), -dcy)
+			end)
+		end
+
+		local function wsApplyColor(c, keepIndicators)
 			c = NormalizeColor(c)
+			if not keepIndicators then
+				local hsv = Color3.toHSV(c)
+				wsColorHSV = { hsv.X, hsv.Y, hsv.Z }
+			end
 			for i, t in ipairs(tabs) do
 				pcall(function()
 					if i == activeTabIndex then
@@ -1532,11 +1629,14 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			pcall(function() wsDarkCircle.BackgroundColor3 = c end)
 			pcall(function() wsHex.Text = wsToHex(c) end)
 			mainColor = c
+			if not keepIndicators then
+				task.defer(wsSyncIndicators)
+			end
 		end
 		applyMainColorProxy = wsApplyColor
 
 		local function wsUpdate()
-			wsApplyColor(Color3.fromHSV(wsColorHSV[1], wsColorHSV[2], wsColorHSV[3]))
+			wsApplyColor(Color3.fromHSV(wsColorHSV[1], wsColorHSV[2], wsColorHSV[3]), true)
 		end
 
 		local function wsUpdateSlide(input)
@@ -1579,6 +1679,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				CloseAllPopupsExcept(wsColorFrame)
 				wsColorFrame.Visible = true
 				PositionPopupWithinMain(wsColorFrame, true)
+				task.defer(wsSyncIndicators)
 				RegisterPopup(wsColorFrame, function()
 					wsPickerOpen = false
 					UnregisterPopup(wsColorFrame)
@@ -2064,6 +2165,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		end
 		do
 			local lbl = Instance.new("TextLabel")
+			lbl.Name = "TextToggle"
 			lbl.Position = UDim2.new(0.04,0,0.5,0)
 			lbl.Size = UDim2.new(0.65,0,0.5,0)
 			lbl.AnchorPoint = Vector2.new(0,0.5)
@@ -2255,8 +2357,9 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		BackgroundColor3 = Color3.fromRGB(15,17,26),
 		BackgroundTransparency = 0.8,
 		BorderSizePixel = 0,
-		ClipsDescendants = false,
+		ClipsDescendants = true,
 	}, MainFrame)
+
 	New("UICorner", {}, Frame2)
 
 	local Header = New("Frame", {
@@ -2273,7 +2376,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Size = UDim2.new(0.034, 0, 0.45, 0),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BackgroundTransparency = 1,
-		Image = "http://www.roblox.com/asset/?id=6031154871",
+		Image = "rbxassetid://6031154871",
       ImageTransparency = 0.2,
 	}, Header)
 
@@ -2370,7 +2473,7 @@ SaveIcon.Name = "SaveIcon"
 SaveIcon.Position = UDim2.new(0.019999995827674866,0,0.20003588497638702,0)
 SaveIcon.Size = UDim2.new(0.2700001299381256,0,0.6990000009536743,0)
 SaveIcon.BackgroundTransparency = 1
-SaveIcon.Image = "http://www.roblox.com/asset/?id=6035067857"
+SaveIcon.Image = "rbxassetid://6035067857"
 SaveIcon.ImageTransparency = 0.20000000298023224
 SaveIcon.Parent = Save
 
@@ -2653,6 +2756,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ListContainer.ScrollBarThickness = 3
 	ListContainer.ScrollBarImageTransparency = 0.35
 	ListContainer.Parent = ConfigMainFrame
+	ListContainer.ClipsDescendants = false
 	do
 		local ll = Instance.new("UIListLayout")
 		ll.Name = "UIListLayout"
@@ -2669,7 +2773,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	Space.Parent = ListContainer
 
 	-- ── Icons ────────────────────────────────────────────────────
-	local SAVE_ICON = "http://www.roblox.com/asset/?id=6035067857"  -- floppy/save
+	local SAVE_ICON = "rbxassetid://6035067857"  -- floppy/save
 	local LOAD_ICON = "rbxassetid://102258343905919"                  -- download/load
 
 	-- ── Deleted configs store (in-memory + file persistence) ─────
@@ -2855,6 +2959,22 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── Active row tracking ───────────────────────────────────────
 	local activeRow = nil     -- the currently "loaded" row frame
 	local activeLoadBtn = nil -- its LoadConfig ImageButton
+	local activeConfigName = nil
+
+	local function SetActiveConfigName(name)
+		if type(name) == "string" and name ~= "" and name ~= "Save" then
+			activeConfigName = name
+		else
+			activeConfigName = nil
+		end
+		SaveText.Text = activeConfigName or "Save"
+	end
+
+	local function ClearActiveConfig()
+		activeRow = nil
+		activeLoadBtn = nil
+		SetActiveConfigName(nil)
+	end
 
 	local function DeactivateRow(rowFrame, loadBtn)
 		-- Reset stroke color/transparency
@@ -2949,9 +3069,10 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 		local sfOpen = false
 		local closeSfRow
+		local SF_ROW_HEIGHT = 58
 		local function MakeSettingBtn(text, textColor, callback)
 			local btn = Instance.new("TextButton")
-			btn.Size = UDim2.new(1, 0, 0, 0)
+			btn.Size = UDim2.new(1, 0, 0, 27)
 			btn.BackgroundTransparency = 1
 			btn.Text = text
 			btn.TextColor3 = textColor
@@ -2959,7 +3080,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			btn.Font = Enum.Font.GothamBold
 			btn.ZIndex = 6001
 			btn.Parent = SettingsFrame
-			do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = btn end
 
 			-- hover highlight
 			btn.MouseEnter:Connect(function()
@@ -3006,9 +3126,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			SaveDeletedList()
 			-- Deactivate if this was the active row
 			if activeRow == row then
-				activeRow = nil
-				activeLoadBtn = nil
-				SaveText.Text = "Save"
+				ClearActiveConfig()
 			end
 			Tween(row, {BackgroundTransparency = 1}, 0.2)
 			task.delay(0.22, function() row:Destroy() end)
@@ -3051,10 +3169,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				CloseAllPopupsExcept(SettingsFrame)
 				SettingsFrame.BackgroundTransparency = 1
 				SettingsFrame.Visible = true
-				SettingsFrame.Size = UDim2.new(0.44, 0, 0, 56)
-				RegisterPopup(SettingsFrame, closeSfRow, SettingsBtn)
-				ConstrainPopupToMainFrame(SettingsFrame)
-				Tween(SettingsFrame, {Size = UDim2.new(0.44, 0, 0, 56), BackgroundTransparency = 0.05}, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				SettingsFrame.Size = UDim2.new(0.44, 0, 0, SF_ROW_HEIGHT)
+				PositionPopupWithinMain(SettingsFrame, true); RegisterPopup(SettingsFrame, closeSfRow, SettingsBtn)
+				Tween(SettingsFrame, {Size = UDim2.new(0.44, 0, 0, SF_ROW_HEIGHT), BackgroundTransparency = 0.05}, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			else
 				closeSfRow()
 			end
@@ -3092,11 +3209,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				end
 				activeRow = row
 				activeLoadBtn = LoadConfigBtn
+				SetActiveConfigName(name)
 				Tween(rowStroke, {Transparency = 0, Color = mainColor}, 0.2)
 				Tween(row, {BackgroundTransparency = 0.5}, 0.2)
 				LoadConfigBtn.Image = SAVE_ICON
 				Tween(LoadConfigBtn, {ImageColor3 = mainColor}, 0.2)
-				SaveText.Text = name
 			end
 		end)
 
@@ -3107,9 +3224,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	-- ── Refresh main list ─────────────────────────────────────────
 	local function RefreshConfigList()
-		activeRow = nil
-		activeLoadBtn = nil
-		SaveText.Text = "Save"
+		ClearActiveConfig()
 		for _, c in ipairs(ListContainer:GetChildren()) do
 			if c:IsA("Frame") and c.Name ~= "Space" then c:Destroy() end
 		end
@@ -3162,14 +3277,20 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── AutoSave toggle ───────────────────────────────────────────
 	-- AutoSave: saves the currently loaded config to file on a 30s loop
 	-- so settings persist across rejoin. Also saves immediately on enable.
+	local function SaveActiveConfig()
+		if not autoSaveEnabled then return end
+		if not activeRow or not activeLoadBtn then return end
+		local n = activeConfigName
+		if type(n) ~= "string" or n == "" or n == "Save" then return end
+		SaveNamedConfig(n)
+	end
+
 	AutoSaveBtn.MouseButton1Click:Connect(function()
 		autoSaveEnabled = not autoSaveEnabled
 		if autoSaveEnabled then
 			Tween(AutoSaveBtn, {ImageColor3 = mainColor}, 0.2)
 			-- Immediate save when toggled on
-			if activeRow then
-				SaveNamedConfig(SaveText.Text)
-			end
+			SaveActiveConfig()
 		else
 			Tween(AutoSaveBtn, {ImageColor3 = Color3.fromRGB(200, 200, 220)}, 0.2)
 		end
@@ -3181,12 +3302,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		task.spawn(function()
 			while true do
 				task.wait(30)
-				if autoSaveEnabled and activeRow then
-					local n = SaveText.Text
-					if n ~= "Save" and n ~= "" then
-						SaveNamedConfig(n)
-					end
-				end
+				SaveActiveConfig()
 			end
 		end)
 	end
@@ -3194,12 +3310,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- Also save on character removing (best-effort "on close")
 	if LocalPlayer and LocalPlayer.CharacterRemoving then
 		LocalPlayer.CharacterRemoving:Connect(function()
-			if autoSaveEnabled and activeRow then
-				local n = SaveText.Text
-				if n ~= "Save" and n ~= "" then
-					SaveNamedConfig(n)
-				end
-			end
+			SaveActiveConfig()
 		end)
 	end
 
@@ -3220,7 +3331,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	closeConfigPanel = function()
 		configOpen = false
-		SaveText.Text = "Save"
+		ClearActiveConfig()
 		ClosePopupsUnder(ConfigMainFrame)
 		ClosePopupsUnder(RecentlyDeletedPanel)
 		UnregisterPopup(ConfigMainFrame)
@@ -3231,7 +3342,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			if configOpen then return end
 			ConfigMainFrame.Visible = false
 			RecentlyDeletedPanel.Visible = false
-			SaveText.Text = "Save"
+			ClearActiveConfig()
 		end)
 	end
 	TriggerSaveConfig.MouseButton1Click:Connect(function()
@@ -3872,7 +3983,7 @@ UIStroke.Parent = Elements
 				SFContainer.ScrollingDirection = Enum.ScrollingDirection.Y
 				SFContainer.ScrollBarThickness = 2
 				SFContainer.ScrollBarImageTransparency = 0.5
-				SFContainer.ClipsDescendants = false
+				SFContainer.ClipsDescendants = true
 				SFContainer.Parent = SettingsFrame
 
 				local SFLayout = Instance.new('UIListLayout')
@@ -4352,7 +4463,7 @@ UIAspectRatioConstraint.Parent = Slider
 						BackgroundTransparency = 1,
 						BorderSizePixel = 0,
 						Visible = false,
-						ZIndex = 1000,
+						ZIndex = 5000,
 					}, Selection)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, DropPopup)
 					New("UIStroke", {
@@ -4367,7 +4478,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Size = UDim2.new(0.8980000019073486, 0, 0, 96),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 1,
-						ZIndex = 1000,
+						ZIndex = 5000,
 						Active = true,
 						AutomaticCanvasSize = Enum.AutomaticSize.Y,
 						CanvasSize = UDim2.new(),
@@ -4407,7 +4518,7 @@ UIAspectRatioConstraint.Parent = Slider
 							Size = UDim2.new(1, 0, 0.20000000298023224, 0),
 							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 							BackgroundTransparency = 1,
-							ZIndex = 1001,
+							ZIndex = 5001,
 							LayoutOrder = i,
 						}, DropContainer)
 						New("UIAspectRatioConstraint", {
@@ -4426,7 +4537,7 @@ UIAspectRatioConstraint.Parent = Slider
 							TextScaled = true,
 							Font = Enum.Font.SourceSansSemibold,
 							TextTransparency = 0.10000000149011612,
-							ZIndex = 1002,
+							ZIndex = 5002,
 							TextXAlignment = Enum.TextXAlignment.Left,
 						}, BtnRow)
 
@@ -4440,7 +4551,7 @@ UIAspectRatioConstraint.Parent = Slider
 							Text = "",
 							TextColor3 = Color3.fromRGB(26, 123, 255),
 							TextScaled = true,
-							ZIndex = 1004,
+							ZIndex = 5004,
 						}, BtnRow)
 						New("UICorner", { CornerRadius = UDim.new(0, 5) }, SelBtn)
 						selectedBtns[opt] = SelBtn
@@ -4449,7 +4560,7 @@ UIAspectRatioConstraint.Parent = Slider
 							Size = UDim2.new(1, 0, 1, 0),
 							BackgroundTransparency = 1,
 							Text = "",
-							ZIndex = 1005,
+							ZIndex = 5005,
 						}, BtnRow)
 						RowBtn.MouseButton1Click:Connect(function()
 							selected = opt; TextDefault.Text = opt; updateCheckmarks(); closeDropdown()
@@ -4524,6 +4635,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 					}, Colorpicker)
 
 					local colorpickerLabel = New("TextLabel", {
+						Name = "TextToggle",
 						Position = UDim2.new(0.048, 0, 0.3, 0),
 						Size = UDim2.new(0.66, 0, 0.6, 0),
 						BackgroundTransparency = 1,
@@ -5574,7 +5686,7 @@ if maxY <= 0 then return end
 					BackgroundColor3 = Color3.fromRGB(16,19,28),
 					Visible = false,
 					ZIndex = 300,
-					ClipsDescendants = true,
+					ClipsDescendants = false,
 				}, Dropdown)
 				New("UICorner", {}, DownBar)
 				New("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.98, Thickness = 5 }, DownBar)
@@ -6122,6 +6234,7 @@ if maxY <= 0 then return end
 
 
 				local colorpickerLabel = New("TextLabel", {
+						Name = "TextToggle",
 						Position = UDim2.new(0.04800000086426735, 0, 0.30000001192092896, 0),
 						Size = UDim2.new(0.6000000238418579, 0, 0.5000000238418579, 0),
 						BackgroundTransparency = 1,
@@ -6476,7 +6589,7 @@ if maxY <= 0 then return end
 				Container.ScrollingDirection = Enum.ScrollingDirection.Y
 				Container.ScrollBarThickness = 2
 				Container.ScrollBarImageTransparency = 0.5
-				Container.ClipsDescendants = false
+				Container.ClipsDescendants = true
 				Container.Parent = Section2Frame
 
 				local UIListLayout = Instance.new('UIListLayout')
@@ -6811,7 +6924,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundTransparency = 1,
 						BorderSizePixel = 0,
 						Visible = false,
-						ZIndex = 1000,
+						ZIndex = 5000,
 					}, Selection)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, DropPopup)
 					New("UIStroke", {
@@ -6827,7 +6940,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Size = UDim2.new(0.8980000019073486, 0, 0, 96),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 1,
-						ZIndex = 1000,
+						ZIndex = 5000,
 						Active = true,
 						AutomaticCanvasSize = Enum.AutomaticSize.Y,
 						CanvasSize = UDim2.new(),
@@ -6949,7 +7062,7 @@ UIAspectRatioConstraint.Parent = Toggle
 							_openAccordionDropdown = closeDropdown2
 							SmoothOpen(DropPopup, 0, 0.2)
 							Tween(SelArrow, {Rotation = 0}, 0.25)
-							RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
+							PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
 						end
 					end)
 
@@ -7154,6 +7267,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 					}, Colorpicker)
 
 					local colorpickerLabel = New("TextLabel", {
+						Name = "TextToggle",
 						Position = UDim2.new(0.048, 0, 0.3, 0),
 						Size = UDim2.new(0.66, 0, 0.6, 0),
 						BackgroundTransparency = 1,
