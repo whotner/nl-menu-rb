@@ -395,7 +395,20 @@ CenterElement = function(el)
 	for _, name in ipairs({ "TextToggle", "TextDefault", "TextAccordion", "TextDropdown", "TextAccordionLabel" }) do
 		placeText(el:FindFirstChild(name), 0.5, 0.5)
 	end
-	place(el:FindFirstChild("Effect"), 0.5, 0.7)
+	local toggleLabel = el:FindFirstChild("TextToggle")
+	if toggleLabel and toggleLabel:IsA("GuiObject") then
+		toggleLabel.Size = UDim2.new(0.58, toggleLabel.Size.X.Offset, toggleLabel.Size.Y.Scale, toggleLabel.Size.Y.Offset)
+	end
+	local effect = el:FindFirstChild("Effect")
+	if effect and effect:IsA("GuiObject") then
+		if effect:FindFirstChild("Icon") then
+			effect.Position = UDim2.new(0.78, 0, effect.Position.Y.Scale, 0)
+			effect.Size = UDim2.new(0.17, 0, effect.Size.Y.Scale, effect.Size.Y.Offset)
+			place(effect, 0.5, 0.6)
+		else
+			place(effect, 0.5, 0.7)
+		end
+	end
 	place(el:FindFirstChild("Line"), 0.5, 0.24)
 	place(el:FindFirstChild("SliderValue"), 0.5, 0.8)
 	place(el:FindFirstChild("DropdownArrow") or el:FindFirstChild("TextboxArrow"), 0.5, 0.5)
@@ -1115,71 +1128,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		ds.Parent = WindowSettingsFrame
 	end
 
-	-- Profile row
-	local WSProfile = Instance.new("Frame")
-	WSProfile.Name = "Profile"
-	WSProfile.Size = UDim2.new(1,0,0.20000000298023224,0)
-	WSProfile.BackgroundColor3 = Color3.fromRGB(162,162,162)
-	WSProfile.BackgroundTransparency = 1
-	WSProfile.ZIndex = 130
-	WSProfile.Parent = WindowSettingsFrame
-
-	do
-		local ui = Instance.new("ImageLabel")
-		ui.Name = "UserImage"
-		ui.Size = UDim2.new(0.3400000035762787,0,1,0)
-		ui.BackgroundColor3 = Color3.fromRGB(21,24,36)
-		ui.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
-		ui.ZIndex = 130
-		ui.Parent = WSProfile
-		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1,0); c.Parent = ui end
-		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = ui end
-	end
-
-	do
-		local un = Instance.new("TextLabel")
-		un.Name = "Username"
-		un.Position = UDim2.new(0.30000001192092896,0,0.00800000037997961,0)
-		un.Size = UDim2.new(0.5,0,0.800000011920929,0)
-		un.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		un.BackgroundTransparency = 1
-		un.Text = LocalPlayer.Name
-		un.TextColor3 = Color3.fromRGB(255,255,255)
-		un.TextScaled = true
-		un.Font = Enum.Font.SourceSansSemibold
-		un.ZIndex = 130
-		un.TextXAlignment = Enum.TextXAlignment.Left
-		un.Parent = WSProfile
-	end
-
-	do
-		local dl = Instance.new("TextLabel")
-		dl.Name = "DaysLeft"
-		dl.Position = UDim2.new(0.30000001192092896,0,0.5,0)
-		dl.Size = UDim2.new(0.5,0,0.3400000035762787,0)
-		dl.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		dl.BackgroundTransparency = 1
-		dl.Text = daysLeft
-		dl.TextColor3 = Color3.fromRGB(255,255,255)
-		dl.TextScaled = true
-		dl.Font = Enum.Font.SourceSansBold
-		dl.TextTransparency = 0.6000000238418579
-		dl.ZIndex = 130
-		dl.TextXAlignment = Enum.TextXAlignment.Left
-		dl.Parent = WSProfile
-	end
-
-	do
-		local ln = Instance.new("Frame")
-		ln.Name = "Lines"
-		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
-		ln.Size = UDim2.new(0.8999999761581421,0,0,1)
-		ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		ln.BackgroundTransparency = 0.6000000238418579
-		ln.BorderSizePixel = 0
-		ln.ZIndex = 130
-		ln.Parent = WSProfile
-	end
 
 	local UIScale = Instance.new("UIScale")
 	MainFrameUIScale = UIScale
@@ -1224,7 +1172,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	-- Settings Container (Main Color + dropdowns)
 	local SettingsContainer = Instance.new("Frame")
 	SettingsContainer.Name = "SettingsContainer"
-	SettingsContainer.Position = UDim2.new(0,0,0.23000000417232513,0)
+	SettingsContainer.Position = UDim2.new(0,0,0.03,0)
 	SettingsContainer.Size = UDim2.new(1,0,0,50)
 	SettingsContainer.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	SettingsContainer.BackgroundTransparency = 1
@@ -1976,7 +1924,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	-- UsageContainer: dynamic rows added via WindowObj:GetUsage()
 	local UsageContainer = Instance.new("Frame")
 	UsageContainer.Name = "UsageContainer"
-	UsageContainer.Position = UDim2.new(0,0,0.6700001955032349,0)
+	UsageContainer.Position = UDim2.new(0,0,0.45,0)
 	UsageContainer.Size = UDim2.new(1,0,0,50)
 	UsageContainer.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	UsageContainer.BackgroundTransparency = 1
@@ -2591,7 +2539,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local ConfigMainFrame = Instance.new("Frame")
 	ConfigMainFrame.Name = "ConfigMainFrame"
 	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.1, 0)
-	ConfigMainFrame.Size = UDim2.new(0.46, 0, 0.5, 0)
+	ConfigMainFrame.Size = UDim2.new(0.4, 0, 0.42, 0)
 	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	ConfigMainFrame.BackgroundTransparency = 0.09
 	ConfigMainFrame.BorderSizePixel = 0
@@ -2859,7 +2807,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local RecentlyDeletedPanel = Instance.new("Frame")
 	RecentlyDeletedPanel.Name = "RecentlyDeletedPanel"
 	RecentlyDeletedPanel.Position = UDim2.new(0.012, 0, 0.1, 0)
-	RecentlyDeletedPanel.Size = UDim2.new(0.46, 0, 0.5, 0)
+	RecentlyDeletedPanel.Size = UDim2.new(0.4, 0, 0.42, 0)
 	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	RecentlyDeletedPanel.BackgroundTransparency = 0.01
 	RecentlyDeletedPanel.BorderSizePixel = 0
@@ -3736,6 +3684,7 @@ end
 			AspectRatio = 5,
 			AspectType = Enum.AspectType.ScaleWithParentSize,
 		}, TabButtonFrame)
+		local TabScale = New("UIScale", { Scale = 1 }, TabButtonFrame)
 
 		local TabIcon = New("ImageLabel", {
 			Name = "TabIcon",
@@ -3821,12 +3770,10 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 		end
 
 		local function ShowContent()
-			Left.Position = UDim2.new(0.04, 0, 0, 0)
-			Right.Position = UDim2.new(0.04, 0, 0, 0)
+			Left.Position = UDim2.new(0, 0, 0, 0)
+			Right.Position = UDim2.new(0, 0, 0, 0)
 			Left.Visible = true
 			Right.Visible = true
-			Tween(Left, { Position = UDim2.new(0, 0, 0, 0) }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-			Tween(Right, { Position = UDim2.new(0, 0, 0, 0) }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			for _, column in ipairs({Left, Right}) do
 				for _, section in ipairs(column:GetChildren()) do
 					if section:IsA("GuiObject") then
@@ -3871,6 +3818,8 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 			TabButtonFrame.BackgroundColor3 = Color3.fromRGB(255,255,255)
 			Tween(TabButtonFrame, { BackgroundTransparency = 0.9 }, 0.25)
 			Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.25)
+			TabScale.Scale = 0.86
+			Tween(TabScale, { Scale = 1 }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			Tween(TabText, { TextTransparency = 0 }, 0.25)
 			ShowContent()
 			activeTabIndex = tabIndex
@@ -3990,20 +3939,50 @@ UIStroke.Parent = Elements
 					btnPosition = UDim2.new(0.6990000009536743, 0, 0.20000000298023224, 0)
 				end
 
-				local SettingsBtn = New("ImageButton", {
+				local SettingsBtn = New("Frame", {
 					Name = "SettingsGear",
-					Position = UDim2.new(0.78, 0, 0.18, 0),
-					Size = UDim2.new(0.09, 0, 0.64, 0),
+					Position = UDim2.new(0.63, 0, 0.18, 0),
+					Size = UDim2.new(0.1, 0, 0.64, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
-					Image = "rbxassetid://10709797985",
-					ImageColor3 = Color3.fromRGB(210, 215, 225),
-					ImageTransparency = 0.15,
-					ScaleType = Enum.ScaleType.Fit,
 					ZIndex = 2000,
 				}, parentFrame)
-				SettingsBtn.MouseEnter:Connect(function() Tween(SettingsBtn, {ImageTransparency = 0}, 0.15) end)
-				SettingsBtn.MouseLeave:Connect(function() Tween(SettingsBtn, {ImageTransparency = 0.15}, 0.15) end)
+
+				for i = 0, 2 do
+					New("Frame", {
+						Name = "Dot" .. tostring(i + 1),
+						AnchorPoint = Vector2.new(0.5, 0.5),
+						Position = UDim2.new(0.5, (i - 1) * 7, 0.5, 0),
+						Size = UDim2.new(0, 5, 0, 5),
+						BackgroundColor3 = Color3.fromRGB(225, 230, 240),
+						BackgroundTransparency = 0,
+						BorderSizePixel = 0,
+						ZIndex = 2001,
+					}, SettingsBtn)
+				end
+
+				local SettingsHit = New("TextButton", {
+					Name = "SettingsHit",
+					Size = UDim2.new(1, 0, 1, 0),
+					BackgroundTransparency = 1,
+					Text = "",
+					AutoButtonColor = false,
+					ZIndex = 2002,
+				}, SettingsBtn)
+				for _, dot in ipairs(SettingsBtn:GetChildren()) do
+					if dot:IsA("GuiObject") and string.sub(dot.Name, 1, 3) == "Dot" then
+						dot.BackgroundTransparency = 1
+					end
+				end
+				local function SetDotsTransparency(value)
+					for _, dot in ipairs(SettingsBtn:GetChildren()) do
+						if dot:IsA("GuiObject") and string.sub(dot.Name, 1, 3) == "Dot" then
+							Tween(dot, { BackgroundTransparency = value }, 0.15)
+						end
+					end
+				end
+				SettingsHit.MouseEnter:Connect(function() SetDotsTransparency(0) end)
+				SettingsHit.MouseLeave:Connect(function() SetDotsTransparency(1) end)
 
 				local SettingsFrame = Instance.new('Frame')
 				SettingsFrame.Name = "SettingsFrame"
@@ -4132,7 +4111,7 @@ UIStroke.Parent = Elements
 					task.delay(0.21, function() if not settingsOpen then SettingsFrame.Visible = false end end)
 				end
 				local SettingsObj = {}
-				SettingsBtn.MouseButton1Click:Connect(function()
+				SettingsHit.MouseButton1Click:Connect(function()
 					if settingsOpen then closeSF() else SettingsObj:Open() end
 				end)
 
@@ -4216,7 +4195,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.41100209951400757, 0, 0.04500000551342964, 0) or UDim2.new(0.08, 0, 0.04500000551342964, 0),
+						Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0),
 						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
@@ -4235,7 +4214,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					local function Set(val)
 						enabled = val == true
 						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(Icon, { Position = enabled and UDim2.new(0.41100209951400757, 0, 0.04500000551342964, 0) or UDim2.new(0.08, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+						Tween(Icon, { Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -5246,7 +5225,7 @@ if maxY <= 0 then return end
 
 				local Icon = New("Frame", {
 					Name = "Icon",
-					Position = enabled and UDim2.new(0.41100209951400757, 0, 0.04500000551342964, 0) or UDim2.new(0.08, 0, 0.04500000551342964, 0),
+					Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0),
 					Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 					BackgroundColor3 = Color3.fromRGB(255,255,255),
 					BackgroundTransparency = enabled and 0 or 0.5,
@@ -5264,7 +5243,7 @@ if maxY <= 0 then return end
 				local function Set(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.41100209951400757, 0, 0.04500000551342964, 0) or UDim2.new(0.08, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					InvokeCallback(callback, enabled)
 				end
 
@@ -5395,7 +5374,7 @@ if maxY <= 0 then return end
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.41100209951400757, 0, 0.04500000551342964, 0) or UDim2.new(0.08, 0, 0.04500000551342964, 0),
+						Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0),
 						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
@@ -5428,7 +5407,7 @@ if maxY <= 0 then return end
 					enabled = val == true
 					Icon.BackgroundTransparency = enabled and 0 or 0.5
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.41100209951400757, 0, 0.04500000551342964, 0) or UDim2.new(0.08, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					InvokeCallback(callback, color, enabled)
 				end
 
@@ -5508,7 +5487,7 @@ if maxY <= 0 then return end
 
 				local Icon = New("Frame", {
 					Name = "Icon",
-					Position = enabled and UDim2.new(0.41100209951400757, 0, 0.04500000551342964, 0) or UDim2.new(0.08, 0, 0.04500000551342964, 0),
+					Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0),
 					Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 					BackgroundTransparency = enabled and 0 or 0.5,
@@ -5699,7 +5678,7 @@ if maxY <= 0 then return end
 				local function SetEnabled(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.41100209951400757, 0, 0.04500000551342964, 0) or UDim2.new(0.08, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					NotifyEnabled()
 				end
 
@@ -6007,14 +5986,14 @@ if maxY <= 0 then return end
 					Image = "rbxassetid://10709790948",
 					ImageColor3 = Color3.fromRGB(255, 255, 255),
 					ScaleType = Enum.ScaleType.Fit,
-					Rotation = 0,
+					Rotation = -90,
 					ZIndex = 7,
 				}, TopBar)
 
 				local DownBar = New("Frame", {
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 2),
-					Size = UDim2.new(0.5, 0, 0, 0),
+					Size = UDim2.new(0.62, 0, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(16,19,28),
 					Visible = false,
 					ZIndex = 300,
@@ -6043,7 +6022,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = 0}, 0.2)
+					Tween(Arrow, {Rotation = -90}, 0.2)
 					Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -6092,7 +6071,7 @@ if maxY <= 0 then return end
 						DownBar.Size = UDim2.new(0.62, 0, 0, 0)
 						local h = math.min(#options * 22 + 8, 132)
 						Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, h) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 90}, 0.25)
+						Tween(Arrow, {Rotation = 90}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						PositionPopupWithinMain(DownBar, true); task.delay(0.3, function() PositionPopupWithinMain(DownBar, true) end); RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
@@ -6201,7 +6180,7 @@ if maxY <= 0 then return end
 					Image = "rbxassetid://10709790948",
 					ImageColor3 = Color3.fromRGB(255, 255, 255),
 					ScaleType = Enum.ScaleType.Fit,
-					Rotation = 0,
+					Rotation = -90,
 					ZIndex = 7,
 				}, TopBar)
 
@@ -6209,7 +6188,7 @@ if maxY <= 0 then return end
 				local DownBar = New("Frame", {
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 2),
-					Size = UDim2.new(0.5, 0, 0, 0),
+					Size = UDim2.new(0.62, 0, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(16,19,28),
 					ClipsDescendants = true,
 					Visible = false,
@@ -6242,7 +6221,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = 0}, 0.2)
+					Tween(Arrow, {Rotation = -90}, 0.2)
 					Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -6311,7 +6290,7 @@ if maxY <= 0 then return end
 						DownBar.Size = UDim2.new(0.62, 0, 0, 0)
 						local h = math.min(#options * 22 + 8, 132)
 						Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, h) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 90}, 0.25)
+						Tween(Arrow, {Rotation = 90}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						PositionPopupWithinMain(DownBar, true); task.delay(0.3, function() PositionPopupWithinMain(DownBar, true) end); RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
@@ -7064,7 +7043,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.41100209951400757, 0, 0.04500000551342964, 0) or UDim2.new(0.08, 0, 0.04500000551342964, 0),
+						Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0),
 						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
@@ -7083,7 +7062,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					local function Set(val)
 						enabled = val == true
 						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(Icon, { Position = enabled and UDim2.new(0.41100209951400757, 0, 0.04500000551342964, 0) or UDim2.new(0.08, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+						Tween(Icon, { Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -7904,12 +7883,10 @@ if maxY <= 0 then return end
 				if activeSubTabIndex then
 					local st = subTabs[activeSubTabIndex]
 					if st then
-						st.left.Position  = UDim2.new(0.04, 0, 0, 0)
-						st.right.Position = UDim2.new(0.04, 0, 0, 0)
-						st.left.Visible  = true
-						st.right.Visible = true
-						Tween(st.left,  { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(st.right, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
+					st.left.Position  = UDim2.new(0, 0, 0, 0)
+					st.right.Position = UDim2.new(0, 0, 0, 0)
+					st.left.Visible  = true
+					st.right.Visible = true
 					end
 				elseif #subTabs > 0 then
 					subTabs[1].activate()
@@ -7978,6 +7955,7 @@ if maxY <= 0 then return end
 				AspectRatio = 4.6,
 				AspectType = Enum.AspectType.ScaleWithParentSize,
 			}, STRow)
+			local STScale = New("UIScale", { Scale = 1 }, STRow)
 
 
 
@@ -8029,13 +8007,13 @@ if maxY <= 0 then return end
 				Tween(STRow,    { BackgroundTransparency = 0.9 }, 0.2)
 				Tween(STLabel,  { TextTransparency = 0 }, 0.2)
 				if iconRef then Tween(iconRef, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.2) end
+				STScale.Scale = 0.86
+				Tween(STScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-				stLeft.Position  = UDim2.new(0.04, 0, 0, 0)
-				stRight.Position = UDim2.new(0.04, 0, 0, 0)
+				stLeft.Position  = UDim2.new(0, 0, 0, 0)
+				stRight.Position = UDim2.new(0, 0, 0, 0)
 				stLeft.Visible  = true
 				stRight.Visible = true
-				Tween(stLeft,  { Position = UDim2.new(0, 0, 0, 0) }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-				Tween(stRight, { Position = UDim2.new(0, 0, 0, 0) }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 				for _, column in ipairs({stLeft, stRight}) do
 					for _, section in ipairs(column:GetChildren()) do
 						if section:IsA("GuiObject") then
