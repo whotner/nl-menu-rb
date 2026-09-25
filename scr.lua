@@ -402,9 +402,9 @@ CenterElement = function(el)
 	local effect = el:FindFirstChild("Effect")
 	if effect and effect:IsA("GuiObject") then
 		if effect:FindFirstChild("Icon") then
-			effect.Position = UDim2.new(0.78, 0, effect.Position.Y.Scale, 0)
-			effect.Size = UDim2.new(0.17, 0, effect.Size.Y.Scale, effect.Size.Y.Offset)
-			place(effect, 0.5, 0.6)
+			effect.Position = UDim2.new(0.755, 0, effect.Position.Y.Scale, 0)
+			effect.Size = UDim2.new(0.22, 0, effect.Size.Y.Scale, effect.Size.Y.Offset)
+			place(effect, 0.5, 0.52)
 		else
 			place(effect, 0.5, 0.7)
 		end
@@ -412,6 +412,76 @@ CenterElement = function(el)
 	place(el:FindFirstChild("Line"), 0.5, 0.24)
 	place(el:FindFirstChild("SliderValue"), 0.5, 0.8)
 	place(el:FindFirstChild("DropdownArrow") or el:FindFirstChild("TextboxArrow"), 0.5, 0.5)
+end
+
+local ELLIPSIS = "..."
+local TextService = game:GetService("TextService")
+local MEASURE_SIZE = Vector2.new(10000, 10000)
+
+local function MeasureText(text, fontSize, font)
+	local ok, size = pcall(TextService.GetTextSize, TextService, text, fontSize or 14, font or Enum.Font.Gotham, MEASURE_SIZE)
+	if ok and size then return size.X end
+	return 0
+end
+
+local function EllipsizeTo(label, maxWidth)
+	if not label or not label:IsA("TextLabel") and not label:IsA("TextButton") then return end
+	if type(maxWidth) ~= "number" or maxWidth <= 0 then return end
+	local full = label:GetAttribute("FullText")
+	if type(full) ~= "string" or full == "" then
+		full = label.Text
+		label:SetAttribute("FullText", full)
+	end
+	if full == "" then return end
+	local fontSize = label.TextSize or 14
+	local font = label.Font or Enum.Font.Gotham
+	local unscaled = MeasureText(full, fontSize, font)
+	if unscaled <= 0 then return end
+	local scale = 1
+	if label.TextScaled and label.TextBounds.X > 0 then
+		scale = label.TextBounds.X / unscaled
+		if scale <= 0 or scale ~= scale then scale = 1 end
+	end
+	local function rendered(text)
+		return MeasureText(text, fontSize, font) * scale
+	end
+	if rendered(full) <= maxWidth then
+		if label.Text ~= full then label.Text = full end
+		return
+	end
+	local low, high, best = 1, #full, ""
+	while low <= high do
+		local mid = math.floor((low + high) / 2)
+		local candidate = full:sub(1, mid) .. ELLIPSIS
+		if rendered(candidate) <= maxWidth then
+			best = candidate
+			low = mid + 1
+		else
+			high = mid - 1
+		end
+	end
+	label.Text = best ~= "" and best or ELLIPSIS
+end
+
+local function FitTextBeforeArrow(label, arrow)
+	if not label or not arrow then return end
+	task.defer(function()
+		if not label.Parent or not arrow.Parent then return end
+		local arrowX = arrow.AbsolutePosition.X
+		local labelX = label.AbsolutePosition.X
+		local width = label.AbsoluteSize.X
+		if label.TextXAlignment == Enum.TextXAlignment.Right then
+			EllipsizeTo(label, arrowX - labelX - 6)
+		else
+			EllipsizeTo(label, math.min(width, arrowX - labelX - 6))
+		end
+	end)
+end
+
+local function SetTrimmedText(label, value)
+	if not label then return end
+	label:SetAttribute("FullText", tostring(value or ""))
+	label.Text = tostring(value or "")
 end
 
 local function MakeDraggable(frame, handle)
@@ -635,17 +705,18 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		AnchorPoint = Vector2.new(0.5, 0.43),
 		Size = UDim2.new(0.78, 0, 0.78, 0),
 		Position = UDim2.new(0.5, 0, 0.43, 0),
-		BackgroundColor3 = Color3.fromRGB(3,3,14),
-		BackgroundTransparency = 0.2,
-		BorderSizePixel = 1,
-		ClipsDescendants = true,
+	BackgroundColor3 = Color3.fromRGB(3,3,14),
+	BackgroundTransparency = 0.2,
+	BorderSizePixel = 0,
+	ClipsDescendants = true,
 	}, NeverloseCS2)
 	local MainFrameUIScale
-	local Watermark = New("TextLabel", {
-		Name = "Watermark",
-		Position = UDim2.new(0.845, 0, 0.012, 0),
-		Size = UDim2.new(0.125, 0, 0.018, 0),
-		BackgroundTransparency = 1,
+    local Watermark = New("TextLabel", {
+	Name = "Watermark",
+	Position = UDim2.new(0.985, 0, 0.982, 0),
+	Size = UDim2.new(0.16, 0, 0.022, 0),
+	AnchorPoint = Vector2.new(1, 1),
+	BackgroundTransparency = 1,
 		Text = "NEVERLOSE  •  UI",
 		TextColor3 = Color3.fromRGB(255, 255, 255),
 		TextTransparency = 0.72,
@@ -2538,7 +2609,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── ConfigMainFrame (new design panel) ──────────────────────
 	local ConfigMainFrame = Instance.new("Frame")
 	ConfigMainFrame.Name = "ConfigMainFrame"
-	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.1, 0)
+	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.075, 0)
 	ConfigMainFrame.Size = UDim2.new(0.4, 0, 0.42, 0)
 	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	ConfigMainFrame.BackgroundTransparency = 0.09
@@ -2806,7 +2877,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── Recently Deleted Panel ────────────────────────────────────
 	local RecentlyDeletedPanel = Instance.new("Frame")
 	RecentlyDeletedPanel.Name = "RecentlyDeletedPanel"
-	RecentlyDeletedPanel.Position = UDim2.new(0.012, 0, 0.1, 0)
+	RecentlyDeletedPanel.Position = UDim2.new(0.012, 0, 0.075, 0)
 	RecentlyDeletedPanel.Size = UDim2.new(0.4, 0, 0.42, 0)
 	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	RecentlyDeletedPanel.BackgroundTransparency = 0.01
@@ -3988,7 +4059,7 @@ UIStroke.Parent = Elements
 				SettingsFrame.Name = "SettingsFrame"
 				SettingsFrame.Position = UDim2.new(0.02, 0, 1, 2)
 				SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
-				SettingsFrame.BackgroundColor3 = Color3.fromRGB(17,20,30)
+				SettingsFrame.BackgroundColor3 = Color3.fromRGB(14, 16, 25)
 				SettingsFrame.BackgroundTransparency = 1
 				SettingsFrame.BorderSizePixel = 0
 				SettingsFrame.Visible = false
@@ -4000,7 +4071,21 @@ UIStroke.Parent = Elements
 
 				local UICorner = Instance.new('UICorner')
 				UICorner.Name = "UICorner"
+				UICorner.CornerRadius = UDim.new(0, 12)
 				UICorner.Parent = SettingsFrame
+
+				local SettingsShadow = Instance.new('ImageLabel')
+				SettingsShadow.Name = "DropShadow"
+				SettingsShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+				SettingsShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+				SettingsShadow.Size = UDim2.new(1, 40, 1, 40)
+				SettingsShadow.BackgroundTransparency = 1
+				SettingsShadow.BorderSizePixel = 0
+				SettingsShadow.Image = "rbxassetid://6014261993"
+				SettingsShadow.ImageColor3 = Color3.fromRGB(8, 10, 16)
+				SettingsShadow.ImageTransparency = 0.35
+				SettingsShadow.ZIndex = 999
+				SettingsShadow.Parent = SettingsFrame
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
@@ -4009,12 +4094,13 @@ UIStroke.Parent = Elements
 				UIStroke.Parent = SettingsFrame
 
 				local function GetSettingsLabelHeight()
-					return 28 / GetMainFrameScale()
+					return 0
 				end
 				local SFLabelContainer = Instance.new('TextLabel')
 				SFLabelContainer.Name = "LabelContainer"
+				SFLabelContainer.Visible = false
 				SFLabelContainer.Position = UDim2.new(0.05000000074505806, 0, 0, 0)
-				SFLabelContainer.Size = UDim2.new(0.9, 0, 0, GetSettingsLabelHeight())
+				SFLabelContainer.Size = UDim2.new(0.9, 0, 0, 0)
 				SFLabelContainer.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
 				SFLabelContainer.BackgroundTransparency = 1
 				SFLabelContainer.Text = label or ""
@@ -4065,10 +4151,10 @@ UIStroke.Parent = Elements
 
 				local function UpdateSettingsLayout()
 					local scale = GetMainFrameScale()
-					local labelHeight = 28 / scale
+					local labelHeight = 0
 					SFLabelContainer.Size = UDim2.new(0.9, 0, 0, labelHeight)
-					SFContainer.Position = UDim2.new(0.05, 0, 0, labelHeight)
-					SFContainer.Size = UDim2.new(0.9, 0, 1, -labelHeight - 8 / scale)
+					SFContainer.Position = UDim2.new(0.04, 0, 0, 3 / scale)
+					SFContainer.Size = UDim2.new(0.92, 0, 1, -6 / scale)
 				end
 
 				local function getSettingsHeight()
@@ -4076,9 +4162,9 @@ UIStroke.Parent = Elements
 					local scale = GetMainFrameScale()
 					local okCanvas, canvasSize = pcall(function() return SFContainer.AbsoluteCanvasSize end)
 					local contentVisual = okCanvas and canvasSize and canvasSize.Y or SFContainer.AbsoluteSize.Y
-					local labelVisual = (SFLabelContainer.AbsoluteSize or Vector2.new(0, 20 * scale)).Y
-					local desiredVisual = math.max(44 * scale, contentVisual + labelVisual + 8 * scale)
-					local maxVisual = math.max(44 * scale, MainFrame.AbsoluteSize.Y - 12 * scale)
+					local labelVisual = 0
+					local desiredVisual = math.max(30 * scale, contentVisual + labelVisual + 8 * scale)
+					local maxVisual = math.max(30 * scale, MainFrame.AbsoluteSize.Y - 12 * scale)
 					return math.min(desiredVisual, maxVisual) / scale
 				end
 
@@ -4086,7 +4172,7 @@ UIStroke.Parent = Elements
 					local scale = GetMainFrameScale()
 					UpdateSettingsLayout()
 					local mainSize = MainFrame.AbsoluteSize
-					local minHeight = 44
+					local minHeight = 30
 					local maxHeight = math.max(minHeight, (mainSize.Y - 12 * scale) / scale)
 					height = math.clamp(type(height) == "number" and height == height and height or minHeight, minHeight, maxHeight)
 					local parentPosition = parentFrame.AbsolutePosition
@@ -4195,7 +4281,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0),
+						Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0),
 						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
@@ -4214,7 +4300,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					local function Set(val)
 						enabled = val == true
 						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(Icon, { Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+						Tween(Icon, { Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -4635,11 +4721,11 @@ UIAspectRatioConstraint.Parent = Slider
 							ZIndex = 5005,
 						}, BtnRow)
 						RowBtn.MouseButton1Click:Connect(function()
-							selected = opt; TextDefault.Text = opt; updateCheckmarks(); closeDropdown()
+							selected = opt; SetTrimmedText(TextDefault, opt); FitTextBeforeArrow(TextDefault, SelArrow); updateCheckmarks(); closeDropdown()
 							InvokeCallback(callback, opt)
 						end)
 						SelBtn.MouseButton1Click:Connect(function()
-							selected = opt; TextDefault.Text = opt; updateCheckmarks(); closeDropdown()
+							selected = opt; SetTrimmedText(TextDefault, opt); FitTextBeforeArrow(TextDefault, SelArrow); updateCheckmarks(); closeDropdown()
 							InvokeCallback(callback, opt)
 						end)
 					end
@@ -4662,11 +4748,11 @@ UIAspectRatioConstraint.Parent = Slider
 						end
 					end)
 
-					TextDefault.Text = selected
+					SetTrimmedText(TextDefault, selected); FitTextBeforeArrow(TextDefault, SelArrow)
 					updateCheckmarks()
 
 					local obj = {}
-					function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TextDefault.Text = val; updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
+					function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; SetTrimmedText(TextDefault, val); FitTextBeforeArrow(TextDefault, SelArrow); updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
 					function obj:Get() return selected end
 					RegisterConfigElement("settings_dropdown_", text, obj)
 					return obj
@@ -5225,7 +5311,7 @@ if maxY <= 0 then return end
 
 				local Icon = New("Frame", {
 					Name = "Icon",
-					Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0),
+					Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0),
 					Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 					BackgroundColor3 = Color3.fromRGB(255,255,255),
 					BackgroundTransparency = enabled and 0 or 0.5,
@@ -5243,7 +5329,7 @@ if maxY <= 0 then return end
 				local function Set(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					InvokeCallback(callback, enabled)
 				end
 
@@ -5374,7 +5460,7 @@ if maxY <= 0 then return end
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0),
+						Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0),
 						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
@@ -5407,7 +5493,7 @@ if maxY <= 0 then return end
 					enabled = val == true
 					Icon.BackgroundTransparency = enabled and 0 or 0.5
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					InvokeCallback(callback, color, enabled)
 				end
 
@@ -5487,7 +5573,7 @@ if maxY <= 0 then return end
 
 				local Icon = New("Frame", {
 					Name = "Icon",
-					Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0),
+					Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0),
 					Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 					BackgroundTransparency = enabled and 0 or 0.5,
@@ -5678,7 +5764,7 @@ if maxY <= 0 then return end
 				local function SetEnabled(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					NotifyEnabled()
 				end
 
@@ -6053,7 +6139,7 @@ if maxY <= 0 then return end
 					end)
 					Buttons.MouseButton1Click:Connect(function()
 						selected = opt
-						TopBar.Text = opt
+						SetTrimmedText(TopBar, opt); FitTextBeforeArrow(TopBar, Arrow)
 						InvokeCallback(callback, opt)
 						closeDropdown()
 					end)
@@ -6077,7 +6163,7 @@ if maxY <= 0 then return end
 				end)
 
 				local obj = {}
-				function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TopBar.Text = val; if not silent then InvokeCallback(callback, val) end end
+				function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; SetTrimmedText(TopBar, val); FitTextBeforeArrow(TopBar, Arrow); if not silent then InvokeCallback(callback, val) end end
 				function obj:Get() return selected end
 				function obj:AddSettings() return MakeSettings(Dropdown, "dropdown", text) end
 				
@@ -6272,7 +6358,7 @@ if maxY <= 0 then return end
 					end)
 					Btn.MouseButton1Click:Connect(function()
 						selected = opt
-						TopBar.Text = opt
+						SetTrimmedText(TopBar, opt); FitTextBeforeArrow(TopBar, Arrow)
 						closeDropdown()
 						NotifySelection(opt)
 					end)
@@ -6484,7 +6570,7 @@ if maxY <= 0 then return end
 				function obj:Set(val)
 					val = GetValidOption(options, val)
 					selected = val
-					TopBar.Text = val
+					SetTrimmedText(TopBar, val); FitTextBeforeArrow(TopBar, Arrow)
 					NotifySelection(val)
 				end
 				function obj:Get() return selected end
@@ -7043,7 +7129,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0),
+						Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0),
 						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
@@ -7062,7 +7148,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					local function Set(val)
 						enabled = val == true
 						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(Icon, { Position = enabled and UDim2.new(0.635, 0, 0.04500000551342964, 0) or UDim2.new(0.124, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+						Tween(Icon, { Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -7352,14 +7438,14 @@ UIAspectRatioConstraint.Parent = Toggle
 						}, BtnRow)
 						RowBtn.MouseButton1Click:Connect(function()
 							selected = opt
-							TextDefault.Text = opt
+							SetTrimmedText(TextDefault, opt); FitTextBeforeArrow(TextDefault, SelArrow)
 							updateCheckmarks()
 							closeDropdown2()
 							InvokeCallback(callback, opt)
 						end)
 						SelBtn.MouseButton1Click:Connect(function()
 							selected = opt
-							TextDefault.Text = opt
+							SetTrimmedText(TextDefault, opt); FitTextBeforeArrow(TextDefault, SelArrow)
 							updateCheckmarks()
 							closeDropdown2()
 							InvokeCallback(callback, opt)
@@ -7393,7 +7479,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					function obj:Set(val, silent)
 						val = GetValidOption(options, val)
 						selected = val
-						TextDefault.Text = val
+						SetTrimmedText(TextDefault, val); FitTextBeforeArrow(TextDefault, SelArrow)
 						updateCheckmarks()
 						if not silent then InvokeCallback(callback, val) end
 					end
