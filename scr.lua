@@ -402,9 +402,9 @@ CenterElement = function(el)
 	local effect = el:FindFirstChild("Effect")
 	if effect and effect:IsA("GuiObject") then
 		if effect:FindFirstChild("Icon") then
-			effect.Position = UDim2.new(0.755, 0, effect.Position.Y.Scale, 0)
-			effect.Size = UDim2.new(0.22, 0, effect.Size.Y.Scale, effect.Size.Y.Offset)
-			place(effect, 0.5, 0.52)
+			effect.Position = UDim2.new(0.8, 0, effect.Position.Y.Scale, 0)
+			effect.Size = UDim2.new(0.15, 0, effect.Size.Y.Scale, effect.Size.Y.Offset)
+			place(effect, 0.5, 0.6)
 		else
 			place(effect, 0.5, 0.7)
 		end
@@ -713,7 +713,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local MainFrameUIScale
     local Watermark = New("TextLabel", {
 	Name = "Watermark",
-	Position = UDim2.new(0.985, 0, 0.982, 0),
+	Position = UDim2.new(0.972, 0, 0.965, 0),
 	Size = UDim2.new(0.16, 0, 0.022, 0),
 	AnchorPoint = Vector2.new(1, 1),
 	BackgroundTransparency = 1,
@@ -884,14 +884,14 @@ local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
 GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(0.98, 0, 0.02, 0)
-GameInfo.Size = UDim2.fromOffset(480, 48)
+GameInfo.Size = UDim2.fromOffset(520, 48)
 GameInfo.BackgroundColor3 = Color3.fromRGB(14,17,27)
 GameInfo.BackgroundTransparency = 0.2
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
 GameInfo.ClipsDescendants = true
-GameInfo.AutomaticSize = Enum.AutomaticSize.X
+GameInfo.AutomaticSize = Enum.AutomaticSize.None
 GameInfo.Parent = NeverloseCS2
 
 
@@ -979,8 +979,8 @@ UIAspectRatio_UserIcon.Parent = UserIcon
 
 local Username = Instance.new('TextLabel')
 Username.Name = "Username"
-Username.Position = UDim2.new(0.71, 0, 0.268, 0)
-Username.Size = UDim2.new(0.15, 0, 0.49, 0)
+Username.Position = UDim2.new(0.7, 0, 0.268, 0)
+Username.Size = UDim2.new(0.145, 0, 0.49, 0)
 Username.BackgroundTransparency = 1
 Username.Text = LocalPlayer.DisplayName
 Username.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -992,7 +992,7 @@ Username.Parent = GameInfo
 
 local NeverIcon = Instance.new('ImageLabel')
 NeverIcon.Name = "NeverIcon"
-NeverIcon.Position = UDim2.new(0.87, 0, 0.1, 0)
+NeverIcon.Position = UDim2.new(0.865, 0, 0.1, 0)
 NeverIcon.Size = UDim2.new(0.05, 0, 0.8, 0)
 NeverIcon.BackgroundTransparency = 1
 NeverIcon.Image = "rbxthumb://type=Asset&id=118608145176297&w=420&h=420"
@@ -1007,7 +1007,7 @@ UICorner_NeverIcon.Parent = NeverIcon
 
 local Profile = Instance.new('ImageLabel')
 Profile.Name = "Profile"
-Profile.Position = UDim2.new(0.93, 0, 0.1, 0)
+Profile.Position = UDim2.new(0.928, 0, 0.1, 0)
 Profile.Size = UDim2.new(0.05, 0, 0.8, 0)
 Profile.BackgroundColor3 = Color3.fromRGB(127, 127, 127)
 Profile.Image = ("rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=420&h=420")
@@ -1161,7 +1161,7 @@ ImageLabel.BackgroundTransparency = 1
 ImageLabel.Image = "rbxassetid://10709790948"
 ImageLabel.ImageTransparency = 0.2
 ImageLabel.ScaleType = Enum.ScaleType.Fit
-ImageLabel.Rotation = -90
+ImageLabel.Rotation = 90
 ImageLabel.ZIndex = 102
 ImageLabel.Parent = WindowSettings
 
@@ -1949,7 +1949,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			ClosePopupsUnder(WindowSettingsFrame)
 			UnregisterPopup(WindowSettingsFrame)
 			SmoothClose(WindowSettingsFrame, 0.18)
-			Tween(ImageLabel, {Rotation = -90}, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(ImageLabel, {Rotation = 90}, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		end
 		WindowSettings.MouseButton1Click:Connect(function()
 			wsOpen = not wsOpen
@@ -1959,7 +1959,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
 				PositionPopupWithinMain(WindowSettingsFrame, false, 6, Info)
 				RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
-				Tween(ImageLabel, {Rotation = 0}, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				Tween(ImageLabel, {Rotation = 180}, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			else
 				closeWS()
 			end
@@ -4281,7 +4281,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0),
+						Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0),
 						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
@@ -4300,7 +4300,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					local function Set(val)
 						enabled = val == true
 						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(Icon, { Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+						Tween(Icon, { Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -4594,7 +4594,7 @@ UIAspectRatioConstraint.Parent = Slider
 						ImageColor3 = Color3.fromRGB(255, 255, 255),
 						ImageTransparency = 0.10000000149011612,
 						ScaleType = Enum.ScaleType.Fit,
-						Rotation = -90,
+						Rotation = 90,
 						ZIndex = 1000,
 					}, Selection)
 
@@ -4654,7 +4654,7 @@ UIAspectRatioConstraint.Parent = Slider
 
 					local function closeDropdown()
 						dropOpen = false
-						Tween(SelArrow, {Rotation = -90}, 0.2)
+						Tween(SelArrow, {Rotation = 90}, 0.2)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 					end
@@ -4743,7 +4743,7 @@ UIAspectRatioConstraint.Parent = Slider
 							CloseAllPopupsExcept(DropPopup)
 							dropOpen = true
 							SmoothOpen(DropPopup, 0, 0.2)
-							Tween(SelArrow, {Rotation = 0}, 0.25)
+							Tween(SelArrow, {Rotation = 0}, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 							PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 						end
 					end)
@@ -5311,7 +5311,7 @@ if maxY <= 0 then return end
 
 				local Icon = New("Frame", {
 					Name = "Icon",
-					Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0),
+					Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0),
 					Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 					BackgroundColor3 = Color3.fromRGB(255,255,255),
 					BackgroundTransparency = enabled and 0 or 0.5,
@@ -5329,7 +5329,7 @@ if maxY <= 0 then return end
 				local function Set(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					InvokeCallback(callback, enabled)
 				end
 
@@ -5460,7 +5460,7 @@ if maxY <= 0 then return end
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0),
+						Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0),
 						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
@@ -5493,7 +5493,7 @@ if maxY <= 0 then return end
 					enabled = val == true
 					Icon.BackgroundTransparency = enabled and 0 or 0.5
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					InvokeCallback(callback, color, enabled)
 				end
 
@@ -5573,7 +5573,7 @@ if maxY <= 0 then return end
 
 				local Icon = New("Frame", {
 					Name = "Icon",
-					Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0),
+					Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0),
 					Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 					BackgroundTransparency = enabled and 0 or 0.5,
@@ -5764,7 +5764,7 @@ if maxY <= 0 then return end
 				local function SetEnabled(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					NotifyEnabled()
 				end
 
@@ -6072,7 +6072,7 @@ if maxY <= 0 then return end
 					Image = "rbxassetid://10709790948",
 					ImageColor3 = Color3.fromRGB(255, 255, 255),
 					ScaleType = Enum.ScaleType.Fit,
-					Rotation = -90,
+					Rotation = 90,
 					ZIndex = 7,
 				}, TopBar)
 
@@ -6108,7 +6108,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = -90}, 0.2)
+					Tween(Arrow, {Rotation = 90}, 0.2)
 					Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -6157,7 +6157,7 @@ if maxY <= 0 then return end
 						DownBar.Size = UDim2.new(0.62, 0, 0, 0)
 						local h = math.min(#options * 22 + 8, 132)
 						Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, h) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 90}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						Tween(Arrow, {Rotation = 0}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						PositionPopupWithinMain(DownBar, true); task.delay(0.3, function() PositionPopupWithinMain(DownBar, true) end); RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
@@ -6266,7 +6266,7 @@ if maxY <= 0 then return end
 					Image = "rbxassetid://10709790948",
 					ImageColor3 = Color3.fromRGB(255, 255, 255),
 					ScaleType = Enum.ScaleType.Fit,
-					Rotation = -90,
+					Rotation = 90,
 					ZIndex = 7,
 				}, TopBar)
 
@@ -6307,7 +6307,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = -90}, 0.2)
+					Tween(Arrow, {Rotation = 90}, 0.2)
 					Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -6376,7 +6376,7 @@ if maxY <= 0 then return end
 						DownBar.Size = UDim2.new(0.62, 0, 0, 0)
 						local h = math.min(#options * 22 + 8, 132)
 						Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, h) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 90}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						Tween(Arrow, {Rotation = 0}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						PositionPopupWithinMain(DownBar, true); task.delay(0.3, function() PositionPopupWithinMain(DownBar, true) end); RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
@@ -7129,7 +7129,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0),
+						Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0),
 						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
@@ -7148,7 +7148,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					local function Set(val)
 						enabled = val == true
 						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(Icon, { Position = enabled and UDim2.new(0.704, 0, 0.04500000551342964, 0) or UDim2.new(0.06, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+						Tween(Icon, { Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -7304,7 +7304,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						ImageColor3 = Color3.fromRGB(255, 255, 255),
 						ImageTransparency = 0.10000000149011612,
 						ScaleType = Enum.ScaleType.Fit,
-						Rotation = -90,
+						Rotation = 90,
 						ZIndex = 1000,
 					}, Selection)
 
@@ -7367,7 +7367,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local function closeDropdown2()
 						dropOpen = false
-						Tween(SelArrow, {Rotation = -90}, 0.2)
+						Tween(SelArrow, {Rotation = 90}, 0.2)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 						if _openAccordionDropdown == closeDropdown2 then _openAccordionDropdown = nil end
@@ -7470,7 +7470,7 @@ UIAspectRatioConstraint.Parent = Toggle
 							dropOpen = true
 							_openAccordionDropdown = closeDropdown2
 							SmoothOpen(DropPopup, 0, 0.2)
-							Tween(SelArrow, {Rotation = 0}, 0.25)
+							Tween(SelArrow, {Rotation = 0}, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 							PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
 						end
 					end)
@@ -7913,7 +7913,7 @@ if maxY <= 0 then return end
 				-- FIX: register so LoadSavedConfig can find and restore this colorpicker
 					RegisterConfigElement("accordion_colorpicker_", text2, obj)
 					CenterElement(Colorpicker)
-				BindElementContext(Colorpicker, "accordion_colorpicker", text2, obj, options.color)
+				BindElementContext(Colorpicker, "accordion_colorpicker", text2, obj, NormalizeColor(defaultColor))
 					return obj
 				end
 
