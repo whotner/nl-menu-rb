@@ -888,7 +888,8 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			if #ancestors == 0 then return end
 			local restored = {}
 			for _, ancestor in ipairs(ancestors) do
-				table.insert(restored, ancestor)
+				local okClip, wasClipping = pcall(function() return ancestor.ClipsDescendants end)
+				table.insert(restored, { frame = ancestor, clipping = okClip and wasClipping == true })
 				_popupClipCounts[ancestor] = (_popupClipCounts[ancestor] or 0) + 1
 				ancestor.ClipsDescendants = false
 			end
@@ -899,13 +900,14 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			local ancestors = popup and _popupClipRestore[popup]
 			if not ancestors then return end
 			_popupClipRestore[popup] = nil
-			for _, ancestor in ipairs(ancestors) do
+			for _, entry in ipairs(ancestors) do
+				local ancestor = entry.frame
 				local count = (_popupClipCounts[ancestor] or 1) - 1
 				if count > 0 then
 					_popupClipCounts[ancestor] = count
 				else
 					_popupClipCounts[ancestor] = nil
-					if ancestor.Parent then ancestor.ClipsDescendants = true end
+					if ancestor.Parent then ancestor.ClipsDescendants = entry.clipping == true end
 				end
 			end
 		end
@@ -1230,7 +1232,7 @@ ImageLabel.BackgroundTransparency = 1
 ImageLabel.Image = "rbxassetid://10709790948"
 ImageLabel.ImageTransparency = 0.2
 ImageLabel.ScaleType = Enum.ScaleType.Fit
-ImageLabel.Rotation = 90
+ImageLabel.Rotation = 180
 ImageLabel.ZIndex = 102
 ImageLabel.Parent = WindowSettings
 
@@ -2018,7 +2020,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			ClosePopupsUnder(WindowSettingsFrame)
 			UnregisterPopup(WindowSettingsFrame)
 			SmoothClose(WindowSettingsFrame, 0.18)
-			Tween(ImageLabel, {Rotation = 90}, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(ImageLabel, {Rotation = 180}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		end
 		WindowSettings.MouseButton1Click:Connect(function()
 			wsOpen = not wsOpen
@@ -2028,7 +2030,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
 				PositionPopupWithinMain(WindowSettingsFrame, false, 6, Info)
 				RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
-				Tween(ImageLabel, {Rotation = 180}, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				Tween(ImageLabel, {Rotation = -90}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			else
 				closeWS()
 			end
@@ -2645,7 +2647,7 @@ SaveArrow.BackgroundTransparency = 1
 SaveArrow.Image = "rbxassetid://10709790948"
 SaveArrow.ImageColor3 = Color3.fromRGB(255,255,255)
 SaveArrow.ScaleType = Enum.ScaleType.Fit
-SaveArrow.Rotation = 90
+SaveArrow.Rotation = 180
 SaveArrow.ZIndex = 15
 SaveArrow.Parent = Save
 
@@ -3463,7 +3465,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		UnregisterPopup(RecentlyDeletedPanel)
 		Tween(ConfigMainFrame, {BackgroundTransparency = 1}, 0.2)
 		Tween(RecentlyDeletedPanel, {BackgroundTransparency = 1}, 0.2)
-		Tween(SaveArrow, {Rotation = 90}, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		Tween(SaveArrow, {Rotation = 180}, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		task.delay(0.22, function()
 			if configOpen then return end
 			ConfigMainFrame.Visible = false
@@ -3482,7 +3484,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConfigMainFrame.Visible = true
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
 			Tween(ConfigMainFrame, {BackgroundTransparency = 0.01}, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		Tween(SaveArrow, {Rotation = 0}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		Tween(SaveArrow, {Rotation = 90}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		else
 			closeConfigPanel()
 		end
@@ -4220,9 +4222,8 @@ UIStroke.Parent = Elements
 					local scale = GetMainFrameScale()
 					local okCanvas, canvasSize = pcall(function() return SFContainer.AbsoluteCanvasSize end)
 					local contentVisual = okCanvas and canvasSize and canvasSize.Y or SFContainer.AbsoluteSize.Y
-					local labelVisual = 0
-					local desiredVisual = math.max(30 * scale, contentVisual + labelVisual + 8 * scale)
-					local maxVisual = math.max(30 * scale, MainFrame.AbsoluteSize.Y - 12 * scale)
+					local desiredVisual = math.max(30 * scale, contentVisual + 10 * scale)
+					local maxVisual = math.max(30 * scale, MainFrame.AbsoluteSize.Y - 10 * scale)
 					return math.min(desiredVisual, maxVisual) / scale
 				end
 
@@ -4230,18 +4231,41 @@ UIStroke.Parent = Elements
 					local scale = GetMainFrameScale()
 					UpdateSettingsLayout()
 					local mainSize = MainFrame.AbsoluteSize
+					local mainPosition = MainFrame.AbsolutePosition
 					local minHeight = 30
-					local maxHeight = math.max(minHeight, (mainSize.Y - 12 * scale) / scale)
+					local width = 0.96
+					local edge = 5 * scale
+					local maxHeight = math.max(minHeight, (mainSize.Y - 2 * edge) / scale)
 					height = math.clamp(type(height) == "number" and height == height and height or minHeight, minHeight, maxHeight)
 					local parentPosition = parentFrame.AbsolutePosition
 					local parentSize = parentFrame.AbsoluteSize
-					local mainPosition = MainFrame.AbsolutePosition
-					if mainSize.X <= 0 or mainSize.Y <= 0 then return end
+					if mainSize.X <= 0 or mainSize.Y <= 0 or parentSize.X <= 0 or parentSize.Y <= 0 then return end
 					local visualHeight = height * scale
-					local belowFits = parentPosition.Y + parentSize.Y + visualHeight + 8 * scale <= mainPosition.Y + mainSize.Y
-					local position = belowFits and UDim2.new(0.02, 0, 1, 2 / scale) or UDim2.new(0.02, 0, 0, -height - 4 / scale)
-					SettingsFrame.Position = position
-					SettingsFrame.Size = UDim2.new(0.96, 0, 0, height)
+
+					local mainLeft = mainPosition.X
+					local mainRight = mainPosition.X + mainSize.X
+					local mainTop = mainPosition.Y
+					local mainBottom = mainPosition.Y + mainSize.Y
+
+					local panelWidth = parentSize.X * width
+					local leftX = parentPosition.X + (1 - width) * parentSize.X
+					leftX = math.clamp(leftX, mainLeft + edge, math.max(mainLeft + edge, mainRight - panelWidth - edge))
+
+					local belowY = parentPosition.Y + parentSize.Y + edge
+					local aboveY = parentPosition.Y - visualHeight - edge
+					local y
+					if belowY + visualHeight <= mainBottom - edge then
+						y = belowY
+					elseif aboveY >= mainTop + edge then
+						y = aboveY
+					else
+						y = mainTop + edge
+						height = maxHeight
+						visualHeight = height * scale
+					end
+
+					SettingsFrame.Position = UDim2.new((leftX - parentPosition.X) / parentSize.X, 0, 0, (y - parentPosition.Y) / scale)
+					SettingsFrame.Size = UDim2.new(width, 0, 0, height)
 					task.defer(function()
 						if SettingsFrame.Parent and SettingsFrame.Visible then ConstrainPopupToMainFrame(SettingsFrame) end
 					end)
@@ -4652,7 +4676,7 @@ UIAspectRatioConstraint.Parent = Slider
 						ImageColor3 = Color3.fromRGB(255, 255, 255),
 						ImageTransparency = 0.10000000149011612,
 						ScaleType = Enum.ScaleType.Fit,
-						Rotation = 90,
+						Rotation = 180,
 						ZIndex = 1000,
 					}, Selection)
 
@@ -4712,7 +4736,7 @@ UIAspectRatioConstraint.Parent = Slider
 
 					local function closeDropdown()
 						dropOpen = false
-						Tween(SelArrow, {Rotation = 90}, 0.2)
+						Tween(SelArrow, {Rotation = 180}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 					end
@@ -4801,7 +4825,7 @@ UIAspectRatioConstraint.Parent = Slider
 							CloseAllPopupsExcept(DropPopup)
 							dropOpen = true
 							SmoothOpen(DropPopup, 0, 0.2)
-							Tween(SelArrow, {Rotation = 0}, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+							Tween(SelArrow, {Rotation = 90}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 							PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 						end
 					end)
@@ -6110,7 +6134,7 @@ if maxY <= 0 then return end
 					Image = "rbxassetid://10709790948",
 					ImageColor3 = Color3.fromRGB(255, 255, 255),
 					ScaleType = Enum.ScaleType.Fit,
-					Rotation = 90,
+					Rotation = 180,
 					ZIndex = 7,
 				}, TopBar)
 
@@ -6146,7 +6170,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = 90}, 0.2)
+					Tween(Arrow, {Rotation = 180}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 					Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -6195,7 +6219,7 @@ if maxY <= 0 then return end
 						DownBar.Size = UDim2.new(0.62, 0, 0, 0)
 						local h = math.min(#options * 22 + 8, 132)
 						Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, h) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 0}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						Tween(Arrow, {Rotation = 90}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						PositionPopupWithinMain(DownBar, true); task.delay(0.3, function() PositionPopupWithinMain(DownBar, true) end); RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
@@ -6304,7 +6328,7 @@ if maxY <= 0 then return end
 					Image = "rbxassetid://10709790948",
 					ImageColor3 = Color3.fromRGB(255, 255, 255),
 					ScaleType = Enum.ScaleType.Fit,
-					Rotation = 90,
+					Rotation = 180,
 					ZIndex = 7,
 				}, TopBar)
 
@@ -6345,7 +6369,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = 90}, 0.2)
+					Tween(Arrow, {Rotation = 180}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 					Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -6414,7 +6438,7 @@ if maxY <= 0 then return end
 						DownBar.Size = UDim2.new(0.62, 0, 0, 0)
 						local h = math.min(#options * 22 + 8, 132)
 						Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, h) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 0}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						Tween(Arrow, {Rotation = 90}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						PositionPopupWithinMain(DownBar, true); task.delay(0.3, function() PositionPopupWithinMain(DownBar, true) end); RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
@@ -7322,7 +7346,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						ImageColor3 = Color3.fromRGB(255, 255, 255),
 						ImageTransparency = 0.10000000149011612,
 						ScaleType = Enum.ScaleType.Fit,
-						Rotation = 90,
+						Rotation = 180,
 						ZIndex = 1000,
 					}, Selection)
 
@@ -7385,7 +7409,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local function closeDropdown2()
 						dropOpen = false
-						Tween(SelArrow, {Rotation = 90}, 0.2)
+						Tween(SelArrow, {Rotation = 180}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 						if _openAccordionDropdown == closeDropdown2 then _openAccordionDropdown = nil end
@@ -7488,7 +7512,7 @@ UIAspectRatioConstraint.Parent = Toggle
 							dropOpen = true
 							_openAccordionDropdown = closeDropdown2
 							SmoothOpen(DropPopup, 0, 0.2)
-							Tween(SelArrow, {Rotation = 0}, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+							Tween(SelArrow, {Rotation = 90}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 							PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
 						end
 					end)
