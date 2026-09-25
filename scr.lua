@@ -689,7 +689,6 @@ end
 		Visible = false,
 		ZIndex = 4990,
 	}, MainFrame)
-end
 
 local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	if not frame or not frame.Parent then return end
