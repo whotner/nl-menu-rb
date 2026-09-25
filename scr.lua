@@ -484,6 +484,60 @@ local function SetTrimmedText(label, value)
 	label.Text = tostring(value or "")
 end
 
+local function AnimateColorPickerOpen(popup, trigger, open, onClose)
+	if not popup or not popup.Parent then return end
+	if open then
+		CloseAllPopupsExcept(popup)
+		popup.Visible = true
+		FitColorPickerPopup(popup)
+		popup.BackgroundTransparency = 1
+		Tween(popup, { BackgroundTransparency = 0.02 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		PositionPopupWithinMain(popup, true)
+		task.defer(function() if popup.Visible then PositionPopupWithinMain(popup, true) end end)
+		RegisterPopup(popup, function()
+			UnregisterPopup(popup)
+			popup.Visible = false
+			if type(onClose) == "function" then onClose(false) end
+		end, trigger)
+	else
+		UnregisterPopup(popup)
+		Tween(popup, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		task.delay(0.15, function() if not popup.Visible then popup.BackgroundTransparency = 1 end end)
+		popup.Visible = false
+	end
+end
+
+local function FitColorPickerPopup(popup)
+	if not popup or not popup:IsA("GuiObject") then return end
+	local parent = popup.Parent
+	if not parent then
+		task.defer(function() FitColorPickerPopup(popup) end)
+		return
+	end
+	local function apply()
+		if not popup.Parent then return end
+		local w = parent.AbsoluteSize.X
+		if w <= 0 then return end
+		local h = (w * popup.Size.X.Scale) / 1.1
+		if h > 0 then popup.Size = UDim2.new(popup.Size.X.Scale, popup.Size.X.Offset, 0, h) end
+	end
+	apply()
+	task.defer(apply)
+	pcall(function()
+		parent:GetPropertyChangedSignal("AbsoluteSize"):Connect(apply)
+		popup:GetPropertyChangedSignal("Visible"):Connect(function()
+			if popup.Visible then task.defer(apply) end
+		end)
+	end)
+end
+
+local DragShield = nil
+
+local function SetDragShield(active)
+	if not DragShield then return end
+	DragShield.Visible = active == true
+end
+
 local function MakeDraggable(frame, handle)
 	handle = handle or frame
 	frame.Draggable = false
@@ -512,6 +566,7 @@ local function MakeDraggable(frame, handle)
 			dragInput = input
 			pointerPos = input.Position
 			framePos = frame.Position
+			SetDragShield(true)
 		end
 	end)
 
@@ -529,6 +584,7 @@ local function MakeDraggable(frame, handle)
 		if IsPrimaryInput(input) then
 			dragging = false
 			dragInput = nil
+			SetDragShield(false)
 		end
 	end)
 end
@@ -622,6 +678,19 @@ end
 		for _, fn in ipairs(toClose) do pcall(fn) end
 	end)
 
+	DragShield = New("TextButton", {
+		Name = "DragShield",
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Text = "",
+		AutoButtonColor = false,
+		Active = true,
+		Visible = false,
+		ZIndex = 4990,
+	}, MainFrame)
+end
+
 local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	if not frame or not frame.Parent then return end
 	local token = (frame:GetAttribute("PopupToken") or 0) + 1
@@ -713,19 +782,20 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local MainFrameUIScale
     local Watermark = New("TextLabel", {
 	Name = "Watermark",
-	Position = UDim2.new(0.972, 0, 0.965, 0),
-	Size = UDim2.new(0.16, 0, 0.022, 0),
-	AnchorPoint = Vector2.new(1, 1),
-	BackgroundTransparency = 1,
+    Position = UDim2.new(0.985, 0, 0.988, 0),
+    Size = UDim2.new(0.2, 0, 0.026, 0),
+    AnchorPoint = Vector2.new(1, 1),
+    BackgroundTransparency = 1,
 		Text = "NEVERLOSE  •  UI",
 		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextTransparency = 0.72,
+		TextTransparency = 0.45,
 		TextScaled = false,
-		TextSize = 8,
-		Font = Enum.Font.GothamBold,
-		TextXAlignment = Enum.TextXAlignment.Right,
-		ZIndex = 4,
-	}, MainFrame)
+		TextSize = 11,
+    Font = Enum.Font.GothamBold,
+    TextXAlignment = Enum.TextXAlignment.Right,
+    TextYAlignment = Enum.TextYAlignment.Center,
+    ZIndex = 6000,
+    }, MainFrame)
 	local watermarkConstraint = Watermark:FindFirstChild("ReadableTextConstraint")
 	if watermarkConstraint then
 		watermarkConstraint.MinTextSize = 8
@@ -2340,18 +2410,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 		cpBtn.MouseButton1Click:Connect(function()
 			pickerOpen = not pickerOpen
-			if pickerOpen then
-				CloseAllPopupsExcept(cpFrame)
-				cpFrame.Visible = true
-				PositionPopupWithinMain(cpFrame, true); RegisterPopup(cpFrame, function()
-					pickerOpen = false
-					UnregisterPopup(cpFrame)
-					cpFrame.Visible = false
-				end, cpBtn)
-			else
-				UnregisterPopup(cpFrame)
-				cpFrame.Visible = false
-			end
+			AnimateColorPickerOpen(cpFrame, cpBtn, pickerOpen, function(v) pickerOpen = v end)
 		end)
 		RGB.InputBegan:Connect(function(input) if IsPrimaryInput(input) then WheelDown = true; UpdateRing(input) end end)
 		Darkness.InputBegan:Connect(function(input) if IsPrimaryInput(input) then SlideDown = true; UpdateSlide(input) end end)
@@ -2587,7 +2646,7 @@ SaveArrow.BackgroundTransparency = 1
 SaveArrow.Image = "rbxassetid://10709790948"
 SaveArrow.ImageColor3 = Color3.fromRGB(255,255,255)
 SaveArrow.ScaleType = Enum.ScaleType.Fit
-SaveArrow.Rotation = 0
+SaveArrow.Rotation = 90
 SaveArrow.ZIndex = 15
 SaveArrow.Parent = Save
 
@@ -3405,7 +3464,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		UnregisterPopup(RecentlyDeletedPanel)
 		Tween(ConfigMainFrame, {BackgroundTransparency = 1}, 0.2)
 		Tween(RecentlyDeletedPanel, {BackgroundTransparency = 1}, 0.2)
-		Tween(SaveArrow, {Rotation = 0}, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		Tween(SaveArrow, {Rotation = 90}, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		task.delay(0.22, function()
 			if configOpen then return end
 			ConfigMainFrame.Visible = false
@@ -3424,7 +3483,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConfigMainFrame.Visible = true
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
 			Tween(ConfigMainFrame, {BackgroundTransparency = 0.01}, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			Tween(SaveArrow, {Rotation = 90}, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		Tween(SaveArrow, {Rotation = 0}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		else
 			closeConfigPanel()
 		end
@@ -4023,10 +4082,10 @@ UIStroke.Parent = Elements
 					New("Frame", {
 						Name = "Dot" .. tostring(i + 1),
 						AnchorPoint = Vector2.new(0.5, 0.5),
-						Position = UDim2.new(0.5, (i - 1) * 7, 0.5, 0),
-						Size = UDim2.new(0, 5, 0, 5),
-						BackgroundColor3 = Color3.fromRGB(225, 230, 240),
-						BackgroundTransparency = 0,
+						Position = UDim2.new(0.5, (i - 1) * 5, 0.5, 0),
+						Size = UDim2.new(0, 3, 0, 3),
+						BackgroundColor3 = Color3.fromRGB(205, 212, 226),
+						BackgroundTransparency = 1,
 						BorderSizePixel = 0,
 						ZIndex = 2001,
 					}, SettingsBtn)
@@ -4831,6 +4890,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 					New("UICorner", { CornerRadius = UDim.new(0, 6) }, colorpickerFrame)
 					New("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.92, Thickness = 1 }, colorpickerFrame)
 					New("UIAspectRatioConstraint", { AspectRatio = 1.1 }, colorpickerFrame)
+					FitColorPickerPopup(colorpickerFrame)
 
 					local RGB = New("ImageButton", {
 						Name = "RGB",
@@ -4956,18 +5016,7 @@ if maxY <= 0 then return end
 
 					colorpickerButton.MouseButton1Click:Connect(function()
 						pickerOpen = not pickerOpen
-						if pickerOpen then
-							CloseAllPopupsExcept(colorpickerFrame)
-							colorpickerFrame.Visible = true
-							PositionPopupWithinMain(colorpickerFrame, true); RegisterPopup(colorpickerFrame, function()
-								pickerOpen = false
-								UnregisterPopup(colorpickerFrame)
-								colorpickerFrame.Visible = false
-							end, colorpickerButton)
-						else
-							UnregisterPopup(colorpickerFrame)
-							colorpickerFrame.Visible = false
-						end
+						AnimateColorPickerOpen(colorpickerFrame, colorpickerButton, pickerOpen, function(v) pickerOpen = v end)
 						Tween(colorpickerLabel, { TextColor3 = pickerOpen and Color3.fromRGB(234, 239, 246) or Color3.fromRGB(157, 171, 182) }, 0.06)
 					end)
 
@@ -5608,6 +5657,7 @@ if maxY <= 0 then return end
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, cpFrame)
 				New("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.9200000166893005 }, cpFrame)
 				New("UIAspectRatioConstraint", { AspectRatio = 1.100000023841858 }, cpFrame)
+				FitColorPickerPopup(cpFrame)
 
 				local RGB = New("ImageButton", {
 					Name = "ImageButton",
@@ -5775,18 +5825,7 @@ if maxY <= 0 then return end
 
 				cpBtn.MouseButton1Click:Connect(function()
 					pickerOpen = not pickerOpen
-					if pickerOpen then
-						CloseAllPopupsExcept(cpFrame)
-						cpFrame.Visible = true
-						PositionPopupWithinMain(cpFrame, true); RegisterPopup(cpFrame, function()
-							pickerOpen = false
-							UnregisterPopup(cpFrame)
-							cpFrame.Visible = false
-						end, cpBtn)
-					else
-						UnregisterPopup(cpFrame)
-						cpFrame.Visible = false
-					end
+					AnimateColorPickerOpen(cpFrame, cpBtn, pickerOpen, function(v) pickerOpen = v end)
 				end)
 
 				RGB.InputBegan:Connect(function(input) if IsPrimaryInput(input) then WheelDown = true; UpdateRing(input) end end)
@@ -6395,6 +6434,7 @@ if maxY <= 0 then return end
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, cpFrame)
 				New("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.92, Thickness = 1 }, cpFrame)
 				New("UIAspectRatioConstraint", { AspectRatio = 1.1 }, cpFrame)
+				FitColorPickerPopup(cpFrame)
 
 				local RGB = New("ImageButton", {
 					Name = "RGB",
@@ -6522,18 +6562,7 @@ if maxY <= 0 then return end
 
 				cpBtn.MouseButton1Click:Connect(function()
 					pickerOpen = not pickerOpen
-					if pickerOpen then
-						CloseAllPopupsExcept(cpFrame)
-						cpFrame.Visible = true
-						PositionPopupWithinMain(cpFrame, true); RegisterPopup(cpFrame, function()
-							pickerOpen = false
-							UnregisterPopup(cpFrame)
-							cpFrame.Visible = false
-						end, cpBtn)
-					else
-						UnregisterPopup(cpFrame)
-						cpFrame.Visible = false
-					end
+					AnimateColorPickerOpen(cpFrame, cpBtn, pickerOpen, function(v) pickerOpen = v end)
 				end)
 
 				RGB.InputBegan:Connect(function(input) if IsPrimaryInput(input) then WheelDown = true; UpdateRing(input) end end)
@@ -6674,6 +6703,7 @@ if maxY <= 0 then return end
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, colorpickerFrame)
 				New("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.92, Thickness = 1 }, colorpickerFrame)
 				New("UIAspectRatioConstraint", { AspectRatio = 1.1 }, colorpickerFrame)
+				FitColorPickerPopup(colorpickerFrame)
 
 				local RGB = New("ImageButton", {
 					Name = "RGB",
@@ -6803,18 +6833,7 @@ if maxY <= 0 then return end
 
 				colorpickerButton.MouseButton1Click:Connect(function()
 					pickerOpen = not pickerOpen
-					if pickerOpen then
-						CloseAllPopupsExcept(colorpickerFrame)
-						colorpickerFrame.Visible = true
-						PositionPopupWithinMain(colorpickerFrame, true); RegisterPopup(colorpickerFrame, function()
-							pickerOpen = false
-							UnregisterPopup(colorpickerFrame)
-							colorpickerFrame.Visible = false
-						end, colorpickerButton)
-					else
-						UnregisterPopup(colorpickerFrame)
-						colorpickerFrame.Visible = false
-					end
+					AnimateColorPickerOpen(colorpickerFrame, colorpickerButton, pickerOpen, function(v) pickerOpen = v end)
 					Tween(colorpickerLabel, { TextColor3 = pickerOpen and Color3.fromRGB(255,255,255) or Color3.fromRGB(255,255,255) }, 0.06)
 				end)
 
@@ -7718,6 +7737,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 					New("UICorner", { CornerRadius = UDim.new(0, 6) }, colorpickerFrame)
 					New("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.92, Thickness = 1 }, colorpickerFrame)
 					New("UIAspectRatioConstraint", { AspectRatio = 1.1 }, colorpickerFrame)
+					FitColorPickerPopup(colorpickerFrame)
 
 					local RGB = New("ImageButton", {
 						Name = "RGB",
@@ -7843,18 +7863,7 @@ if maxY <= 0 then return end
 
 					colorpickerButton.MouseButton1Click:Connect(function()
 						pickerOpen = not pickerOpen
-						if pickerOpen then
-							CloseAllPopupsExcept(colorpickerFrame)
-							colorpickerFrame.Visible = true
-							PositionPopupWithinMain(colorpickerFrame, true); RegisterPopup(colorpickerFrame, function()
-								pickerOpen = false
-								UnregisterPopup(colorpickerFrame)
-								colorpickerFrame.Visible = false
-							end, colorpickerButton)
-						else
-							UnregisterPopup(colorpickerFrame)
-							colorpickerFrame.Visible = false
-						end
+						AnimateColorPickerOpen(colorpickerFrame, colorpickerButton, pickerOpen, function(v) pickerOpen = v end)
 						Tween(colorpickerLabel, { TextColor3 = pickerOpen and Color3.fromRGB(234, 239, 246) or Color3.fromRGB(157, 171, 182) }, 0.06)
 					end)
 
@@ -8155,12 +8164,14 @@ if maxY <= 0 then return end
 			elseif not isFirstST then
 				STRow.BackgroundTransparency = 1
 				STLabel.TextTransparency = 1
+				STScale.Scale = 0.7
 				if iconRef then iconRef.ImageTransparency = 1 end
 				task.defer(function()
 					if not STRow.Parent then return end
-					Tween(STRow, { BackgroundTransparency = 1 }, 0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-					Tween(STLabel, { TextTransparency = 0.55 }, 0.28)
-					if iconRef then Tween(iconRef, { ImageTransparency = 0.6 }, 0.28) end
+					Tween(STRow, { BackgroundTransparency = 1 }, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					Tween(STLabel, { TextTransparency = 0.55 }, 0.3)
+					Tween(STScale, { Scale = 1 }, 0.38, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+					if iconRef then Tween(iconRef, { ImageTransparency = 0.6 }, 0.3) end
 				end)
 			end
 
