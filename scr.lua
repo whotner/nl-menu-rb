@@ -592,14 +592,14 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local MainFrameUIScale
 	local Watermark = New("TextLabel", {
 		Name = "Watermark",
-		Position = UDim2.new(0.82, 0, 0.014, 0),
-		Size = UDim2.new(0.15, 0, 0.024, 0),
+		Position = UDim2.new(0.84, 0, 0.014, 0),
+		Size = UDim2.new(0.13, 0, 0.020, 0),
 		BackgroundTransparency = 1,
 		Text = "Neverlose",
 		TextColor3 = Color3.fromRGB(255, 255, 255),
 		TextTransparency = 0.82,
 		TextScaled = false,
-		TextSize = 9,
+		TextSize = 8,
 		Font = Enum.Font.GothamBold,
 		TextXAlignment = Enum.TextXAlignment.Right,
 		ZIndex = 4,
@@ -728,8 +728,10 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			if not popup.Parent or not popup.Visible then return end
 			local popupSize = popup.AbsoluteSize
 			if popupSize.X <= 0 or popupSize.Y <= 0 then return end
-			local parentPosition = popup.Parent.AbsolutePosition
-			local parentSize = popup.Parent.AbsoluteSize
+			local parent = popup.Parent
+			local anchor = parent and (parent:FindFirstChild("TopBar") or parent:FindFirstChild("OpenBtn") or parent:FindFirstChild("ScaleOpenBtn") or parent:FindFirstChild("LangOpenBtn"))
+			local parentPosition = (anchor or parent).AbsolutePosition
+			local parentSize = (anchor or parent).AbsoluteSize
 			local mainPosition = MainFrame.AbsolutePosition
 			local mainSize = MainFrame.AbsoluteSize
 			if mainSize.X <= 0 or mainSize.Y <= 0 or parentSize.X <= 0 or parentSize.Y <= 0 then return end
@@ -746,7 +748,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 				local flipped = parentPosition.Y + parentSize.Y + edge
 				if flipped <= maxY then y = flipped end
 			end
-			local x = maxX < minX and minX or math.clamp(popup.AbsolutePosition.X, minX, maxX)
+			local x = maxX < minX and minX or math.clamp(anchor and anchor.AbsolutePosition.X or popup.AbsolutePosition.X, minX, maxX)
 			if maxY < minY then y = minY end
 			MovePopupToAbsolute(popup, x, math.clamp(y, minY, math.max(minY, maxY)))
 			ConstrainPopupToMainFrame(popup, edge)
@@ -1049,10 +1051,10 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 	local WindowSettingsFrame = Instance.new('Frame')
 	WindowSettingsFrame.Name = "WindowSettingsFrame"
-	WindowSettingsFrame.Position = UDim2.new(0.59, 0, 0.08, 0)
-	WindowSettingsFrame.Size = UDim2.new(0.38, 0, 0, 0)
+	WindowSettingsFrame.Position = UDim2.new(0.50, 0, 0.08, 0)
+	WindowSettingsFrame.Size = UDim2.new(0.30, 0, 0, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
-	WindowSettingsFrame.ClipsDescendants = true
+	WindowSettingsFrame.ClipsDescendants = false
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(17,20,30)
 	WindowSettingsFrame.BackgroundTransparency = 0.30000000298023224
 	WindowSettingsFrame.ZIndex = 101
@@ -2547,8 +2549,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── ConfigMainFrame (new design panel) ──────────────────────
 	local ConfigMainFrame = Instance.new("Frame")
 	ConfigMainFrame.Name = "ConfigMainFrame"
-	ConfigMainFrame.Position = UDim2.new(0.11, 0, 0.15, 0)
-	ConfigMainFrame.Size = UDim2.new(0.78, 0, 0.70, 0)
+	ConfigMainFrame.Position = UDim2.new(0.16, 0, 0.18, 0)
+	ConfigMainFrame.Size = UDim2.new(0.68, 0, 0.62, 0)
 	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	ConfigMainFrame.BackgroundTransparency = 0.09
 	ConfigMainFrame.BorderSizePixel = 0
@@ -2815,8 +2817,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── Recently Deleted Panel ────────────────────────────────────
 	local RecentlyDeletedPanel = Instance.new("Frame")
 	RecentlyDeletedPanel.Name = "RecentlyDeletedPanel"
-	RecentlyDeletedPanel.Position = UDim2.new(0.11, 0, 0.15, 0)
-	RecentlyDeletedPanel.Size = UDim2.new(0.78, 0, 0.70, 0)
+	RecentlyDeletedPanel.Position = UDim2.new(0.16, 0, 0.18, 0)
+	RecentlyDeletedPanel.Size = UDim2.new(0.68, 0, 0.62, 0)
 	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	RecentlyDeletedPanel.BackgroundTransparency = 0.01
 	RecentlyDeletedPanel.BorderSizePixel = 0
@@ -3781,8 +3783,9 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 			Right.Position = UDim2.new(0.04, 0, 0, 0)
 			Left.Visible = true
 			Right.Visible = true
-			Tween(Left, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-			Tween(Right, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
+				Tween(Left, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				Tween(Right, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
 		end
 
 		local function ActivateTab()
@@ -3941,6 +3944,7 @@ UIStroke.Parent = Elements
 				SettingsFrame.ZIndex = 1000
 				SettingsFrame.AutomaticSize = Enum.AutomaticSize.None
 				SettingsFrame.ClipsDescendants = false
+
 				SettingsFrame.Parent = parentFrame
 
 				local UICorner = Instance.new('UICorner')
@@ -4898,9 +4902,8 @@ if maxY <= 0 then return end
 			local _bindListener
 
 			local function GetTargetBindLabel(target)
-				if not target then return "Not bound" end
-				if target.key then return target.key.Name end
-				return "Not bound"
+				if not target or not target.key then return "Not bound" end
+				return target.key.Name
 			end
 
 			local function SetTargetBind(target, key)
@@ -5024,9 +5027,6 @@ if maxY <= 0 then return end
 						if settings and settings.Open then settings:Open() end
 					end
 				end)
-				AddContextItem("Bind: " .. GetTargetBindLabel(target), function(current)
-					OpenBindMenu(current)
-				end)
 				AddContextItem("Reset", function(current)
 					if current.obj and current.obj.Set and current.defaultValue ~= nil then
 						current.obj:Set(current.defaultValue)
@@ -5129,7 +5129,7 @@ if maxY <= 0 then return end
 					end
 					for row, target in pairs(_contextTargets) do
 						if row.Parent and row.Visible and IsPointInsideTree(row, point) then
-							OpenContextMenu(target, point)
+							OpenBindMenu(target)
 							return
 						end
 					end
@@ -7964,8 +7964,9 @@ if maxY <= 0 then return end
 				stRight.Position = UDim2.new(0.04, 0, 0, 0)
 				stLeft.Visible  = true
 				stRight.Visible = true
-				Tween(stLeft,  { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-				Tween(stRight, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
+					Tween(stLeft,  { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+					Tween(stRight, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
 				activeSubTabIndex = stIndex
 				if tabs[tabIndex] then tabs[tabIndex].activeSubTabIndex = stIndex end
 				if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
