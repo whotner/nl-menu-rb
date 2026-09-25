@@ -592,12 +592,12 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local MainFrameUIScale
 	local Watermark = New("TextLabel", {
 		Name = "Watermark",
-		Position = UDim2.new(0.84, 0, 0.014, 0),
-		Size = UDim2.new(0.13, 0, 0.020, 0),
+		Position = UDim2.new(0.845, 0, 0.012, 0),
+		Size = UDim2.new(0.125, 0, 0.018, 0),
 		BackgroundTransparency = 1,
-		Text = "Neverlose",
+		Text = "NEVERLOSE  •  UI",
 		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextTransparency = 0.82,
+		TextTransparency = 0.72,
 		TextScaled = false,
 		TextSize = 8,
 		Font = Enum.Font.GothamBold,
@@ -610,7 +610,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		watermarkConstraint.MaxTextSize = 9
 	end
 	customization.watermark = Watermark
-	New("UICorner", {}, MainFrame)
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = MainFrame end
 	local DragHandle = New("Frame", {
 		Name = "DragHandle",
 		Size = UDim2.new(0.3, 0, 0.08, 0),
@@ -1051,7 +1051,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 	local WindowSettingsFrame = Instance.new('Frame')
 	WindowSettingsFrame.Name = "WindowSettingsFrame"
-	WindowSettingsFrame.Position = UDim2.new(0.50, 0, 0.08, 0)
+	WindowSettingsFrame.Position = UDim2.new(0.22, 0, 0.46, 0)
 	WindowSettingsFrame.Size = UDim2.new(0.30, 0, 0, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
@@ -1060,7 +1060,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.ZIndex = 101
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
-	do local c = Instance.new("UICorner"); c.Parent = WindowSettingsFrame end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = WindowSettingsFrame end
 
 
 	do
@@ -2367,7 +2367,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		ClipsDescendants = true,
 	}, MainFrame)
 
-	New("UICorner", {}, Frame2)
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Frame2 end
 
 	local Header = New("Frame", {
 		Name = "Header",
@@ -2549,8 +2549,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── ConfigMainFrame (new design panel) ──────────────────────
 	local ConfigMainFrame = Instance.new("Frame")
 	ConfigMainFrame.Name = "ConfigMainFrame"
-	ConfigMainFrame.Position = UDim2.new(0.16, 0, 0.18, 0)
-	ConfigMainFrame.Size = UDim2.new(0.68, 0, 0.62, 0)
+	ConfigMainFrame.Position = UDim2.new(0.21, 0, 0.21, 0)
+	ConfigMainFrame.Size = UDim2.new(0.58, 0, 0.56, 0)
 	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	ConfigMainFrame.BackgroundTransparency = 0.09
 	ConfigMainFrame.BorderSizePixel = 0
@@ -2560,7 +2560,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Active = true
 	ConfigMainFrame.Visible = false
 	ConfigMainFrame.Parent = Frame2
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = ConfigMainFrame end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = ConfigMainFrame end
 	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.800000011920929; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
 
 	local CMHeader = Instance.new("Frame")
@@ -2817,8 +2817,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── Recently Deleted Panel ────────────────────────────────────
 	local RecentlyDeletedPanel = Instance.new("Frame")
 	RecentlyDeletedPanel.Name = "RecentlyDeletedPanel"
-	RecentlyDeletedPanel.Position = UDim2.new(0.16, 0, 0.18, 0)
-	RecentlyDeletedPanel.Size = UDim2.new(0.68, 0, 0.62, 0)
+	RecentlyDeletedPanel.Position = UDim2.new(0.21, 0, 0.21, 0)
+	RecentlyDeletedPanel.Size = UDim2.new(0.58, 0, 0.56, 0)
 	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	RecentlyDeletedPanel.BackgroundTransparency = 0.01
 	RecentlyDeletedPanel.BorderSizePixel = 0
@@ -2828,7 +2828,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Active = true
 	RecentlyDeletedPanel.Visible = false
 	RecentlyDeletedPanel.Parent = Frame2
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = RecentlyDeletedPanel end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = RecentlyDeletedPanel end
 	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.8; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = RecentlyDeletedPanel end
 
 	-- RD Header
@@ -3066,7 +3066,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.ClipsDescendants = false
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
-		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = SettingsFrame end
+		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = SettingsFrame end
 		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,60,80); s.Transparency = 0.3; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
@@ -3783,8 +3783,16 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 			Right.Position = UDim2.new(0.04, 0, 0, 0)
 			Left.Visible = true
 			Right.Visible = true
-				Tween(Left, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-				Tween(Right, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			Tween(Left, { Position = UDim2.new(0, 0, 0, 0) }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			Tween(Right, { Position = UDim2.new(0, 0, 0, 0) }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			for _, column in ipairs({Left, Right}) do
+				for _, section in ipairs(column:GetChildren()) do
+					if section:IsA("GuiObject") then
+						section.BackgroundTransparency = 1
+						Tween(section, {BackgroundTransparency = section.Name == "Section" and 1 or 0.26}, 0.28, Enum.EasingStyle.Quad)
+					end
+				end
+			end
 
 		end
 
@@ -3884,7 +3892,7 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 				AutomaticSize = Enum.AutomaticSize.Y,
 				LayoutOrder = 1,
 			}, Section)
-			New("UICorner", {}, Elements)
+			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 12); c.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 6),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -4004,7 +4012,7 @@ UIStroke.Parent = Elements
 				SFLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				SFLayout.Parent = SFContainer
 
-				New("UICorner", {}, SFContainer)
+				do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = SFContainer end
 				New("UIStroke", {
 					Name = "UIStroke",
 					Color = Color3.fromRGB(255,255,255),
@@ -4023,7 +4031,8 @@ UIStroke.Parent = Elements
 				local function getSettingsHeight()
 					UpdateSettingsLayout()
 					local scale = GetMainFrameScale()
-					local contentVisual = (SFContainer.AbsoluteContentSize or Vector2.new(0, 0)).Y
+					local okCanvas, canvasSize = pcall(function() return SFContainer.AbsoluteCanvasSize end)
+					local contentVisual = okCanvas and canvasSize and canvasSize.Y or SFContainer.AbsoluteSize.Y
 					local labelVisual = (SFLabelContainer.AbsoluteSize or Vector2.new(0, 20 * scale)).Y
 					local desiredVisual = math.max(44 * scale, contentVisual + labelVisual + 8 * scale)
 					local maxVisual = math.max(44 * scale, MainFrame.AbsoluteSize.Y - 12 * scale)
@@ -4936,7 +4945,7 @@ if maxY <= 0 then return end
 					ZIndex = 9000,
 					ClipsDescendants = true,
 				}, MainFrame)
-				New("UICorner", { CornerRadius = UDim.new(0, 8) }, _bindMenu)
+				New("UICorner", { CornerRadius = UDim.new(0, 12) }, _bindMenu)
 				local label = New("TextLabel", {
 					Name = "BindLabel",
 					Size = UDim2.new(1, -20, 1, 0),
@@ -4985,7 +4994,7 @@ if maxY <= 0 then return end
 					ZIndex = 8000,
 					ClipsDescendants = false,
 				}, MainFrame)
-				New("UICorner", { CornerRadius = UDim.new(0, 8) }, _contextMenu)
+					New("UICorner", { CornerRadius = UDim.new(0, 12) }, _contextMenu)
 				New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, _contextMenu)
 				return _contextMenu
 			end
@@ -6904,7 +6913,8 @@ if maxY <= 0 then return end
 				local function getAccordionHeight()
 					UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
-					local contentVisual = (Container.AbsoluteContentSize or Vector2.new(0, 0)).Y
+					local okCanvas, canvasSize = pcall(function() return Container.AbsoluteCanvasSize end)
+					local contentVisual = okCanvas and canvasSize and canvasSize.Y or Container.AbsoluteSize.Y
 					local labelVisual = (LabelContainer.AbsoluteSize or Vector2.new(0, 20 * scale)).Y
 					local desiredVisual = math.max(44 * scale, contentVisual + labelVisual + 8 * scale)
 					local maxVisual = math.max(44 * scale, MainFrame.AbsoluteSize.Y - 12 * scale)
@@ -7964,8 +7974,16 @@ if maxY <= 0 then return end
 				stRight.Position = UDim2.new(0.04, 0, 0, 0)
 				stLeft.Visible  = true
 				stRight.Visible = true
-					Tween(stLeft,  { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-					Tween(stRight, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				Tween(stLeft,  { Position = UDim2.new(0, 0, 0, 0) }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				Tween(stRight, { Position = UDim2.new(0, 0, 0, 0) }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				for _, column in ipairs({stLeft, stRight}) do
+					for _, section in ipairs(column:GetChildren()) do
+						if section:IsA("GuiObject") then
+							section.BackgroundTransparency = 1
+							Tween(section, {BackgroundTransparency = section.Name == "Section" and 1 or 0.26}, 0.28, Enum.EasingStyle.Quad)
+						end
+					end
+				end
 
 				activeSubTabIndex = stIndex
 				if tabs[tabIndex] then tabs[tabIndex].activeSubTabIndex = stIndex end
