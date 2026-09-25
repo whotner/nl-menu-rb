@@ -255,18 +255,19 @@ local function GetValidOption(options, value)
 	return options[1]
 end
 
-local function AddTextConstraint(object, minimum, maximum)
+local function AddTextConstraint(object, minimum, maximum, force)
 	if not object or not object:IsA("GuiObject") then return end
 	if not (object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")) then return end
 	if not object.TextScaled then return end
 	local constraint = object:FindFirstChild("ReadableTextConstraint")
+	if constraint and not force then return end
 	if not constraint then
 		constraint = Instance.new("UITextSizeConstraint")
 		constraint.Name = "ReadableTextConstraint"
 		constraint.Parent = object
 	end
-	constraint.MinTextSize = minimum or 10
-	constraint.MaxTextSize = maximum or 20
+	constraint.MinTextSize = minimum or 9
+	constraint.MaxTextSize = maximum or 16
 end
 
 local function MakeReadableText(root, minimum, maximum)
@@ -358,7 +359,7 @@ local function New(class, props, parent)
 		pcall(function() obj[k] = v end)
 	end
 	if parent then obj.Parent = parent end
-	AddTextConstraint(obj, 10, 20)
+	AddTextConstraint(obj, 9, 16)
 	return obj
 end
 
@@ -551,6 +552,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local WindowObj = {}
 	local _coloredElements = {}
 	local logoVisible = true
+	local customization = {}
 
 	local screenGuiParent
 	pcall(function() screenGuiParent = game.CoreGui end)
@@ -590,21 +592,24 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local MainFrameUIScale
 	local Watermark = New("TextLabel", {
 		Name = "Watermark",
-		Position = UDim2.new(0.79, 0, 0.012, 0),
-		Size = UDim2.new(0.19, 0, 0.038, 0),
+		Position = UDim2.new(0.82, 0, 0.014, 0),
+		Size = UDim2.new(0.15, 0, 0.024, 0),
 		BackgroundTransparency = 1,
-		Text = tostring(hubTitle or "Neverlose") .. "  |  UI",
+		Text = "Neverlose",
 		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextTransparency = 0.72,
-		TextScaled = true,
+		TextTransparency = 0.82,
+		TextScaled = false,
+		TextSize = 9,
 		Font = Enum.Font.GothamBold,
 		TextXAlignment = Enum.TextXAlignment.Right,
 		ZIndex = 4,
 	}, MainFrame)
-	New("UITextSizeConstraint", {
-		MinTextSize = 8,
-		MaxTextSize = 12,
-	}, Watermark)
+	local watermarkConstraint = Watermark:FindFirstChild("ReadableTextConstraint")
+	if watermarkConstraint then
+		watermarkConstraint.MinTextSize = 8
+		watermarkConstraint.MaxTextSize = 9
+	end
+	customization.watermark = Watermark
 	New("UICorner", {}, MainFrame)
 	local DragHandle = New("Frame", {
 		Name = "DragHandle",
@@ -1013,7 +1018,7 @@ Aspect.AspectRatio = 1.4
 
 	local WindowSettings = Instance.new('TextButton')
 	WindowSettings.Name = "WindowSettings"
-	WindowSettings.Position = UDim2.new(0.42, 0, 0.25, 0)
+	WindowSettings.Position = UDim2.new(0.5, 0, 0.25, 0)
 	WindowSettings.Size = UDim2.new(0.5, 0, 0.5, 0)
 	WindowSettings.BackgroundColor3 = Color3.fromRGB(255,255,255)
 	WindowSettings.BackgroundTransparency = 1
@@ -1025,8 +1030,8 @@ Aspect.AspectRatio = 1.4
 
 local ImageLabel = Instance.new('ImageLabel')
 ImageLabel.Name = "UserSettingsArrow"
-ImageLabel.Position = UDim2.new(0.95, 0, 0.5, 0)
-ImageLabel.Size = UDim2.new(0.7, 0, 0.7, 0)
+ImageLabel.Position = UDim2.new(0.99, 0, 0.5, 0)
+ImageLabel.Size = UDim2.new(0.52, 0, 0.52, 0)
 ImageLabel.AnchorPoint = Vector2.new(1, 0.5)
 ImageLabel.BackgroundTransparency = 1
 ImageLabel.Image = "rbxassetid://10709790948"
@@ -1044,10 +1049,10 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 	local WindowSettingsFrame = Instance.new('Frame')
 	WindowSettingsFrame.Name = "WindowSettingsFrame"
-	WindowSettingsFrame.Position = UDim2.new(0.43, 0, 0.08, 0)
-	WindowSettingsFrame.Size = UDim2.new(0.55, 0, 0, 0)
+	WindowSettingsFrame.Position = UDim2.new(0.59, 0, 0.08, 0)
+	WindowSettingsFrame.Size = UDim2.new(0.38, 0, 0, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
-	WindowSettingsFrame.ClipsDescendants = false
+	WindowSettingsFrame.ClipsDescendants = true
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(17,20,30)
 	WindowSettingsFrame.BackgroundTransparency = 0.30000000298023224
 	WindowSettingsFrame.ZIndex = 101
@@ -2336,8 +2341,8 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BorderSizePixel = 0,
 		BackgroundTransparency = 1,
-		ScrollBarThickness = 0,
-		ScrollBarImageTransparency = 1,
+		ScrollBarThickness = 3,
+		ScrollBarImageTransparency = 0.35,
 		Active = true,
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		CanvasSize = UDim2.new(),
@@ -2542,8 +2547,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── ConfigMainFrame (new design panel) ──────────────────────
 	local ConfigMainFrame = Instance.new("Frame")
 	ConfigMainFrame.Name = "ConfigMainFrame"
-	ConfigMainFrame.Position = UDim2.new(0.02, 0, 0.14, 0)
-	ConfigMainFrame.Size = UDim2.new(0.96, 0, 0.84, 0)
+	ConfigMainFrame.Position = UDim2.new(0.11, 0, 0.15, 0)
+	ConfigMainFrame.Size = UDim2.new(0.78, 0, 0.70, 0)
 	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	ConfigMainFrame.BackgroundTransparency = 0.09
 	ConfigMainFrame.BorderSizePixel = 0
@@ -2756,7 +2761,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ListContainer.ScrollBarThickness = 3
 	ListContainer.ScrollBarImageTransparency = 0.35
 	ListContainer.Parent = ConfigMainFrame
-	ListContainer.ClipsDescendants = false
+	ListContainer.ClipsDescendants = true
 	do
 		local ll = Instance.new("UIListLayout")
 		ll.Name = "UIListLayout"
@@ -2810,8 +2815,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── Recently Deleted Panel ────────────────────────────────────
 	local RecentlyDeletedPanel = Instance.new("Frame")
 	RecentlyDeletedPanel.Name = "RecentlyDeletedPanel"
-	RecentlyDeletedPanel.Position = UDim2.new(0.02, 0, 0.14, 0)
-	RecentlyDeletedPanel.Size = UDim2.new(0.96, 0, 0.84, 0)
+	RecentlyDeletedPanel.Position = UDim2.new(0.11, 0, 0.15, 0)
+	RecentlyDeletedPanel.Size = UDim2.new(0.78, 0, 0.70, 0)
 	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	RecentlyDeletedPanel.BackgroundTransparency = 0.01
 	RecentlyDeletedPanel.BorderSizePixel = 0
@@ -3733,12 +3738,12 @@ New("UIAspectRatioConstraint", {
 			Size = UDim2.new(0.47999998927116394, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
-			ClipsDescendants = false,
+			ClipsDescendants = true,
 			Active = true,
 			AutomaticCanvasSize = Enum.AutomaticSize.Y,
 			CanvasSize = UDim2.new(),
 			ScrollingDirection = Enum.ScrollingDirection.Y,
-			ScrollBarThickness = 0,
+			ScrollBarThickness = 3,
 		}, TabHose)
 		
 		local Right = New("ScrollingFrame", {
@@ -3747,12 +3752,12 @@ New("UIAspectRatioConstraint", {
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			LayoutOrder = 1,
-			ClipsDescendants = false,
+			ClipsDescendants = true,
 			Active = true,
 			AutomaticCanvasSize = Enum.AutomaticSize.Y,
 			CanvasSize = UDim2.new(),
 			ScrollingDirection = Enum.ScrollingDirection.Y,
-			ScrollBarThickness = 0,
+			ScrollBarThickness = 3,
 		}, TabHose)
 		Left:SetAttribute("SearchName", name)
 		Right:SetAttribute("SearchName", name)
@@ -3833,7 +3838,7 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 
 local SectionTitle = Instance.new('Frame')
 SectionTitle.Name = "SectionTitle"
-SectionTitle.Size = UDim2.new(1,0,0.05999999865889549,0)
+SectionTitle.Size = UDim2.new(1,0,0.045,0)
 SectionTitle.BackgroundTransparency = 1
 SectionTitle.Parent = Section
 
@@ -3851,12 +3856,14 @@ SectionLabel.BackgroundColor3 = Color3.fromRGB(162,162,162)
 SectionLabel.BackgroundTransparency = 1
 SectionLabel.BorderSizePixel = 0
 SectionLabel.Text = title
-SectionLabel.TextColor3 = Color3.fromRGB(75, 78, 98)
-SectionLabel.TextScaled = true
-SectionLabel.Font = Enum.Font.Legacy
-SectionLabel.TextTransparency = 0.20000000298023224
+SectionLabel.TextColor3 = customization.sectionTitleColor or Color3.fromRGB(112, 118, 145)
+SectionLabel.TextScaled = customization.sectionTitleTextSize == nil
+SectionLabel.TextSize = customization.sectionTitleTextSize or 12
+SectionLabel.Font = customization.font or Enum.Font.GothamBold
+SectionLabel.TextTransparency = customization.sectionTitleTransparency or 0.35
 SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
 SectionLabel.Parent = SectionTitle
+AddTextConstraint(SectionLabel, 9, 12, true)
 
 local UIAspectRatioConstraint_2 = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint_2.Name = "UIAspectRatioConstraint"
@@ -3892,6 +3899,7 @@ UIStroke.Parent = Elements
 			local _openAccordion = nil
 			local _openAccordionDropdown = nil
 			local settingsCache = {}
+			local BindElementContext
 
 			local function MakeSettings(parentFrame, elementType, label)
 				if settingsCache[parentFrame] then return settingsCache[parentFrame] end
@@ -3909,7 +3917,7 @@ UIStroke.Parent = Elements
 
 				local SettingsBtn = New("ImageButton", {
 					Name = "SettingsGear",
-					Position = elementType == "slider" and UDim2.new(0.90, 0, 0.18, 0) or UDim2.new(0.90, 0, 0.18, 0),
+					Position = UDim2.new(0.80, 0, 0.18, 0),
 					Size = UDim2.new(0.08, 0, 0.64, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
@@ -4046,27 +4054,35 @@ UIStroke.Parent = Elements
 					Tween(SettingsFrame, {Size = UDim2.new(0.96, 0, 0, 0), BackgroundTransparency = 1}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not settingsOpen then SettingsFrame.Visible = false end end)
 				end
+				local SettingsObj = {}
 				SettingsBtn.MouseButton1Click:Connect(function()
-					settingsOpen = not settingsOpen
-					if settingsOpen then
-						CloseAllPopupsExcept(SettingsFrame)
-						SettingsFrame.Visible = true
-						SettingsFrame.BackgroundTransparency = 1
-						placeSettings(getSettingsHeight())
-						PositionPopupWithinMain(SettingsFrame, true); RegisterPopup(SettingsFrame, closeSF, SettingsBtn)
-						task.defer(function()
-							if not settingsOpen or not SettingsFrame.Parent then return end
-							placeSettings(getSettingsHeight())
-							Tween(SettingsFrame, {BackgroundTransparency = 0.019}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-						end)
-					else
-						closeSF()
-					end
+					if settingsOpen then closeSF() else SettingsObj:Open() end
 				end)
 
 				local settingsElemCount = 0
 				local SettingsFrame_Container = SFContainer
-				local SettingsObj = {}
+
+				function SettingsObj:Open()
+					if settingsOpen then return self end
+					settingsOpen = true
+					CloseAllPopupsExcept(SettingsFrame)
+					SettingsFrame.Visible = true
+					SettingsFrame.BackgroundTransparency = 1
+					placeSettings(getSettingsHeight())
+					PositionPopupWithinMain(SettingsFrame, true)
+					RegisterPopup(SettingsFrame, closeSF, SettingsBtn)
+					task.defer(function()
+						if not settingsOpen or not SettingsFrame.Parent then return end
+						placeSettings(getSettingsHeight())
+						Tween(SettingsFrame, {BackgroundTransparency = 0.019}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+					end)
+					return self
+				end
+
+				function SettingsObj:Close()
+					if settingsOpen then closeSF() end
+					return self
+				end
 
 				function SettingsObj:AddToggle(text, default, callback)
 					settingsElemCount = settingsElemCount + 1
@@ -4872,6 +4888,256 @@ if maxY <= 0 then return end
 				return SettingsObj
 			end
 
+			local _contextTargets = {}
+			local _contextMenu
+			local _contextOpen = false
+			local _contextTarget
+			local _bindTarget
+			local _bindMenu
+			local _keybinds = {}
+			local _bindListener
+
+			local function GetTargetBindLabel(target)
+				if not target then return "Not bound" end
+				if target.key then return target.key.Name end
+				return "Not bound"
+			end
+
+			local function SetTargetBind(target, key)
+				if not target or not target.obj then return end
+				if target.key then _keybinds[target.key] = nil end
+				target.key = key
+				if key then _keybinds[key] = target end
+				if target.dots then
+					target.dots.Text = key and ("⋮ " .. key.Name) or "⋮"
+				end
+			end
+
+			local function CloseBindMenu()
+				if not _bindMenu then return end
+				_bindMenu.Visible = false
+				_bindTarget = nil
+			end
+
+			local function BuildBindMenu()
+				if _bindMenu then return _bindMenu end
+				_bindMenu = New("Frame", {
+					Name = "BindPrompt",
+					Position = UDim2.new(0.5, 0, 0.5, 0),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Size = UDim2.new(0.34, 0, 0, 42),
+					BackgroundColor3 = Color3.fromRGB(17, 20, 30),
+					BackgroundTransparency = 0.05,
+					BorderSizePixel = 0,
+					Visible = false,
+					ZIndex = 9000,
+					ClipsDescendants = true,
+				}, MainFrame)
+				New("UICorner", { CornerRadius = UDim.new(0, 8) }, _bindMenu)
+				local label = New("TextLabel", {
+					Name = "BindLabel",
+					Size = UDim2.new(1, -20, 1, 0),
+					Position = UDim2.new(0, 10, 0, 0),
+					BackgroundTransparency = 1,
+					Text = "Press a key to bind",
+					TextColor3 = Color3.fromRGB(255, 255, 255),
+					TextScaled = true,
+					Font = Enum.Font.GothamBold,
+					ZIndex = 9001,
+				}, _bindMenu)
+				AddTextConstraint(label, 10, 14, true)
+				return _bindMenu
+			end
+
+			local function OpenBindMenu(target)
+				CloseAllPopupsExcept(nil)
+				_bindTarget = target
+				BuildBindMenu()
+				local label = _bindMenu:FindFirstChild("BindLabel")
+				if label then label.Text = "Press a key to bind: " .. tostring(target.label or "Function") end
+				_bindMenu.Visible = true
+				_bindMenu.BackgroundTransparency = 1
+				Tween(_bindMenu, { BackgroundTransparency = 0.05 }, 0.15)
+				ConstrainPopupToMainFrame(_bindMenu, 8)
+			end
+
+			local function CloseContextMenu()
+				if not _contextMenu then return end
+				_contextOpen = false
+				_contextTarget = nil
+				UnregisterPopup(_contextMenu)
+				SmoothClose(_contextMenu, 0.15)
+			end
+
+			local function BuildContextMenu()
+				if _contextMenu then return _contextMenu end
+				_contextMenu = New("Frame", {
+					Name = "ElementContextMenu",
+					Position = UDim2.new(0.5, 0, 0.5, 0),
+					Size = UDim2.new(0.28, 0, 0, 112),
+					BackgroundColor3 = Color3.fromRGB(17, 20, 30),
+					BackgroundTransparency = 1,
+					BorderSizePixel = 0,
+					Visible = false,
+					ZIndex = 8000,
+					ClipsDescendants = false,
+				}, MainFrame)
+				New("UICorner", { CornerRadius = UDim.new(0, 8) }, _contextMenu)
+				New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, _contextMenu)
+				return _contextMenu
+			end
+
+			local function AddContextItem(labelText, callback)
+				local item = New("TextButton", {
+					Name = "MenuItem",
+					Size = UDim2.new(1, -12, 0, 26),
+					Position = UDim2.new(0, 6, 0, 0),
+					BackgroundTransparency = 1,
+					Text = labelText,
+					TextColor3 = Color3.fromRGB(235, 238, 248),
+					TextScaled = true,
+					Font = Enum.Font.Gotham,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					ZIndex = 8001,
+				}, _contextMenu)
+				AddTextConstraint(item, 9, 13, true)
+				item.MouseButton1Click:Connect(function()
+					local target = _contextTarget
+					CloseContextMenu()
+					if target and callback then callback(target) end
+				end)
+				return item
+			end
+
+			local function OpenContextMenu(target, point)
+				BuildContextMenu()
+				CloseAllPopupsExcept(_contextMenu)
+				_contextTarget = target
+				for _, child in ipairs(_contextMenu:GetChildren()) do
+					if child:IsA("GuiObject") then child:Destroy() end
+				end
+				local layout = _contextMenu:FindFirstChildOfClass("UIListLayout")
+				if not layout then New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, _contextMenu) end
+				AddContextItem("Settings", function(current)
+					if current.obj and current.obj.AddSettings then
+						local settings = current.obj:AddSettings()
+						if settings and settings.Open then settings:Open() end
+					end
+				end)
+				AddContextItem("Bind: " .. GetTargetBindLabel(target), function(current)
+					OpenBindMenu(current)
+				end)
+				AddContextItem("Reset", function(current)
+					if current.obj and current.obj.Set and current.defaultValue ~= nil then
+						current.obj:Set(current.defaultValue)
+					end
+				end)
+				AddContextItem("Unbind", function(current)
+					SetTargetBind(current, nil)
+				end)
+				_contextMenu.Size = UDim2.new(0.28, 0, 0, 112)
+				SmoothOpen(_contextMenu, 0.03, 0.15)
+				MovePopupToAbsolute(_contextMenu, point.X, point.Y)
+				ConstrainPopupToMainFrame(_contextMenu, 8)
+				_contextOpen = true
+				RegisterPopup(_contextMenu, CloseContextMenu, target.dots)
+			end
+
+			local function IsEditableTarget()
+				local ok, focused = pcall(function() return UserInputService:GetFocusedTextBox() end)
+				return not (ok and focused)
+			end
+
+			local function RunBoundFunction(target)
+				if not target or not target.obj then return end
+				local value = target.obj.Get and target.obj:Get()
+				if type(value) == "boolean" then
+					target.obj:Set(not value)
+				elseif type(value) == "number" and target.min and target.max then
+					local step = (target.max - target.min) / 10
+					target.obj:Set(math.clamp(value + step, target.min, target.max))
+				elseif type(value) == "string" and target.options then
+					for index, option in ipairs(target.options) do
+						if option == value then
+							target.obj:Set(target.options[index % #target.options + 1] or target.options[1])
+							break
+						end
+					end
+				end
+			end
+
+			BindElementContext = function(row, kind, label, obj, defaultValue, options, min, max)
+				if not row or not obj then return end
+				local target = {
+					row = row,
+					kind = kind,
+					label = tostring(label or "Function"),
+					obj = obj,
+					defaultValue = defaultValue,
+					options = options,
+					min = min,
+					max = max,
+				}
+				_contextTargets[row] = target
+				local dots = row:FindFirstChild("ContextDots")
+				if not dots then
+					dots = New("TextButton", {
+						Name = "ContextDots",
+						Position = UDim2.new(0.95, 0, 0.22, 0),
+						Size = UDim2.new(0.04, 0, 0.56, 0),
+						BackgroundTransparency = 1,
+						Text = "⋯",
+						TextColor3 = Color3.fromRGB(205, 210, 225),
+						TextTransparency = 0.35,
+						TextScaled = false,
+						TextSize = 13,
+						Font = Enum.Font.GothamBold,
+						AutoButtonColor = false,
+						ZIndex = 2100,
+					}, row)
+					dots.MouseButton1Click:Connect(function()
+						local p = GetPointerPosition()
+						OpenContextMenu(target, p)
+					end)
+				end
+				target.dots = dots
+				SetTargetBind(target, nil)
+				if obj.Bind then return end
+				function obj:Bind(key)
+					local normalized = type(key) == "string" and Enum.KeyCode[key] or key
+					if normalized and normalized ~= Enum.KeyCode.Unknown then SetTargetBind(target, normalized) end
+					return self:GetBind()
+				end
+				function obj:Unbind() SetTargetBind(target, nil) return self:GetBind() end
+				function obj:GetBind() return target.key end
+			end
+
+			UserInputService.InputBegan:Connect(function(input, gameProcessed)
+				if gameProcessed then return end
+				if _bindTarget then
+					if input.UserInputType == Enum.UserInputType.Keyboard then
+						local key = input.KeyCode
+						if key ~= Enum.KeyCode.Escape then SetTargetBind(_bindTarget, key) end
+						CloseBindMenu()
+					end
+					return
+				end
+				if input.UserInputType == Enum.UserInputType.MouseButton2 then
+					local point = GetInputPosition(input)
+					for _, entry in ipairs(_openPopups) do
+						if entry.frame and entry.frame.Visible and IsPointInsideTree(entry.frame, point) then return end
+					end
+					for row, target in pairs(_contextTargets) do
+						if row.Parent and row.Visible and IsPointInsideTree(row, point) then
+							OpenContextMenu(target, point)
+							return
+						end
+					end
+				elseif input.UserInputType == Enum.UserInputType.Keyboard and IsEditableTarget() then
+					local target = _keybinds[input.KeyCode]
+					if target then RunBoundFunction(target) end
+				end
+			end)
 
 			function SectionObj:AddToggle(text, default, callback)
 				elemCount = elemCount + 1
@@ -4953,6 +5219,7 @@ if maxY <= 0 then return end
 				function obj:Get() return enabled end
 				function obj:AddSettings() return MakeSettings(Toggle, nil, text) end
 				RegisterConfigElement("toggle_", text, obj)
+				BindElementContext(Toggle, "toggle", text, obj, default)
 				return obj
 			end
 
@@ -5023,6 +5290,7 @@ if maxY <= 0 then return end
 				function obj:Get() return enabled end
 				function obj:AddSettings() return MakeSettings(CheckBoxToggle, nil, text) end
 				RegisterConfigElement("checkbox_", text, obj)
+				BindElementContext(CheckBoxToggle, "checkbox", text, obj, default)
 				return obj
 			end
 
@@ -5119,6 +5387,7 @@ if maxY <= 0 then return end
 				function obj:AddSettings() return MakeSettings(ToggleWithColorPicker, nil, text) end
 				RegisterConfigElement("colortoggle_", text, obj)
 				RegisterConfigElement("colortoggle_color_", text, {Get = function() return obj:GetColor() end, Set = function(_, c) obj:SetColor(c) end})
+				BindElementContext(ToggleWithColorPicker, "colortoggle", text, obj, defaultEnabled)
 				return obj
 			end
 
@@ -5451,6 +5720,7 @@ if maxY <= 0 then return end
 				function obj:AddSettings() return MakeSettings(Toggle, nil, text) end
 				RegisterConfigElement("togglecolorpicker_", text, obj)
 				RegisterConfigElement("togglecolorpicker_color_", text, {Get = function() return obj:GetColor() end, Set = function(_, c) obj:SetColor(c) end})
+				BindElementContext(Toggle, "togglecolorpicker", text, obj, defaultEnabled)
 				return obj
 			end
 
@@ -5600,6 +5870,7 @@ if maxY <= 0 then return end
 				function obj:Get() return value end
 				function obj:AddSettings() return MakeSettings(Slider, "slider", text) end
 				RegisterConfigElement("slider_", text, obj)
+				BindElementContext(Slider, "slider", text, obj, value, nil, min, max)
 				return obj
 			end
 
@@ -5771,8 +6042,10 @@ if maxY <= 0 then return end
 				function obj:AddSettings() return MakeSettings(Dropdown, "dropdown", text) end
 				
 				RegisterConfigElement("dropdown_", text, obj)
-					if default ~= nil then obj:Set(GetValidOption(options, default), true) end
+				if default ~= nil then obj:Set(GetValidOption(options, default), true) end
+				BindElementContext(Dropdown, "dropdown", text, obj, selected, options)
 				return obj
+
 			end
 
 
@@ -6191,6 +6464,7 @@ if maxY <= 0 then return end
 				function obj:AddSettings() return MakeSettings(Dropdown, "dropdown", text) end
 				RegisterConfigElement("dropdowncolorpicker_", text, obj)
 				RegisterConfigElement("dropdowncolorpicker_color_", text, {Get = function() return obj:GetColor() end, Set = function(_, c) obj:SetColor(c) end})
+				BindElementContext(Dropdown, "dropdowncolorpicker", text, obj, selected, options)
 				return obj
 			end
 
@@ -6470,6 +6744,7 @@ if maxY <= 0 then return end
 				end
 				function obj:AddSettings() return MakeSettings(Colorpicker, nil, text) end
 				RegisterConfigElement("colorpicker_", text, obj)
+				BindElementContext(Colorpicker, "colorpicker", text, obj, options.color)
 				return obj
 				end
 
@@ -6754,6 +7029,7 @@ UIAspectRatioConstraint.Parent = Toggle
 				function obj:Get() return enabled end
 				function obj:AddSettings() return MakeSettings(Toggle, nil, text2) end
 				RegisterConfigElement("accordion_toggle_", text2, obj)
+				BindElementContext(Toggle, "accordion_toggle", text2, obj, default)
 					return obj
 				end
 
@@ -6829,6 +7105,7 @@ UIAspectRatioConstraint.Parent = Toggle
 				function obj:Get() return enabled end
 				function obj:AddSettings() return MakeSettings(CheckBoxToggle, nil, text2) end
 				RegisterConfigElement("accordion_checkbox_", text2, obj)
+				BindElementContext(CheckBoxToggle, "accordion_checkbox", text2, obj, default)
 					return obj
 				end
 
@@ -7078,6 +7355,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					function obj:AddSettings() return MakeSettings(Selection, "dropdown", text2) end
 				if default ~= nil then obj:Set(GetValidOption(options, default), true) end
 					RegisterConfigElement("accordion_dropdown_", text2, obj)
+					BindElementContext(Selection, "accordion_dropdown", text2, obj, selected, options)
 					return obj
 				end
 
@@ -7229,6 +7507,7 @@ UIAspectRatioConstraint.Parent = Slider
 				function obj:Get() return value end
 				function obj:AddSettings() return MakeSettings(Slider, "slider", text2) end
 				RegisterConfigElement("accordion_slider_", text2, obj)
+				BindElementContext(Slider, "accordion_slider", text2, obj, value, nil, min, max)
 					return obj
 				end
 
@@ -7499,6 +7778,7 @@ if maxY <= 0 then return end
 				function obj:AddSettings() return MakeSettings(Colorpicker, nil, text2) end
 				-- FIX: register so LoadSavedConfig can find and restore this colorpicker
 					RegisterConfigElement("accordion_colorpicker_", text2, obj)
+					BindElementContext(Colorpicker, "accordion_colorpicker", text2, obj, options.color)
 					return obj
 				end
 
@@ -7585,12 +7865,12 @@ if maxY <= 0 then return end
 				Size = UDim2.new(0.47999998927116394, 0, 1, 0),
 				BackgroundTransparency = 1,
 				Visible = false,
-				ClipsDescendants = false,
+				ClipsDescendants = true,
 				Active = true,
 				AutomaticCanvasSize = Enum.AutomaticSize.Y,
 				CanvasSize = UDim2.new(),
 				ScrollingDirection = Enum.ScrollingDirection.Y,
-				ScrollBarThickness = 0,
+				ScrollBarThickness = 3,
 			}, TabHose)
 			New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder }, stLeft)
 
@@ -7600,12 +7880,12 @@ if maxY <= 0 then return end
 				BackgroundTransparency = 1,
 				LayoutOrder = 1,
 				Visible = false,
-				ClipsDescendants = false,
+				ClipsDescendants = true,
 				Active = true,
 				AutomaticCanvasSize = Enum.AutomaticSize.Y,
 				CanvasSize = UDim2.new(),
 				ScrollingDirection = Enum.ScrollingDirection.Y,
-				ScrollBarThickness = 0,
+				ScrollBarThickness = 3,
 			}, TabHose)
 			stLeft:SetAttribute("SearchName", name)
 			stRight:SetAttribute("SearchName", name)
@@ -7773,7 +8053,7 @@ if maxY <= 0 then return end
 		return MainFrame
 	end
 
-	MakeReadableText(NeverloseCS2, 10, 20)
+	MakeReadableText(NeverloseCS2, 9, 16)
 
 	return WindowObj
 end
