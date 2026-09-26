@@ -5154,24 +5154,14 @@ UIAspectRatioConstraint.Parent = Slider
 						else
 							CloseAllPopupsExcept(DropPopup)
 							dropOpen = true
-							local knownH = math.max(24, math.min(100, math.max(MainFrame.AbsoluteSize.Y, 1)))
 							local knownW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
-							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
-							-- reveal first, so the deferred re-measure below can see a visible popup
+							-- height is pure arithmetic, computed before the popup is ever shown:
+							-- every option row is full width with AspectRatio 6, so row height = width / 6
+							local rowH = knownW / 6
+							local popupH = math.clamp(rowH * #options + 10, 40, 280)
+							DropPopup.Size = UDim2.new(0.6899999737739563, 0, 0, popupH)
 							SmoothOpen(DropPopup, 0, 0.2)
-							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
-							task.defer(function()
-								-- the popup is open now: re-measure against the real content height
-								if not (DropPopup.Parent and DropPopup.Visible) then return end
-								local content = 0
-								if DropContainer:IsA("ScrollingFrame") then
-									content = math.max(DropContainer.AbsoluteContentSize.Y, DropContainer.AbsoluteSize.Y)
-								end
-								if content > 1 then
-									DropPopup.Size = UDim2.new(0.6899999737739563, 0, 0, math.clamp(content + 8, 40, 280))
-								end
-								PositionPopupWithinMain(DropPopup, true)
-							end)
+							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, popupH))
 							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 						end
