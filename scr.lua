@@ -4583,8 +4583,8 @@ end
 				Name = "Elements",
 				-- 2px inset: Border paints half outside and the column clips, so the
 				-- left edge needs real room or it loses its outline
-				Size = UDim2.new(1, -4, 0, 30),
-				Position = UDim2.new(0, 2, 0, 0),
+				Size = UDim2.new(1, -2, 0, 30),
+				Position = UDim2.new(0, 1, 0, 0),
 				BackgroundColor3 = Color3.fromRGB(21,24,36),
 				BackgroundTransparency = 0,
 				BorderSizePixel = 0,
