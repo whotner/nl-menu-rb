@@ -1311,6 +1311,10 @@ Aspect.AspectRatio = 1.4
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
 	}, MainFrame)
 	New("UICorner", { CornerRadius = UDim.new(0, 6) }, HubIcon)
+	New("UIAspectRatioConstraint", {
+		AspectRatio = 1,
+		AspectType = Enum.AspectType.ScaleWithParentSize,
+	}, HubIcon)
 
 	New("TextLabel", {
 		Name = "Title",
@@ -1342,8 +1346,8 @@ Aspect.AspectRatio = 1.4
 
 	local Info = Instance.new('Frame')
 	Info.Name = "Info"
-	Info.Position = UDim2.new(0.020, 0, 0.923, 0)
-	Info.Size = UDim2.new(0.196, 0, 0.064, 0)
+	Info.Position = UDim2.new(0.020, 0, 0.918, 0)
+	Info.Size = UDim2.new(0.196, 0, 0.069, 0)
 	Info.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	Info.BackgroundTransparency = 1
 	Info.BorderSizePixel = 0
@@ -1359,17 +1363,23 @@ Aspect.AspectRatio = 1.4
 
 	local UserImageEl = Instance.new('ImageLabel')
 	UserImageEl.Name = "UserImage"
-	UserImageEl.Size = UDim2.new(0.19,0,1,0)
+	UserImageEl.Size = UDim2.new(0.235,0,1,0)
 	UserImageEl.BackgroundColor3 = Color3.fromRGB(21,24,36)
 	UserImageEl.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
 	UserImageEl.Parent = Info
 	New("UICorner", { CornerRadius = UDim.new(1,0) }, UserImageEl)
 	New("UIAspectRatioConstraint", { AspectType = Enum.AspectType.ScaleWithParentSize }, UserImageEl)
+	New("UIStroke", {
+		Color = Color3.fromRGB(70, 78, 110),
+		Transparency = 0.35,
+		Thickness = 1,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+	}, UserImageEl)
 
 	local User = Instance.new('TextLabel')
 	User.Name = "Username"
-	User.Position = UDim2.new(0.3, 0, 0.13, 0)
-	User.Size = UDim2.new(0.50, 0, 0.42, 0)
+	User.Position = UDim2.new(0.315, 0, 0.10, 0)
+	User.Size = UDim2.new(0.50, 0, 0.46, 0)
 	User.TextTruncate = Enum.TextTruncate.AtEnd
 	User.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	User.BackgroundTransparency = 1
@@ -1384,8 +1394,8 @@ Aspect.AspectRatio = 1.4
 
 	local DaysLeft = Instance.new('TextLabel')
 	DaysLeft.Name = "Daysleft"
-	DaysLeft.Position = UDim2.new(0.3, 0, 0.56, 0)
-	DaysLeft.Size = UDim2.new(0.50, 0, 0.3, 0)
+	DaysLeft.Position = UDim2.new(0.315, 0, 0.56, 0)
+	DaysLeft.Size = UDim2.new(0.50, 0, 0.32, 0)
 	DaysLeft.TextTruncate = Enum.TextTruncate.AtEnd
 	DaysLeft.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	DaysLeft.BackgroundTransparency = 1
@@ -1413,8 +1423,8 @@ Aspect.AspectRatio = 1.4
 
 local ImageLabel = Instance.new('ImageLabel')
 ImageLabel.Name = "UserSettingsArrow"
-ImageLabel.Position = UDim2.new(0.97, 0, 0.5, 0)
-ImageLabel.Size = UDim2.new(0.46, 0, 0.46, 0)
+ImageLabel.Position = UDim2.new(0.99, 0, 0.5, 0)
+ImageLabel.Size = UDim2.new(0.40, 0, 0.40, 0)
 ImageLabel.AnchorPoint = Vector2.new(1, 0.5)
 ImageLabel.BackgroundTransparency = 1
 ImageLabel.Image = "rbxassetid://10709790948"
@@ -1526,7 +1536,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
 		ln.Size = UDim2.new(0.8899999856948853,0,0,1)
 		ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		ln.BackgroundTransparency = 0.8999999761581421
+		ln.BackgroundTransparency = 0.95
 		ln.BorderSizePixel = 0; ln.ZIndex = 130; ln.Parent = WSColorpicker
 	end
 	do
@@ -1656,7 +1666,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
 		ln.Size = UDim2.new(0.8999999761581421,0,0,1)
 		ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		ln.BackgroundTransparency = 0.9000000357627869
+		ln.BackgroundTransparency = 0.95
 		ln.BorderSizePixel = 0; ln.ZIndex = 150; ln.Parent = WSScaleRow
 	end
 	do
@@ -1752,7 +1762,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Position = UDim2.new(0.05, 0, 1, 0),
 		Size = UDim2.new(0.9, 0, 0, 1),
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
-		BackgroundTransparency = 0.86,
+		BackgroundTransparency = 0.93,
 		BorderSizePixel = 0,
 		ZIndex = 150,
 	}, WSLogoRow)
@@ -1806,7 +1816,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
 		ln.Size = UDim2.new(0.8999999761581421,0,0,1)
 		ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		ln.BackgroundTransparency = 0.9000000357627869
+		ln.BackgroundTransparency = 0.95
 		ln.BorderSizePixel = 0; ln.ZIndex = 150; ln.Parent = WSLangRow
 	end
 	do
@@ -2119,7 +2129,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				scaleOpen = true
 				SmoothOpen(ScaleDownBar, 0.5, 0.2)
 				PositionPopupWithinMain(ScaleDownBar, true)
-				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 				RegisterPopup(ScaleDownBar, closeScaleDropdown, ScaleOpenBtn)
 			end
 		end)
@@ -2195,7 +2205,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				CloseAllPopupsExcept(LangDownBar)
 				langOpen = true
 				SmoothOpen(LangDownBar, 0.5, 0.2)
-			Tween(LangArrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(LangArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 				PositionPopupWithinMain(LangDownBar, true)
 				Tween(LangArrow, {ImageTransparency = 0}, 0.2)
 				RegisterPopup(LangDownBar, closeLangDropdown, LangOpenBtn)
@@ -2289,7 +2299,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			ln.Position = UDim2.new(0.05,0,1,0)
 			ln.Size = UDim2.new(0.9,0,0,1)
 			ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-			ln.BackgroundTransparency = 0.9
+			ln.BackgroundTransparency = 0.95
 			ln.BorderSizePixel = 0; ln.ZIndex = 150; ln.Parent = Row
 		end
 		do
@@ -2451,7 +2461,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				CloseAllPopupsExcept(DropPopup)
 				dropOpen = true
 				SmoothOpen(DropPopup, 0.5, 0.2)
-		Tween(Arrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 				Tween(Arrow, {ImageTransparency = 0}, 0.2)
 				PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 			end
@@ -2488,7 +2498,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			ln.Position = UDim2.new(0.05,0,1,0)
 			ln.Size = UDim2.new(0.89,0,0,1)
 			ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-			ln.BackgroundTransparency = 0.9
+			ln.BackgroundTransparency = 0.95
 			ln.BorderSizePixel = 0; ln.ZIndex = 130; ln.Parent = Row
 		end
 		do
@@ -2816,7 +2826,7 @@ Lines.Name = "Lines"
 Lines.Position = UDim2.new(0,-5,-0.19000010192394257,0)
 Lines.Size = UDim2.new(-0.0010000000474974513,1,1.2000000476837158,3)
 Lines.BackgroundColor3 = Color3.fromRGB(40,44,65)
-Lines.BackgroundTransparency = 0.8999999761581421
+Lines.BackgroundTransparency = 0.95
 Lines.BorderSizePixel = 0
 Lines.Parent = SaveText
 
@@ -2825,7 +2835,7 @@ Lines_2.Name = "Lines"
 Lines_2.Position = UDim2.new(1,0,-0.19000010192394257,0)
 Lines_2.Size = UDim2.new(-0.0010000000474974513,1,1.2000000476837158,3)
 Lines_2.BackgroundColor3 = Color3.fromRGB(40,44,65)
-Lines_2.BackgroundTransparency = 0.8999999761581421
+Lines_2.BackgroundTransparency = 0.95
 Lines_2.BorderSizePixel = 0
 Lines_2.Parent = SaveText
 
@@ -2972,7 +2982,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CMLine.Position = UDim2.new(0.05, 0, 0.898, 0)
 	CMLine.Size = UDim2.new(0.9, 0, 0, 1)
 	CMLine.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
-	CMLine.BackgroundTransparency = 0.7
+	CMLine.BackgroundTransparency = 0.85
 	CMLine.BorderSizePixel = 0
 	CMLine.ZIndex = 1000
 	CMLine.Parent = CMHeader
@@ -3678,7 +3688,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConfigMainFrame.Visible = true
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
 			Tween(ConfigMainFrame, {BackgroundTransparency = 0.01}, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		Tween(SaveArrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		Tween(SaveArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		else
 			closeConfigPanel()
 		end
@@ -3851,7 +3861,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	Line3.Position = UDim2.new(-0.009999999776482582,0,0,0)
 	Line3.Size = UDim2.new(0,1,1,0)
 	Line3.BackgroundColor3 = Color3.fromRGB(162,162,162)
-	Line3.BackgroundTransparency = 0.800000011920929
+	Line3.BackgroundTransparency = 0.9
 	Line3.BorderSizePixel = 0
 	Line3.Parent = Frame2
 
@@ -3860,7 +3870,7 @@ Line9.Name = "Line9"
 Line9.Position = UDim2.new(0.22900649905204773,0,0.07999999821186066,0)
 Line9.Size = UDim2.new(0.7600772976875305,0,0,1)
 Line9.BackgroundColor3 = Color3.fromRGB(162,162,162)
-Line9.BackgroundTransparency = 0.800000011920929
+Line9.BackgroundTransparency = 0.9
 Line9.BorderSizePixel = 0
 Line9.Parent = MainFrame
 
@@ -3869,7 +3879,7 @@ Line9.Parent = MainFrame
 	Line1.Position = UDim2.new(0.009999999776482582,0,0.08,0)
 	Line1.Size = UDim2.new(0.20900000631809235,0,0,1)
 	Line1.BackgroundColor3 = Color3.fromRGB(162,162,162)
-	Line1.BackgroundTransparency = 0.800000011920929
+	Line1.BackgroundTransparency = 0.9
 	Line1.BorderSizePixel = 0
 	Line1.Parent = MainFrame
 
@@ -3878,7 +3888,7 @@ Line9.Parent = MainFrame
 	Line4.Position = UDim2.new(0.00800000037997961,0,0.8999999761581421,0)
 	Line4.Size = UDim2.new(0.20900000631809235,0,0,1)
 	Line4.BackgroundColor3 = Color3.fromRGB(162,162,162)
-	Line4.BackgroundTransparency = 0.800000011920929
+	Line4.BackgroundTransparency = 0.9
 	Line4.BorderSizePixel = 0
 	Line4.Parent = MainFrame
 
@@ -3910,7 +3920,13 @@ Line9.Parent = MainFrame
 	local guiOpen = true
 	local function toggleGui()
     guiOpen = not guiOpen
-    if not guiOpen then CloseAllPopupsExcept(nil) end
+    if not guiOpen then
+		CloseAllPopupsExcept(nil)
+		if ConfigMainFrame then ConfigMainFrame.Visible = false end
+		if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
+		if Save then Save.Visible = false end
+		if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
+	end
     ToggleBtn.Text = guiOpen and "Close [H]" or "Open  [H]"
     Tween(ToggleBtn, {
         BackgroundColor3 = guiOpen and Color3.fromRGB(16,19,28) or Color3.fromRGB(33,37,53)
@@ -3922,7 +3938,7 @@ Line9.Parent = MainFrame
         if AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = true end
         if AcrylicBlur.Signal then pcall(function() AcrylicBlur.Signal:Disconnect() end); AcrylicBlur.Signal = nil end
         AcrylicBlur.Signal = game:GetService("RunService").RenderStepped:Connect(AcrylicBlur.Update)
-        Tween(MainFrame, { BackgroundTransparency = 0.2 }, 0.12)
+        Tween(MainFrame, { BackgroundTransparency = 0 }, 0.12)
         Tween(AcrylicBlur.Instances.Part, { Transparency = AcrylicBlur.Instances.Part:GetAttribute("TargetTransparency") or 0.8 }, 0.12)
     else
         if AcrylicBlur.Signal then
@@ -3949,7 +3965,7 @@ end
 	end)
 
 	MainFrame.BackgroundTransparency = 1
-	Tween(MainFrame, { BackgroundTransparency = 0.2 }, 0.5)
+	Tween(MainFrame, { BackgroundTransparency = 0 }, 0.5)
 
 
 
@@ -3958,22 +3974,20 @@ end
 		tabOrder = tabOrder + 1
 		local lbl = New("TextLabel", {
 			Name = "TabLabel",
-			Size = UDim2.new(0.800000011920929, 0, 0.010999999940395355, 0),
+			Size = UDim2.new(0.800000011920929, 0, 0, 22),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			Text = text,
-			TextColor3 = Color3.fromRGB(75, 78, 98),
-			TextScaled = true,
-			Font = Enum.Font.SourceSansSemibold,
-         TextTransparency = 0.3,
+			TextColor3 = Color3.fromRGB(112, 118, 145),
+			TextScaled = false,
+			TextSize = 12,
+			Font = Enum.Font.GothamBold,
+         TextTransparency = 0.35,
 			TextXAlignment = Enum.TextXAlignment.Left,
+			TextYAlignment = Enum.TextYAlignment.Center,
 			LayoutOrder = tabOrder,
 		}, Tab)
-		New("UIAspectRatioConstraint", {
-			AspectRatio = 10,
-			AspectType = Enum.AspectType.ScaleWithParentSize,
-		}, lbl)
 		return lbl
 	end
 
@@ -4090,11 +4104,11 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 				for _, section in ipairs(column:GetChildren()) do
 					if section:IsA("GuiObject") then
 						section.BackgroundTransparency = 1
-						Tween(section, {BackgroundTransparency = section.Name == "Section" and 1 or 0.26}, 0.28, Enum.EasingStyle.Quad)
+						Tween(section, {BackgroundTransparency = section.Name == "Section" and 1 or 0}, 0.28, Enum.EasingStyle.Quad)
 						local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
 						if list and list:IsA("GuiObject") then
 							list.BackgroundTransparency = 1
-							Tween(list, {BackgroundTransparency = 0.26}, 0.3, Enum.EasingStyle.Quad)
+							Tween(list, {BackgroundTransparency = 0}, 0.3, Enum.EasingStyle.Quad)
 							local order = 0
 							for _, item in ipairs(list:GetChildren()) do
 								if item:IsA("GuiObject") then
@@ -4122,17 +4136,20 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 		local function ActivateTab()
 			CloseAllPopupsExcept(nil)
 			for _, t in ipairs(tabs) do
-				Tween(t.btn, { BackgroundTransparency = 1 }, 0.2)
-				Tween(t.icon, { ImageColor3 = Color3.fromRGB(255, 255, 255), ImageTransparency = 0.6 }, 0.2)
-				Tween(t.txt, { TextTransparency = 0.6000000238418579 }, 0.2)
+				t.btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				t.btn.BackgroundTransparency = 1
+				t.icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+				t.icon.ImageTransparency = 0.6
+				t.txt.TextTransparency = 0.6
 				t.hide()
 			end
 			TabButtonFrame.BackgroundColor3 = Color3.fromRGB(255,255,255)
-			Tween(TabButtonFrame, { BackgroundTransparency = 0.9 }, 0.25)
-			Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.25)
+			TabButtonFrame.BackgroundTransparency = 0.9
+			TabIcon.ImageColor3 = mainColor
+			TabIcon.ImageTransparency = 0
+			TabText.TextTransparency = 0
 			TabScale.Scale = 0.86
 			Tween(TabScale, { Scale = 1 }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-			Tween(TabText, { TextTransparency = 0 }, 0.25)
 			ShowContent()
 			activeTabIndex = tabIndex
 			if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
@@ -4296,6 +4313,7 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 				SettingsFrame.ZIndex = 5000
 				SettingsFrame.AutomaticSize = Enum.AutomaticSize.None
 				SettingsFrame.ClipsDescendants = false
+				local SFScale = New("UIScale", { Scale = 1 }, SettingsFrame)
 
 				SettingsFrame.Parent = parentFrame
 
@@ -4434,13 +4452,15 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 					CloseAllPopupsExcept(SettingsFrame)
 					SettingsFrame.Visible = true
 					SettingsFrame.BackgroundTransparency = 1
+					SFScale.Scale = 0.94
 					ApplyZIndexLadder(SettingsFrame, 5000)
 					placeSettings(getSettingsHeight())
 					RegisterPopup(SettingsFrame, closeSF, SettingsBtn)
 					local function settle()
 						if not settingsOpen or not SettingsFrame.Parent then return end
 						placeSettings(getSettingsHeight())
-						Tween(SettingsFrame, {BackgroundTransparency = 0}, 0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(SettingsFrame, {BackgroundTransparency = 0}, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(SFScale, {Scale = 1}, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 					end
 					task.defer(settle)
 					task.delay(0.05, settle)
@@ -4485,7 +4505,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.86,
+						BackgroundTransparency = 0.93,
 						ZIndex = 1000,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -4651,7 +4671,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.86,
+						BackgroundTransparency = 0.93,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -4804,7 +4824,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.05000000074505806, 0, 1, 0),
 						Size = UDim2.new(0.8999999761581421, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.9000000357627869,
+						BackgroundTransparency = 0.95,
 						BorderSizePixel = 0,
 						ZIndex = 1000,
 					}, Selection)
@@ -4987,7 +5007,7 @@ UIAspectRatioConstraint.Parent = Slider
 							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
 							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
 							SmoothOpen(DropPopup, 0, 0.2)
-							Tween(SelArrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 						end
 					end)
@@ -5031,7 +5051,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.86,
+						BackgroundTransparency = 0.93,
 						BorderSizePixel = 0,
 						ZIndex = 1001,
 					}, Colorpicker)
@@ -5541,7 +5561,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.86,
+					BackgroundTransparency = 0.93,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -5621,7 +5641,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.86,
+					BackgroundTransparency = 0.93,
 					BorderSizePixel = 0,
 					ZIndex = 100,
 				}, CheckBoxToggle)
@@ -5725,7 +5745,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.86,
+					BackgroundTransparency = 0.93,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -6047,7 +6067,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.86,
+					BackgroundTransparency = 0.93,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Slider)
@@ -6206,7 +6226,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.86,
+					BackgroundTransparency = 0.93,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Dropdown)
@@ -6352,7 +6372,7 @@ if maxY <= 0 then return end
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
 						DownBar.Size = UDim2.new(0.96, 0, 0, 0)
 						Tween(DownBar, { Size = finalSize }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
@@ -6404,7 +6424,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05000000074505806, 0, 1, 0),
 					Size = UDim2.new(0.8999999761581421, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.9000000357627869,
+					BackgroundTransparency = 0.95,
 					BorderSizePixel = 0,
 					ZIndex = 100,
 				}, Dropdown)
@@ -6578,7 +6598,7 @@ if maxY <= 0 then return end
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
 						DownBar.Size = UDim2.new(0.96, 0, 0, 0)
 						Tween(DownBar, { Size = finalSize }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
@@ -6820,7 +6840,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.89, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.86,
+					BackgroundTransparency = 0.93,
 					BorderSizePixel = 0,
 					ZIndex = 3,
 				}, Colorpicker)
@@ -7125,6 +7145,7 @@ if maxY <= 0 then return end
 				Section2Frame.ZIndex = 5000
 				Section2Frame.ClipsDescendants = false
 				Section2Frame.AutomaticSize = Enum.AutomaticSize.None
+				local S2Scale = New("UIScale", { Scale = 1 }, Section2Frame)
 				Section2Frame.Parent = DropdownSection
 
 				local UICorner = Instance.new('UICorner')
@@ -7197,7 +7218,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.86,
+					BackgroundTransparency = 0.93,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, DropdownSection)
@@ -7240,6 +7261,7 @@ if maxY <= 0 then return end
 						_openAccordion = closeAccordion
 						Section2Frame.Visible = true
 						Section2Frame.BackgroundTransparency = 1
+						S2Scale.Scale = 0.94
 						ApplyZIndexLadder(Section2Frame, 5000)
 						local accordionHeight = getAccordionHeight()
 						local accordionKnown = Vector2.new(
@@ -7247,7 +7269,7 @@ if maxY <= 0 then return end
 							math.min(accordionHeight * GetMainFrameScale(), math.max(MainFrame.AbsoluteSize.Y, 1)))
 						Section2Frame.Size = UDim2.new(0.96, 0, 0, accordionHeight)
 						PositionPopupWithinMain(Section2Frame, true, nil, nil, accordionKnown)
-						Tween(TextArrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(TextArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						RegisterPopup(Section2Frame, closeAccordion, Open)
 						local function settle()
 							if not accordionOpen or not Section2Frame.Parent then return end
@@ -7256,7 +7278,8 @@ if maxY <= 0 then return end
 						task.defer(function()
 							if not accordionOpen or not Section2Frame.Parent then return end
 							fitAccordionHeight()
-							Tween(Section2Frame, {BackgroundTransparency = 0}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+							Tween(Section2Frame, {BackgroundTransparency = 0}, 0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+							Tween(S2Scale, {Scale = 1}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						end)
 						task.delay(0.05, settle)
 						if not accordionRefitConnection then
@@ -7314,7 +7337,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.86,
+						BackgroundTransparency = 0.93,
 						ZIndex = 100,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -7490,7 +7513,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.05000000074505806, 0, 1, 0),
 						Size = UDim2.new(0.8999999761581421, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.9000000357627869,
+						BackgroundTransparency = 0.95,
 						BorderSizePixel = 0,
 						ZIndex = 100,
 					}, Selection)
@@ -7691,7 +7714,7 @@ UIAspectRatioConstraint.Parent = Toggle
 							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
 							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
 							SmoothOpen(DropPopup, 0, 0.2)
-							Tween(SelArrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
 						end
 					end)
@@ -7741,7 +7764,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.86,
+						BackgroundTransparency = 0.93,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -7899,7 +7922,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.86,
+						BackgroundTransparency = 0.93,
 						BorderSizePixel = 0,
 						ZIndex = 101,
 					}, Colorpicker)
@@ -8181,6 +8204,22 @@ if maxY <= 0 then return end
 				Left.Visible = false
 				Right.Visible = false
 				subTabContainer.Visible = true
+				-- only one row may look selected: the active sub-tab
+				TabButtonFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				TabButtonFrame.BackgroundTransparency = 1
+				TabIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+				TabIcon.ImageTransparency = 0.6
+				TabText.TextTransparency = 0.6
+				for i, st in ipairs(subTabs) do
+					if st.scale then
+						local delay = math.min((i - 1) * 0.04, 0.3)
+						task.delay(delay, function()
+							if not subTabContainer.Visible then return end
+							st.scale.Scale = 0.88
+							Tween(st.scale, { Scale = 1 }, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						end)
+					end
+				end
 				if activeSubTabIndex then
 					local st = subTabs[activeSubTabIndex]
 					if st then
@@ -8299,15 +8338,23 @@ if maxY <= 0 then return end
 			local function ActivateSubTab()
 				CloseAllPopupsExcept(nil)
 				for _, st in ipairs(subTabs) do
-					Tween(st.row,  { BackgroundTransparency = 1 }, 0.18)
-					Tween(st.lbl,  { TextTransparency = 0.55 }, 0.18)
-					if st.icon then Tween(st.icon, { ImageColor3 = Color3.fromRGB(200, 200, 210), ImageTransparency = 0.6 }, 0.18) end
+					st.row.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+					st.row.BackgroundTransparency = 1
+					st.lbl.TextTransparency = 0.55
+					if st.icon then
+						st.icon.ImageColor3 = Color3.fromRGB(200, 200, 210)
+						st.icon.ImageTransparency = 0.6
+					end
 					st.left.Visible  = false
 					st.right.Visible = false
 				end
-				Tween(STRow,    { BackgroundTransparency = 0.9 }, 0.2)
-				Tween(STLabel,  { TextTransparency = 0 }, 0.2)
-				if iconRef then Tween(iconRef, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.2) end
+				STRow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				STRow.BackgroundTransparency = 0.9
+				STLabel.TextTransparency = 0
+				if iconRef then
+					iconRef.ImageColor3 = mainColor
+					iconRef.ImageTransparency = 0
+				end
 				STScale.Scale = 0.86
 				Tween(STScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
@@ -8319,7 +8366,7 @@ if maxY <= 0 then return end
 					for _, section in ipairs(column:GetChildren()) do
 						if section:IsA("GuiObject") then
 							section.BackgroundTransparency = 1
-							Tween(section, {BackgroundTransparency = section.Name == "Section" and 1 or 0.26}, 0.28, Enum.EasingStyle.Quad)
+							Tween(section, {BackgroundTransparency = section.Name == "Section" and 1 or 0}, 0.28, Enum.EasingStyle.Quad)
 							local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
 							if list and list:IsA("GuiObject") then
 								local order = 0
@@ -8353,6 +8400,7 @@ if maxY <= 0 then return end
 				row  = STRow,
 				lbl  = STLabel,
 				icon = iconRef,
+				scale = STScale,
 				left = stLeft,
 				right = stRight,
 				activate = ActivateSubTab,
@@ -8450,7 +8498,7 @@ if maxY <= 0 then return end
 		sectionTitleSize = 13,
 		elementTextSize = 12,
 		watermarkText = "NEVERLOSE  •  UI",
-		watermarkVisible = true,
+		watermarkVisible = false,
 		cornerRadius = 14,
 		showContextDots = false,
 	}
