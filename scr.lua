@@ -4379,11 +4379,11 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 				AutomaticSize = Enum.AutomaticSize.Y,
 				LayoutOrder = sectionOrder[side],
 			}, col)
-			New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, Section)
+			New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, Section)
 
 local SectionTitle = Instance.new('Frame')
 SectionTitle.Name = "SectionTitle"
-SectionTitle.Size = UDim2.new(1,0,0.030,0)
+SectionTitle.Size = UDim2.new(1, 0, 0, 22)
 SectionTitle.BackgroundTransparency = 1
 SectionTitle.ClipsDescendants = false
 SectionTitle.Visible = true
@@ -4400,13 +4400,22 @@ SectionLabel.BackgroundTransparency = 1
 SectionLabel.BorderSizePixel = 0
 SectionLabel.Text = title
 SectionLabel.TextColor3 = customization.sectionTitleColor or Color3.fromRGB(112, 118, 145)
-SectionLabel.TextScaled = customization.sectionTitleTextSize == nil
+SectionLabel.TextScaled = false
 SectionLabel.TextSize = customization.sectionTitleTextSize or 12
 SectionLabel.Font = customization.font or Enum.Font.GothamBold
 SectionLabel.TextTransparency = customization.sectionTitleTransparency or 0.35
 SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
+SectionLabel.TextYAlignment = Enum.TextYAlignment.Center
 SectionLabel.Parent = SectionTitle
-AddTextConstraint(SectionLabel, 9, 12, true)
+do
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0, 8)
+	pad.PaddingRight = UDim.new(0, 4)
+	pad.PaddingTop = UDim.new(0, 4)
+	pad.PaddingBottom = UDim.new(0, 4)
+	pad.Parent = SectionLabel
+end
+AddTextConstraint(SectionLabel, 10, 14, true)
 
 
 			local Elements = New("Frame", {
