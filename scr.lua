@@ -4229,20 +4229,9 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 			Right.Visible = false
 		end
 
-		local function HideContent()
-			for _, column in ipairs({Left, Right}) do
-				local list = column:FindFirstChildOfClass("UIListLayout")
-				local items = column:GetChildren()
-				for _, item in ipairs(items) do
-					if item:IsA("GuiObject") then
-						local texts = {}
-						for _, d in ipairs(item:GetDescendants()) do
-							if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
-						end
-						for _, t in ipairs(texts) do t.TextTransparency = 1 end
-					end
-				end
-			end
+		local			function HideContent()
+			-- no transparency fiddling: a hidden column hides its text anyway,
+			-- and ShowContent restores the value when the tab comes back
 			Left.Visible = false
 			Right.Visible = false
 		end
@@ -4703,7 +4692,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundTransparency = enabled and 0 or 0.5,
 						ZIndex = 1002,
 					}, Effect)
-					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
+					New("UICorner", { CornerRadius = UDim.new(0, 2) }, Icon)
 					New("UIAspectRatioConstraint", {}, Icon)
 
 					local Btn = New("TextButton", {
@@ -5038,7 +5027,6 @@ UIAspectRatioConstraint.Parent = Slider
 						Name = "Dropdown",
 						Position = UDim2.new(0.02,0,1,2),
 						Size = UDim2.new(0.6899999737739563, 0, 0, 100),
-						AutomaticCanvasSize = Enum.AutomaticSize.Y,
 						BackgroundColor3 = Color3.fromRGB(16,19,28),
 						BackgroundTransparency = 1,
 						BorderSizePixel = 0,
@@ -5054,6 +5042,7 @@ UIAspectRatioConstraint.Parent = Slider
 					}, DropPopup)
 
 					local DropContainer = New("ScrollingFrame", {
+						AutomaticCanvasSize = Enum.AutomaticSize.Y,
 						Name = "Container",
 						Position = UDim2.new(0.05000000074505806, 0, 0.10000000149011612, 0),
 						Size = UDim2.new(0.8980000019073486, 0, 0, 96),
@@ -5168,20 +5157,21 @@ UIAspectRatioConstraint.Parent = Slider
 							local knownH = math.max(24, math.min(100, math.max(MainFrame.AbsoluteSize.Y, 1)))
 							local knownW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
 							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
-							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
-					task.defer(function()
-						-- SmoothOpen only reveals the popup: re-measure now that it has its real size
-						if not (DropPopup.Parent and DropPopup.Visible) then return end
-						local content = 0
-						if DropContainer:IsA("ScrollingFrame") then
-							content = math.max(DropContainer.AbsoluteContentSize.Y, DropContainer.AbsoluteSize.Y)
-						end
-						if content > 1 then
-							DropPopup.Size = UDim2.new(0.6899999737739563, 0, 0, math.clamp(content + 8, 40, 280))
-						end
-						PositionPopupWithinMain(DropPopup, true)
-					end)
+							-- reveal first, so the deferred re-measure below can see a visible popup
 							SmoothOpen(DropPopup, 0, 0.2)
+							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
+							task.defer(function()
+								-- the popup is open now: re-measure against the real content height
+								if not (DropPopup.Parent and DropPopup.Visible) then return end
+								local content = 0
+								if DropContainer:IsA("ScrollingFrame") then
+									content = math.max(DropContainer.AbsoluteContentSize.Y, DropContainer.AbsoluteSize.Y)
+								end
+								if content > 1 then
+									DropPopup.Size = UDim2.new(0.6899999737739563, 0, 0, math.clamp(content + 8, 40, 280))
+								end
+								PositionPopupWithinMain(DropPopup, true)
+							end)
 							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 						end
@@ -5771,7 +5761,7 @@ if maxY <= 0 then return end
 					BackgroundColor3 = Color3.fromRGB(255,255,255),
 					BackgroundTransparency = enabled and 0 or 0.5,
 				}, Effect)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
+				New("UICorner", { CornerRadius = UDim.new(0, 2) }, Icon)
 				New("UIAspectRatioConstraint", {}, Icon)
 
 				local Btn = New("TextButton", {
@@ -5956,7 +5946,7 @@ if maxY <= 0 then return end
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 					BackgroundTransparency = enabled and 0 or 0.5,
 				}, Effect)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
+				New("UICorner", { CornerRadius = UDim.new(0, 2) }, Icon)
 				New("UIAspectRatioConstraint", {}, Icon)
 
 				-- Colorpicker open button (small colored square)
@@ -7549,7 +7539,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundTransparency = enabled and 0 or 0.5,
 						ZIndex = 102,
 					}, Effect)
-					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
+					New("UICorner", { CornerRadius = UDim.new(0, 2) }, Icon)
 					New("UIAspectRatioConstraint", {}, Icon)
 
 					local Btn = New("TextButton", {
