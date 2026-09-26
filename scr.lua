@@ -639,14 +639,14 @@ local function Quantize(value, min, max, step)
 	local clamped = math.clamp(value, min, max)
 	local snapped = min + math.round((clamped - min) / step) * step
 	if math.abs(snapped - max) < step * 0.001 then snapped = max end
-	if math.abs(snapped - round(snapped)) < 0.0001 then snapped = round(snapped) end
+	if math.abs(snapped - math.round(snapped)) < 0.0001 then snapped = math.round(snapped) end
 	return snapped
 end
 
 local function FormatSliderValue(value, suffix)
 	local text
-	if math.abs(value - round(value)) < 0.0001 then
-		text = tostring(round(value))
+	if math.abs(value - math.round(value)) < 0.0001 then
+		text = tostring(math.round(value))
 	else
 		text = string.format("%.1f", value)
 	end
@@ -914,13 +914,13 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	GetDragShield(MainFrame)
     local Watermark = New("TextLabel", {
 	Name = "Watermark",
-    Position = UDim2.new(0.985, 0, 0.988, 0),
-    Size = UDim2.new(0.2, 0, 0.026, 0),
+    Position = UDim2.new(0.975, 0, 0.980, 0),
+    Size = UDim2.new(0.18, 0, 0.030, 0),
     AnchorPoint = Vector2.new(1, 1),
     BackgroundTransparency = 1,
 		Text = "NEVERLOSE  •  UI",
 		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextTransparency = 0.45,
+		TextTransparency = 0.5,
 		TextScaled = false,
 		TextSize = 11,
     Font = Enum.Font.GothamBold,
@@ -930,8 +930,8 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
     }, MainFrame)
 	local watermarkConstraint = Watermark:FindFirstChild("ReadableTextConstraint")
 	if watermarkConstraint then
-		watermarkConstraint.MinTextSize = 8
-		watermarkConstraint.MaxTextSize = 9
+		watermarkConstraint.MinTextSize = 9
+		watermarkConstraint.MaxTextSize = 11
 	end
 	customization.watermark = Watermark
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 20); c.Parent = MainFrame end
@@ -1340,8 +1340,8 @@ Aspect.AspectRatio = 1.4
 
 	local Info = Instance.new('Frame')
 	Info.Name = "Info"
-	Info.Position = UDim2.new(0.020, 0, 0.885, 0)
-	Info.Size = UDim2.new(0.196, 0, 0.075, 0)
+	Info.Position = UDim2.new(0.020, 0, 0.923, 0)
+	Info.Size = UDim2.new(0.196, 0, 0.064, 0)
 	Info.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	Info.BackgroundTransparency = 1
 	Info.BorderSizePixel = 0
@@ -1349,7 +1349,7 @@ Aspect.AspectRatio = 1.4
 
 	local UserImageEl = Instance.new('ImageLabel')
 	UserImageEl.Name = "UserImage"
-	UserImageEl.Size = UDim2.new(0.3400000035762787,0,1,0)
+	UserImageEl.Size = UDim2.new(0.19,0,1,0)
 	UserImageEl.BackgroundColor3 = Color3.fromRGB(21,24,36)
 	UserImageEl.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
 	UserImageEl.Parent = Info
@@ -4290,6 +4290,7 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 				UICorner.CornerRadius = UDim.new(0, 14)
 				UICorner.Parent = SettingsFrame
 
+				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
 				UIStroke.Color = Color3.fromRGB(44,50,72)
 				UIStroke.Transparency = 0.45
@@ -7176,10 +7177,6 @@ if maxY <= 0 then return end
 				local accordionOpen = false
 				local accordionLayoutConnection = nil
 				local accordionRefitConnection = nil
-				local function fitAccordionHeight()
-					if not accordionOpen or not Section2Frame.Parent then return end
-					Section2Frame.Size = UDim2.new(0.96, 0, 0, getAccordionHeight())
-				end
 				local function getAccordionHeight()
 					UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
@@ -7187,6 +7184,11 @@ if maxY <= 0 then return end
 					local desiredVisual = math.max(34 * scale, contentVisual + 16 * scale)
 					local maxVisual = math.max(34 * scale, MainFrame.AbsoluteSize.Y * 0.92)
 					return math.min(desiredVisual, maxVisual) / scale
+				end
+
+				local function fitAccordionHeight()
+					if not accordionOpen or not Section2Frame.Parent then return end
+					Section2Frame.Size = UDim2.new(0.96, 0, 0, getAccordionHeight())
 				end
 
 				local function closeAccordion()
