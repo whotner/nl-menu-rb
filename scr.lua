@@ -18,16 +18,37 @@ local LoadAcrylic = function()
 		local num = (n.x*v.x) + (n.y*v.y) + (n.z*v.z)
 		local den = (n.x*d.x) + (n.y*d.y) + (n.z*d.z)
 		if math.abs(den) < 0.000001 then
-			return rayOrigin, 0
+			return nil
 		end
 		local a = -num / den
+		if a ~= a or math.abs(a) > 1e6 then
+			return nil
+		end
 
 		return rayOrigin + (a * rayDirection), a
 	end;
 
+	local sharedDepthOfField = nil
+	local function GetSharedDepthOfField()
+		if sharedDepthOfField and sharedDepthOfField.Parent then return sharedDepthOfField end
+		local ok, effect = pcall(function()
+			return Instance.new('DepthOfFieldEffect', game:GetService('Lighting'))
+		end)
+		if ok and effect then
+			effect.Enabled = true
+			effect.FarIntensity = 1
+			effect.FocusDistance = 0
+			effect.InFocusRadius = 500
+			effect.NearIntensity = 1
+			effect.Name = "NeverloseDepthOfField"
+			sharedDepthOfField = effect
+		end
+		return sharedDepthOfField
+	end
+
 	function GuiSystem.new(frame,NoAutoBackground)
 		local Part = Instance.new('Part',workspace);
-		local DepthOfField = Instance.new('DepthOfFieldEffect',game:GetService('Lighting'));
+		local DepthOfField = GetSharedDepthOfField()
 		local SurfaceGui = Instance.new('SurfaceGui',Part);
 		local BlockMesh = Instance.new("BlockMesh");
 
@@ -52,15 +73,13 @@ local LoadAcrylic = function()
 		Part.Size = Vector3.new(1, 1, 1) * 0.01;
 		Part.Color = Color3.fromRGB(0,0,0);
 
-		Twen:Create(Part,TweenInfo.new(1,Enum.EasingStyle.Quint,Enum.EasingDirection.In),{
-			Transparency = 0.8;
-		}):Play()
-
-		DepthOfField.Enabled = true;
-		DepthOfField.FarIntensity = 1;
-		DepthOfField.FocusDistance = 0;
-		DepthOfField.InFocusRadius = 500;
-		DepthOfField.NearIntensity = 1;
+		if DepthOfField then
+			DepthOfField.Enabled = true
+			DepthOfField.FarIntensity = 1
+			DepthOfField.FocusDistance = 0
+			DepthOfField.InFocusRadius = 500
+			DepthOfField.NearIntensity = 1
+		end
 
 		SurfaceGui.AlwaysOnTop = true;
 		SurfaceGui.Adornee = Part;
@@ -68,7 +87,7 @@ local LoadAcrylic = function()
 		SurfaceGui.Face = Enum.NormalId.Front;
 		SurfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;
 
-		DepthOfField.Name = GuiSystem:Hash();
+		if DepthOfField and not sharedDepthOfField then DepthOfField.Name = GuiSystem:Hash() end
 		Part.Name = GuiSystem:Hash();
 		SurfaceGui.Name = GuiSystem:Hash();
 
@@ -86,19 +105,32 @@ local LoadAcrylic = function()
 		};
 
 		local lastQuality = nil
-		local lastTransparency = 0.8
+		local lastTransparency = nil
 
-		local function syncQualityTransparency()
+		local function resolveQualityTransparency()
 			local qualityLevel, target = nil, nil
 			pcall(function()
 				local userSettings = UserSettings():GetService("UserGameSettings")
 				qualityLevel = userSettings.SavedQualityLevel.Value
 				target = qualityLevel < 8 and 1 or 0.8
 			end)
-			if type(qualityLevel) ~= "number" or type(target) ~= "number" then return end
-			if lastQuality == qualityLevel and math.abs(lastTransparency - target) < 0.001 then return end
+			if type(qualityLevel) ~= "number" or type(target) ~= "number" then return nil end
+			return qualityLevel, target
+		end
+
+		local initialQuality, initialTarget = resolveQualityTransparency()
+		lastQuality = initialQuality
+		lastTransparency = initialTarget
+		Part.Transparency = initialTarget or 0.8
+		Part:SetAttribute("TargetTransparency", Part.Transparency)
+
+		local function syncQualityTransparency()
+			local qualityLevel, target = resolveQualityTransparency()
+			if not qualityLevel then return end
+			if lastQuality == qualityLevel and lastTransparency and math.abs(lastTransparency - target) < 0.001 then return end
 			lastQuality = qualityLevel
 			lastTransparency = target
+			pcall(function() Part:SetAttribute("TargetTransparency", target) end)
 			local ok, tween = pcall(function()
 				return Twen:Create(Part,TweenInfo.new(1,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Transparency = target})
 			end)
@@ -119,18 +151,25 @@ local LoadAcrylic = function()
 				local planeNormal = camera.CFrame.LookVector
 				local pos0 = Hiter(planeOrigin, planeNormal, ray0.Origin, ray0.Direction)
 				local pos1 = Hiter(planeOrigin, planeNormal, ray1.Origin, ray1.Direction)
-				return camera.CFrame:PointToObjectSpace(pos0), camera.CFrame:PointToObjectSpace(pos1)
+				if not pos0 or not pos1 then return nil end
+				local a = camera.CFrame:PointToObjectSpace(pos0)
+				local b = camera.CFrame:PointToObjectSpace(pos1)
+				if a.X ~= a.X or a.Y ~= a.Y or a.Z ~= a.Z then return nil end
+				if b.X ~= b.X or b.Y ~= b.Y or b.Z ~= b.Z then return nil end
+				return a, b
 			end)
-			if not ok then return end
+			if not ok or not result0 or not result1 then return end
 			local size = result1 - result0
 			local center = (result0 + result1) / 2
+			local scaleX = math.clamp(math.abs(size.X) / 0.0101, 0.01, 4000)
+			local scaleY = math.clamp(math.abs(size.Y) / 0.0101, 0.01, 4000)
+			local scaleZ = math.clamp(math.abs(size.Z) / 0.0101, 0.01, 4000)
 			BlockMesh.Offset = center
-			BlockMesh.Scale = size / 0.0101
+			BlockMesh.Scale = Vector3.new(scaleX, scaleY, scaleZ)
 			Part.CFrame = camera.CFrame
 		end
 
 		C4.Update = Update;
-		C4.Signal = RunService.RenderStepped:Connect(Update)
 
 		pcall(function()
 			C4.Signal2 = workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
@@ -146,11 +185,12 @@ local LoadAcrylic = function()
 			C4.Signal2 = nil
 			C4.Update = function() end
 
-			Twen:Create(Part,TweenInfo.new(1),{
-				Transparency = 1
-			}):Play()
+			pcall(function()
+				Twen:Create(Part,TweenInfo.new(1),{
+					Transparency = 1
+				}):Play()
+			end)
 
-			DepthOfField:Destroy()
 			Part:Destroy()
 		end;
 
@@ -187,10 +227,21 @@ local function InvokeCallback(callback, ...)
 	if type(callback) == "function" then pcall(callback, ...) end
 end
 
+local function IsAncestorVisible(object)
+	local current = object and object.Parent
+	while current do
+		local ok, visible = pcall(function() return current.Visible end)
+		if ok and visible == false then return false end
+		current = current.Parent
+	end
+	return true
+end
+
 local function IsPointInside(object, point)
 	if not object or not point then return false end
 	local ok, isGui = pcall(function() return object:IsA("GuiObject") end)
 	if not ok or not isGui or not object.Visible then return false end
+	if not IsAncestorVisible(object) then return false end
 	local size = object.AbsoluteSize
 	if size.X <= 0 or size.Y <= 0 then return false end
 	local position = object.AbsolutePosition
@@ -674,22 +725,45 @@ end
 		for _, fn in ipairs(toClose) do pcall(fn) end
 	end)
 
+local function CancelPopupTween(frame)
+	if not frame or not frame.Parent then return end
+	local running = frame:GetAttribute("PopupTween")
+	if running then
+		pcall(function() running:Cancel() end)
+	end
+	frame:SetAttribute("PopupTween", nil)
+end
+
+local function PlayPopupTween(frame, info, props)
+	local ok, tween = pcall(function() return TweenService:Create(frame, info, props) end)
+	if not ok or not tween then return end
+	frame:SetAttribute("PopupTween", tween)
+	pcall(function() tween:Play() end)
+	pcall(function()
+		tween.Completed:Connect(function()
+			if frame:GetAttribute("PopupTween") == tween then
+				frame:SetAttribute("PopupTween", nil)
+			end
+		end)
+	end)
+end
+
 local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	if not frame or not frame.Parent then return end
 	local token = (frame:GetAttribute("PopupToken") or 0) + 1
 	frame:SetAttribute("PopupToken", token)
+	CancelPopupTween(frame)
 	frame.BackgroundTransparency = 1
 	frame.Visible = true
-	local ok, tween = pcall(function() return TweenService:Create(frame, TweenInfo.new(dur or 0.2, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out), {BackgroundTransparency = targetAlpha}) end)
-	if ok and tween then tween:Play() end
+	PlayPopupTween(frame, TweenInfo.new(dur or 0.2, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out), {BackgroundTransparency = targetAlpha})
 end
 
 local function SmoothClose(frame, dur, cb)
 	if not frame or not frame.Parent then return end
 	local token = (frame:GetAttribute("PopupToken") or 0) + 1
 	frame:SetAttribute("PopupToken", token)
-	local ok, tween = pcall(function() return TweenService:Create(frame, TweenInfo.new(dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1}) end)
-	if ok and tween then tween:Play() end
+	CancelPopupTween(frame)
+	PlayPopupTween(frame, TweenInfo.new(dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
 	task.delay((dur or 0.18) + 0.01, function()
 		if frame.Parent and frame:GetAttribute("PopupToken") == token then
 			frame.Visible = false
@@ -736,6 +810,9 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	if not screenGuiParent and LocalPlayer and LocalPlayer.FindFirstChildOfClass then
 		local ok, playerGui = pcall(function() return LocalPlayer:FindFirstChildOfClass("PlayerGui") end)
 		if ok then screenGuiParent = playerGui end
+	end
+	if not screenGuiParent then
+		pcall(function() screenGuiParent = game:GetService("CoreGui") end)
 	end
 
 	local NeverloseCS2 = New("ScreenGui", {
@@ -3763,14 +3840,15 @@ DropShadow.Name = "DropShadow"
     Tween(ToggleBtn, {
         BackgroundColor3 = guiOpen and Color3.fromRGB(16,19,28) or Color3.fromRGB(33,37,53)
     }, 0.1)
-    if guiOpen then
+    	if guiOpen then
         MainFrame.BackgroundTransparency = 1
         MainFrame.Visible = true
         AcrylicBlur.Instances.Part.Transparency = 1
-        AcrylicBlur.Instances.DepthOfField.Enabled = true
+        if AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = true end
+        if AcrylicBlur.Signal then pcall(function() AcrylicBlur.Signal:Disconnect() end); AcrylicBlur.Signal = nil end
         AcrylicBlur.Signal = game:GetService("RunService").RenderStepped:Connect(AcrylicBlur.Update)
         Tween(MainFrame, { BackgroundTransparency = 0.2 }, 0.12)
-        Tween(AcrylicBlur.Instances.Part, { Transparency = 0.8 }, 0.12)
+        Tween(AcrylicBlur.Instances.Part, { Transparency = AcrylicBlur.Instances.Part:GetAttribute("TargetTransparency") or 0.8 }, 0.12)
     else
         if AcrylicBlur.Signal then
             AcrylicBlur.Signal:Disconnect()
@@ -3781,7 +3859,7 @@ DropShadow.Name = "DropShadow"
         task.delay(0.13, function()
             if guiOpen then return end
             MainFrame.Visible = false
-            AcrylicBlur.Instances.DepthOfField.Enabled = false
+            if AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = false end
         end)
     end
 end
