@@ -767,7 +767,7 @@ end
 		end
 	end
 
-	local function HideAllPopupsNow()
+	local function HideAllPopupsNow(instant)
 		local copy = {}
 		for i, entry in ipairs(_openPopups) do copy[i] = entry end
 		for _, entry in ipairs(copy) do
@@ -775,10 +775,30 @@ end
 			if frame and frame.Parent then
 				if entry.connection then pcall(function() entry.connection:Disconnect() end) end
 				RestorePopupClipping(frame)
-				Tween(frame, { BackgroundTransparency = 1 }, 0.18)
+				if instant then
+					frame.Visible = false
+				else
+					Tween(frame, { BackgroundTransparency = 1 }, 0.18)
+				end
 			end
 		end
 		table.clear(_openPopups)
+	end
+
+	local function HideWindowInstantly()
+		HideAllPopupsNow(true)
+		if ConfigMainFrame then ConfigMainFrame.Visible = false end
+		if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
+		if Save then Save.Visible = false end
+		if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
+		if AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.Part then
+			AcrylicBlur.Instances.Part.Transparency = 1
+		end
+		if AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.DepthOfField then
+			AcrylicBlur.Instances.DepthOfField.Enabled = false
+		end
+		MainFrame.BackgroundTransparency = 1
+		MainFrame.Visible = false
 	end
 
 	local function ClosePopupsUnder(root)
@@ -1184,7 +1204,7 @@ UIScale.Parent = GameInfo
 
 local FpsIcon = Instance.new('ImageLabel')
 FpsIcon.Name = "FpsIcon"
-FpsIcon.Position = UDim2.new(0.022, 0, 0.30, 0)
+FpsIcon.Position = UDim2.new(0.022, 0, 0.32, 0)
 FpsIcon.Size = UDim2.new(0.1, 0, 0.4, 0)
 FpsIcon.BackgroundTransparency = 1
 FpsIcon.Image = "rbxthumb://type=Asset&id=137471315687443&w=420&h=420"
@@ -1196,8 +1216,8 @@ UIAspectRatio_FpsIcon.Parent = FpsIcon
 
 local FPSText = Instance.new('TextLabel')
 FPSText.Name = "FPSText"
-FPSText.Position = UDim2.new(0.115, 0, 0.315, 0)
-FPSText.Size = UDim2.new(0.17, 0, 0.37, 0)
+FPSText.Position = UDim2.new(0.115, 0, 0.28, 0)
+FPSText.Size = UDim2.new(0.17, 0, 0.44, 0)
 FPSText.BackgroundTransparency = 1
 FPSText.Text = "0 FPS"
 FPSText.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1213,7 +1233,7 @@ UIAspectRatio_FPSText.Parent = FPSText
 
 local SignalImage = Instance.new('ImageLabel')
 SignalImage.Name = "SignalImage"
-SignalImage.Position = UDim2.new(0.338, 0, 0.32, 0)
+SignalImage.Position = UDim2.new(0.338, 0, 0.34, 0)
 SignalImage.Size = UDim2.new(0.085, 0, 0.36, 0)
 SignalImage.BackgroundTransparency = 1
 SignalImage.Image = "rbxthumb://type=Asset&id=113541980541438&w=420&h=420"
@@ -1225,8 +1245,8 @@ UIAspectRatio_SignalImage.Parent = SignalImage
 
 local MSText = Instance.new('TextLabel')
 MSText.Name = "MSText"
-MSText.Position = UDim2.new(0.435, 0, 0.315, 0)
-MSText.Size = UDim2.new(0.15, 0, 0.37, 0)
+MSText.Position = UDim2.new(0.435, 0, 0.28, 0)
+MSText.Size = UDim2.new(0.15, 0, 0.44, 0)
 MSText.BackgroundTransparency = 1
 MSText.Text = "0 MS"
 MSText.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1242,7 +1262,7 @@ UIAspectRatio_MSText.Parent = MSText
 
 local UserIcon = Instance.new('ImageLabel')
 UserIcon.Name = "UserIcon"
-UserIcon.Position = UDim2.new(0.618, 0, 0.25, 0)
+UserIcon.Position = UDim2.new(0.618, 0, 0.27, 0)
 UserIcon.Size = UDim2.new(0.09, 0, 0.5, 0)
 UserIcon.BackgroundTransparency = 1
 UserIcon.Image = "rbxthumb://type=Asset&id=123112467890707&w=420&h=420"
@@ -3995,32 +4015,14 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		ApplySearch(SearchBox.Text)
 	end)
 
-	local Line3 = Instance.new('Frame')
-	Line3.Name = "Line3"
-	Line3.Position = UDim2.new(-0.009999999776482582,0,0,0)
-	Line3.Size = UDim2.new(0,1,1,0)
-	Line3.BackgroundColor3 = Color3.fromRGB(162,162,162)
-	Line3.BackgroundTransparency = 0.93
-	Line3.BorderSizePixel = 0
-	Line3.Parent = Frame2
-
 local Line9 = Instance.new('Frame')
 Line9.Name = "Line9"
-Line9.Position = UDim2.new(0.22900649905204773,0,0.07999999821186066,0)
-Line9.Size = UDim2.new(0.7600772976875305,0,0,1)
+Line9.Position = UDim2.new(0.010000000707268715,0,0.07999999821186066,0)
+Line9.Size = UDim2.new(0.9789999723434448,0,0,1)
 Line9.BackgroundColor3 = Color3.fromRGB(162,162,162)
 Line9.BackgroundTransparency = 0.93
 Line9.BorderSizePixel = 0
 Line9.Parent = MainFrame
-
-	local Line1 = Instance.new('Frame')
-	Line1.Name = "Line1"
-	Line1.Position = UDim2.new(0.009999999776482582,0,0.08,0)
-	Line1.Size = UDim2.new(0.20900000631809235,0,0,1)
-	Line1.BackgroundColor3 = Color3.fromRGB(162,162,162)
-	Line1.BackgroundTransparency = 0.93
-	Line1.BorderSizePixel = 0
-	Line1.Parent = MainFrame
 
 	local Line4 = Instance.new('Frame')
 	Line4.Name = "Line4"
@@ -4044,7 +4046,7 @@ Line9.Parent = MainFrame
 	ToggleBtn.Size = UDim2.new(0, 100, 0, 28)
 	ToggleBtn.BackgroundColor3 = Color3.fromRGB(16,19,28)
 	ToggleBtn.BorderSizePixel = 1
-	ToggleBtn.Text = "Close  [H]"
+	ToggleBtn.Text = "Close  [RShift]"
 	ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	ToggleBtn.TextScaled = true
 	ToggleBtn.Font = Enum.Font.SourceSansSemibold
@@ -4060,9 +4062,9 @@ Line9.Parent = MainFrame
 	local function toggleGui()
     guiOpen = not guiOpen
     if not guiOpen then
-		HideAllPopupsNow()
+		HideWindowInstantly()
 	end
-    ToggleBtn.Text = guiOpen and "Close [H]" or "Open  [H]"
+    ToggleBtn.Text = guiOpen and "Close [RShift]" or "Open  [RShift]"
     Tween(ToggleBtn, {
         BackgroundColor3 = guiOpen and Color3.fromRGB(16,19,28) or Color3.fromRGB(33,37,53)
     }, 0.1)
@@ -4081,19 +4083,8 @@ Line9.Parent = MainFrame
             AcrylicBlur.Signal:Disconnect()
             AcrylicBlur.Signal = nil
         end
-        Tween(MainFrame, { BackgroundTransparency = 1 }, 0.18)
-        Tween(AcrylicBlur.Instances.Part, { Transparency = 1 }, 0.18)
-        task.delay(0.19, function()
-            if guiOpen then return end
-            MainFrame.Visible = false
-            -- everything disappears together with the window
-            HideAllPopupsNow()
-            if ConfigMainFrame then ConfigMainFrame.Visible = false end
-            if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
-            if Save then Save.Visible = false end
-            if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
-            if AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = false end
-        end)
+        -- everything (text, logo, cards, popups, acrylic) disappears in one frame
+        HideWindowInstantly()
     end
 end
 
@@ -6439,8 +6430,9 @@ if maxY <= 0 then return end
 
 				local Scrolls = New("ScrollingFrame", {
 					Name = "Scrolls",
-					Position = UDim2.new(0.03, 0, 0, 2),
-					Size = UDim2.new(0.94, 0, 1, -4),
+					Position = UDim2.new(0.02, 0, 0, 2),
+					Size = UDim2.new(0.96, 0, 1, -4),
+					ScrollingEnabled = false,
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					BorderSizePixel = 0,
@@ -6451,11 +6443,11 @@ if maxY <= 0 then return end
 					AutomaticCanvasSize = Enum.AutomaticSize.Y,
 					CanvasSize = UDim2.new(),
 					ScrollingDirection = Enum.ScrollingDirection.Y,
-					ClipsDescendants = true,
+					ClipsDescendants = false,
 					ZIndex = 5001,
 				}, DownBar)
 				New("UIListLayout", {
-					Padding = UDim.new(0, 2),
+					Padding = UDim.new(0, 0),
 					SortOrder = Enum.SortOrder.LayoutOrder,
 				}, Scrolls)
 
@@ -6473,6 +6465,7 @@ if maxY <= 0 then return end
 						Name = "Buttons",
 						Size = UDim2.new(1, -4, 0, 23),
 						Position = UDim2.new(0, 2, 0, 0),
+						ClipsDescendants = false,
 						BackgroundColor3 = Color3.fromRGB(33, 38, 56),
 						BackgroundTransparency = 1,
 						Text = opt,
@@ -6486,6 +6479,15 @@ if maxY <= 0 then return end
 						ZIndex = 5002,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 7) }, Buttons)
+					New("Frame", {
+						Name = "Lines",
+						Position = UDim2.new(0.05, 0, 1, -1),
+						Size = UDim2.new(0.9, 0, 0, 1),
+						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+						BackgroundTransparency = 0.9,
+						ZIndex = 5003,
+						BorderSizePixel = 0,
+					}, Buttons)
 
 					Buttons.MouseEnter:Connect(function()
 						Tween(Buttons, { BackgroundTransparency = 0.15 }, 0.1)
@@ -6510,7 +6512,7 @@ if maxY <= 0 then return end
 						dropOpen = true
 						_openDropdown = closeDropdown
 						DownBar.Visible = true
-						local h = math.min(#options * 25 + 8, 170)
+						local h = math.clamp(#options * 25 + 10, 34, 400)
 						local finalSize = UDim2.new(0.72, 0, 0, h)
 						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.72, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
 						DownBar.Size = finalSize
@@ -6664,7 +6666,7 @@ if maxY <= 0 then return end
 					ZIndex = 5001,
 				}, DownBar)
 				New("UIListLayout", {
-					Padding = UDim.new(0, 2),
+					Padding = UDim.new(0, 0),
 					SortOrder = Enum.SortOrder.LayoutOrder,
 				}, Scrolls)
 
@@ -6736,7 +6738,7 @@ if maxY <= 0 then return end
 						dropOpen = true
 						_openDropdown = closeDropdown
 						DownBar.Visible = true
-						local h = math.min(#options * 25 + 8, 170)
+						local h = math.clamp(#options * 25 + 10, 34, 400)
 						local finalSize = UDim2.new(0.72, 0, 0, h)
 						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.72, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
 						DownBar.Size = finalSize
