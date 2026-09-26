@@ -1314,6 +1314,13 @@ do local h = Instance.new("Frame"); h.Name = "HandHour"; h.AnchorPoint = Vector2
 do local p2 = Instance.new("Frame"); p2.Name = "Pin"; p2.AnchorPoint = Vector2.new(0.5, 0.5); p2.Position = UDim2.new(0.5, 0, 0.5, 0); p2.Size = UDim2.fromOffset(2.6, 2.6); p2.BackgroundColor3 = ACCENT; p2.BorderSizePixel = 0; p2.Parent = ClockIcon end
 do local c2 = Instance.new("UICorner"); c2.CornerRadius = UDim.new(1, 0); c2.Parent = p2 end
 local TimeText = PillText("TimeText", "00:00", 7, 54)
+-- children must sit above the pill: with ZIndexBehavior Global a lower ZIndex
+-- child draws behind its own parent's background
+do
+	for _, d in ipairs(GameInfo:GetDescendants()) do
+		if d:IsA("GuiObject") then d.ZIndex = 9001 end
+	end
+end
 local SignalImage = PillIcon("SignalImage", "rbxthumb://type=Asset&id=113541980541438&w=420&h=420", 8, GOOD)
 local MSText = PillText("MSText", "0 MS", 9, 64)
 
@@ -2273,7 +2280,8 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			if wsPickerOpen then
 				CloseAllPopupsExcept(wsColorFrame)
 				wsColorFrame.Visible = true
-				PositionPopupWithinMain(wsColorFrame, true)
+				ApplyZIndexLadder(wsColorFrame, NextPopupZ())
+PositionPopupWithinMain(wsColorFrame, true)
 				task.defer(wsSyncIndicators)
 				RegisterPopup(wsColorFrame, function()
 					wsPickerOpen = false
@@ -2390,7 +2398,8 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				CloseAllPopupsExcept(ScaleDownBar)
 				scaleOpen = true
 				SmoothOpen(ScaleDownBar, 0.5, 0.2)
-				PositionPopupWithinMain(ScaleDownBar, true)
+				ApplyZIndexLadder(ScaleDownBar, NextPopupZ())
+PositionPopupWithinMain(ScaleDownBar, true)
 				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 				RegisterPopup(ScaleDownBar, closeScaleDropdown, ScaleOpenBtn)
 			end
@@ -2468,7 +2477,8 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				langOpen = true
 				SmoothOpen(LangDownBar, 0.5, 0.2)
 			Tween(LangArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-				PositionPopupWithinMain(LangDownBar, true)
+				ApplyZIndexLadder(LangDownBar, NextPopupZ())
+PositionPopupWithinMain(LangDownBar, true)
 				Tween(LangArrow, {ImageTransparency = 0}, 0.2)
 				RegisterPopup(LangDownBar, closeLangDropdown, LangOpenBtn)
 			end
@@ -2494,6 +2504,20 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				WindowSettingsFrame.Visible = false
 					ApplyZIndexLadder(WindowSettingsFrame, NextPopupZ())
 					PositionPopupWithinMain(WindowSettingsFrame, false, 44, WindowSettings)
+					-- centre the plate on the arrow instead of hanging it off the left edge
+					do
+						local anchorPos = WindowSettings and WindowSettings.AbsolutePosition
+						local anchorSize = WindowSettings and WindowSettings.AbsoluteSize
+						local size = WindowSettingsFrame.AbsoluteSize
+						local gui = NeverloseCS2
+						if anchorPos and anchorSize and size.X > 0 and gui.AbsoluteSize.X > 0 then
+							local wanted = anchorPos.X + anchorSize.X / 2 - size.X / 2
+							local minX = gui.AbsolutePosition.X + 6
+							local maxX = gui.AbsolutePosition.X + gui.AbsoluteSize.X - size.X - 6
+							local x = maxX < minX and minX or math.clamp(wanted, minX, maxX)
+							MovePopupToAbsolute(WindowSettingsFrame, x, WindowSettingsFrame.AbsolutePosition.Y)
+						end
+					end
 					WindowSettingsFrame.Visible = true
 				RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
 				Tween(ImageLabel, {Rotation = 180}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -3251,18 +3275,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	InsertConfigBtn.Parent = CMHeaderRight
 	do local a = Instance.new("UIAspectRatioConstraint"); a.Parent = InsertConfigBtn end
 
-	-- Divider line
-	local CMLine = Instance.new("Frame")
-	CMLine.Name = "Line"
-	CMLine.Active = true
-	CMLine.Position = UDim2.new(0.05, 0, 0.898, 0)
-	CMLine.Size = UDim2.new(0.9, 0, 0, 1)
-	CMLine.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
-	CMLine.BackgroundTransparency = 0.9
-	CMLine.BorderSizePixel = 0
-	CMLine.ZIndex = 1000
-	CMLine.Parent = CMHeader
-
 	-- ── Search Container ─────────────────────────────────────────
 	local SearchContainer = Instance.new("Frame")
 	SearchContainer.Name = "SearchContainer"
@@ -3935,8 +3947,10 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			if not configOpen then return end
 			ConfigMainFrame.Visible = false
 			RefreshDeletedList()
-			RecentlyDeletedPanel.Visible = true
 			RecentlyDeletedPanel.BackgroundTransparency = 0
+			RecentlyDeletedPanel.Visible = false
+			ApplyZIndexLadder(RecentlyDeletedPanel, NextPopupZ())
+			RecentlyDeletedPanel.Visible = true
 			ConstrainPopupToMainFrame(RecentlyDeletedPanel); task.defer(function() ConstrainPopupToMainFrame(RecentlyDeletedPanel) end); RegisterPopup(RecentlyDeletedPanel, closeConfigPanel, RecentlyDeletedBtn)
 		end)
 	end)
@@ -4560,7 +4574,7 @@ end
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1.5; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -5779,7 +5793,8 @@ if maxY <= 0 then return end
 					SetTargetBind(current, nil)
 				end)
 				_contextMenu.Size = UDim2.new(0.28, 0, 0, 112)
-				SmoothOpen(_contextMenu, 0.03, 0.15)
+				ApplyZIndexLadder(_contextMenu, NextPopupZ())
+		SmoothOpen(_contextMenu, 0.03, 0.15)
 				MovePopupToAbsolute(_contextMenu, point.X, point.Y)
 				ConstrainPopupToMainFrame(_contextMenu, 8)
 				_contextOpen = true
