@@ -416,7 +416,7 @@ local function New(class, props, parent)
 		obj.TextYAlignment = Enum.TextYAlignment.Center
 	end
 	if parent then obj.Parent = parent end
-	AddTextConstraint(obj, 9, 16)
+	AddTextConstraint(obj, 7, 16)
 	return obj
 end
 
@@ -1171,7 +1171,7 @@ UIAspectRatio_MSText.Parent = MSText
 
 local UserIcon = Instance.new('ImageLabel')
 UserIcon.Name = "UserIcon"
-UserIcon.Position = UDim2.new(0.62, 0, 0.3, 0)
+UserIcon.Position = UDim2.new(0.615, 0, 0.28, 0)
 UserIcon.Size = UDim2.new(0.09, 0, 0.5, 0)
 UserIcon.BackgroundTransparency = 1
 UserIcon.Image = "rbxthumb://type=Asset&id=123112467890707&w=420&h=420"
@@ -1183,8 +1183,9 @@ UIAspectRatio_UserIcon.Parent = UserIcon
 
 local Username = Instance.new('TextLabel')
 Username.Name = "Username"
-Username.Position = UDim2.new(0.7, 0, 0.268, 0)
-Username.Size = UDim2.new(0.145, 0, 0.49, 0)
+Username.Position = UDim2.new(0.695, 0, 0.268, 0)
+Username.Size = UDim2.new(0.15, 0, 0.49, 0)
+Username.TextTruncate = Enum.TextTruncate.AtEnd
 Username.BackgroundTransparency = 1
 Username.Text = LocalPlayer.DisplayName
 Username.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1196,8 +1197,8 @@ Username.Parent = GameInfo
 
 local NeverIcon = Instance.new('ImageLabel')
 NeverIcon.Name = "NeverIcon"
-NeverIcon.Position = UDim2.new(0.865, 0, 0.1, 0)
-NeverIcon.Size = UDim2.new(0.05, 0, 0.8, 0)
+NeverIcon.Position = UDim2.new(0.862, 0, 0.12, 0)
+NeverIcon.Size = UDim2.new(0.042, 0, 0.76, 0)
 NeverIcon.BackgroundTransparency = 1
 NeverIcon.Image = "rbxthumb://type=Asset&id=118608145176297&w=420&h=420"
 NeverIcon.Parent = GameInfo
@@ -1211,8 +1212,8 @@ UICorner_NeverIcon.Parent = NeverIcon
 
 local Profile = Instance.new('ImageLabel')
 Profile.Name = "Profile"
-Profile.Position = UDim2.new(0.928, 0, 0.1, 0)
-Profile.Size = UDim2.new(0.05, 0, 0.8, 0)
+Profile.Position = UDim2.new(0.918, 0, 0.12, 0)
+Profile.Size = UDim2.new(0.042, 0, 0.76, 0)
 Profile.BackgroundColor3 = Color3.fromRGB(127, 127, 127)
 Profile.Image = ("rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=420&h=420")
 Profile.Parent = GameInfo
@@ -1683,7 +1684,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Position = UDim2.new(0.05, 0, 1, 0),
 		Size = UDim2.new(0.9, 0, 0, 1),
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
-		BackgroundTransparency = 0.94,
+		BackgroundTransparency = 0.965,
 		BorderSizePixel = 0,
 		ZIndex = 150,
 	}, WSLogoRow)
@@ -2792,8 +2793,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Name = "ConfigMainFrame"
 	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.075, 0)
 	ConfigMainFrame.Size = UDim2.new(0.4, 0, 0.42, 0)
-	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(16,19,28)
-	ConfigMainFrame.BackgroundTransparency = 0.09
+	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(15,17,26)
+	ConfigMainFrame.BackgroundTransparency = 0.18
 	ConfigMainFrame.BorderSizePixel = 0
 	ConfigMainFrame.ZIndex = 110
 	ConfigMainFrame.AutomaticSize = Enum.AutomaticSize.None
@@ -2802,16 +2803,19 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Visible = false
 	ConfigMainFrame.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.800000011920929; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(46,52,74); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
 
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
-	CMHeader.Size = UDim2.new(1, 0, 0.25, 0)
-	CMHeader.BackgroundColor3 = Color3.fromRGB(17,20,30)
+	CMHeader.Size = UDim2.new(1, 0, 0.22, 0)
+	CMHeader.BackgroundColor3 = Color3.fromRGB(21,24,36)
+	CMHeader.BackgroundTransparency = 0.55
 	CMHeader.BorderSizePixel = 0
+	CMHeader.ClipsDescendants = true
 	CMHeader.ZIndex = 100
 	CMHeader.Parent = ConfigMainFrame
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = CMHeader end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = CMHeader end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(46,52,74); s.Transparency = 0.75; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = CMHeader end
 
 	-- Cloud icon
 	local CloudIcon = Instance.new("ImageLabel")
@@ -2828,13 +2832,14 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- Title
 	local CMTitle = Instance.new("TextLabel")
 	CMTitle.Name = "TitleLabel"
-	CMTitle.Position = UDim2.new(0.14, 0, 0, 0)
-	CMTitle.Size = UDim2.new(0.3, 0, 1, 0)
+	CMTitle.Position = UDim2.new(0.15, 0, 0, 0)
+	CMTitle.Size = UDim2.new(0.45, 0, 1, 0)
 	CMTitle.BackgroundTransparency = 1
 	CMTitle.Text = "Presets"
 	CMTitle.TextColor3 = mainColor
-	CMTitle.TextSize = 20
+	CMTitle.TextSize = 15
 	CMTitle.Font = Enum.Font.GothamBold
+	CMTitle.TextTransparency = 0.1
 	CMTitle.ZIndex = 1000
 	CMTitle.TextXAlignment = Enum.TextXAlignment.Left
 	CMTitle.Parent = CMHeader
@@ -3060,8 +3065,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Name = "RecentlyDeletedPanel"
 	RecentlyDeletedPanel.Position = UDim2.new(0.012, 0, 0.075, 0)
 	RecentlyDeletedPanel.Size = UDim2.new(0.4, 0, 0.42, 0)
-	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(16,19,28)
-	RecentlyDeletedPanel.BackgroundTransparency = 0.01
+	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(15,17,26)
+	RecentlyDeletedPanel.BackgroundTransparency = 0.18
 	RecentlyDeletedPanel.BorderSizePixel = 0
 	RecentlyDeletedPanel.ZIndex = 120
 	RecentlyDeletedPanel.AutomaticSize = Enum.AutomaticSize.None
@@ -3070,7 +3075,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Visible = false
 	RecentlyDeletedPanel.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = RecentlyDeletedPanel end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.8; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = RecentlyDeletedPanel end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(46,52,74); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = RecentlyDeletedPanel end
 
 	-- RD Header
 	local RDHeader = Instance.new("Frame")
@@ -4138,13 +4143,15 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 			local Elements = New("Frame", {
 				Name = "Elements",
 				Size = UDim2.new(1, 0, 0, 30),
-				BackgroundColor3 = Color3.fromRGB(21,24,35),
-				BackgroundTransparency = 0.26,
+				Position = UDim2.new(0, 0, 0, 0),
+				BackgroundColor3 = Color3.fromRGB(21,24,36),
+				BackgroundTransparency = 0.35,
 				BorderSizePixel = 0,
 				AutomaticSize = Enum.AutomaticSize.Y,
 				LayoutOrder = 1,
 			}, Section)
-			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 12); c.Parent = Elements end
+			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.72; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 6),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -4435,7 +4442,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.939999997615814,
+						BackgroundTransparency = 0.965,
 						ZIndex = 1000,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -4443,7 +4450,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					New("TextLabel", {
 						Name = "TextToggle",
 						Position = UDim2.new(0.04800000086426735, 0, 0.30000001192092896, 0),
-						Size = UDim2.new(0.6600000262260437, 0, 0.6000000238418579, 0),
+						Size = UDim2.new(0.7600000262260437, 0, 0.6000000238418579, 0),
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = text,
@@ -4539,7 +4546,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					New("TextLabel", {
 						Name = "TextToggle",
 						Position = UDim2.new(0.15, 0, 0.30000001192092896, 0),
-						Size = UDim2.new(0.6600000262260437, 0, 0.6000000238418579, 0),
+						Size = UDim2.new(0.7600000262260437, 0, 0.6000000238418579, 0),
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = text,
@@ -4601,7 +4608,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.939999997615814,
+						BackgroundTransparency = 0.965,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -4609,7 +4616,7 @@ UIAspectRatioConstraint.Parent = Slider
 					New("TextLabel", {
 						Name = "TextToggle",
 						Position = UDim2.new(0.04800000086426735, 0, 0.30000001192092896, 0),
-						Size = UDim2.new(0.6600000262260437, 0, 0.6000000238418579, 0),
+						Size = UDim2.new(0.7600000262260437, 0, 0.6000000238418579, 0),
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = text,
@@ -4980,7 +4987,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.94,
+						BackgroundTransparency = 0.965,
 						BorderSizePixel = 0,
 						ZIndex = 1001,
 					}, Colorpicker)
@@ -5490,7 +5497,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.939999997615814,
+					BackgroundTransparency = 0.965,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -5570,7 +5577,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.94,
+					BackgroundTransparency = 0.965,
 					BorderSizePixel = 0,
 					ZIndex = 100,
 				}, CheckBoxToggle)
@@ -5674,7 +5681,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.939999997615814,
+					BackgroundTransparency = 0.965,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -5996,7 +6003,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.939999997615814,
+					BackgroundTransparency = 0.965,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Slider)
@@ -6154,7 +6161,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.939999997615814,
+					BackgroundTransparency = 0.965,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Dropdown)
@@ -6244,18 +6251,19 @@ if maxY <= 0 then return end
 				for _, opt in ipairs(options) do
 					local Buttons = New("TextButton", {
 						Name = "Buttons",
-						Size = UDim2.new(1, 0, 0, 20),
-						BackgroundColor3 = Color3.fromRGB(32, 35, 50),
+						Size = UDim2.new(1, -8, 0, 24),
+						Position = UDim2.new(0, 4, 0, 0),
+						BackgroundColor3 = Color3.fromRGB(28, 32, 48),
 						BackgroundTransparency = 1,
 						Text = opt,
-						TextColor3 = Color3.fromRGB(255, 255, 255),
+						TextColor3 = Color3.fromRGB(226, 232, 244),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
-						TextTransparency = 0.20000000298023224,
+						Font = Enum.Font.SourceSans,
+						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 5002,
 					}, Scrolls)
-					New("UICorner", { CornerRadius = UDim.new(0, 5) }, Buttons)
+					New("UICorner", { CornerRadius = UDim.new(0, 7) }, Buttons)
 
 					Buttons.MouseEnter:Connect(function()
 						Tween(Buttons, { BackgroundTransparency = 0.6 }, 0.1)
@@ -6280,7 +6288,7 @@ if maxY <= 0 then return end
 						dropOpen = true
 						_openDropdown = closeDropdown
 						DownBar.Visible = true
-						local h = math.min(#options * 22 + 8, 132)
+						local h = math.min(#options * 26 + 10, 168)
 						local finalSize = UDim2.new(0.62, 0, 0, h)
 						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.62, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
 						DownBar.Size = finalSize
@@ -6504,7 +6512,7 @@ if maxY <= 0 then return end
 						dropOpen = true
 						_openDropdown = closeDropdown
 						DownBar.Visible = true
-						local h = math.min(#options * 22 + 8, 132)
+						local h = math.min(#options * 26 + 10, 168)
 						local finalSize = UDim2.new(0.62, 0, 0, h)
 						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.62, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
 						DownBar.Size = finalSize
@@ -6753,7 +6761,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.89, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.94,
+					BackgroundTransparency = 0.965,
 					BorderSizePixel = 0,
 					ZIndex = 3,
 				}, Colorpicker)
@@ -7102,14 +7110,7 @@ if maxY <= 0 then return end
 				UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				UIListLayout.Parent = Container
 
-				New("UICorner", { CornerRadius = UDim.new(0, 10) }, Container)
-				New("UIStroke", {
-					Name = "UIStroke",
-					Color = Color3.fromRGB(40, 46, 68),
-					Transparency = 0.6,
-					Thickness = 1,
-					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-				}, Container)
+				-- single panel: the inner container is layout-only, no second card
 
 				local function GetAccordionContentHeight()
 					local okLayout, layout = pcall(function() return Container:FindFirstChildOfClass("UIListLayout") end)
@@ -7140,7 +7141,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.939999997615814,
+					BackgroundTransparency = 0.965,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, DropdownSection)
@@ -7219,7 +7220,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.939999997615814,
+						BackgroundTransparency = 0.965,
 						ZIndex = 100,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -7227,7 +7228,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					New("TextLabel", {
 						Name = "TextToggle",
 						Position = UDim2.new(0.04800000086426735, 0, 0.30000001192092896, 0),
-						Size = UDim2.new(0.6600000262260437, 0, 0.6000000238418579, 0),
+						Size = UDim2.new(0.7600000262260437, 0, 0.6000000238418579, 0),
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = text2,
@@ -7326,7 +7327,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					New("TextLabel", {
 						Name = "TextToggle",
 						Position = UDim2.new(0.15, 0, 0.30000001192092896, 0),
-						Size = UDim2.new(0.6600000262260437, 0, 0.6000000238418579, 0),
+						Size = UDim2.new(0.7600000262260437, 0, 0.6000000238418579, 0),
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = text2,
@@ -7646,7 +7647,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.939999997615814,
+						BackgroundTransparency = 0.965,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -7654,7 +7655,7 @@ UIAspectRatioConstraint.Parent = Slider
 					New("TextLabel", {
 						Name = "TextToggle",
 						Position = UDim2.new(0.04800000086426735, 0, 0.30000001192092896, 0),
-						Size = UDim2.new(0.6600000262260437, 0, 0.6000000238418579, 0),
+						Size = UDim2.new(0.7600000262260437, 0, 0.6000000238418579, 0),
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = text2,
@@ -7803,7 +7804,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.94,
+						BackgroundTransparency = 0.965,
 						BorderSizePixel = 0,
 						ZIndex = 101,
 					}, Colorpicker)
