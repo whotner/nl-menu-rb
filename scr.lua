@@ -1211,7 +1211,7 @@ local Stats = game:GetService('Stats')
 local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
 GameInfo.AnchorPoint = Vector2.new(1, 0)
-GameInfo.Position = UDim2.new(1, -18, 0, 14)
+GameInfo.Position = UDim2.new(1, -10, 0, 8)
 GameInfo.Size = UDim2.fromOffset(380, 40)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
 GameInfo.BackgroundColor3 = Color3.fromRGB(13, 15, 22)
@@ -1222,27 +1222,6 @@ GameInfo.Draggable = false
 GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = GameInfo end
--- soft shadow: Roblox has no box-shadow, so stack translucent frames behind the pill
-do
-local shadow = {}
-for i = 1, 6 do
-local layer = Instance.new("Frame")
-layer.Name = "GameInfoShadow" .. tostring(i)
-layer.AnchorPoint = Vector2.new(0.5, 0.5)
-layer.BackgroundColor3 = Color3.new(0, 0, 0)
-layer.BackgroundTransparency = 0.5 + i * 0.07
-layer.BorderSizePixel = 0
-layer.ClipsDescendants = false
-layer.Active = false
-layer.Selectable = false
-layer.ZIndex = 0
-layer.Visible = false
-layer.Parent = NeverloseCS2
-do local sc = Instance.new("UICorner"); sc.CornerRadius = UDim.new(1, 0); sc.Parent = layer end
-shadow[i] = layer
-end
-GameInfoShadowLayers = shadow
-end
 do local s = Instance.new("UIStroke"); s.Name = "Border"; s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.5; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = GameInfo end
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 15); pd.PaddingRight = UDim.new(0, 19); pd.PaddingTop = UDim.new(0, 9); pd.PaddingBottom = UDim.new(0, 9); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
@@ -1325,65 +1304,61 @@ TweenService:Create(label, TweenInfo.new(0.16, Enum.EasingStyle.Sine), {TextTran
 end)
 end
 
--- live FPS + clock + ping, smoothed so the numbers do not jump
+-- live FPS + clock + ping: sampled every frame, written once per second
+local function setTextSmooth(label, newText)
+if label:GetAttribute("shownText") == newText then return end
+label:SetAttribute("shownText", newText)
+local fadeOut = TweenService:Create(label, TweenInfo.new(0.1, Enum.EasingStyle.Sine), {TextTransparency = 1})
+fadeOut:Play()
+fadeOut.Completed:Once(function()
+if not label or not label.Parent then return end
+label.Text = newText
+TweenService:Create(label, TweenInfo.new(0.16, Enum.EasingStyle.Sine), {TextTransparency = 0.15}):Play()
+end)
+end
+
 local fpsBuffer = {}
-local timeAcc = 0
-local shadowAcc = 0
-local lastMs
+local clockAcc = 0
+local statAcc = 0
 local lastFps
-local shownFps = 60
-local shownMs = 0
+local lastMs
 RunService.RenderStepped:Connect(function(dt)
 if type(dt) ~= "number" or dt <= 0 then return end
 table.insert(fpsBuffer, dt)
 if #fpsBuffer > 20 then table.remove(fpsBuffer, 1) end
+clockAcc = clockAcc + dt
+if clockAcc >= 1 then
+clockAcc = 0
+setTextSmooth(TimeText, os.date("%H:%M"))
+end
+statAcc = statAcc + dt
+if statAcc < 1 then return end
+statAcc = 0
 local avg = 0
 for _, v in ipairs(fpsBuffer) do avg = avg + v end
 if avg > 0 then
-shownFps = shownFps + ((#fpsBuffer / avg) - shownFps) * 0.15
-local shownFpsInt = math.round(shownFps)
-if shownFpsInt ~= lastFps then
-lastFps = shownFpsInt
-setTextSmooth(FPSText, tostring(shownFpsInt) .. " FPS")
-end
-end
-timeAcc = timeAcc + dt
-if timeAcc >= 0.5 then
-timeAcc = 0
-setTextSmooth(TimeText, os.date("%H:%M"))
-end
-shadowAcc = shadowAcc + dt
-if shadowAcc >= 0.07 and GameInfoShadowLayers then
-shadowAcc = 0
-local pos = GameInfo.AbsolutePosition
-local size = GameInfo.AbsoluteSize
-if size.X > 1 and GameInfo.Visible then
-for i = 1, 6 do
-local layer = GameInfoShadowLayers[i]
-if layer then
-layer.Visible = true
-layer.Position = UDim2.fromOffset(pos.X + size.X / 2, pos.Y + size.Y / 2 + 2 + i)
-layer.Size = UDim2.fromOffset(size.X + i * 3, size.Y + i * 3)
-end
-end
+local fps = math.round(#fpsBuffer / avg)
+if fps ~= lastFps then
+lastFps = fps
+setTextSmooth(FPSText, tostring(fps) .. " FPS")
 end
 end
 local ping = Stats and Stats.Network and Stats.Network.ServerStatsItem and Stats.Network.ServerStatsItem["Data Ping"]
 if ping then
 local ok, value = pcall(function() return ping:GetValue() end)
 if ok and type(value) == "number" then
-shownMs = shownMs + (value - shownMs) * 0.15
-local shownMsInt = math.round(shownMs)
-if shownMsInt ~= lastMs then
-lastMs = shownMsInt
-setTextSmooth(MSText, tostring(shownMsInt) .. " MS")
-local tint = shownMsInt >= 150 and BAD or shownMsInt >= 80 and WARN or GOOD
+local ms = math.round(value)
+if ms ~= lastMs then
+lastMs = ms
+setTextSmooth(MSText, tostring(ms) .. " MS")
+local tint = ms >= 150 and BAD or ms >= 80 and WARN or GOOD
 MSText.TextColor3 = tint
 SignalImage.ImageColor3 = tint
 end
 end
 end
 end)
+
 -- rounded window: no square drop-shadow image (its corners broke the rounding)
 
 local Aspect = Instance.new("UIAspectRatioConstraint")
