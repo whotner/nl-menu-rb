@@ -1370,8 +1370,8 @@ Aspect.AspectRatio = 1.4
 
 	local HubIcon = New("ImageLabel", {
 		Name = "HubIcon",
-		Position = UDim2.new(0.014000000432133675, 0, 0.006000000052154064, 0),
-		Size = UDim2.new(0.03300000014901161, 0, 0.05800000014901161, 0),
+		Position = UDim2.new(0.014000000432133675, 0, 0.005000000052154064, 0),
+		Size = UDim2.new(0.048000000089406967, 0, 0.08000000011920929, 0),
 		BackgroundColor3 = Color3.fromRGB(19,22,33),
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
@@ -1381,7 +1381,7 @@ Aspect.AspectRatio = 1.4
 
 	New("TextLabel", {
 		Name = "Title",
-		Position = UDim2.new(0.06800000369548798, 0, 0.008700000122189522, 0),
+		Position = UDim2.new(0.07600000500679016, 0, 0.008700000122189522, 0),
 		Size = UDim2.new(0.20000000298023224, 0, 0.05000000074505806, 0),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BackgroundTransparency = 1,
@@ -1394,7 +1394,7 @@ Aspect.AspectRatio = 1.4
 
 	New("TextLabel", {
 		Name = "GameTitle",
-		Position = UDim2.new(0.06800000369548798, 0, 0.04699999839067459, 0),
+		Position = UDim2.new(0.07600000500679016, 0, 0.04699999839067459, 0),
 		Size = UDim2.new(0.20000000298023224, 0, 0.024000000208616257, 0),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BackgroundTransparency = 1,
@@ -4042,7 +4042,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 local Line9 = Instance.new('Frame')
 Line9.Name = "Line9"
-Line9.Position = UDim2.new(0.010000000707268715,0,0.08799999952316284,0)
+Line9.Position = UDim2.new(0.010000000707268715,0,0.09000000357627869,0)
 Line9.Size = UDim2.new(0.9789999723434448,0,0,1)
 Line9.BackgroundColor3 = Color3.fromRGB(162,162,162)
 Line9.BackgroundTransparency = 0.93
@@ -4162,6 +4162,11 @@ end
 			TextYAlignment = Enum.TextYAlignment.Center,
 			LayoutOrder = tabOrder,
 		}, Tab)
+		New("UIPadding", {
+			PaddingLeft = UDim.new(0, 4),
+			PaddingTop = UDim.new(0, 14),
+			PaddingBottom = UDim.new(0, 6),
+		}, lbl)
 		return lbl
 	end
 
@@ -4406,8 +4411,9 @@ AddTextConstraint(SectionLabel, 9, 12, true)
 
 			local Elements = New("Frame", {
 				Name = "Elements",
-				Size = UDim2.new(1, 0, 0, 30),
-				Position = UDim2.new(0, 0, 0, 0),
+				-- 1px inset: the column clips, a flush border loses half its width
+				Size = UDim2.new(1, -2, 0, 30),
+				Position = UDim2.new(0, 1, 0, 0),
 				BackgroundColor3 = Color3.fromRGB(21,24,36),
 				BackgroundTransparency = 0,
 				BorderSizePixel = 0,
@@ -5138,14 +5144,6 @@ UIAspectRatioConstraint.Parent = Slider
 							TextTransparency = 0.10000000149011612,
 							ZIndex = 5002,
 							TextXAlignment = Enum.TextXAlignment.Left,
-						}, BtnRow)
-						New("Frame", {
-							Name = "Lines",
-							Position = UDim2.new(0.05, 0, 1, -1),
-							Size = UDim2.new(0.9, 0, 0, 1),
-							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-							BackgroundTransparency = 0.9,
-							BorderSizePixel = 0,
 						}, BtnRow)
 
 						local SelBtn = New("TextButton", {
@@ -6533,15 +6531,6 @@ if maxY <= 0 then return end
 						ZIndex = 5002,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 7) }, Buttons)
-					New("Frame", {
-						Name = "Lines",
-						Position = UDim2.new(0.05, 0, 1, -1),
-						Size = UDim2.new(0.9, 0, 0, 1),
-						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.9,
-						ZIndex = 5003,
-						BorderSizePixel = 0,
-					}, Buttons)
 
 					Buttons.MouseEnter:Connect(function()
 						Tween(Buttons, { BackgroundTransparency = 0.15 }, 0.1)
@@ -6768,14 +6757,6 @@ if maxY <= 0 then return end
 						ZIndex = 5002,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, Btn)
-					New("Frame", {
-						Name = "Lines",
-						Position = UDim2.new(0.05, 0, 1, -1),
-						Size = UDim2.new(0.9, 0, 0, 1),
-						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.9,
-						BorderSizePixel = 0,
-					}, Btn)
 
 					Btn.MouseEnter:Connect(function()
 						Tween(Btn, { BackgroundTransparency = 0.6 }, 0.1)
@@ -7856,14 +7837,6 @@ UIAspectRatioConstraint.Parent = Toggle
 							TextTransparency = 0.10000000149011612,
 							ZIndex = 1002,
 							TextXAlignment = Enum.TextXAlignment.Left,
-						}, BtnRow)
-						New("Frame", {
-							Name = "Lines",
-							Position = UDim2.new(0.05, 0, 1, -1),
-							Size = UDim2.new(0.9, 0, 0, 1),
-							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-							BackgroundTransparency = 0.9,
-							BorderSizePixel = 0,
 						}, BtnRow)
 
 						local SelBtn = New("TextButton", {
