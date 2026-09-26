@@ -1231,8 +1231,8 @@ local Stats = game:GetService('Stats')
 
 local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
-GameInfo.AnchorPoint = Vector2.new(0, 0)
-GameInfo.Position = UDim2.new(0, 10, 0, 8)
+GameInfo.AnchorPoint = Vector2.new(1, 0)
+GameInfo.Position = UDim2.new(1, -10, 0, 8)
 GameInfo.Size = UDim2.fromOffset(380, 40)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
 GameInfo.BackgroundColor3 = Color3.fromRGB(13, 15, 22)
@@ -2480,7 +2480,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		WSScale.Scale = 0.92
 		Tween(WSScale, { Scale = 1 }, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
-				PositionPopupWithinMain(WindowSettingsFrame, false, 30, Info)
+				PositionPopupWithinMain(WindowSettingsFrame, false, 8, WindowSettings)
 				RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
 				Tween(ImageLabel, {Rotation = 180}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			else
@@ -3067,6 +3067,19 @@ SaveText.TextTransparency = 0.20000000298023224
 SaveText.TextXAlignment = Enum.TextXAlignment.Left
 SaveText.Parent = Save
 
+	-- short pulse so a save is visible, plus the name of what is stored
+	local function FlashSaved()
+		if not Save then return end
+		Tween(Save, { BackgroundColor3 = mainColor }, 0.09)
+		task.delay(0.1, function()
+			if Save then Tween(Save, { BackgroundColor3 = Color3.fromRGB(16,19,28) }, 0.22) end
+		end)
+	end
+	local function ShowSavedName()
+		if not SaveText then return end
+		SaveText.Text = activeConfigName or "Save"
+	end
+
 local Lines = Instance.new('Frame')
 Lines.Name = "Lines"
 Lines.Position = UDim2.new(0,-5,-0.19000010192394257,0)
@@ -3239,7 +3252,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── Search Container ─────────────────────────────────────────
 	local SearchContainer = Instance.new("Frame")
 	SearchContainer.Name = "SearchContainer"
-	SearchContainer.Position = UDim2.new(0.037, 0, 0.22, 0)
+	SearchContainer.Position = UDim2.new(0.037, 0, 0.18, 0)
 	SearchContainer.Size = UDim2.new(0.928, 0, 0.143, 0)
 	SearchContainer.BackgroundColor3 = Color3.fromRGB(19, 22, 33)
 	SearchContainer.BorderSizePixel = 0
@@ -3251,8 +3264,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local SearchIconImg = Instance.new("ImageLabel")
 	SearchIconImg.Name = "SearchIcon"
-	SearchIconImg.Position = UDim2.new(0.025, 0, 0.25, 0)
-	SearchIconImg.Size = UDim2.new(0, 20, 0, 20)
+	SearchIconImg.AnchorPoint = Vector2.new(0, 0.5)
+	SearchIconImg.Position = UDim2.new(0.03, 0, 0.5, 0)
+	SearchIconImg.Size = UDim2.fromOffset(18, 18)
 	SearchIconImg.BackgroundTransparency = 1
 	SearchIconImg.Image = "rbxassetid://6031154871"
 	SearchIconImg.ImageColor3 = Color3.fromRGB(140, 140, 160)
@@ -3323,8 +3337,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── List Container ────────────────────────────────────────────
 	local ListContainer = Instance.new("ScrollingFrame")
 	ListContainer.Name = "ListContainer"
-	ListContainer.Position = UDim2.new(0.037, 0, 0.39, 0)
-	ListContainer.Size = UDim2.new(0.93, 0, 0.59, 0)
+	ListContainer.Position = UDim2.new(0.037, 0, 0.33, 0)
+	ListContainer.Size = UDim2.new(0.93, 0, 0.65, 0)
 	ListContainer.BackgroundTransparency = 1
 	ListContainer.BorderSizePixel = 0
 	ListContainer.ZIndex = 100
@@ -3529,6 +3543,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		task.delay(0.22, function()
 			if not configOpen then return end
 			RecentlyDeletedPanel.Visible = false
+			ConfigMainFrame.BackgroundTransparency = 0
 			ConfigMainFrame.Visible = true
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
 			ConfigScale.Scale = 0.96
@@ -3605,7 +3620,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		-- "..." button
 		local SettingsBtn = Instance.new("TextButton")
 		SettingsBtn.Name = "Settings"
-		SettingsBtn.Position = UDim2.new(0.79, 0, 0, 0)
+		SettingsBtn.Position = UDim2.new(0.75, 0, 0, 0)
 		SettingsBtn.Size = UDim2.new(0.08, 0, 1, 0)
 		SettingsBtn.BackgroundTransparency = 1
 		SettingsBtn.Text = "..."
@@ -3630,8 +3645,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		-- ── Settings Frame (shown on "..." click) ─────────────────
 		local SettingsFrame = Instance.new("Frame")
 		SettingsFrame.Name = "SettingsFrame"
-		SettingsFrame.Position = UDim2.new(0.54, 0, 1, 2)
-		SettingsFrame.Size = UDim2.new(0.44, 0, 0, 0)
+		SettingsFrame.Position = UDim2.new(0.02, 0, 1, 2)
+		SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
 		SettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 		SettingsFrame.BackgroundTransparency = 0
 		SettingsFrame.BorderSizePixel = 0
@@ -3865,6 +3880,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		local n = activeConfigName
 		if type(n) ~= "string" or n == "" or n == "Save" then return end
 		SaveNamedConfig(n)
+		ShowSavedName()
+		FlashSaved()
 	end
 
 	AutoSaveBtn.MouseButton1Click:Connect(function()
@@ -3932,8 +3949,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		if configOpen then
 			CloseAllPopupsExcept(ConfigMainFrame)
 			RecentlyDeletedPanel.Visible = false
-			RecentlyDeletedPanel.BackgroundTransparency = 1
 			RefreshConfigList()
+			ConfigMainFrame.BackgroundTransparency = 0
 			ConfigMainFrame.Visible = true
 			ConfigMainFrame.ZIndex = 7000
 			ApplyZIndexLadder(ConfigMainFrame, NextPopupZ())
