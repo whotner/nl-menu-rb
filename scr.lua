@@ -5644,96 +5644,19 @@ if maxY <= 0 then return end
 					defaultEnabled = false
 				end
 				if type(callback) ~= "function" then callback = nil end
-				elemCount = elemCount + 1
-				local enabled = defaultEnabled == true
-				local color = NormalizeColor(defaultColor)
-
-				local ToggleWithColorPicker = New("Frame", {
-					Name = "ToggleWithColorPicker",
-					Size = UDim2.new(1, 0, 0.20000000298023224, 0),
-					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 1,
-					LayoutOrder = elemCount,
-				}, Elements)
-				New("UIAspectRatioConstraint", {
-					AspectRatio = 9,
-					AspectType = Enum.AspectType.ScaleWithParentSize,
-				}, ToggleWithColorPicker)
-
-				New("Frame", {
-					Name = "Lines",
-					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.9, 0, 0, 1),
-					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.900000011920929,
-					ZIndex = 100,
-					BorderSizePixel = 0,
-				}, ToggleWithColorPicker)
-
-				local Effect = New("Frame", {
-					Name = "Effect",
-					Position = UDim2.new(0.8400000143051147, 0, 0.30000001192092896, 0),
-					Size = UDim2.new(0.11035999655723572, 0, 0.5600000023841858, 0),
-					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
-				}, ToggleWithColorPicker)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
-				New("UIStroke", { Transparency = 0.800000011920929, Thickness = 0.800000011920929 }, Effect)
-
-					local Icon = New("Frame", {
-						Name = "Icon",
-						Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0),
-						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
-						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-						BackgroundTransparency = enabled and 0 or 0.5,
-					}, Effect)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
-				New("UIAspectRatioConstraint", {}, Icon)
-
-				New("TextLabel", {
-					Name = "TextToggle",
-					Position = UDim2.new(0.02800000086426735, 0, 0.30000001192092896, 0),
-					Size = UDim2.new(0.6600000262260437, 0, 0.500000238418579, 0),
-					BackgroundColor3 = Color3.fromRGB(28,32,48),
-					BackgroundTransparency = 1,
-					Text = text,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
-					TextScaled = true,
-					Font = Enum.Font.SourceSansSemibold,
-					TextTransparency = 0.10000000149011612,
-					TextXAlignment = Enum.TextXAlignment.Left,
-				}, ToggleWithColorPicker)
-
-				local Btn = New("TextButton", {
-					Size = UDim2.new(1, 0, 1, 0),
-					BackgroundTransparency = 1,
-					Text = "",
-					ZIndex = 5,
-				}, ToggleWithColorPicker)
-
-				local function Set(val)
-					enabled = val == true
-					Icon.BackgroundTransparency = enabled and 0 or 0.5
-					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
-					InvokeCallback(callback, color, enabled)
-				end
-
-				Btn.MouseButton1Click:Connect(function() Set(not enabled) end)
-
-				local obj = {}
-				function obj:Set(v) Set(v) end
-				function obj:SetColor(c)
-					color = NormalizeColor(c)
-					InvokeCallback(callback, color, enabled)
-				end
-				function obj:GetColor() return color end
-				function obj:Get() return enabled end
-				function obj:AddSettings() return MakeSettings(ToggleWithColorPicker, nil, text) end
-				RegisterConfigElement("colortoggle_", text, obj)
-				RegisterConfigElement("colortoggle_color_", text, {Get = function() return obj:GetColor() end, Set = function(_, c) obj:SetColor(c) end})
-				CenterElement(ToggleWithColorPicker)
-				BindElementContext(ToggleWithColorPicker, "colortoggle", text, obj, defaultEnabled)
-				return obj
+				local state = {
+					enabled = defaultEnabled == true,
+					color = NormalizeColor(defaultColor),
+				}
+				return SectionObj:AddToggleColorpicker(text, state.enabled, state.color,
+					function(enabled)
+						state.enabled = enabled
+						if callback then callback(state.color, enabled) end
+					end,
+					function(newColor)
+						state.color = newColor
+						if callback then callback(newColor, state.enabled) end
+					end)
 			end
 
 			function SectionObj:AddToggleColorpicker(text, defaultEnabled, defaultColor, callback, colorCallback)
