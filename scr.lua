@@ -922,10 +922,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	hubTitle = tostring(hubTitle or "Neverlose")
 	hubImage = tostring(hubImage or "")
 	gameTitle = tostring(gameTitle or "Counter Strike 2")
-	local username = LocalPlayer.DisplayName or LocalPlayer.Name or "Player"
 	local daysLeft = "Lifetime"
-	local userId = LocalPlayer.UserId or 0
-	local userImage = "rbxthumb://type=AvatarHeadShot&id=" .. userId .. "&w=150&h=150"
 
 	_windowConfigCounter = _windowConfigCounter + 1
 	local windowConfigId = tostring(_windowConfigCounter)
@@ -1950,7 +1947,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		ZIndex = 120,
 		LayoutOrder = 2,
 	}, SettingsContainer)
-	local logoLine = New("Frame", {
+	New("Frame", {
 		Name = "Lines",
 		Position = UDim2.new(0.06, 0, 1, -1),
 		Size = UDim2.new(0.88, 0, 0, 1),
@@ -1959,7 +1956,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		BorderSizePixel = 0,
 		ZIndex = 150,
 	}, WSLogoRow)
-	local logoLabel = New("TextLabel", {
+	New("TextLabel", {
 		Name = "Text",
 		Position = UDim2.new(0.04, 0, 0.5, 0),
 		Size = UDim2.new(0.6, 0, 0.5, 0),
@@ -2892,7 +2889,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 local asss = Instance.new("UIAspectRatioConstraint")
 asss.Parent = SearchBtn
 
-	local _configs = {}
 
 	local function SanitizeConfigName(name)
 		name = tostring(name or "Default"):gsub("[^%w%-%_ ]", "_")
@@ -8703,27 +8699,14 @@ if maxY <= 0 then return end
 		return self
 	end
 
-	local defaultCustomization = {
-		accentColor = mainColor,
-		font = Enum.Font.SourceSansSemibold,
-		textColor = Color3.fromRGB(255, 255, 255),
-		sectionTitleSize = 13,
-		sectionTitleColor = Color3.fromRGB(150, 158, 190),
-		sectionTitleTransparency = 0.6,
-		elementTextSize = 12,
-		watermarkText = "NEVERLOSE  •  UI",
-		watermarkVisible = false,
-		cornerRadius = 14,
-		showContextDots = false,
-	}
 
-	local function eachText(root, fn)
-		for _, d in ipairs(root:GetDescendants()) do
-			if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then fn(d) end
-		end
-	end
 
 	local function applyCustomization()
+		local function eachText(root, fn)
+			for _, d in ipairs(root:GetDescendants()) do
+				if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then fn(d) end
+			end
+		end
 		eachText(MainFrame, function(t)
 			t.Font = customization.font
 			t.TextColor3 = customization.textColor
