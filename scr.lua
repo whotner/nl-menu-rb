@@ -2987,7 +2987,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BorderSizePixel = 0,
 		BackgroundTransparency = 1,
-		ScrollBarThickness = 3,
+		ScrollBarThickness = 0,
 		ScrollBarImageTransparency = 0.35,
 		Active = true,
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
@@ -4428,9 +4428,8 @@ New("UIAspectRatioConstraint", {
 			AutomaticCanvasSize = Enum.AutomaticSize.Y,
 			CanvasSize = UDim2.new(),
 			ScrollingDirection = Enum.ScrollingDirection.Y,
-			ScrollBarThickness = 3,
+			ScrollBarThickness = 0,
 		}, TabHose)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 1), PaddingRight = UDim.new(0, 1) }, Left)
 		
 		local Right = New("ScrollingFrame", {
 			Name = "Right",
@@ -4443,9 +4442,8 @@ New("UIAspectRatioConstraint", {
 			AutomaticCanvasSize = Enum.AutomaticSize.Y,
 			CanvasSize = UDim2.new(),
 			ScrollingDirection = Enum.ScrollingDirection.Y,
-			ScrollBarThickness = 3,
+			ScrollBarThickness = 0,
 		}, TabHose)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 1), PaddingRight = UDim.new(0, 1) }, Right)
 		Left:SetAttribute("SearchName", name)
 		Right:SetAttribute("SearchName", name)
 		Left:SetAttribute("TabIndex", tabIndex)
@@ -8660,7 +8658,7 @@ if maxY <= 0 then return end
 				AutomaticCanvasSize = Enum.AutomaticSize.Y,
 				CanvasSize = UDim2.new(),
 				ScrollingDirection = Enum.ScrollingDirection.Y,
-				ScrollBarThickness = 3,
+				ScrollBarThickness = 0,
 			}, TabHose)
 			New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder }, stLeft)
 
@@ -8675,7 +8673,7 @@ if maxY <= 0 then return end
 				AutomaticCanvasSize = Enum.AutomaticSize.Y,
 				CanvasSize = UDim2.new(),
 				ScrollingDirection = Enum.ScrollingDirection.Y,
-				ScrollBarThickness = 3,
+				ScrollBarThickness = 0,
 			}, TabHose)
 			stLeft:SetAttribute("SearchName", name)
 			stRight:SetAttribute("SearchName", name)
