@@ -1123,6 +1123,16 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			return ancestors
 		end
 
+		-- the ref counted version can be undone by an unrelated close, which left the
+		-- column clipping again and cut the plate plus its left border, so force it
+		local function ForceLiftClipping(popup)
+			local current = popup and popup.Parent
+			while current and current ~= MainFrame do
+				pcall(function() current.ClipsDescendants = false end)
+				current = current.Parent
+			end
+		end
+
 		local function RememberPopupClipping(popup)
 			if not popup or not popup.Parent or _popupClipRestore[popup] then return end
 			local ancestors = FindClippingAncestors(popup)
@@ -1290,8 +1300,7 @@ end
 -- square-ish chip with a 6px radius, exactly like the logo in the menu header
 local NeverIcon = PillIcon("NeverIcon", "rbxthumb://type=Asset&id=118608145176297&w=420&h=420", 1, Color3.new(1, 1, 1), UDim.new(0, 6))
 NeverIcon.Size = UDim2.fromOffset(24, 24)
-NeverIcon.BackgroundTransparency = 0
-NeverIcon.BackgroundColor3 = Color3.fromRGB(19, 22, 33)
+NeverIcon.BackgroundTransparency = 1
 NeverIcon.ScaleType = Enum.ScaleType.Fit
 local UserIcon = PillIcon("UserIcon", "rbxthumb://type=Asset&id=123112467890707&w=420&h=420", 2)
 local Username = PillText("Username", LocalPlayer.DisplayName, 3, 100)
@@ -1485,7 +1494,7 @@ Aspect.AspectRatio = 1.4
 		Name = "HubIcon",
 		Position = UDim2.new(0.014000000432133675, 0, 0.005000000052154064, 0),
 		Size = UDim2.new(0.048000000089406967, 0, 0.08000000011920929, 0),
-		BackgroundColor3 = Color3.fromRGB(19,22,33),
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
 		ScaleType = Enum.ScaleType.Fit,
@@ -4797,6 +4806,7 @@ end
 					-- this plate is positioned by placeSettings, so it has to lift the
 					-- ancestor clipping itself or the column cuts it in half
 					RememberPopupClipping(SettingsFrame)
+					ForceLiftClipping(SettingsFrame)
 					SettingsFrame.BackgroundTransparency = 0
 					SettingsFrame.Visible = false
 					SFScale.Scale = 0.94
@@ -5361,11 +5371,11 @@ UIAspectRatioConstraint.Parent = Slider
 							-- opaque from the first frame, the grow animation is enough
 							DropPopup.BackgroundTransparency = 0
 							DropPopup.Visible = false
-							ApplyZIndexLadder(DropPopup, NextPopupZ())
 							-- own rung: without it the panel text drawn later sat on top and
 							-- showed through the list
 							ApplyZIndexLadder(DropPopup, NextPopupZ())
 							PositionPopupWithinMain(DropPopup, true, nil, Selection, Vector2.new(popupW, popupH))
+							ForceLiftClipping(DropPopup)
 							DropPopup.Visible = true
 							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown, OpenBtn)
@@ -8074,9 +8084,12 @@ UIAspectRatioConstraint.Parent = Toggle
 							local knownH = math.max(24, math.min(100, math.max(MainFrame.AbsoluteSize.Y, 1)))
 							local knownW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
 							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
-							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
 							DropPopup.BackgroundTransparency = 0
 							DropPopup.Visible = false
+							ApplyZIndexLadder(DropPopup, NextPopupZ())
+							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
+							ForceLiftClipping(DropPopup)
+							DropPopup.Visible = true
 							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
 						end
