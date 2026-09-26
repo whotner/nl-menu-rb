@@ -569,11 +569,14 @@ end
 local Z_BASE = 10000
 local _popupZStep = 0
 
--- each open gets its own rung, so the newest popup always wins
+-- each open gets its own rung, so the newest popup always wins.
+-- the step has to clear the deepest subtree, otherwise rows of the parent
+-- plate end up drawn over the popup that opened inside it
+local Z_RUNG = 100
 local function NextPopupZ()
 	_popupZStep = _popupZStep + 1
-	if _popupZStep > 500 then _popupZStep = 1 end
-	return Z_BASE + _popupZStep
+	if _popupZStep > 40 then _popupZStep = 1 end
+	return Z_BASE + _popupZStep * Z_RUNG
 end
 
 local function ApplyZIndexLadder(root, base)
@@ -1252,7 +1255,7 @@ GameInfo.Active = true
 GameInfo.Draggable = false
 GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
-GameInfo.ZIndex = 9000
+GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = GameInfo end
 do local s = Instance.new("UIStroke"); s.Name = "Border"; s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = GameInfo end
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 15); pd.PaddingRight = UDim.new(0, 19); pd.PaddingTop = UDim.new(0, 9); pd.PaddingBottom = UDim.new(0, 9); pd.Parent = GameInfo end
@@ -1327,7 +1330,7 @@ local TimeText = PillText("TimeText", "00:00", 7, 54)
 -- child draws behind its own parent's background
 do
 	for _, d in ipairs(GameInfo:GetDescendants()) do
-		if d:IsA("GuiObject") then d.ZIndex = 9001 end
+		if d:IsA("GuiObject") then d.ZIndex = Z_BASE + 901 end
 	end
 end
 local SignalImage = PillIcon("SignalImage", "rbxthumb://type=Asset&id=113541980541438&w=420&h=420", 8, GOOD)
@@ -1335,7 +1338,7 @@ local MSText = PillText("MSText", "0 MS", 9, 64)
 -- every part of the pill, including the two created last, has to sit above it
 do
 	for _, d in ipairs(GameInfo:GetDescendants()) do
-		if d:IsA("GuiObject") then d.ZIndex = 9001 end
+		if d:IsA("GuiObject") then d.ZIndex = Z_BASE + 901 end
 	end
 end
 
@@ -5708,7 +5711,7 @@ if maxY <= 0 then return end
 					BackgroundTransparency = 0.05,
 					BorderSizePixel = 0,
 					Visible = false,
-					ZIndex = 9000,
+					ZIndex = Z_BASE + 950,
 					ClipsDescendants = true,
 				}, MainFrame)
 				New("UICorner", { CornerRadius = UDim.new(0, 12) }, _bindMenu)
@@ -5721,7 +5724,7 @@ if maxY <= 0 then return end
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = true,
 					Font = Enum.Font.GothamBold,
-					ZIndex = 9001,
+					ZIndex = Z_BASE + 951,
 				}, _bindMenu)
 				AddTextConstraint(label, 10, 14, true)
 				return _bindMenu
