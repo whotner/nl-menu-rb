@@ -4078,7 +4078,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	}, Frame2)
 	New("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
-		Padding = UDim.new(0, 8),
+		Padding = UDim.new(0, 13),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, TabHose)
 
@@ -4415,7 +4415,7 @@ New("UIAspectRatioConstraint", {
 
 		local Left = New("ScrollingFrame", {
 			Name = "Left",
-			Size = UDim2.new(0.47, 0, 1, 0),
+			Size = UDim2.new(0.47999998927116394, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			ClipsDescendants = true,
@@ -4428,7 +4428,7 @@ New("UIAspectRatioConstraint", {
 		
 		local Right = New("ScrollingFrame", {
 			Name = "Right",
-			Size = UDim2.new(0.47, 0, 1, 0),
+			Size = UDim2.new(0.47999998927116394, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			LayoutOrder = 1,
@@ -8645,7 +8645,7 @@ if maxY <= 0 then return end
 			-- Content columns in TabHose
 			local stLeft = New("ScrollingFrame", {
 				Name = "STLeft_" .. name,
-				Size = UDim2.new(0.47, 0, 1, 0),
+				Size = UDim2.new(0.47999998927116394, 0, 1, 0),
 				BackgroundTransparency = 1,
 				Visible = false,
 				ClipsDescendants = true,
@@ -8659,7 +8659,7 @@ if maxY <= 0 then return end
 
 			local stRight = New("ScrollingFrame", {
 				Name = "STRight_" .. name,
-				Size = UDim2.new(0.47, 0, 1, 0),
+				Size = UDim2.new(0.47999998927116394, 0, 1, 0),
 				BackgroundTransparency = 1,
 				LayoutOrder = 1,
 				Visible = false,
