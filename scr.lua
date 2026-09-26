@@ -319,10 +319,6 @@ local function AddTextConstraint(object, minimum, maximum, force)
 	end
 	constraint.MinTextSize = minimum or 9
 	constraint.MaxTextSize = maximum or 16
-	if object:IsA("TextLabel") or object:IsA("TextButton") then
-		object.TextWrapped = false
-		object.TextTruncate = Enum.TextTruncate.AtEnd
-	end
 end
 
 local function MakeReadableText(root, minimum, maximum)
@@ -420,7 +416,7 @@ local function New(class, props, parent)
 		obj.TextYAlignment = Enum.TextYAlignment.Center
 	end
 	if parent then obj.Parent = parent end
-	AddTextConstraint(obj, 9, 16)
+	AddTextConstraint(obj, 7, 16)
 	return obj
 end
 
@@ -520,27 +516,16 @@ end
 
 local function FitTextBeforeArrow(label, arrow)
 	if not label or not arrow then return end
-	-- Do NOT re-measure and rewrite the text: with TextScaled on, replacing the
-	-- string makes Roblox re-fit it and the glyph size drifts. Narrow the label so
-	-- it cannot reach the arrow, then let TextTruncate handle the overflow.
-	if label:IsA("TextLabel") or label:IsA("TextButton") then
-		label.TextWrapped = false
-		label.TextTruncate = Enum.TextTruncate.AtEnd
-	end
 	task.defer(function()
 		if not label.Parent or not arrow.Parent then return end
-		local parent = label.Parent
-		if not parent or not parent:IsA("GuiObject") then return end
-		local parentX = parent.AbsolutePosition.X
-		local parentW = parent.AbsoluteSize.X
-		if parentW <= 0 then return end
-		local room = (arrow.AbsolutePosition.X - label.AbsolutePosition.X) - 6
-		if room <= 4 then return end
-		local scaleX = (label.AbsolutePosition.X - parentX) / parentW
-		local scaleW = (label.AbsolutePosition.X - parentX + room) / parentW
-		if scaleX < 0 then scaleX = 0 end
-		if scaleW > 1 then scaleW = 1 end
-		label.Size = UDim2.new(scaleW, 0, label.Size.Y.Scale, label.Size.Y.Offset)
+		local arrowX = arrow.AbsolutePosition.X
+		local labelX = label.AbsolutePosition.X
+		local width = label.AbsoluteSize.X
+		if label.TextXAlignment == Enum.TextXAlignment.Right then
+			EllipsizeTo(label, arrowX - labelX - 6)
+		else
+			EllipsizeTo(label, math.min(width, arrowX - labelX - 6))
+		end
 	end)
 end
 
@@ -909,7 +894,7 @@ local function SmoothClose(frame, dur, cb)
 	local token = (frame:GetAttribute("PopupToken") or 0) + 1
 	frame:SetAttribute("PopupToken", token)
 	CancelPopupTween(frame)
-	PlayPopupTween(frame, TweenInfo.new(math.min(dur or 0.18, 0.09), Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
+	PlayPopupTween(frame, TweenInfo.new(dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
 	task.delay((dur or 0.18) + 0.01, function()
 		if frame.Parent and frame:GetAttribute("PopupToken") == token then
 			frame.Visible = false
@@ -1386,7 +1371,7 @@ Aspect.AspectRatio = 1.4
 	local HubIcon = New("ImageLabel", {
 		Name = "HubIcon",
 		Position = UDim2.new(0.014000000432133675, 0, 0.006000000052154064, 0),
-		Size = UDim2.new(0.042000000178813934, 0, 0.07500000339746475, 0),
+		Size = UDim2.new(0.03300000014901161, 0, 0.05800000014901161, 0),
 		BackgroundColor3 = Color3.fromRGB(19,22,33),
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
@@ -1541,7 +1526,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21,24,36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
@@ -2665,7 +2650,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		local obj = {}
 		function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TextDefault.Text = val; updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
 		function obj:Get() return selected end
-		MakeReadableText(Row, 12, 18)
+		MakeReadableText(Row, 10, 18)
 		return obj
 	end
 
@@ -2842,7 +2827,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			InvokeCallback(callback, normalized)
 		end
 		function obj:Get() return Color3.fromHSV(color[1],color[2],color[3]) end
-		MakeReadableText(Row, 12, 18)
+		MakeReadableText(Row, 10, 18)
 		return obj
 	end
 
@@ -3064,7 +3049,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Name = "ConfigMainFrame"
 	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.075, 0)
 	ConfigMainFrame.Size = UDim2.new(0.4, 0, 0.42, 0)
-	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(21,24,36)
+	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(17,20,30)
 	ConfigMainFrame.BackgroundTransparency = 0
 	ConfigMainFrame.BorderSizePixel = 0
 	ConfigMainFrame.ZIndex = 110
@@ -3074,12 +3059,12 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Visible = false
 	ConfigMainFrame.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
 
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
 	CMHeader.Size = UDim2.new(1, 0, 0.22, 0)
-	CMHeader.BackgroundColor3 = Color3.fromRGB(26,30,45)
+	CMHeader.BackgroundColor3 = Color3.fromRGB(21,24,36)
 	CMHeader.BackgroundTransparency = 0
 	CMHeader.BorderSizePixel = 0
 	CMHeader.ClipsDescendants = true
@@ -3185,7 +3170,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	SearchContainer.Name = "SearchContainer"
 	SearchContainer.Position = UDim2.new(0.037, 0, 0.27, 0)
 	SearchContainer.Size = UDim2.new(0.928, 0, 0.143, 0)
-	SearchContainer.BackgroundColor3 = Color3.fromRGB(28,32,48)
+	SearchContainer.BackgroundColor3 = Color3.fromRGB(19,22,33)
 	SearchContainer.BorderSizePixel = 0
 	SearchContainer.ZIndex = 1000
 	SearchContainer.Parent = ConfigMainFrame
@@ -3267,8 +3252,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── List Container ────────────────────────────────────────────
 	local ListContainer = Instance.new("ScrollingFrame")
 	ListContainer.Name = "ListContainer"
-	ListContainer.Position = UDim2.new(0.037, 0, 0.435, 0)
-	ListContainer.Size = UDim2.new(0.93, 0, 0.55, 0)
+	ListContainer.Position = UDim2.new(0.037, 0, 0.48, 0)
+	ListContainer.Size = UDim2.new(0.93, 0, 0.5, 0)
 	ListContainer.BackgroundTransparency = 1
 	ListContainer.BorderSizePixel = 0
 	ListContainer.ZIndex = 100
@@ -3521,7 +3506,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		row.ZIndex = 1000
 		row.Parent = ListContainer
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = row end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = row end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.3; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = row end
 		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = row end
 
 		local rowStroke = row:FindFirstChildWhichIsA("UIStroke")
@@ -3586,7 +3571,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -4177,11 +4162,6 @@ end
 			TextYAlignment = Enum.TextYAlignment.Center,
 			LayoutOrder = tabOrder,
 		}, Tab)
-		New("UIPadding", {
-			PaddingLeft = UDim.new(0, 4),
-			PaddingTop = UDim.new(0, 14),
-			PaddingBottom = UDim.new(0, 6),
-		}, lbl)
 		return lbl
 	end
 
@@ -4426,9 +4406,8 @@ AddTextConstraint(SectionLabel, 9, 12, true)
 
 			local Elements = New("Frame", {
 				Name = "Elements",
-				-- inset by 1px: the column clips, a flush border loses half its width
-				Size = UDim2.new(1, -2, 0, 30),
-				Position = UDim2.new(0, 1, 0, 0),
+				Size = UDim2.new(1, 0, 0, 30),
+				Position = UDim2.new(0, 0, 0, 0),
 				BackgroundColor3 = Color3.fromRGB(21,24,36),
 				BackgroundTransparency = 0,
 				BorderSizePixel = 0,
@@ -4526,7 +4505,7 @@ AddTextConstraint(SectionLabel, 9, 12, true)
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(44, 50, 72)
+				UIStroke.Color = Color3.fromRGB(60,68,96)
 				UIStroke.Transparency = 0.25
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -5160,6 +5139,14 @@ UIAspectRatioConstraint.Parent = Slider
 							ZIndex = 5002,
 							TextXAlignment = Enum.TextXAlignment.Left,
 						}, BtnRow)
+						New("Frame", {
+							Name = "Lines",
+							Position = UDim2.new(0.05, 0, 1, -1),
+							Size = UDim2.new(0.9, 0, 0, 1),
+							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+							BackgroundTransparency = 0.9,
+							BorderSizePixel = 0,
+						}, BtnRow)
 
 						local SelBtn = New("TextButton", {
 							Name = "Selected",
@@ -5481,7 +5468,7 @@ if maxY <= 0 then return end
 					return obj
 				end
 
-				MakeReadableText(SettingsFrame, 12, 18)
+				MakeReadableText(SettingsFrame, 10, 18)
 				settingsCache[parentFrame] = SettingsObj
 				return SettingsObj
 			end
@@ -5611,7 +5598,7 @@ if maxY <= 0 then return end
 					TextXAlignment = Enum.TextXAlignment.Left,
 					ZIndex = 8001,
 				}, _contextMenu)
-				AddTextConstraint(item, 12, 15, true)
+				AddTextConstraint(item, 9, 13, true)
 				item.MouseButton1Click:Connect(function()
 					local target = _contextTarget
 					CloseContextMenu()
@@ -6489,8 +6476,8 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
-					Color = Color3.fromRGB(44, 50, 72),
-					Transparency = 0.45,
+					Color = Color3.fromRGB(60, 68, 96),
+					Transparency = 0.25,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, DownBar)
@@ -6546,6 +6533,15 @@ if maxY <= 0 then return end
 						ZIndex = 5002,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 7) }, Buttons)
+					New("Frame", {
+						Name = "Lines",
+						Position = UDim2.new(0.05, 0, 1, -1),
+						Size = UDim2.new(0.9, 0, 0, 1),
+						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+						BackgroundTransparency = 0.9,
+						ZIndex = 5003,
+						BorderSizePixel = 0,
+					}, Buttons)
 
 					Buttons.MouseEnter:Connect(function()
 						Tween(Buttons, { BackgroundTransparency = 0.15 }, 0.1)
@@ -6704,8 +6700,8 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
-					Color = Color3.fromRGB(44, 50, 72),
-					Transparency = 0.45,
+					Color = Color3.fromRGB(60, 68, 96),
+					Transparency = 0.25,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, DownBar)
@@ -6772,6 +6768,14 @@ if maxY <= 0 then return end
 						ZIndex = 5002,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, Btn)
+					New("Frame", {
+						Name = "Lines",
+						Position = UDim2.new(0.05, 0, 1, -1),
+						Size = UDim2.new(0.9, 0, 0, 1),
+						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+						BackgroundTransparency = 0.9,
+						BorderSizePixel = 0,
+					}, Btn)
 
 					Btn.MouseEnter:Connect(function()
 						Tween(Btn, { BackgroundTransparency = 0.6 }, 0.1)
@@ -7360,8 +7364,8 @@ if maxY <= 0 then return end
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(44, 50, 72)
-				UIStroke.Transparency = 0.45
+				UIStroke.Color = Color3.fromRGB(60, 68, 96)
+				UIStroke.Transparency = 0.25
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				UIStroke.Parent = Section2Frame
@@ -7852,6 +7856,14 @@ UIAspectRatioConstraint.Parent = Toggle
 							TextTransparency = 0.10000000149011612,
 							ZIndex = 1002,
 							TextXAlignment = Enum.TextXAlignment.Left,
+						}, BtnRow)
+						New("Frame", {
+							Name = "Lines",
+							Position = UDim2.new(0.05, 0, 1, -1),
+							Size = UDim2.new(0.9, 0, 0, 1),
+							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+							BackgroundTransparency = 0.9,
+							BorderSizePixel = 0,
 						}, BtnRow)
 
 						local SelBtn = New("TextButton", {
@@ -8357,11 +8369,11 @@ if maxY <= 0 then return end
 					return obj
 				end
 
-				MakeReadableText(Section2Frame, 12, 18)
+				MakeReadableText(Section2Frame, 10, 18)
 				return AccordionObj
 			end
 
-			MakeReadableText(Section, 12, 18)
+			MakeReadableText(Section, 10, 18)
 			return SectionObj
 		end
 
@@ -8429,25 +8441,6 @@ if maxY <= 0 then return end
 					st.right.Position = UDim2.new(0, 0, 0, 0)
 					st.left.Visible  = true
 					st.right.Visible = true
-					-- the content was faded out on hide: bring the labels back
-					for _, column in ipairs({st.left, st.right}) do
-						for _, section in ipairs(column:GetChildren()) do
-							if section:IsA("GuiObject") then
-								local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
-								if list and list:IsA("GuiObject") then
-									for _, item in ipairs(list:GetChildren()) do
-										if item:IsA("GuiObject") then
-											for _, d in ipairs(item:GetDescendants()) do
-												if d:IsA("TextLabel") or d:IsA("TextButton") then
-													Tween(d, {TextTransparency = d.Name == "TextDefault" and 0.5 or 0}, 0.18)
-												end
-											end
-										end
-									end
-								end
-							end
-						end
-					end
 					end
 				elseif #subTabs > 0 then
 					subTabs[1].activate()
@@ -8865,7 +8858,7 @@ if maxY <= 0 then return end
 		return customMenus
 	end
 
-	MakeReadableText(NeverloseCS2, 12, 18)
+	MakeReadableText(NeverloseCS2, 9, 16)
 	CleanBorders(MainFrame)
 
 	return WindowObj
