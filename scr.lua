@@ -1120,6 +1120,8 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			FitColorPickerPopup(popup)
 			RefreshColorPickerPopup(popup)
 			popup.BackgroundTransparency = 1
+			popup.ZIndex = 8000
+			ApplyZIndexLadder(popup, 8000)
 			Tween(popup, { BackgroundTransparency = 0.02 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			PositionPopupWithinMain(popup, true)
 			task.defer(function() if popup.Visible then PositionPopupWithinMain(popup, true) end end)
@@ -1143,7 +1145,7 @@ local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
 GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(0.98, 0, 0.02, 0)
-GameInfo.Size = UDim2.fromOffset(520, 48)
+GameInfo.Size = UDim2.fromOffset(620, 48)
 GameInfo.BackgroundColor3 = Color3.fromRGB(17,20,30)
 GameInfo.BackgroundTransparency = 0
 GameInfo.BorderSizePixel = 0
@@ -1239,7 +1241,7 @@ UIAspectRatio_UserIcon.Parent = UserIcon
 local Username = Instance.new('TextLabel')
 Username.Name = "Username"
 Username.Position = UDim2.new(0.690, 0, 0.268, 0)
-Username.Size = UDim2.new(0.135, 0, 0.49, 0)
+Username.Size = UDim2.new(0.185, 0, 0.49, 0)
 Username.TextTruncate = Enum.TextTruncate.AtEnd
 Username.BackgroundTransparency = 1
 Username.Text = LocalPlayer.DisplayName
@@ -1252,7 +1254,7 @@ Username.Parent = GameInfo
 
 local NeverIcon = Instance.new('ImageLabel')
 NeverIcon.Name = "NeverIcon"
-NeverIcon.Position = UDim2.new(0.838, 0, 0.14, 0)
+NeverIcon.Position = UDim2.new(0.885, 0, 0.14, 0)
 NeverIcon.Size = UDim2.new(0.040, 0, 0.72, 0)
 NeverIcon.BackgroundTransparency = 1
 NeverIcon.Image = "rbxthumb://type=Asset&id=118608145176297&w=420&h=420"
@@ -1267,7 +1269,7 @@ UICorner_NeverIcon.Parent = NeverIcon
 
 local Profile = Instance.new('ImageLabel')
 Profile.Name = "Profile"
-Profile.Position = UDim2.new(0.892, 0, 0.14, 0)
+Profile.Position = UDim2.new(0.936, 0, 0.14, 0)
 Profile.Size = UDim2.new(0.040, 0, 0.72, 0)
 Profile.BackgroundColor3 = Color3.fromRGB(127, 127, 127)
 Profile.Image = ("rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=420&h=420")
@@ -1471,19 +1473,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
 
 
-	do
-		local ds = Instance.new("ImageLabel")
-		ds.Name = "DropShadow"
-		ds.Position = UDim2.new(0.5,0,0.5,0)
-		ds.Size = UDim2.new(1,47,1,47)
-		ds.AnchorPoint = Vector2.new(0.5,0.5)
-		ds.BackgroundTransparency = 1
-		ds.BorderSizePixel = 0
-		ds.Image = "rbxassetid://6014261993"
-		ds.ImageColor3 = Color3.fromRGB(12,14,22)
-		ds.ZIndex = 130
-		ds.Parent = WindowSettingsFrame
-	end
+	local WSScale = New("UIScale", { Scale = 1 }, WindowSettingsFrame)
 
 
 	local UIScale = Instance.new("UIScale")
@@ -1889,7 +1879,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Position = UDim2.new(0.09, 0, 1, 0),
 		Size = UDim2.new(0.80, 0, 0, 1),
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
-		BackgroundTransparency = 0.97,
+		BackgroundTransparency = 0.9,
 		BorderSizePixel = 0,
 		ZIndex = 150,
 	}, WSLogoRow)
@@ -2353,8 +2343,10 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			if wsOpen then
 				CloseAllPopupsExcept(WindowSettingsFrame)
 				WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
-				SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
-				PositionPopupWithinMain(WindowSettingsFrame, false, 6, Info)
+		WSScale.Scale = 0.92
+		Tween(WSScale, { Scale = 1 }, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
+				PositionPopupWithinMain(WindowSettingsFrame, false, 10, Info)
 				RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
 				Tween(ImageLabel, {Rotation = 180}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			else
@@ -2940,7 +2932,7 @@ UIAspectRatioConstraint.Parent = SaveIcon
 	SaveText.Position = UDim2.new(0.23000600934028625,0,0.1899999976158142,0)
 	SaveText.Size = UDim2.new(0.5500003099441528,0,0.699999988079071,0)
 	SaveText.BackgroundTransparency = 1
-	SaveText.Text = "Ins"
+	SaveText.Text = "Save"
 SaveText.TextColor3 = Color3.fromRGB(255,255,255)
 SaveText.TextScaled = true
 SaveText.Font = Enum.Font.SourceSansSemibold
@@ -2968,8 +2960,8 @@ Lines_2.Parent = SaveText
 
 local SaveArrow = Instance.new('ImageLabel')
 SaveArrow.Name = "Arrow"
-SaveArrow.Position = UDim2.new(0.7999997735023499,0,0.25000119805335999,0)
-SaveArrow.Size = UDim2.new(0.20000000298023224,0,1,0)
+SaveArrow.Position = UDim2.new(0.845,0,0.32,0)
+SaveArrow.Size = UDim2.new(0.12,0,0.36,0)
 SaveArrow.BackgroundTransparency = 1
 SaveArrow.Image = "rbxassetid://10709790948"
 SaveArrow.ImageColor3 = Color3.fromRGB(255,255,255)
@@ -4058,6 +4050,7 @@ Line9.Parent = MainFrame
     }, 0.1)
     	if guiOpen then
         if Save then Save.Visible = true end
+        if GameInfo then GameInfo.Visible = true end
         MainFrame.BackgroundTransparency = 1
         MainFrame.Visible = true
         AcrylicBlur.Instances.Part.Transparency = 1
@@ -4082,6 +4075,7 @@ Line9.Parent = MainFrame
             if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
             if Save then Save.Visible = false end
             if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
+            if GameInfo then GameInfo.Visible = false end
             if AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = false end
         end)
     end
@@ -4432,7 +4426,8 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 					end
 				end
 				SettingsHit.MouseEnter:Connect(function() SetDotsTransparency(0) end)
-				SettingsHit.MouseLeave:Connect(function() SetDotsTransparency(1) end)
+				SettingsHit.MouseLeave:Connect(function() SetDotsTransparency(0.45) end)
+				SetDotsTransparency(0.45)
 
 				local SettingsFrame = Instance.new('Frame')
 				SettingsFrame.Name = "SettingsFrame"
@@ -4637,7 +4632,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.09, 0, 1, 0),
 						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.97,
+						BackgroundTransparency = 0.9,
 						ZIndex = 1000,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -4803,7 +4798,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.09, 0, 1, 0),
 						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.97,
+						BackgroundTransparency = 0.9,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -5183,7 +5178,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.09, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.97,
+						BackgroundTransparency = 0.9,
 						BorderSizePixel = 0,
 						ZIndex = 1001,
 					}, Colorpicker)
@@ -5693,7 +5688,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.09, 0, 1, 0),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.97,
+					BackgroundTransparency = 0.9,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -5773,7 +5768,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.09, 0, 1, 0),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.97,
+					BackgroundTransparency = 0.9,
 					BorderSizePixel = 0,
 					ZIndex = 100,
 				}, CheckBoxToggle)
@@ -5877,7 +5872,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.09, 0, 1, 0),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.97,
+					BackgroundTransparency = 0.9,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -6199,7 +6194,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.09, 0, 1, 0),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.97,
+					BackgroundTransparency = 0.9,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Slider)
@@ -6358,7 +6353,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.09, 0, 1, 0),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.97,
+					BackgroundTransparency = 0.9,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Dropdown)
@@ -6395,8 +6390,8 @@ if maxY <= 0 then return end
 
 				local Arrow = New("ImageLabel", {
 					Name = "Arrow",
-					Position = UDim2.new(0.799999988079071, 0, 0.17, 0),
-					Size = UDim2.new(0.20000001192092896, 0, 0.6, 0),
+					Position = UDim2.new(0.845, 0, 0.29, 0),
+					Size = UDim2.new(0.12, 0, 0.42, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					Image = "rbxassetid://10709790948",
@@ -6426,8 +6421,8 @@ if maxY <= 0 then return end
 
 				local Scrolls = New("ScrollingFrame", {
 					Name = "Scrolls",
-					Position = UDim2.new(0.04, 0, 0, 4),
-					Size = UDim2.new(0.92, 0, 1, -8),
+					Position = UDim2.new(0.03, 0, 0, 2),
+					Size = UDim2.new(0.94, 0, 1, -4),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					BorderSizePixel = 0,
@@ -6458,8 +6453,8 @@ if maxY <= 0 then return end
 				for _, opt in ipairs(options) do
 					local Buttons = New("TextButton", {
 						Name = "Buttons",
-						Size = UDim2.new(1, -6, 0, 26),
-						Position = UDim2.new(0, 3, 0, 0),
+						Size = UDim2.new(1, -4, 0, 23),
+						Position = UDim2.new(0, 2, 0, 0),
 						BackgroundColor3 = Color3.fromRGB(33, 38, 56),
 						BackgroundTransparency = 1,
 						Text = opt,
@@ -6497,7 +6492,7 @@ if maxY <= 0 then return end
 						dropOpen = true
 						_openDropdown = closeDropdown
 						DownBar.Visible = true
-						local h = math.min(#options * 28 + 12, 190)
+						local h = math.min(#options * 25 + 8, 170)
 						local finalSize = UDim2.new(0.96, 0, 0, h)
 						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.96, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
 						DownBar.Size = finalSize
@@ -6607,8 +6602,8 @@ if maxY <= 0 then return end
 
 				local Arrow = New("ImageLabel", {
 					Name = "Arrow",
-					Position = UDim2.new(0.799999, 0, 0.17, 1),
-					Size = UDim2.new(0.20000001192092896, 0, 0.6, 0),
+					Position = UDim2.new(0.845, 0, 0.29, 0),
+					Size = UDim2.new(0.12, 0, 0.42, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					Image = "rbxassetid://10709790948",
@@ -6723,7 +6718,7 @@ if maxY <= 0 then return end
 						dropOpen = true
 						_openDropdown = closeDropdown
 						DownBar.Visible = true
-						local h = math.min(#options * 28 + 12, 190)
+						local h = math.min(#options * 25 + 8, 170)
 						local finalSize = UDim2.new(0.96, 0, 0, h)
 						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.96, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
 						DownBar.Size = finalSize
@@ -6972,7 +6967,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.09, 0, 1, 0),
 					Size = UDim2.new(0.89, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.97,
+					BackgroundTransparency = 0.9,
 					BorderSizePixel = 0,
 					ZIndex = 3,
 				}, Colorpicker)
@@ -7350,7 +7345,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.09, 0, 1, 0),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.97,
+					BackgroundTransparency = 0.9,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, DropdownSection)
@@ -7469,7 +7464,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.09, 0, 1, 0),
 						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.97,
+						BackgroundTransparency = 0.9,
 						ZIndex = 100,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -7896,7 +7891,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.09, 0, 1, 0),
 						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.97,
+						BackgroundTransparency = 0.9,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -8054,7 +8049,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.09, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.97,
+						BackgroundTransparency = 0.9,
 						BorderSizePixel = 0,
 						ZIndex = 101,
 					}, Colorpicker)
