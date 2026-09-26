@@ -1214,19 +1214,19 @@ GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(0.985, 0, 0.02, 0)
 GameInfo.Size = UDim2.fromOffset(380, 40)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
-GameInfo.BackgroundColor3 = Color3.fromRGB(16, 22, 38)
-GameInfo.BackgroundTransparency = 0.25
+GameInfo.BackgroundColor3 = Color3.fromRGB(13, 15, 22)
+GameInfo.BackgroundTransparency = 0.1
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
 GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = GameInfo end
-do local s = Instance.new("UIStroke"); s.Name = "Glow"; s.Color = Color3.fromRGB(80, 150, 235); s.Thickness = 7; s.Transparency = 0.82; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = GameInfo end
+do local s = Instance.new("UIStroke"); s.Name = "Border"; s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.25; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = GameInfo end
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 15); pd.PaddingRight = UDim.new(0, 19); pd.PaddingTop = UDim.new(0, 9); pd.PaddingBottom = UDim.new(0, 9); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
-local ACCENT = Color3.fromRGB(0, 168, 255)
+local ACCENT = mainColor or Color3.fromRGB(26, 123, 255)
 local GOOD = Color3.fromRGB(120, 220, 140)
 local WARN = Color3.fromRGB(240, 180, 80)
 local BAD = Color3.fromRGB(233, 90, 130)
@@ -1265,6 +1265,11 @@ return t
 end
 
 local NeverIcon = PillIcon("NeverIcon", "rbxthumb://type=Asset&id=118608145176297&w=420&h=420", 1, ACCENT)
+NeverIcon.Size = UDim2.fromOffset(24, 24)
+NeverIcon.BackgroundTransparency = 0
+NeverIcon.BackgroundColor3 = Color3.fromRGB(19, 22, 33)
+NeverIcon.ScaleType = Enum.ScaleType.Fit
+do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = NeverIcon end
 local UserIcon = PillIcon("UserIcon", "rbxthumb://type=Asset&id=123112467890707&w=420&h=420", 2)
 local Username = PillText("Username", LocalPlayer.DisplayName, 3, 100)
 local FpsIcon = PillIcon("FpsIcon", "rbxthumb://type=Asset&id=137471315687443&w=420&h=420", 4)
@@ -4235,6 +4240,9 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 							if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
 						end
 						for _, t in ipairs(texts) do Tween(t, {TextTransparency = 1}, 0.12) end
+						local card = item:FindFirstChild("Elements") or item:FindFirstChild("Container")
+						local listStroke = card and card:FindFirstChildOfClass("UIStroke")
+						if listStroke then Tween(listStroke, {Transparency = 1}, 0.12) end
 					end
 				end
 			end
@@ -4256,16 +4264,19 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 						if list and list:IsA("GuiObject") then
 							list.BackgroundTransparency = 1
 							Tween(list, {BackgroundTransparency = 0}, 0.3, Enum.EasingStyle.Quad)
-							local order = 0
+							local listStroke = list:FindFirstChildOfClass("UIStroke")
+							if listStroke then
+							listStroke.Transparency = 1
+							Tween(listStroke, {Transparency = 0.3}, 0.3, Enum.EasingStyle.Quad)
+							end
 							for _, item in ipairs(list:GetChildren()) do
 								if item:IsA("GuiObject") then
-									order = order + 1
 									local texts = {}
 									for _, d in ipairs(item:GetDescendants()) do
 										if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
 									end
 									-- no TextTransparency = 1 here: an interrupted fade used to leave text invisible forever
-									local delay = math.min((order - 1) * 0.03, 0.25)
+									local delay = 0.02
 									for _, t in ipairs(texts) do
 									if t.Parent then
 									Tween(t, {TextTransparency = t.Name == "TextDefault" and 0.5 or 0}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, delay)
@@ -4277,19 +4288,6 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 					end
 				end
 			end
-			-- safety net: once the fades have played, nothing may stay invisible
-			task.delay(0.5, function()
-				for _, column in ipairs({Left, Right}) do
-					for _, d in ipairs(column:GetDescendants()) do
-						if d:IsA("TextLabel") or d:IsA("TextButton") then
-							local wanted = d.Name == "TextDefault" and 0.5 or 0
-							if d.TextTransparency > wanted then d.TextTransparency = wanted end
-						elseif d.Name == "Lines" and d:IsA("GuiObject") then
-							if d.BackgroundTransparency > 0.9 then d.BackgroundTransparency = 0.9 end
-						end
-					end
-				end
-			end)
 		end
 
 		local function ActivateTab()
@@ -4406,7 +4404,7 @@ end
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.3; s.Thickness = 1.4; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -5178,6 +5176,10 @@ UIAspectRatioConstraint.Parent = Slider
 							local knownW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
 							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
 							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
+					task.defer(function()
+						-- SmoothOpen only reveals the popup: re-measure now that it has its real size
+						if DropPopup.Parent and DropPopup.Visible then PositionPopupWithinMain(DropPopup, true) end
+					end)
 							SmoothOpen(DropPopup, 0, 0.2)
 							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown, OpenBtn)
@@ -8541,16 +8543,14 @@ if maxY <= 0 then return end
 							Tween(section, {BackgroundTransparency = section.Name == "Section" and 1 or 0}, 0.28, Enum.EasingStyle.Quad)
 							local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
 							if list and list:IsA("GuiObject") then
-								local order = 0
 								for _, item in ipairs(list:GetChildren()) do
 									if item:IsA("GuiObject") then
-										order = order + 1
 										local texts = {}
 										for _, d in ipairs(item:GetDescendants()) do
 											if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
 										end
 										-- no TextTransparency = 1 here: an interrupted fade used to leave text invisible forever
-										local delay = math.min((order - 1) * 0.03, 0.25)
+										local delay = 0.02
 										for _, t in ipairs(texts) do
 										if t.Parent then
 										Tween(t, {TextTransparency = t.Name == "TextDefault" and 0.5 or 0}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, delay)
