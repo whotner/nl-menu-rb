@@ -484,58 +484,52 @@ local function SetTrimmedText(label, value)
 	label.Text = tostring(value or "")
 end
 
-local function AnimateColorPickerOpen(popup, trigger, open, onClose)
-	if not popup or not popup.Parent then return end
-	if open then
-		CloseAllPopupsExcept(popup)
-		popup.Visible = true
-		FitColorPickerPopup(popup)
-		popup.BackgroundTransparency = 1
-		Tween(popup, { BackgroundTransparency = 0.02 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		PositionPopupWithinMain(popup, true)
-		task.defer(function() if popup.Visible then PositionPopupWithinMain(popup, true) end end)
-		RegisterPopup(popup, function()
-			UnregisterPopup(popup)
-			popup.Visible = false
-			if type(onClose) == "function" then onClose(false) end
-		end, trigger)
-	else
-		UnregisterPopup(popup)
-		Tween(popup, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-		task.delay(0.15, function() if not popup.Visible then popup.BackgroundTransparency = 1 end end)
-		popup.Visible = false
-	end
-end
-
-local function FitColorPickerPopup(popup)
-	if not popup or not popup:IsA("GuiObject") then return end
-	local parent = popup.Parent
-	if not parent then
-		task.defer(function() FitColorPickerPopup(popup) end)
-		return
-	end
-	local function apply()
-		if not popup.Parent then return end
+	local function RefreshColorPickerPopup(popup)
+		if not popup or not popup:IsA("GuiObject") then return end
+		local parent = popup.Parent
+		if not parent then return end
 		local w = parent.AbsoluteSize.X
 		if w <= 0 then return end
 		local h = (w * popup.Size.X.Scale) / 1.1
 		if h > 0 then popup.Size = UDim2.new(popup.Size.X.Scale, popup.Size.X.Offset, 0, h) end
 	end
-	apply()
-	task.defer(apply)
-	pcall(function()
-		parent:GetPropertyChangedSignal("AbsoluteSize"):Connect(apply)
-		popup:GetPropertyChangedSignal("Visible"):Connect(function()
-			if popup.Visible then task.defer(apply) end
+
+	local function FitColorPickerPopup(popup)
+		if not popup or not popup:IsA("GuiObject") then return end
+		local parent = popup.Parent
+		if not parent then
+			task.defer(function() FitColorPickerPopup(popup) end)
+			return
+		end
+		RefreshColorPickerPopup(popup)
+		task.defer(function() RefreshColorPickerPopup(popup) end)
+		if popup:GetAttribute("_nlPickerFitted") then return end
+		popup:SetAttribute("_nlPickerFitted", true)
+		pcall(function()
+			parent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+				RefreshColorPickerPopup(popup)
+			end)
 		end)
-	end)
-end
+	end
 
-local DragShield = nil
 
-local function SetDragShield(active)
-	if not DragShield then return end
-	DragShield.Visible = active == true
+local function GetDragShield(frame)
+	if not frame then return nil end
+	local shield = frame:FindFirstChild("DragShield")
+	if not shield then
+		shield = New("TextButton", {
+			Name = "DragShield",
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Text = "",
+			AutoButtonColor = false,
+			Active = true,
+			Visible = false,
+			ZIndex = 4990,
+		}, frame)
+	end
+	return shield
 end
 
 local function MakeDraggable(frame, handle)
@@ -566,7 +560,8 @@ local function MakeDraggable(frame, handle)
 			dragInput = input
 			pointerPos = input.Position
 			framePos = frame.Position
-			SetDragShield(true)
+			local shield = GetDragShield(frame)
+			if shield then shield.Visible = true end
 		end
 	end)
 
@@ -584,7 +579,8 @@ local function MakeDraggable(frame, handle)
 		if IsPrimaryInput(input) then
 			dragging = false
 			dragInput = nil
-			SetDragShield(false)
+			local shield = frame:FindFirstChild("DragShield")
+			if shield then shield.Visible = false end
 		end
 	end)
 end
@@ -678,18 +674,6 @@ end
 		for _, fn in ipairs(toClose) do pcall(fn) end
 	end)
 
-	DragShield = New("TextButton", {
-		Name = "DragShield",
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-		BorderSizePixel = 0,
-		Text = "",
-		AutoButtonColor = false,
-		Active = true,
-		Visible = false,
-		ZIndex = 4990,
-	}, MainFrame)
-
 local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	if not frame or not frame.Parent then return end
 	local token = (frame:GetAttribute("PopupToken") or 0) + 1
@@ -779,6 +763,8 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	ClipsDescendants = true,
 	}, NeverloseCS2)
 	local MainFrameUIScale
+	local _windowContextTargets = {}
+	GetDragShield(MainFrame)
     local Watermark = New("TextLabel", {
 	Name = "Watermark",
     Position = UDim2.new(0.985, 0, 0.988, 0),
@@ -842,17 +828,32 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		return scale, scale
 	end
 
-	local function MovePopupToAbsolute(popup, x, y)
-		if not popup or not popup.Parent then return end
-		local current = popup.AbsolutePosition
+	local function GetPopupParentOrigin(popup)
+		local parent = popup and popup.Parent
+		if parent and parent:IsA("GuiObject") then
+			return parent.AbsolutePosition.X, parent.AbsolutePosition.Y,
+				parent.AbsoluteSize.X, parent.AbsoluteSize.Y
+		end
+		return 0, 0, 0, 0
+	end
+
+	local function AbsoluteFromPosition(popup)
+		local baseX, baseY, sizeX, sizeY = GetPopupParentOrigin(popup)
 		local scaleX, scaleY = GetVisualScale(popup)
 		local position = popup.Position
-		popup.Position = UDim2.new(
-			position.X.Scale,
-			position.X.Offset + (x - current.X) / scaleX,
-			position.Y.Scale,
-			position.Y.Offset + (y - current.Y) / scaleY
-		)
+		return baseX + (position.X.Scale * sizeX + position.X.Offset) * scaleX,
+			baseY + (position.Y.Scale * sizeY + position.Y.Offset) * scaleY
+	end
+
+	local function MovePopupToAbsolute(popup, x, y)
+		if not popup or not popup.Parent then return end
+		local baseX, baseY, sizeX, sizeY = GetPopupParentOrigin(popup)
+		local scaleX, scaleY = GetVisualScale(popup)
+		local position = popup.Position
+		local targetX = (x - baseX) / scaleX - position.X.Scale * sizeX
+		local targetY = (y - baseY) / scaleY - position.Y.Scale * sizeY
+		if math.abs(position.X.Offset - targetX) < 0.5 and math.abs(position.Y.Offset - targetY) < 0.5 then return end
+		popup.Position = UDim2.new(position.X.Scale, targetX, position.Y.Scale, targetY)
 	end
 
 	local function ConstrainPopupToMainFrame(popup, margin)
@@ -867,8 +868,9 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		local minY = mainPosition.Y + margin
 		local maxX = mainPosition.X + mainSize.X - size.X - margin
 		local maxY = mainPosition.Y + mainSize.Y - size.Y - margin
-		local x = maxX < minX and minX or math.clamp(popup.AbsolutePosition.X, minX, maxX)
-		local y = maxY < minY and minY or math.clamp(popup.AbsolutePosition.Y, minY, maxY)
+		local currentX, currentY = AbsoluteFromPosition(popup)
+		local x = maxX < minX and minX or math.clamp(currentX, minX, maxX)
+		local y = maxY < minY and minY or math.clamp(currentY, minY, maxY)
 		MovePopupToAbsolute(popup, x, y)
 	end
 		local function FindClippingAncestors(popup)
@@ -946,6 +948,30 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			MovePopupToAbsolute(popup, x, math.clamp(y, minY, math.max(minY, maxY)))
 			ConstrainPopupToMainFrame(popup, edge)
 		end)
+	end
+
+	local function AnimateColorPickerOpen(popup, trigger, open, onClose)
+		if not popup or not popup.Parent then return end
+		if open then
+			CloseAllPopupsExcept(popup)
+			popup.Visible = true
+			FitColorPickerPopup(popup)
+			RefreshColorPickerPopup(popup)
+			popup.BackgroundTransparency = 1
+			Tween(popup, { BackgroundTransparency = 0.02 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			PositionPopupWithinMain(popup, true)
+			task.defer(function() if popup.Visible then PositionPopupWithinMain(popup, true) end end)
+			RegisterPopup(popup, function()
+				UnregisterPopup(popup)
+				popup.Visible = false
+				if type(onClose) == "function" then onClose(false) end
+			end, trigger)
+		else
+			UnregisterPopup(popup)
+			Tween(popup, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+			task.delay(0.15, function() if not popup.Visible then popup.BackgroundTransparency = 1 end end)
+			popup.Visible = false
+		end
 	end
 
 
@@ -4062,6 +4088,7 @@ UIStroke.Parent = Elements
 				if settingsCache[parentFrame] then return settingsCache[parentFrame] end
 				label = tostring(label or "")
 				local settingsOpen = false
+				local settingsLayoutConnection = nil
 
 				local btnPosition
 				if elementType == "slider" then
@@ -4313,13 +4340,15 @@ UIStroke.Parent = Elements
 					end
 					task.defer(settle)
 					task.delay(0.05, settle)
-					local okLayout, layout = pcall(function() return SFContainer:FindFirstChildOfClass("UIListLayout") end)
-					if okLayout and layout then
-						pcall(function()
-							layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-								if settingsOpen then task.defer(function() if settingsOpen then placeSettings(getSettingsHeight()) end end) end
+					if not settingsLayoutConnection then
+						local okLayout, layout = pcall(function() return SFContainer:FindFirstChildOfClass("UIListLayout") end)
+						if okLayout and layout then
+							pcall(function()
+								settingsLayoutConnection = layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+									if settingsOpen then task.defer(function() if settingsOpen then placeSettings(getSettingsHeight()) end end) end
+								end)
 							end)
-						end)
+						end
 					end
 					return self
 				end
@@ -4586,13 +4615,16 @@ UIAspectRatioConstraint.Parent = Slider
 						AnchorPoint = Vector2.new(0.800000011920929, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = 1,
+						Active = false,
 						Text = "",
 						ZIndex = 1003,
 					}, Line)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Trigger)
 					New("UIAspectRatioConstraint", {}, Trigger)
 
+					local initialValue = value
 					task.defer(function()
+						if value ~= initialValue then return end
 						InLine.Size = UDim2.fromScale(initRatio, 1)
 						Trigger.Position = UDim2.new(initRatio, 0, -1.8000000715255737, 0)
 					end)
@@ -5123,7 +5155,7 @@ if maxY <= 0 then return end
 				return SettingsObj
 			end
 
-			local _contextTargets = {}
+			local _contextTargets = _windowContextTargets
 			local _contextMenu
 			local _contextOpen = false
 			local _contextTarget
@@ -5139,7 +5171,17 @@ if maxY <= 0 then return end
 
 			local function SetTargetBind(target, key)
 				if not target or not target.obj then return end
-				if target.key then _keybinds[target.key] = nil end
+				if target.key and _keybinds[target.key] == target then _keybinds[target.key] = nil end
+				if key then
+					local previous = _keybinds[key]
+					if previous and previous ~= target then
+						previous.key = nil
+						if previous.dots then
+							local previousIndicator = previous.dots:FindFirstChild("BindLabel")
+							if previousIndicator then previousIndicator.Text = "" end
+						end
+					end
+				end
 				target.key = key
 				if key then _keybinds[key] = target end
 				if target.dots then
@@ -5150,6 +5192,7 @@ if maxY <= 0 then return end
 			end
 
 			local function CloseBindMenu()
+				UnregisterPopup(_bindMenu)
 				if not _bindMenu then return end
 				_bindMenu.Visible = false
 				_bindTarget = nil
@@ -5195,6 +5238,7 @@ if maxY <= 0 then return end
 				_bindMenu.BackgroundTransparency = 1
 				Tween(_bindMenu, { BackgroundTransparency = 0.05 }, 0.15)
 				ConstrainPopupToMainFrame(_bindMenu, 8)
+				RegisterPopup(_bindMenu, CloseBindMenu, nil)
 			end
 
 			local function CloseContextMenu()
@@ -5327,15 +5371,29 @@ if maxY <= 0 then return end
 			end
 
 			UserInputService.InputBegan:Connect(function(input, gameProcessed)
-				if gameProcessed then return end
 				if _bindTarget then
 					if input.UserInputType == Enum.UserInputType.Keyboard then
 						local key = input.KeyCode
 						if key ~= Enum.KeyCode.Escape then SetTargetBind(_bindTarget, key) end
 						CloseBindMenu()
+						return
+					end
+					if input.UserInputType == Enum.UserInputType.MouseButton2 then
+						local bindPoint = GetInputPosition(input)
+						local retargeted = false
+						for bindRow, bindTargetRow in pairs(_contextTargets) do
+							if bindRow.Parent and bindRow.Visible and IsPointInsideTree(bindRow, bindPoint) then
+								OpenBindMenu(bindTargetRow)
+								retargeted = true
+								break
+							end
+						end
+						if not retargeted then CloseBindMenu() end
+						return
 					end
 					return
 				end
+				if gameProcessed then return end
 				if input.UserInputType == Enum.UserInputType.MouseButton2 then
 					local point = GetInputPosition(input)
 					for _, entry in ipairs(_openPopups) do
@@ -6020,13 +6078,17 @@ if maxY <= 0 then return end
 					Size = UDim2.new(1.1999999284744263, 0, 4.200000286102295, 0),
 					AnchorPoint = Vector2.new(0.800000011920929, 0),
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+					BackgroundTransparency = 1,
+					Active = false,
 					Text = "",
 					ZIndex = 3,
 				}, Line)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Trigger)
 				New("UIAspectRatioConstraint", {}, Trigger)
 
+				local initialValue = value
 				task.defer(function()
+					if value ~= initialValue then return end
 					InLine.Size = UDim2.fromScale(initRatio, 1)
 					Trigger.Position = UDim2.new(initRatio, 0, -1.8000000715255737, 0)
 				end)
@@ -7650,14 +7712,17 @@ UIAspectRatioConstraint.Parent = Slider
 						Size = UDim2.new(1.1999999284744263, 0, 4.200000286102295, 0),
 						AnchorPoint = Vector2.new(0.800000011920929, 0),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                  BackgroundTransparency = 1,
+                     BackgroundTransparency = 1,
+						Active = false,
 						Text = "",
 						ZIndex = 103,
 					}, Line)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Trigger)
 					New("UIAspectRatioConstraint", {}, Trigger)
 
+					local initialValue = value
 					task.defer(function()
+						if value ~= initialValue then return end
 						InLine.Size = UDim2.fromScale(initRatio, 1)
 						Trigger.Position = UDim2.new(initRatio, 0, -1.8000000715255737, 0)
 					end)
@@ -8324,7 +8389,7 @@ if maxY <= 0 then return end
 				end
 			end
 		end
-		for _, row in pairs(_contextTargets) do
+		for _, row in pairs(_windowContextTargets) do
 			if row.dots then row.dots.Visible = customization.showContextDots == true end
 		end
 	end
