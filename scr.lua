@@ -628,6 +628,31 @@ local function EstimateRowsHeight(container, count, aspect)
 	return count * (sizeValue.X / (aspect or 7.5)) + padding * (count - 1)
 end
 
+local function RefreshRowDividers(listFrame)
+	if not listFrame or not listFrame.Parent then return end
+	local rows = {}
+	for _, child in ipairs(listFrame:GetChildren()) do
+		if child:IsA("GuiObject") then
+			local divider = child:FindFirstChild("Lines")
+			if divider and divider:IsA("GuiObject") then
+				divider.Visible = true
+				divider.BackgroundTransparency = 0.9
+				table.insert(rows, divider)
+			end
+		end
+	end
+	if #rows > 0 then
+		rows[#rows].Visible = false
+	end
+end
+
+local function WatchRowDividers(listFrame)
+	if not listFrame then return end
+	RefreshRowDividers(listFrame)
+	listFrame.ChildAdded:Connect(function() task.defer(RefreshRowDividers, listFrame) end)
+	listFrame.ChildRemoved:Connect(function() task.defer(RefreshRowDividers, listFrame) end)
+end
+
 local function GetSliderStep(min, max)
 	local span = max - min
 	if span <= 0 then return 1 end
@@ -783,22 +808,6 @@ end
 			end
 		end
 		table.clear(_openPopups)
-	end
-
-	local function HideWindowInstantly()
-		HideAllPopupsNow(true)
-		if ConfigMainFrame then ConfigMainFrame.Visible = false end
-		if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
-		if Save then Save.Visible = false end
-		if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
-		if AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.Part then
-			AcrylicBlur.Instances.Part.Transparency = 1
-		end
-		if AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.DepthOfField then
-			AcrylicBlur.Instances.DepthOfField.Enabled = false
-		end
-		MainFrame.BackgroundTransparency = 1
-		MainFrame.Visible = false
 	end
 
 	local function ClosePopupsUnder(root)
@@ -1343,8 +1352,8 @@ Aspect.AspectRatio = 1.4
 
 	local HubIcon = New("ImageLabel", {
 		Name = "HubIcon",
-		Position = UDim2.new(0.014000000432133675, 0, 0.013000000268220901, 0),
-		Size = UDim2.new(0.05000000074505806, 0, 0.05999999865889549, 0),
+		Position = UDim2.new(0.014000000432133675, 0, 0.006000000052154064, 0),
+		Size = UDim2.new(0.038000000685453415, 0, 0, 0),
 		BackgroundColor3 = Color3.fromRGB(19,22,33),
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
@@ -1912,8 +1921,8 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	}, SettingsContainer)
 	local logoLine = New("Frame", {
 		Name = "Lines",
-		Position = UDim2.new(0.09, 0, 1, -1),
-		Size = UDim2.new(0.80, 0, 0, 1),
+		Position = UDim2.new(0.06, 0, 1, -1),
+		Size = UDim2.new(0.88, 0, 0, 1),
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
 		BackgroundTransparency = 0.9,
 		BorderSizePixel = 0,
@@ -2451,7 +2460,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = Row end
 		do
 			local ln = Instance.new("Frame"); ln.Name = "Lines"
-			ln.Position = UDim2.new(0.09,0,1,-1)
+			ln.Position = UDim2.new(0.06,0,1,-1)
 			ln.Size = UDim2.new(0.9,0,0,1)
 			ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
 			ln.BackgroundTransparency = 0.9
@@ -2650,7 +2659,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = Row end
 		do
 			local ln = Instance.new("Frame"); ln.Name = "Lines"
-			ln.Position = UDim2.new(0.09,0,1,-1)
+			ln.Position = UDim2.new(0.06,0,1,-1)
 			ln.Size = UDim2.new(0.89,0,0,1)
 			ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
 			ln.BackgroundTransparency = 0.9
@@ -4058,6 +4067,22 @@ Line9.Parent = MainFrame
 
 
 
+	local function HideWindowInstantly()
+		HideAllPopupsNow(true)
+		if ConfigMainFrame then ConfigMainFrame.Visible = false end
+		if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
+		if Save then Save.Visible = false end
+		if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
+		if AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.Part then
+			AcrylicBlur.Instances.Part.Transparency = 1
+		end
+		if AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.DepthOfField then
+			AcrylicBlur.Instances.DepthOfField.Enabled = false
+		end
+		MainFrame.BackgroundTransparency = 1
+		MainFrame.Visible = false
+	end
+
 	local guiOpen = true
 	local function toggleGui()
     guiOpen = not guiOpen
@@ -4374,6 +4399,7 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
 			}, Elements)
+			WatchRowDividers(Elements)
 
 
 			local SectionObj = {}
@@ -4487,6 +4513,7 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 				SFLayout.Padding = UDim.new(0, 3)
 				SFLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				SFLayout.Parent = SFContainer
+				WatchRowDividers(SFContainer)
 
 				do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = SFContainer end
 
@@ -4636,8 +4663,8 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, -1),
-						Size = UDim2.new(0.80, 0, 0, 1),
+						Position = UDim2.new(0.06, 0, 1, -1),
+						Size = UDim2.new(0.88, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
 						ZIndex = 1000,
@@ -4803,8 +4830,8 @@ UIAspectRatioConstraint.Parent = Slider
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, -1),
-						Size = UDim2.new(0.80, 0, 0, 1),
+						Position = UDim2.new(0.06, 0, 1, -1),
+						Size = UDim2.new(0.88, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
 						ZIndex = 1002,
@@ -5183,7 +5210,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, -1),
+						Position = UDim2.new(0.06, 0, 1, -1),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
@@ -5693,8 +5720,8 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, -1),
-					Size = UDim2.new(0.80, 0, 0, 1),
+					Position = UDim2.new(0.06, 0, 1, -1),
+					Size = UDim2.new(0.88, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
 					ZIndex = 100,
@@ -5773,8 +5800,8 @@ if maxY <= 0 then return end
 				New("UIAspectRatioConstraint", {AspectRatio = 9, AspectType = Enum.AspectType.ScaleWithParentSize}, CheckBoxToggle)
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, -1),
-					Size = UDim2.new(0.80, 0, 0, 1),
+					Position = UDim2.new(0.06, 0, 1, -1),
+					Size = UDim2.new(0.88, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
 					BorderSizePixel = 0,
@@ -5877,8 +5904,8 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, -1),
-					Size = UDim2.new(0.80, 0, 0, 1),
+					Position = UDim2.new(0.06, 0, 1, -1),
+					Size = UDim2.new(0.88, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
 					ZIndex = 100,
@@ -6200,8 +6227,8 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, -1),
-					Size = UDim2.new(0.80, 0, 0, 1),
+					Position = UDim2.new(0.06, 0, 1, -1),
+					Size = UDim2.new(0.88, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
 					ZIndex = 100,
@@ -6359,8 +6386,8 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, -1),
-					Size = UDim2.new(0.80, 0, 0, 1),
+					Position = UDim2.new(0.06, 0, 1, -1),
+					Size = UDim2.new(0.88, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
 					ZIndex = 100,
@@ -6984,7 +7011,7 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, -1),
+					Position = UDim2.new(0.06, 0, 1, -1),
 					Size = UDim2.new(0.89, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
@@ -7332,6 +7359,7 @@ if maxY <= 0 then return end
 				UIListLayout.Padding = UDim.new(0, 3)
 				UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				UIListLayout.Parent = Container
+				WatchRowDividers(Container)
 
 				-- single panel: the inner container is layout-only, no second card
 
@@ -7357,8 +7385,8 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, -1),
-					Size = UDim2.new(0.80, 0, 0, 1),
+					Position = UDim2.new(0.06, 0, 1, -1),
+					Size = UDim2.new(0.88, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
 					ZIndex = 100,
@@ -7476,8 +7504,8 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, -1),
-						Size = UDim2.new(0.80, 0, 0, 1),
+						Position = UDim2.new(0.06, 0, 1, -1),
+						Size = UDim2.new(0.88, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
 						ZIndex = 100,
@@ -7904,8 +7932,8 @@ UIAspectRatioConstraint.Parent = Slider
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, -1),
-						Size = UDim2.new(0.80, 0, 0, 1),
+						Position = UDim2.new(0.06, 0, 1, -1),
+						Size = UDim2.new(0.88, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
 						ZIndex = 1002,
@@ -8062,7 +8090,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, -1),
+						Position = UDim2.new(0.06, 0, 1, -1),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
