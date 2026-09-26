@@ -453,9 +453,11 @@ CenterElement = function(el)
 	local effect = el:FindFirstChild("Effect")
 	if effect and effect:IsA("GuiObject") then
 		if effect:FindFirstChild("Icon") then
-			effect.Position = UDim2.new(0.8, 0, effect.Position.Y.Scale, 0)
-			effect.Size = UDim2.new(0.15, 0, effect.Size.Y.Scale, effect.Size.Y.Offset)
-			place(effect, 0.5, 0.6)
+			-- one fixed 36x20 switch for every row: percentage sizing made the
+			-- switch and its knob land differently on short and wide rows
+			effect.AnchorPoint = Vector2.new(1, 0.5)
+			effect.Position = UDim2.new(1, -8, 0.5, 0)
+			effect.Size = UDim2.fromOffset(36, 20)
 		else
 			place(effect, 0.5, 0.7)
 		end
@@ -565,6 +567,14 @@ end
 
 
 local Z_BASE = 10000
+local _popupZStep = 0
+
+-- each open gets its own rung, so the newest popup always wins
+local function NextPopupZ()
+	_popupZStep = _popupZStep + 1
+	if _popupZStep > 500 then _popupZStep = 1 end
+	return Z_BASE + _popupZStep
+end
 
 local function ApplyZIndexLadder(root, base)
 	if not root or not root:IsA("GuiObject") then return end
@@ -1202,7 +1212,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			RefreshColorPickerPopup(popup)
 			popup.BackgroundTransparency = 1
 			popup.ZIndex = 8000
-			ApplyZIndexLadder(popup, Z_BASE)
+			ApplyZIndexLadder(popup, NextPopupZ())
 			Tween(popup, { BackgroundTransparency = 0.02 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			PositionPopupWithinMain(popup, true)
 			task.defer(function() if popup.Visible then PositionPopupWithinMain(popup, true) end end)
@@ -1245,7 +1255,7 @@ local GOOD = Color3.fromRGB(120, 220, 140)
 local WARN = Color3.fromRGB(240, 180, 80)
 local BAD = Color3.fromRGB(233, 90, 130)
 
-local function PillIcon(name, asset, order, tint)
+local function PillIcon(name, asset, order, tint, corner)
 local icon = Instance.new('ImageLabel')
 icon.Name = name
 icon.LayoutOrder = order
@@ -1255,7 +1265,7 @@ icon.BorderSizePixel = 0
 icon.Image = asset
 icon.ImageColor3 = tint or ACCENT
 icon.Parent = GameInfo
-do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = icon end
+do local c = Instance.new("UICorner"); c.CornerRadius = corner or UDim.new(1, 0); c.Parent = icon end
 return icon
 end
 
@@ -1278,12 +1288,12 @@ t.Parent = GameInfo
 return t
 end
 
-local NeverIcon = PillIcon("NeverIcon", "rbxthumb://type=Asset&id=118608145176297&w=420&h=420", 1, Color3.new(1, 1, 1))
+-- square-ish chip with a 6px radius, exactly like the logo in the menu header
+local NeverIcon = PillIcon("NeverIcon", "rbxthumb://type=Asset&id=118608145176297&w=420&h=420", 1, Color3.new(1, 1, 1), UDim.new(0, 6))
 NeverIcon.Size = UDim2.fromOffset(24, 24)
 NeverIcon.BackgroundTransparency = 0
 NeverIcon.BackgroundColor3 = Color3.fromRGB(19, 22, 33)
 NeverIcon.ScaleType = Enum.ScaleType.Fit
-do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = NeverIcon end
 local UserIcon = PillIcon("UserIcon", "rbxthumb://type=Asset&id=123112467890707&w=420&h=420", 2)
 local Username = PillText("Username", LocalPlayer.DisplayName, 3, 100)
 local FpsIcon = PillIcon("FpsIcon", "rbxthumb://type=Asset&id=137471315687443&w=420&h=420", 4)
@@ -1292,15 +1302,18 @@ local FPSText = PillText("FPSText", "0 FPS", 5, 62)
 local ClockIcon = Instance.new('Frame')
 ClockIcon.Name = "ClockIcon"
 ClockIcon.LayoutOrder = 6
-ClockIcon.Size = UDim2.fromOffset(17, 17)
+ClockIcon.Size = UDim2.fromOffset(18, 18)
 ClockIcon.BackgroundColor3 = ACCENT
 ClockIcon.BackgroundTransparency = 1
 ClockIcon.BorderSizePixel = 0
 ClockIcon.Parent = GameInfo
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = ClockIcon end
-do local s = Instance.new("UIStroke"); s.Color = ACCENT; s.Thickness = 1.6; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ClockIcon end
-do local h = Instance.new("Frame"); h.Name = "HandH"; h.AnchorPoint = Vector2.new(0.5, 1); h.Position = UDim2.new(0.5, 0, 0.52, 0); h.Size = UDim2.fromOffset(1.4, 5); h.BackgroundColor3 = ACCENT; h.BorderSizePixel = 0; h.Parent = ClockIcon end
-do local m = Instance.new("Frame"); m.Name = "HandM"; m.AnchorPoint = Vector2.new(0.5, 0.5); m.Position = UDim2.new(0.5, 0, 0.44, 0); m.Size = UDim2.fromOffset(1.4, 4); m.BackgroundColor3 = ACCENT; m.BorderSizePixel = 0; m.Parent = ClockIcon end
+do local s = Instance.new("UIStroke"); s.Color = ACCENT; s.Thickness = 1.7; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ClockIcon end
+-- minute hand pointing up, hour hand turned to the right: reads as a clock
+do local m = Instance.new("Frame"); m.Name = "HandMinute"; m.AnchorPoint = Vector2.new(0.5, 1); m.Position = UDim2.new(0.5, 0, 0.5, 1); m.Size = UDim2.fromOffset(1.6, 5.5); m.BackgroundColor3 = ACCENT; m.BorderSizePixel = 0; m.Parent = ClockIcon end
+do local h = Instance.new("Frame"); h.Name = "HandHour"; h.AnchorPoint = Vector2.new(0.5, 1); h.Position = UDim2.new(0.5, 0, 0.5, 1); h.Size = UDim2.fromOffset(1.6, 3.6); h.BackgroundColor3 = ACCENT; h.BorderSizePixel = 0; h.Rotation = 62; h.Parent = ClockIcon end
+do local p2 = Instance.new("Frame"); p2.Name = "Pin"; p2.AnchorPoint = Vector2.new(0.5, 0.5); p2.Position = UDim2.new(0.5, 0, 0.5, 0); p2.Size = UDim2.fromOffset(2.6, 2.6); p2.BackgroundColor3 = ACCENT; p2.BorderSizePixel = 0; p2.Parent = ClockIcon end
+do local c2 = Instance.new("UICorner"); c2.CornerRadius = UDim.new(1, 0); c2.Parent = p2 end
 local TimeText = PillText("TimeText", "00:00", 7, 54)
 local SignalImage = PillIcon("SignalImage", "rbxthumb://type=Asset&id=113541980541438&w=420&h=420", 8, GOOD)
 local MSText = PillText("MSText", "0 MS", 9, 64)
@@ -1908,13 +1921,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ScaleDownBar.Parent = WSScaleRow
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = ScaleDownBar end
 	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ScaleDownBar end
-	do
-		local ds = Instance.new("ImageLabel"); ds.Name = "DropShadow"
-		ds.Position = UDim2.new(0.5,0,0.5,0); ds.Size = UDim2.new(1,47,1,47)
-		ds.AnchorPoint = Vector2.new(0.5,0.5); ds.BackgroundTransparency = 1; ds.BorderSizePixel = 0
-		ds.Image = "rbxassetid://6014261993"; ds.ImageColor3 = Color3.fromRGB(12,14,22); ds.ZIndex = 999
-		ds.Parent = ScaleDownBar
-	end
 	local ScaleContainer = Instance.new("ScrollingFrame")
 	ScaleContainer.Name = "Container"
 	ScaleContainer.Position = UDim2.new(0.05,0,0.05,0)
@@ -2058,13 +2064,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangDownBar.Parent = WSLangRow
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = LangDownBar end
 	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = LangDownBar end
-	do
-		local ds = Instance.new("ImageLabel"); ds.Name = "DropShadow"
-		ds.Position = UDim2.new(0.5,0,0.5,0); ds.Size = UDim2.new(1,47,1,47)
-		ds.AnchorPoint = Vector2.new(0.5,0.5); ds.BackgroundTransparency = 1; ds.BorderSizePixel = 0
-		ds.Image = "rbxassetid://6014261993"; ds.ImageColor3 = Color3.fromRGB(12,14,22); ds.ZIndex = 999
-		ds.Parent = LangDownBar
-	end
 	local LangContainer = Instance.new("ScrollingFrame")
 	LangContainer.Name = "Container"
 	LangContainer.Position = UDim2.new(0.05,0,0.05,0)
@@ -2542,13 +2541,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		DropPopup.Parent = Row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = DropPopup end
 		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropPopup end
-		do
-			local ds = Instance.new("ImageLabel"); ds.Name = "DropShadow"
-			ds.Position = UDim2.new(0.5,0,0.5,0); ds.Size = UDim2.new(1,47,1,47)
-			ds.AnchorPoint = Vector2.new(0.5,0.5); ds.BackgroundTransparency = 1; ds.BorderSizePixel = 0
-			ds.Image = "rbxassetid://6014261993"; ds.ImageColor3 = Color3.fromRGB(12,14,22); ds.ZIndex = -1
-			ds.Parent = DropPopup
-		end
 
 		local DropContainer = Instance.new("ScrollingFrame")
 		DropContainer.Name = "Container"
@@ -3879,7 +3871,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConfigMainFrame.BackgroundTransparency = 1
 			ConfigMainFrame.Visible = true
 			ConfigMainFrame.ZIndex = 7000
-			ApplyZIndexLadder(ConfigMainFrame, Z_BASE)
+			ApplyZIndexLadder(ConfigMainFrame, NextPopupZ())
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
 			Tween(ConfigMainFrame, {BackgroundTransparency = 0.01}, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		Tween(SaveArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -4427,9 +4419,10 @@ end
 
 			local Elements = New("Frame", {
 				Name = "Elements",
-				-- 1px inset: Border draws half outside and the column clips
-				Size = UDim2.new(1, -2, 0, 30),
-				Position = UDim2.new(0, 1, 0, 0),
+				-- 2px inset: Border paints half outside and the column clips, so the
+				-- left edge needs real room or it loses its outline
+				Size = UDim2.new(1, -4, 0, 30),
+				Position = UDim2.new(0, 2, 0, 0),
 				BackgroundColor3 = Color3.fromRGB(21,24,36),
 				BackgroundTransparency = 0,
 				BorderSizePixel = 0,
@@ -4654,7 +4647,7 @@ end
 					SettingsFrame.Visible = true
 					SettingsFrame.BackgroundTransparency = 0
 					SFScale.Scale = 0.94
-					ApplyZIndexLadder(SettingsFrame, Z_BASE)
+					ApplyZIndexLadder(SettingsFrame, NextPopupZ())
 					placeSettings(getSettingsHeight())
 					RegisterPopup(SettingsFrame, closeSF, SettingsBtn)
 					local function settle()
@@ -4737,8 +4730,8 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0),
-						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
+						Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2),
+						Size = UDim2.fromOffset(16, 16),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
 						ZIndex = 1002,
@@ -4756,7 +4749,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					local function Set(val)
 						enabled = val == true
 						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(Icon, { Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+						Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -5786,8 +5779,9 @@ if maxY <= 0 then return end
 
 				local Effect = New("Frame", {
 					Name = "Effect",
-					Position = UDim2.new(0.8400000143051147, 0, 0.30000001192092896, 0),
-					Size = UDim2.new(0.11035999655723572, 0, 0.5600000023841858, 0),
+					Position = UDim2.new(1, -8, 0.5, 0),
+					AnchorPoint = Vector2.new(1, 0.5),
+					Size = UDim2.fromOffset(36, 20),
 					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 				}, Toggle)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
@@ -5795,8 +5789,8 @@ if maxY <= 0 then return end
 
 				local Icon = New("Frame", {
 					Name = "Icon",
-					Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0),
-					Size = UDim2.new(1, 0, 0.8999999761581421, 0),
+					Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2),
+					Size = UDim2.fromOffset(16, 16),
 					BackgroundColor3 = Color3.fromRGB(255,255,255),
 					BackgroundTransparency = enabled and 0 or 0.5,
 				}, Effect)
@@ -5813,7 +5807,7 @@ if maxY <= 0 then return end
 				local function Set(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					InvokeCallback(callback, enabled)
 				end
 
@@ -5971,8 +5965,9 @@ if maxY <= 0 then return end
 				-- Toggle switch (shifted slightly left to make room for colorpicker button)
 				local Effect = New("Frame", {
 					Name = "Effect",
-					Position = UDim2.new(0.840000143051147, 0, 0.30000001192092896, 0),
-					Size = UDim2.new(0.11035999655723572, 0, 0.5600000023841858, 0),
+					Position = UDim2.new(1, -8, 0.5, 0),
+					AnchorPoint = Vector2.new(1, 0.5),
+					Size = UDim2.fromOffset(36, 20),
 					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 				}, Toggle)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
@@ -5980,8 +5975,8 @@ if maxY <= 0 then return end
 
 				local Icon = New("Frame", {
 					Name = "Icon",
-					Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0),
-					Size = UDim2.new(1, 0, 0.8999999761581421, 0),
+					Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2),
+					Size = UDim2.fromOffset(16, 16),
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 					BackgroundTransparency = enabled and 0 or 0.5,
 				}, Effect)
@@ -6172,7 +6167,7 @@ if maxY <= 0 then return end
 				local function SetEnabled(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 					NotifyEnabled()
 				end
 
@@ -7465,7 +7460,7 @@ if maxY <= 0 then return end
 						Section2Frame.Visible = true
 						Section2Frame.BackgroundTransparency = 0
 						S2Scale.Scale = 0.94
-						ApplyZIndexLadder(Section2Frame, Z_BASE)
+						ApplyZIndexLadder(Section2Frame, NextPopupZ())
 						local accordionHeight = getAccordionHeight()
 						local accordionKnown = Vector2.new(
 							math.max(DropdownSection.AbsoluteSize.X * 0.96, 1),
@@ -7571,8 +7566,8 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0),
-						Size = UDim2.new(1, 0, 0.8999999761581421, 0),
+						Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2),
+						Size = UDim2.fromOffset(16, 16),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = enabled and 0 or 0.5,
 						ZIndex = 102,
@@ -7590,7 +7585,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					local function Set(val)
 						enabled = val == true
 						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(Icon, { Position = enabled and UDim2.new(0.55, 0, 0.04500000551342964, 0) or UDim2.new(0.05, 0, 0.04500000551342964, 0), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+						Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
 						InvokeCallback(callback, enabled)
 					end
 
