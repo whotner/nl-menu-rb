@@ -1145,7 +1145,7 @@ local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
 GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(0.98, 0, 0.02, 0)
-GameInfo.Size = UDim2.fromOffset(620, 48)
+GameInfo.Size = UDim2.fromOffset(660, 48)
 GameInfo.BackgroundColor3 = Color3.fromRGB(17,20,30)
 GameInfo.BackgroundTransparency = 0
 GameInfo.BorderSizePixel = 0
@@ -1161,7 +1161,7 @@ UICorner.CornerRadius = UDim.new(1, 0)
 UICorner.Parent = GameInfo
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
-UIAspectRatioConstraint.AspectRatio = 9
+UIAspectRatioConstraint.AspectRatio = 13
 UIAspectRatioConstraint.Parent = GameInfo
 
 local UIScale = Instance.new('UIScale')
@@ -1653,7 +1653,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
 		ln.Size = UDim2.new(0.8899999856948853,0,0,1)
 		ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		ln.BackgroundTransparency = 0.95
+		ln.BackgroundTransparency = 0.9
 		ln.BorderSizePixel = 0; ln.ZIndex = 130; ln.Parent = WSColorpicker
 	end
 	do
@@ -1783,7 +1783,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
 		ln.Size = UDim2.new(0.8999999761581421,0,0,1)
 		ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		ln.BackgroundTransparency = 0.95
+		ln.BackgroundTransparency = 0.9
 		ln.BorderSizePixel = 0; ln.ZIndex = 150; ln.Parent = WSScaleRow
 	end
 	do
@@ -1933,7 +1933,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
 		ln.Size = UDim2.new(0.8999999761581421,0,0,1)
 		ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		ln.BackgroundTransparency = 0.95
+		ln.BackgroundTransparency = 0.9
 		ln.BorderSizePixel = 0; ln.ZIndex = 150; ln.Parent = WSLangRow
 	end
 	do
@@ -2346,7 +2346,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		WSScale.Scale = 0.92
 		Tween(WSScale, { Scale = 1 }, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
-				PositionPopupWithinMain(WindowSettingsFrame, false, 10, Info)
+				PositionPopupWithinMain(WindowSettingsFrame, false, 18, Info)
 				RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
 				Tween(ImageLabel, {Rotation = 180}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			else
@@ -2418,7 +2418,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			ln.Position = UDim2.new(0.05,0,1,0)
 			ln.Size = UDim2.new(0.9,0,0,1)
 			ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-			ln.BackgroundTransparency = 0.95
+			ln.BackgroundTransparency = 0.9
 			ln.BorderSizePixel = 0; ln.ZIndex = 150; ln.Parent = Row
 		end
 		do
@@ -2617,7 +2617,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			ln.Position = UDim2.new(0.05,0,1,0)
 			ln.Size = UDim2.new(0.89,0,0,1)
 			ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-			ln.BackgroundTransparency = 0.95
+			ln.BackgroundTransparency = 0.9
 			ln.BorderSizePixel = 0; ln.ZIndex = 130; ln.Parent = Row
 		end
 		do
@@ -2945,7 +2945,7 @@ Lines.Name = "Lines"
 Lines.Position = UDim2.new(0,-5,-0.19000010192394257,0)
 Lines.Size = UDim2.new(-0.0010000000474974513,1,1.2000000476837158,3)
 Lines.BackgroundColor3 = Color3.fromRGB(40,44,65)
-Lines.BackgroundTransparency = 0.95
+Lines.BackgroundTransparency = 0.9
 Lines.BorderSizePixel = 0
 Lines.Parent = SaveText
 
@@ -2954,7 +2954,7 @@ Lines_2.Name = "Lines"
 Lines_2.Position = UDim2.new(1,0,-0.19000010192394257,0)
 Lines_2.Size = UDim2.new(-0.0010000000474974513,1,1.2000000476837158,3)
 Lines_2.BackgroundColor3 = Color3.fromRGB(40,44,65)
-Lines_2.BackgroundTransparency = 0.95
+Lines_2.BackgroundTransparency = 0.9
 Lines_2.BorderSizePixel = 0
 Lines_2.Parent = SaveText
 
@@ -3101,7 +3101,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CMLine.Position = UDim2.new(0.05, 0, 0.898, 0)
 	CMLine.Size = UDim2.new(0.9, 0, 0, 1)
 	CMLine.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
-	CMLine.BackgroundTransparency = 0.85
+	CMLine.BackgroundTransparency = 0.9
 	CMLine.BorderSizePixel = 0
 	CMLine.ZIndex = 1000
 	CMLine.Parent = CMHeader
@@ -3805,6 +3805,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			RefreshConfigList()
 			ConfigMainFrame.BackgroundTransparency = 1
 			ConfigMainFrame.Visible = true
+			ConfigMainFrame.ZIndex = 7000
+			ApplyZIndexLadder(ConfigMainFrame, 7000)
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
 			Tween(ConfigMainFrame, {BackgroundTransparency = 0.01}, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		Tween(SaveArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -4951,7 +4953,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.05000000074505806, 0, 1, 0),
 						Size = UDim2.new(0.8999999761581421, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.95,
+						BackgroundTransparency = 0.9,
 						BorderSizePixel = 0,
 						ZIndex = 1000,
 					}, Selection)
@@ -6404,7 +6406,7 @@ if maxY <= 0 then return end
 				local DownBar = New("Frame", {
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 2),
-					Size = UDim2.new(0.96, 0, 0, 0),
+					Size = UDim2.new(0.72, 0, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(21,24,36),
 					BackgroundTransparency = 0,
 					Visible = false,
@@ -6444,7 +6446,7 @@ if maxY <= 0 then return end
 				local function closeDropdown()
 					dropOpen = false
 					Tween(Arrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-					Tween(DownBar, { Size = UDim2.new(0.96, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
 					if _openDropdown == closeDropdown then _openDropdown = nil end
@@ -6493,11 +6495,11 @@ if maxY <= 0 then return end
 						_openDropdown = closeDropdown
 						DownBar.Visible = true
 						local h = math.min(#options * 25 + 8, 170)
-						local finalSize = UDim2.new(0.96, 0, 0, h)
-						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.96, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
+						local finalSize = UDim2.new(0.72, 0, 0, h)
+						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.72, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
 						DownBar.Size = finalSize
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
-						DownBar.Size = UDim2.new(0.96, 0, 0, 0)
+						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
 						Tween(DownBar, { Size = finalSize }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
@@ -6551,7 +6553,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05000000074505806, 0, 1, 0),
 					Size = UDim2.new(0.8999999761581421, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.95,
+					BackgroundTransparency = 0.9,
 					BorderSizePixel = 0,
 					ZIndex = 100,
 				}, Dropdown)
@@ -6617,7 +6619,7 @@ if maxY <= 0 then return end
 				local DownBar = New("Frame", {
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 2),
-					Size = UDim2.new(0.96, 0, 0, 0),
+					Size = UDim2.new(0.72, 0, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(21,24,36),
 					BackgroundTransparency = 0,
 					ClipsDescendants = true,
@@ -6653,7 +6655,7 @@ if maxY <= 0 then return end
 				local function closeDropdown()
 					dropOpen = false
 					Tween(Arrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-					Tween(DownBar, { Size = UDim2.new(0.96, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
 					if _openDropdown == closeDropdown then _openDropdown = nil end
@@ -6719,11 +6721,11 @@ if maxY <= 0 then return end
 						_openDropdown = closeDropdown
 						DownBar.Visible = true
 						local h = math.min(#options * 25 + 8, 170)
-						local finalSize = UDim2.new(0.96, 0, 0, h)
-						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.96, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
+						local finalSize = UDim2.new(0.72, 0, 0, h)
+						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.72, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
 						DownBar.Size = finalSize
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
-						DownBar.Size = UDim2.new(0.96, 0, 0, 0)
+						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
 						Tween(DownBar, { Size = finalSize }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
@@ -7640,7 +7642,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.05000000074505806, 0, 1, 0),
 						Size = UDim2.new(0.8999999761581421, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.95,
+						BackgroundTransparency = 0.9,
 						BorderSizePixel = 0,
 						ZIndex = 100,
 					}, Selection)
