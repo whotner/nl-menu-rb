@@ -2641,7 +2641,8 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			else
 				CloseAllPopupsExcept(DropPopup)
 				dropOpen = true
-				SmoothOpen(DropPopup, 0.5, 0.2)
+				DropPopup.BackgroundTransparency = 0
+						DropPopup.Visible = true
 		Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 				Tween(Arrow, {ImageTransparency = 0}, 0.2)
 				PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
@@ -3173,12 +3174,12 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	SearchContainer.Name = "SearchContainer"
 	SearchContainer.Position = UDim2.new(0.037, 0, 0.27, 0)
 	SearchContainer.Size = UDim2.new(0.928, 0, 0.143, 0)
-	SearchContainer.BackgroundColor3 = Color3.fromRGB(19,22,33)
+	SearchContainer.BackgroundColor3 = Color3.fromRGB(33, 38, 54)
 	SearchContainer.BorderSizePixel = 0
 	SearchContainer.ZIndex = 1000
 	SearchContainer.Parent = ConfigMainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = SearchContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SearchContainer end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(100, 115, 160); s.Transparency = 0.15; s.Thickness = 1.3; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SearchContainer end
 	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = SearchContainer end
 
 	local SearchIconImg = Instance.new("ImageLabel")
@@ -3213,13 +3214,13 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	NameInputContainer.Name = "NameInputContainer"
 	NameInputContainer.Position = UDim2.new(0.037, 0, 0.27, 0)
 	NameInputContainer.Size = UDim2.new(0.928, 0, 0.143, 0)
-	NameInputContainer.BackgroundColor3 = Color3.fromRGB(19,22,33)
+	NameInputContainer.BackgroundColor3 = Color3.fromRGB(33, 38, 54)
 	NameInputContainer.BorderSizePixel = 0
 	NameInputContainer.ZIndex = 1001
 	NameInputContainer.Visible = false
 	NameInputContainer.Parent = ConfigMainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = NameInputContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = NameInputContainer end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(100, 115, 160); s.Transparency = 0.15; s.Thickness = 1.3; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = NameInputContainer end
 	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = NameInputContainer end
 
 	local NameOfConfig = Instance.new("TextBox")
@@ -4643,7 +4644,7 @@ end
 					settingsOpen = true
 					CloseAllPopupsExcept(SettingsFrame)
 					SettingsFrame.Visible = true
-					SettingsFrame.BackgroundTransparency = 1
+					SettingsFrame.BackgroundTransparency = 0
 					SFScale.Scale = 0.94
 					ApplyZIndexLadder(SettingsFrame, Z_BASE)
 					placeSettings(getSettingsHeight())
@@ -4651,7 +4652,6 @@ end
 					local function settle()
 						if not settingsOpen or not SettingsFrame.Parent then return end
 						placeSettings(getSettingsHeight())
-						Tween(SettingsFrame, {BackgroundTransparency = 0}, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						Tween(SFScale, {Scale = 1}, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 					end
 					task.defer(settle)
@@ -5192,14 +5192,17 @@ UIAspectRatioConstraint.Parent = Slider
 						else
 							CloseAllPopupsExcept(DropPopup)
 							dropOpen = true
-							local knownW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
-							-- height is pure arithmetic, computed before the popup is ever shown:
-							-- every option row is full width with AspectRatio 6, so row height = width / 6
-							local rowH = knownW / 6
+							-- knownSize has to state the real width: the popup is 69%, not 96%,
+							-- otherwise the clamp inside PositionPopupWithinMain pushes it sideways
+							local popupW = math.max(Selection.AbsoluteSize.X * 0.6899999737739563, 1)
+							-- rows fill DropContainer (89.8% of the popup) and carry AspectRatio 6
+							local rowH = (popupW * 0.8980000019073486) / 6
 							local popupH = math.clamp(rowH * #options + 10, 40, 280)
 							DropPopup.Size = UDim2.new(0.6899999737739563, 0, 0, popupH)
-							SmoothOpen(DropPopup, 0, 0.2)
-							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, popupH))
+							-- opaque from the first frame, the grow animation is enough
+							DropPopup.BackgroundTransparency = 0
+							DropPopup.Visible = true
+							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(popupW, popupH))
 							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 						end
@@ -7335,7 +7338,7 @@ if maxY <= 0 then return end
 				Section2Frame.Position = UDim2.new(0.02, 0, 1, 2 / GetMainFrameScale())
 				Section2Frame.Size = UDim2.new(0.96, 0, 0, 0)
 				Section2Frame.BackgroundColor3 = Color3.fromRGB(33, 38, 54)
-				Section2Frame.BackgroundTransparency = 1
+				Section2Frame.BackgroundTransparency = 0
 				Section2Frame.BorderSizePixel = 0
 				Section2Frame.Visible = false
 				Section2Frame.ZIndex = 5000
@@ -7351,9 +7354,9 @@ if maxY <= 0 then return end
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(60, 68, 96)
-				UIStroke.Transparency = 0.25
-				UIStroke.Thickness = 1
+				UIStroke.Color = Color3.fromRGB(100, 115, 160)
+				UIStroke.Transparency = 0.15
+				UIStroke.Thickness = 1.3
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				UIStroke.Parent = Section2Frame
 
@@ -7452,7 +7455,7 @@ if maxY <= 0 then return end
 						accordionOpen = true
 						_openAccordion = closeAccordion
 						Section2Frame.Visible = true
-						Section2Frame.BackgroundTransparency = 1
+						Section2Frame.BackgroundTransparency = 0
 						S2Scale.Scale = 0.94
 						ApplyZIndexLadder(Section2Frame, Z_BASE)
 						local accordionHeight = getAccordionHeight()
@@ -7470,7 +7473,6 @@ if maxY <= 0 then return end
 						task.defer(function()
 							if not accordionOpen or not Section2Frame.Parent then return end
 							fitAccordionHeight()
-							Tween(Section2Frame, {BackgroundTransparency = 0}, 0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 							Tween(S2Scale, {Scale = 1}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						end)
 						task.delay(0.05, settle)
@@ -7900,7 +7902,8 @@ UIAspectRatioConstraint.Parent = Toggle
 							local knownW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
 							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
 							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
-							SmoothOpen(DropPopup, 0, 0.2)
+							DropPopup.BackgroundTransparency = 0
+							DropPopup.Visible = true
 							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
 						end
