@@ -396,11 +396,11 @@ end
 local Library = {}
 Library.__index = Library
 
-local function Tween(obj, props, t, style, dir)
+local function Tween(obj, props, t, style, dir, delay)
 	if not obj or not obj.Parent then return end
 	style = style or Enum.EasingStyle.Quad
 	dir = dir or Enum.EasingDirection.Out
-	local ok, tween = pcall(function() return TweenService:Create(obj, TweenInfo.new(t or 0.2, style, dir), props) end)
+	local ok, tween = pcall(function() return TweenService:Create(obj, TweenInfo.new(t or 0.2, style, dir, 0, false, delay or 0), props) end)
 	if ok and tween then tween:Play() end
 end
 
@@ -1211,188 +1211,112 @@ local Stats = game:GetService('Stats')
 local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
 GameInfo.AnchorPoint = Vector2.new(1, 0)
-GameInfo.Position = UDim2.new(0.98, 0, 0.02, 0)
-GameInfo.Size = UDim2.fromOffset(660, 48)
-GameInfo.BackgroundColor3 = Color3.fromRGB(16,22,38)
+GameInfo.Position = UDim2.new(0.985, 0, 0.02, 0)
+GameInfo.Size = UDim2.fromOffset(380, 40)
+GameInfo.AutomaticSize = Enum.AutomaticSize.X
+GameInfo.BackgroundColor3 = Color3.fromRGB(16, 22, 38)
 GameInfo.BackgroundTransparency = 0.25
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
-GameInfo.ClipsDescendants = true
-GameInfo.AutomaticSize = Enum.AutomaticSize.None
+GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
-do
-local glow = Instance.new("UIStroke")
-glow.Name = "Glow"
-glow.Color = Color3.fromRGB(80, 150, 235)
-glow.Thickness = 7
-glow.Transparency = 0.82
-glow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-glow.Parent = GameInfo
-task.spawn(function()
-local last
-while GameInfo and GameInfo.Parent do
-local label = GameInfo:FindFirstChild("MSText")
-if label and label:IsA("TextLabel") then
-local ms = tonumber(string.match(label.Text, "(%d+)"))
-if ms and ms ~= last then
-last = ms
-label.TextColor3 = ms >= 150 and Color3.fromRGB(233, 90, 130)
-or ms >= 80 and Color3.fromRGB(240, 180, 80)
-or Color3.fromRGB(120, 220, 140)
-end
-end
-task.wait(0.25)
-end
-end)
+do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = GameInfo end
+do local s = Instance.new("UIStroke"); s.Name = "Glow"; s.Color = Color3.fromRGB(80, 150, 235); s.Thickness = 7; s.Transparency = 0.82; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = GameInfo end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 15); pd.PaddingRight = UDim.new(0, 19); pd.PaddingTop = UDim.new(0, 9); pd.PaddingBottom = UDim.new(0, 9); pd.Parent = GameInfo end
+do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
+
+local ACCENT = Color3.fromRGB(0, 168, 255)
+local GOOD = Color3.fromRGB(120, 220, 140)
+local WARN = Color3.fromRGB(240, 180, 80)
+local BAD = Color3.fromRGB(233, 90, 130)
+
+local function PillIcon(name, asset, order, tint)
+local icon = Instance.new('ImageLabel')
+icon.Name = name
+icon.LayoutOrder = order
+icon.Size = UDim2.fromOffset(17, 17)
+icon.BackgroundTransparency = 1
+icon.BorderSizePixel = 0
+icon.Image = asset
+icon.ImageColor3 = tint or ACCENT
+icon.Parent = GameInfo
+do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = icon end
+return icon
 end
 
+local function PillText(name, text, order, width)
+local t = Instance.new('TextLabel')
+t.Name = name
+t.LayoutOrder = order
+t.Size = UDim2.fromOffset(width, 22)
+t.BackgroundTransparency = 1
+t.BorderSizePixel = 0
+t.Text = text
+t.TextColor3 = Color3.fromRGB(255, 255, 255)
+t.TextScaled = false
+t.TextSize = 13
+t.Font = Enum.Font.GothamBold
+t.TextTransparency = 0.15
+t.TextXAlignment = Enum.TextXAlignment.Left
+t.TextYAlignment = Enum.TextYAlignment.Center
+t.Parent = GameInfo
+return t
+end
 
-local UICorner = Instance.new('UICorner')
-UICorner.CornerRadius = UDim.new(1, 0)
-UICorner.Parent = GameInfo
+local NeverIcon = PillIcon("NeverIcon", "rbxthumb://type=Asset&id=118608145176297&w=420&h=420", 1, ACCENT)
+local UserIcon = PillIcon("UserIcon", "rbxthumb://type=Asset&id=123112467890707&w=420&h=420", 2)
+local Username = PillText("Username", LocalPlayer.DisplayName, 3, 100)
+local FpsIcon = PillIcon("FpsIcon", "rbxthumb://type=Asset&id=137471315687443&w=420&h=420", 4)
+local FPSText = PillText("FPSText", "0 FPS", 5, 62)
+-- clock drawn from parts: no asset id to guess, nothing to fail to load
+local ClockIcon = Instance.new('Frame')
+ClockIcon.Name = "ClockIcon"
+ClockIcon.LayoutOrder = 6
+ClockIcon.Size = UDim2.fromOffset(17, 17)
+ClockIcon.BackgroundColor3 = ACCENT
+ClockIcon.BackgroundTransparency = 1
+ClockIcon.BorderSizePixel = 0
+ClockIcon.Parent = GameInfo
+do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = ClockIcon end
+do local s = Instance.new("UIStroke"); s.Color = ACCENT; s.Thickness = 1.6; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ClockIcon end
+do local h = Instance.new("Frame"); h.Name = "HandH"; h.AnchorPoint = Vector2.new(0.5, 1); h.Position = UDim2.new(0.5, 0, 0.52, 0); h.Size = UDim2.fromOffset(1.4, 5); h.BackgroundColor3 = ACCENT; h.BorderSizePixel = 0; h.Parent = ClockIcon end
+do local m = Instance.new("Frame"); m.Name = "HandM"; m.AnchorPoint = Vector2.new(0.5, 0.5); m.Position = UDim2.new(0.5, 0, 0.44, 0); m.Size = UDim2.fromOffset(1.4, 4); m.BackgroundColor3 = ACCENT; m.BorderSizePixel = 0; m.Parent = ClockIcon end
+local TimeText = PillText("TimeText", "00:00", 7, 54)
+local SignalImage = PillIcon("SignalImage", "rbxthumb://type=Asset&id=113541980541438&w=420&h=420", 8, GOOD)
+local MSText = PillText("MSText", "0 MS", 9, 64)
 
-local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
-UIAspectRatioConstraint.AspectRatio = 13
-UIAspectRatioConstraint.Parent = GameInfo
-
-local UIScale = Instance.new('UIScale')
-UIScale.Scale = 0.7
-UIScale.Parent = GameInfo
-
-local FpsIcon = Instance.new('ImageLabel')
-FpsIcon.Name = "FpsIcon"
-FpsIcon.Position = UDim2.new(0.022, 0, 0.32, 0)
-FpsIcon.Size = UDim2.new(0.1, 0, 0.4, 0)
-FpsIcon.BackgroundTransparency = 1
-FpsIcon.Image = "rbxthumb://type=Asset&id=137471315687443&w=420&h=420"
-FpsIcon.ImageColor3 = Color3.fromRGB(0, 168, 255)
-FpsIcon.Parent = GameInfo
-
-local UIAspectRatio_FpsIcon = Instance.new('UIAspectRatioConstraint')
-UIAspectRatio_FpsIcon.Parent = FpsIcon
-
-local FPSText = Instance.new('TextLabel')
-FPSText.Name = "FPSText"
-FPSText.Position = UDim2.new(0.115, 0, 0.28, 0)
-FPSText.Size = UDim2.new(0.17, 0, 0.44, 0)
-FPSText.BackgroundTransparency = 1
-FPSText.Text = "0 FPS"
-FPSText.TextColor3 = Color3.fromRGB(255, 255, 255)
-FPSText.TextScaled = true
-FPSText.Font = Enum.Font.SourceSansSemibold
-FPSText.TextTransparency = 0.15
-FPSText.TextXAlignment = Enum.TextXAlignment.Left
-FPSText.Parent = GameInfo
-
-local UIAspectRatio_FPSText = Instance.new('UIAspectRatioConstraint')
-UIAspectRatio_FPSText.AspectRatio = 8
-UIAspectRatio_FPSText.Parent = FPSText
-
-local SignalImage = Instance.new('ImageLabel')
-SignalImage.Name = "SignalImage"
-SignalImage.Position = UDim2.new(0.338, 0, 0.34, 0)
-SignalImage.Size = UDim2.new(0.085, 0, 0.36, 0)
-SignalImage.BackgroundTransparency = 1
-SignalImage.Image = "rbxthumb://type=Asset&id=113541980541438&w=420&h=420"
-SignalImage.ImageColor3 = Color3.fromRGB(0, 168, 255)
-SignalImage.Parent = GameInfo
-
-local UIAspectRatio_SignalImage = Instance.new('UIAspectRatioConstraint')
-UIAspectRatio_SignalImage.Parent = SignalImage
-
-local MSText = Instance.new('TextLabel')
-MSText.Name = "MSText"
-MSText.Position = UDim2.new(0.435, 0, 0.28, 0)
-MSText.Size = UDim2.new(0.15, 0, 0.44, 0)
-MSText.BackgroundTransparency = 1
-MSText.Text = "0 MS"
-MSText.TextColor3 = Color3.fromRGB(255, 255, 255)
-MSText.TextScaled = true
-MSText.Font = Enum.Font.SourceSansSemibold
-MSText.TextTransparency = 0.15
-MSText.TextXAlignment = Enum.TextXAlignment.Left
-MSText.Parent = GameInfo
-
-local UIAspectRatio_MSText = Instance.new('UIAspectRatioConstraint')
-UIAspectRatio_MSText.AspectRatio = 8
-UIAspectRatio_MSText.Parent = MSText
-
-local UserIcon = Instance.new('ImageLabel')
-UserIcon.Name = "UserIcon"
-UserIcon.Position = UDim2.new(0.618, 0, 0.27, 0)
-UserIcon.Size = UDim2.new(0.09, 0, 0.5, 0)
-UserIcon.BackgroundTransparency = 1
-UserIcon.Image = "rbxthumb://type=Asset&id=123112467890707&w=420&h=420"
-UserIcon.ImageColor3 = Color3.fromRGB(0, 168, 255)
-UserIcon.Parent = GameInfo
-
-local UIAspectRatio_UserIcon = Instance.new('UIAspectRatioConstraint')
-UIAspectRatio_UserIcon.Parent = UserIcon
-
-local Username = Instance.new('TextLabel')
-Username.Name = "Username"
-Username.Position = UDim2.new(0.690, 0, 0.30, 0)
-Username.Size = UDim2.new(0.140, 0, 0.40, 0)
-Username.TextTruncate = Enum.TextTruncate.AtEnd
-Username.BackgroundTransparency = 1
-Username.Text = LocalPlayer.DisplayName
-Username.TextColor3 = Color3.fromRGB(255, 255, 255)
-Username.TextScaled = true
-Username.Font = Enum.Font.SourceSansSemibold
-Username.TextTransparency = 0.15
-Username.TextXAlignment = Enum.TextXAlignment.Left
-Username.Parent = GameInfo
-
-local NeverIcon = Instance.new('ImageLabel')
-NeverIcon.Name = "NeverIcon"
-NeverIcon.Position = UDim2.new(0.845, 0, 0.18, 0)
-NeverIcon.Size = UDim2.new(0.044, 0, 0.64, 0)
-NeverIcon.BackgroundTransparency = 1
-NeverIcon.Image = "rbxthumb://type=Asset&id=118608145176297&w=420&h=420"
-NeverIcon.Parent = GameInfo
-
-local UIAspectRatio_NeverIcon = Instance.new('UIAspectRatioConstraint')
-UIAspectRatio_NeverIcon.Parent = NeverIcon
-
-local UICorner_NeverIcon = Instance.new('UICorner')
-UICorner_NeverIcon.CornerRadius = UDim.new(1, 0)
-UICorner_NeverIcon.Parent = NeverIcon
-
-local Profile = Instance.new('ImageLabel')
-Profile.Name = "Profile"
-Profile.Position = UDim2.new(0.912, 0, 0.18, 0)
-Profile.Size = UDim2.new(0.044, 0, 0.64, 0)
-Profile.BackgroundColor3 = Color3.fromRGB(127, 127, 127)
-Profile.Image = ("rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=420&h=420")
-Profile.Parent = GameInfo
-
-do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = Profile end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(70, 78, 110); s.Transparency = 0.35; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Profile end
-local UIAspectRatio_Profile = Instance.new('UIAspectRatioConstraint')
-UIAspectRatio_Profile.Parent = Profile
-
-local UICorner_Profile = Instance.new('UICorner')
-UICorner_Profile.CornerRadius = UDim.new(1, 0)
-UICorner_Profile.Parent = Profile
-
--- live FPS + ping updates
+-- live FPS + clock + ping
 local fpsBuffer = {}
+local timeAcc = 0
+local lastMs
 RunService.RenderStepped:Connect(function(dt)
-    if type(dt) ~= "number" or dt <= 0 then return end
-    table.insert(fpsBuffer, dt)
-    if #fpsBuffer > 20 then table.remove(fpsBuffer, 1) end
-    local avg = 0
-    for _, v in ipairs(fpsBuffer) do avg = avg + v end
-    if avg > 0 then FPSText.Text = tostring(math.round(#fpsBuffer / avg)) .. " FPS" end
-    local ping = Stats and Stats.Network and Stats.Network.ServerStatsItem and Stats.Network.ServerStatsItem["Data Ping"]
-    if ping then
-        local ok, value = pcall(function() return ping:GetValue() end)
-        if ok and type(value) == "number" then MSText.Text = tostring(math.round(value)) .. " MS" end
-    end
+if type(dt) ~= "number" or dt <= 0 then return end
+table.insert(fpsBuffer, dt)
+if #fpsBuffer > 20 then table.remove(fpsBuffer, 1) end
+local avg = 0
+for _, v in ipairs(fpsBuffer) do avg = avg + v end
+if avg > 0 then FPSText.Text = tostring(math.round(#fpsBuffer / avg)) .. " FPS" end
+timeAcc = timeAcc + dt
+if timeAcc >= 0.5 then
+timeAcc = 0
+TimeText.Text = os.date("%H:%M")
+end
+local ping = Stats and Stats.Network and Stats.Network.ServerStatsItem and Stats.Network.ServerStatsItem["Data Ping"]
+if ping then
+local ok, value = pcall(function() return ping:GetValue() end)
+if ok and type(value) == "number" then
+local ms = math.round(value)
+MSText.Text = tostring(ms) .. " MS"
+if ms ~= lastMs then
+lastMs = ms
+local tint = ms >= 150 and BAD or ms >= 80 and WARN or GOOD
+MSText.TextColor3 = tint
+SignalImage.ImageColor3 = tint
+end
+end
+end
 end)
-
-
 -- rounded window: no square drop-shadow image (its corners broke the rounding)
 
 local Aspect = Instance.new("UIAspectRatioConstraint")
@@ -4340,20 +4264,32 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 									for _, d in ipairs(item:GetDescendants()) do
 										if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
 									end
-									for _, t in ipairs(texts) do t.TextTransparency = 1 end
+									-- no TextTransparency = 1 here: an interrupted fade used to leave text invisible forever
 									local delay = math.min((order - 1) * 0.03, 0.25)
-									task.delay(delay, function()
-										for _, t in ipairs(texts) do
-											if t.Parent then Tween(t, {TextTransparency = t.Name == "TextDefault" and 0.5 or 0}, 0.2) end
-										end
-									end)
+									for _, t in ipairs(texts) do
+									if t.Parent then
+									Tween(t, {TextTransparency = t.Name == "TextDefault" and 0.5 or 0}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, delay)
+									end
+									end
 								end
 							end
 						end
 					end
 				end
 			end
-
+			-- safety net: once the fades have played, nothing may stay invisible
+			task.delay(0.5, function()
+				for _, column in ipairs({Left, Right}) do
+					for _, d in ipairs(column:GetDescendants()) do
+						if d:IsA("TextLabel") or d:IsA("TextButton") then
+							local wanted = d.Name == "TextDefault" and 0.5 or 0
+							if d.TextTransparency > wanted then d.TextTransparency = wanted end
+						elseif d.Name == "Lines" and d:IsA("GuiObject") then
+							if d.BackgroundTransparency > 0.9 then d.BackgroundTransparency = 0.9 end
+						end
+					end
+				end
+			end)
 		end
 
 		local function ActivateTab()
@@ -4414,7 +4350,7 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 
 local SectionTitle = Instance.new('Frame')
 SectionTitle.Name = "SectionTitle"
-SectionTitle.Size = UDim2.new(1, 0, 0, 22)
+SectionTitle.Size = UDim2.new(1, 0, 0, 26)
 SectionTitle.BackgroundTransparency = 1
 SectionTitle.ClipsDescendants = false
 SectionTitle.Visible = true
@@ -4442,7 +4378,7 @@ do
 	local pad = Instance.new("UIPadding")
 	pad.PaddingLeft = UDim.new(0, 8)
 	pad.PaddingRight = UDim.new(0, 4)
-	pad.PaddingTop = UDim.new(0, 4)
+	pad.PaddingTop = UDim.new(0, 8)
 	pad.PaddingBottom = UDim.new(0, 4)
 	pad.Parent = SectionLabel
 end
@@ -8613,13 +8549,13 @@ if maxY <= 0 then return end
 										for _, d in ipairs(item:GetDescendants()) do
 											if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
 										end
-										for _, t in ipairs(texts) do t.TextTransparency = 1 end
+										-- no TextTransparency = 1 here: an interrupted fade used to leave text invisible forever
 										local delay = math.min((order - 1) * 0.03, 0.25)
-										task.delay(delay, function()
-											for _, t in ipairs(texts) do
-												if t.Parent then Tween(t, {TextTransparency = t.Name == "TextDefault" and 0.5 or 0}, 0.2) end
-											end
-										end)
+										for _, t in ipairs(texts) do
+										if t.Parent then
+										Tween(t, {TextTransparency = t.Name == "TextDefault" and 0.5 or 0}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, delay)
+										end
+										end
 									end
 								end
 							end
