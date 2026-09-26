@@ -1231,8 +1231,8 @@ local Stats = game:GetService('Stats')
 
 local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
-GameInfo.AnchorPoint = Vector2.new(1, 0)
-GameInfo.Position = UDim2.new(1, -10, 0, 8)
+GameInfo.AnchorPoint = Vector2.new(0, 0)
+GameInfo.Position = UDim2.new(0, 10, 0, 8)
 GameInfo.Size = UDim2.fromOffset(380, 40)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
 GameInfo.BackgroundColor3 = Color3.fromRGB(13, 15, 22)
@@ -1314,6 +1314,74 @@ do local c2 = Instance.new("UICorner"); c2.CornerRadius = UDim.new(1, 0); c2.Par
 local TimeText = PillText("TimeText", "00:00", 7, 54)
 local SignalImage = PillIcon("SignalImage", "rbxthumb://type=Asset&id=113541980541438&w=420&h=420", 8, GOOD)
 local MSText = PillText("MSText", "0 MS", 9, 64)
+
+-- everything the loader needs to restyle or hide parts of the pill
+WindowObj.Watermark = {
+	frame = GameInfo,
+	logo = NeverIcon,
+	user = Username,
+	fps = FPSText,
+	time = TimeText,
+	ping = MSText,
+	icons = { NeverIcon, UserIcon, FpsIcon, ClockIcon, SignalImage },
+}
+
+--[[
+	Win:SetWatermark({
+		position = UDim2.new(0, 10, 0, 8),   -- UDim2
+		anchorPoint = Vector2.new(0, 0),
+		background = Color3.fromRGB(13, 15, 22),
+		backgroundTransparency = 0.1,
+		cornerRadius = 999,                   -- anything big makes it a pill
+		textSize = 13,
+		accent = Color3.fromRGB(26, 123, 255),
+		show = { logo = true, user = true, fps = true, time = true, ping = true },
+		order = { "logo", "user", "fps", "time", "ping" },
+	})
+]]
+function WindowObj:SetWatermark(options)
+	local wm = WindowObj.Watermark
+	if type(options) ~= "table" then return wm end
+	if options.position then
+		wm.frame.AnchorPoint = options.anchorPoint or Vector2.new(0, 0)
+		wm.frame.Position = options.position
+	end
+	if options.background then wm.frame.BackgroundColor3 = options.background end
+	if type(options.backgroundTransparency) == "number" then
+		wm.frame.BackgroundTransparency = options.backgroundTransparency
+	end
+	if type(options.cornerRadius) == "number" then
+		for _, d in ipairs(wm.frame:GetChildren()) do
+			if d:IsA("UICorner") then d.CornerRadius = UDim.new(0, options.cornerRadius) end
+		end
+	end
+	local keys = { "user", "fps", "time", "ping" }
+	if type(options.textSize) == "number" then
+		for _, key in ipairs(keys) do
+			if wm[key] then wm[key].TextSize = options.textSize end
+		end
+	end
+	if options.accent then
+		for _, icon in ipairs(wm.icons) do
+			if icon ~= wm.logo then icon.ImageColor3 = options.accent end
+		end
+	end
+	if type(options.show) == "table" then
+		for _, icon in ipairs(wm.icons) do
+			if icon == wm.logo and options.show.logo == false then icon.Visible = false end
+		end
+		for _, key in ipairs(keys) do
+			if wm[key] and options.show[key] == false then wm[key].Visible = false end
+		end
+	end
+	if type(options.order) == "table" then
+		for i, key in ipairs(options.order) do
+			local part = wm[key]
+			if part then part.LayoutOrder = i end
+		end
+	end
+	return wm
+end
 
 -- only the text that actually changes gets animated; nothing else is touched
 local function setTextSmooth(label, newText)
@@ -3574,7 +3642,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SettingsFrame end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.35; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -4102,6 +4170,42 @@ Line9.Parent = MainFrame
 	end
 
 	local guiOpen = true
+
+	-- window, acrylic and scale all move together in the same time window
+	local function AnimateWindow(open)
+		local dur = open and 0.2 or 0.16
+		local part = AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.Part
+		local dof = AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.DepthOfField
+		if open then
+			MainFrame.Visible = true
+			MainFrame.BackgroundTransparency = 1
+			if MainFrameUIScale then MainFrameUIScale.Scale = 0.96 end
+			Tween(MainFrame, { BackgroundTransparency = 0.1 }, dur)
+			if MainFrameUIScale then
+				Tween(MainFrameUIScale, { Scale = 1 }, dur, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			end
+		else
+			HideAllPopupsNow(true)
+			if ConfigMainFrame then ConfigMainFrame.Visible = false end
+			if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
+			if Save then Save.Visible = false end
+			if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
+			Tween(MainFrame, { BackgroundTransparency = 1 }, dur)
+			if MainFrameUIScale then Tween(MainFrameUIScale, { Scale = 0.96 }, dur) end
+			task.delay(dur + 0.02, function()
+				if guiOpen then return end
+				MainFrame.Visible = false
+				if part then part.Transparency = 1 end
+				if dof then dof.Enabled = false end
+			end)
+		end
+		if part then
+			local target = open and (part:GetAttribute("TargetTransparency") or 0.8) or 1
+			Tween(part, { Transparency = target }, dur)
+		end
+		if dof then dof.Enabled = open end
+	end
+
 	local function toggleGui()
     guiOpen = not guiOpen
     if not guiOpen then
@@ -4113,22 +4217,18 @@ Line9.Parent = MainFrame
     }, 0.1)
     	if guiOpen then
         if Save then Save.Visible = true end
-        MainFrame.BackgroundTransparency = 1
-        MainFrame.Visible = true
-        AcrylicBlur.Instances.Part.Transparency = 1
-        if AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = true end
-        if AcrylicBlur.Signal then pcall(function() AcrylicBlur.Signal:Disconnect() end); AcrylicBlur.Signal = nil end
+        if AcrylicBlur.Signal then
+            pcall(function() AcrylicBlur.Signal:Disconnect() end)
+            AcrylicBlur.Signal = nil
+        end
         AcrylicBlur.Signal = game:GetService("RunService").RenderStepped:Connect(AcrylicBlur.Update)
-        Tween(MainFrame, { BackgroundTransparency = 0.1 }, 0.18)
-        Tween(AcrylicBlur.Instances.Part, { Transparency = AcrylicBlur.Instances.Part:GetAttribute("TargetTransparency") or 0.8 }, 0.18)
     else
         if AcrylicBlur.Signal then
             AcrylicBlur.Signal:Disconnect()
             AcrylicBlur.Signal = nil
         end
-        -- everything (text, logo, cards, popups, acrylic) disappears in one frame
-        HideWindowInstantly()
     end
+    AnimateWindow(guiOpen)
 end
 
 	ToggleBtn.MouseButton1Click:Connect(toggleGui)
@@ -4718,8 +4818,9 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Effect = New("Frame", {
 						Name = "Effect",
-						Position = UDim2.new(0.8400000143051147, 0, 0.30000001192092896, 0),
-						Size = UDim2.new(0.11035999655723572, 0, 0.5600000023841858, 0),
+						Position = UDim2.new(1, -8, 0.5, 0),
+						AnchorPoint = Vector2.new(1, 0.5),
+						Size = UDim2.fromOffset(36, 20),
 						BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 						ZIndex = 1001,
 					}, Toggle)
@@ -7563,8 +7664,9 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Effect = New("Frame", {
 						Name = "Effect",
-						Position = UDim2.new(0.8400000143051147, 0, 0.30000001192092896, 0),
-						Size = UDim2.new(0.11035999655723572, 0, 0.5600000023841858, 0),
+						Position = UDim2.new(1, -8, 0.5, 0),
+						AnchorPoint = Vector2.new(1, 0.5),
+						Size = UDim2.fromOffset(36, 20),
 						BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 						ZIndex = 101,
 					}, Toggle)
