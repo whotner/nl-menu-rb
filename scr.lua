@@ -1323,6 +1323,12 @@ do
 end
 local SignalImage = PillIcon("SignalImage", "rbxthumb://type=Asset&id=113541980541438&w=420&h=420", 8, GOOD)
 local MSText = PillText("MSText", "0 MS", 9, 64)
+-- every part of the pill, including the two created last, has to sit above it
+do
+	for _, d in ipairs(GameInfo:GetDescendants()) do
+		if d:IsA("GuiObject") then d.ZIndex = 9001 end
+	end
+end
 
 -- everything the loader needs to restyle or hide parts of the pill
 WindowObj.Watermark = {
@@ -1534,7 +1540,7 @@ Aspect.AspectRatio = 1.4
 	local UserImageEl = Instance.new('ImageLabel')
 	UserImageEl.Name = "UserImage"
 	UserImageEl.Size = UDim2.new(0.235,0,1,0)
-	UserImageEl.BackgroundColor3 = Color3.fromRGB(16,19,28)
+	UserImageEl.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	UserImageEl.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
 	UserImageEl.Parent = Info
 	New("UICorner", { CornerRadius = UDim.new(1,0) }, UserImageEl)
@@ -1633,7 +1639,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.3; s.Thickness = 1.4; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
@@ -2018,7 +2024,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ScaleContainer.ScrollBarImageTransparency = 0.5
 	ScaleContainer.Parent = ScaleDownBar
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = ScaleContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.3; s.Thickness = 1.4; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ScaleContainer end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ScaleContainer end
 	do local ll = Instance.new("UIListLayout"); ll.FillDirection = Enum.FillDirection.Vertical; ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0,2); ll.Parent = ScaleContainer end
 
 	local ScaleOpenBtn = Instance.new("TextButton"); ScaleOpenBtn.Name = "OpenBtn"
@@ -2161,7 +2167,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangContainer.ScrollBarImageTransparency = 0.5
 	LangContainer.Parent = LangDownBar
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = LangContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.3; s.Thickness = 1.4; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = LangContainer end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = LangContainer end
 	do local ll = Instance.new("UIListLayout"); ll.FillDirection = Enum.FillDirection.Vertical; ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0,2); ll.Parent = LangContainer end
 
 	local LangOpenBtn = Instance.new("TextButton"); LangOpenBtn.Name = "OpenBtn"
@@ -2643,7 +2649,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		DropPopup.ZIndex = 1000
 		DropPopup.Parent = Row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = DropPopup end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.3; s.Thickness = 1.4; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropPopup end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropPopup end
 
 		local DropContainer = Instance.new("ScrollingFrame")
 		DropContainer.Name = "Container"
@@ -2659,7 +2665,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		DropContainer.ScrollBarImageTransparency = 0.5
 		DropContainer.Parent = DropPopup
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = DropContainer end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.3; s.Thickness = 1.4; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropContainer end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropContainer end
 		do local ll = Instance.new("UIListLayout"); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Parent = DropContainer end
 
 		local function closeDropdown()
@@ -3072,7 +3078,7 @@ asss.Parent = SearchBtn
 	Save.Name = "Save"
 	Save.Position = UDim2.new(0.009999999776482582, 0, 0.2, 0)
 	Save.Size = UDim2.new(0.28, 0, 0.62, 0)
-	Save.BackgroundColor3 = Color3.fromRGB(16,19,28)
+	Save.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	Save.BackgroundTransparency = 0
 	Save.BorderSizePixel = 0
 	Save.Parent = Header
@@ -3110,7 +3116,7 @@ SaveText.Parent = Save
 		if not Save then return end
 		Tween(Save, { BackgroundColor3 = mainColor }, 0.09)
 		task.delay(0.1, function()
-			if Save then Tween(Save, { BackgroundColor3 = Color3.fromRGB(16,19,28) }, 0.22) end
+			if Save then Tween(Save, { BackgroundColor3 = Color3.fromRGB(21, 24, 36) }, 0.22) end
 		end)
 	end
 	local function ShowSavedName()
@@ -3186,7 +3192,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
 	CMHeader.Size = UDim2.new(1, 0, 0.22, 0)
-	CMHeader.BackgroundColor3 = Color3.fromRGB(16,19,28)
+	CMHeader.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	CMHeader.BackgroundTransparency = 0
 	CMHeader.BorderSizePixel = 0
 	CMHeader.ClipsDescendants = true
@@ -3285,7 +3291,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	SearchContainer.ZIndex = 1000
 	SearchContainer.Parent = ConfigMainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = SearchContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.6; s.Thickness = 1.5; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SearchContainer end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.55; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SearchContainer end
 	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = SearchContainer end
 
 	local SearchIconImg = Instance.new("ImageLabel")
@@ -3327,7 +3333,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	NameInputContainer.Visible = false
 	NameInputContainer.Parent = ConfigMainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = NameInputContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.6; s.Thickness = 1.5; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = NameInputContainer end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.55; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = NameInputContainer end
 	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = NameInputContainer end
 
 	local NameOfConfig = Instance.new("TextBox")
@@ -3612,7 +3618,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		local row = Instance.new("Frame")
 		row.Name = "ConfigRow_" .. name
 		row.Size = UDim2.new(1, 0, 0, 0)
-		row.BackgroundColor3 = Color3.fromRGB(16,19,28)
+		row.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 		row.BackgroundTransparency = 0
 		row.BorderSizePixel = 0
 		row.ZIndex = 1000
@@ -3683,7 +3689,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.3; s.Thickness = 1.4; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -3996,7 +4002,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		Name = "SearchBox",
 		Position = UDim2.new(0.44999998807907104, 0, 0.10000000149011612, 0),
 		Size = UDim2.new(0, 0, 0.6000000238418579, 0),
-		BackgroundColor3 = Color3.fromRGB(16,19,28),
+		BackgroundColor3 = Color3.fromRGB(21, 24, 36),
 		Text = "",
 		PlaceholderText = "Search",
 		PlaceholderColor3 = Color3.fromRGB(178, 178, 178),
@@ -4185,7 +4191,7 @@ Line9.Parent = MainFrame
    ToggleBtn.Active = true
    ToggleBtn.Draggable = false
 	ToggleBtn.Size = UDim2.new(0, 100, 0, 28)
-	ToggleBtn.BackgroundColor3 = Color3.fromRGB(16,19,28)
+	ToggleBtn.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	ToggleBtn.BorderSizePixel = 1
 	ToggleBtn.Text = "Close  [RShift]"
 	ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -4259,7 +4265,7 @@ Line9.Parent = MainFrame
 	end
     ToggleBtn.Text = guiOpen and "Close [RShift]" or "Open  [RShift]"
     Tween(ToggleBtn, {
-        BackgroundColor3 = guiOpen and Color3.fromRGB(16,19,28) or Color3.fromRGB(33,37,53)
+        BackgroundColor3 = guiOpen and Color3.fromRGB(21, 24, 36) or Color3.fromRGB(33,37,53)
     }, 0.1)
     	if guiOpen then
         if Save then Save.Visible = true end
@@ -4574,7 +4580,7 @@ end
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1.5; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.55; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -4788,6 +4794,9 @@ end
 					if settingsOpen then return self end
 					settingsOpen = true
 					CloseAllPopupsExcept(SettingsFrame)
+					-- this plate is positioned by placeSettings, so it has to lift the
+					-- ancestor clipping itself or the column cuts it in half
+					RememberPopupClipping(SettingsFrame)
 					SettingsFrame.BackgroundTransparency = 0
 					SettingsFrame.Visible = false
 					SFScale.Scale = 0.94
@@ -5225,7 +5234,7 @@ UIAspectRatioConstraint.Parent = Slider
 						ZIndex = 5000,
 					}, Selection)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, DropPopup)
-						do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.3; s.Thickness = 1.4; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropPopup end
+						do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropPopup end
 
 					local DropContainer = New("ScrollingFrame", {
 						AutomaticCanvasSize = Enum.AutomaticSize.Y,
@@ -5301,7 +5310,7 @@ UIAspectRatioConstraint.Parent = Slider
 							Name = "Selected",
 							Position = UDim2.new(0.800000011920929, 0, 0, 0),
 							Size = UDim2.new(0.20000000298023224, 0, 0.800000011920929, 0),
-							BackgroundColor3 = Color3.fromRGB(16,19,28),
+							BackgroundColor3 = Color3.fromRGB(21, 24, 36),
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
 							Text = "",
@@ -7449,7 +7458,7 @@ if maxY <= 0 then return end
 				local DropdownSection = Instance.new('Frame')
 				DropdownSection.Name = "Accordion"
 				DropdownSection.Size = UDim2.new(1, 0, 0, 0)
-				DropdownSection.BackgroundColor3 = Color3.fromRGB(16,19,28)
+				DropdownSection.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 				DropdownSection.BackgroundTransparency = 1
 				DropdownSection.LayoutOrder = elemCount
 				DropdownSection.Parent = Elements
@@ -8010,7 +8019,7 @@ UIAspectRatioConstraint.Parent = Toggle
 							Name = "Selected",
 							Position = UDim2.new(0.800000011920929, 0, 0, 0),
 							Size = UDim2.new(0.20000000298023224, 0, 0.800000011920929, 0),
-							BackgroundColor3 = Color3.fromRGB(16,19,28),
+							BackgroundColor3 = Color3.fromRGB(21, 24, 36),
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
 							Text = "",
