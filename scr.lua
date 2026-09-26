@@ -767,6 +767,20 @@ end
 		end
 	end
 
+	local function HideAllPopupsNow()
+		local copy = {}
+		for i, entry in ipairs(_openPopups) do copy[i] = entry end
+		for _, entry in ipairs(copy) do
+			local frame = entry.frame
+			if frame and frame.Parent then
+				if entry.connection then pcall(function() entry.connection:Disconnect() end) end
+				RestorePopupClipping(frame)
+				Tween(frame, { BackgroundTransparency = 1 }, 0.12)
+			end
+		end
+		table.clear(_openPopups)
+	end
+
 	local function ClosePopupsUnder(root)
 		if not root then return end
 		local copy = {}
@@ -1157,7 +1171,7 @@ GameInfo.Parent = NeverloseCS2
 
 
 local UICorner = Instance.new('UICorner')
-UICorner.CornerRadius = UDim.new(1, 0)
+UICorner.CornerRadius = UDim.new(0, 16)
 UICorner.Parent = GameInfo
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
@@ -1241,7 +1255,7 @@ UIAspectRatio_UserIcon.Parent = UserIcon
 local Username = Instance.new('TextLabel')
 Username.Name = "Username"
 Username.Position = UDim2.new(0.690, 0, 0.268, 0)
-Username.Size = UDim2.new(0.185, 0, 0.49, 0)
+Username.Size = UDim2.new(0.152, 0, 0.49, 0)
 Username.TextTruncate = Enum.TextTruncate.AtEnd
 Username.BackgroundTransparency = 1
 Username.Text = LocalPlayer.DisplayName
@@ -1254,8 +1268,8 @@ Username.Parent = GameInfo
 
 local NeverIcon = Instance.new('ImageLabel')
 NeverIcon.Name = "NeverIcon"
-NeverIcon.Position = UDim2.new(0.885, 0, 0.14, 0)
-NeverIcon.Size = UDim2.new(0.040, 0, 0.72, 0)
+NeverIcon.Position = UDim2.new(0.856, 0, 0.16, 0)
+NeverIcon.Size = UDim2.new(0.046, 0, 0.68, 0)
 NeverIcon.BackgroundTransparency = 1
 NeverIcon.Image = "rbxthumb://type=Asset&id=118608145176297&w=420&h=420"
 NeverIcon.Parent = GameInfo
@@ -1269,12 +1283,14 @@ UICorner_NeverIcon.Parent = NeverIcon
 
 local Profile = Instance.new('ImageLabel')
 Profile.Name = "Profile"
-Profile.Position = UDim2.new(0.936, 0, 0.14, 0)
-Profile.Size = UDim2.new(0.040, 0, 0.72, 0)
+Profile.Position = UDim2.new(0.908, 0, 0.16, 0)
+Profile.Size = UDim2.new(0.046, 0, 0.68, 0)
 Profile.BackgroundColor3 = Color3.fromRGB(127, 127, 127)
 Profile.Image = ("rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=420&h=420")
 Profile.Parent = GameInfo
 
+do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = Profile end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(70, 78, 110); s.Transparency = 0.35; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Profile end
 local UIAspectRatio_Profile = Instance.new('UIAspectRatioConstraint')
 UIAspectRatio_Profile.Parent = Profile
 
@@ -1876,7 +1892,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	}, SettingsContainer)
 	local logoLine = New("Frame", {
 		Name = "Lines",
-		Position = UDim2.new(0.09, 0, 1, 0),
+		Position = UDim2.new(0.09, 0, 1, -1),
 		Size = UDim2.new(0.80, 0, 0, 1),
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
 		BackgroundTransparency = 0.9,
@@ -2415,7 +2431,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = Row end
 		do
 			local ln = Instance.new("Frame"); ln.Name = "Lines"
-			ln.Position = UDim2.new(0.05,0,1,0)
+			ln.Position = UDim2.new(0.09,0,1,-1)
 			ln.Size = UDim2.new(0.9,0,0,1)
 			ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
 			ln.BackgroundTransparency = 0.9
@@ -2614,7 +2630,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = Row end
 		do
 			local ln = Instance.new("Frame"); ln.Name = "Lines"
-			ln.Position = UDim2.new(0.05,0,1,0)
+			ln.Position = UDim2.new(0.09,0,1,-1)
 			ln.Size = UDim2.new(0.89,0,0,1)
 			ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
 			ln.BackgroundTransparency = 0.9
@@ -4044,7 +4060,7 @@ Line9.Parent = MainFrame
 	local function toggleGui()
     guiOpen = not guiOpen
     if not guiOpen then
-		-- popups are closed in the same frame the window disappears
+		HideAllPopupsNow()
 	end
     ToggleBtn.Text = guiOpen and "Close [H]" or "Open  [H]"
     Tween(ToggleBtn, {
@@ -4052,7 +4068,6 @@ Line9.Parent = MainFrame
     }, 0.1)
     	if guiOpen then
         if Save then Save.Visible = true end
-        if GameInfo then GameInfo.Visible = true end
         MainFrame.BackgroundTransparency = 1
         MainFrame.Visible = true
         AcrylicBlur.Instances.Part.Transparency = 1
@@ -4072,12 +4087,11 @@ Line9.Parent = MainFrame
             if guiOpen then return end
             MainFrame.Visible = false
             -- everything disappears together with the window
-            CloseAllPopupsExcept(nil)
+            HideAllPopupsNow()
             if ConfigMainFrame then ConfigMainFrame.Visible = false end
             if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
             if Save then Save.Visible = false end
             if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
-            if GameInfo then GameInfo.Visible = false end
             if AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = false end
         end)
     end
@@ -4631,7 +4645,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, 0),
+						Position = UDim2.new(0.09, 0, 1, -1),
 						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
@@ -4777,6 +4791,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					if type(suffix) ~= "string" then suffix = "" end
 					local value
 					min, max, value = NormalizeRange(min, max, default)
+					value = Quantize(value, min, max, GetSliderStep(min, max))
 					local initRatio = (value - min) / (max - min)
 					local dragging = false
 
@@ -4797,7 +4812,7 @@ UIAspectRatioConstraint.Parent = Slider
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, 0),
+						Position = UDim2.new(0.09, 0, 1, -1),
 						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
@@ -5177,7 +5192,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, 0),
+						Position = UDim2.new(0.09, 0, 1, -1),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
@@ -5687,7 +5702,7 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, 0),
+					Position = UDim2.new(0.09, 0, 1, -1),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
@@ -5767,7 +5782,7 @@ if maxY <= 0 then return end
 				New("UIAspectRatioConstraint", {AspectRatio = 9, AspectType = Enum.AspectType.ScaleWithParentSize}, CheckBoxToggle)
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, 0),
+					Position = UDim2.new(0.09, 0, 1, -1),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
@@ -5871,7 +5886,7 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, 0),
+					Position = UDim2.new(0.09, 0, 1, -1),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
@@ -6176,6 +6191,7 @@ if maxY <= 0 then return end
 				if type(suffix) ~= "string" then suffix = "" end
 				local value
 				min, max, value = NormalizeRange(min, max, default)
+				value = Quantize(value, min, max, GetSliderStep(min, max))
 				local initRatio = (value - min) / (max - min)
 				local dragging = false
 
@@ -6193,7 +6209,7 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, 0),
+					Position = UDim2.new(0.09, 0, 1, -1),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
@@ -6352,7 +6368,7 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, 0),
+					Position = UDim2.new(0.09, 0, 1, -1),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
@@ -6966,7 +6982,7 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, 0),
+					Position = UDim2.new(0.09, 0, 1, -1),
 					Size = UDim2.new(0.89, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
@@ -7344,7 +7360,7 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.09, 0, 1, 0),
+					Position = UDim2.new(0.09, 0, 1, -1),
 					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
@@ -7463,7 +7479,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, 0),
+						Position = UDim2.new(0.09, 0, 1, -1),
 						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
@@ -7870,6 +7886,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					if type(suffix) ~= "string" then suffix = "" end
 					local value
 					min, max, value = NormalizeRange(min, max, default)
+					value = Quantize(value, min, max, GetSliderStep(min, max))
 					local initRatio = (value - min) / (max - min)
 					local dragging = false
 
@@ -7890,7 +7907,7 @@ UIAspectRatioConstraint.Parent = Slider
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, 0),
+						Position = UDim2.new(0.09, 0, 1, -1),
 						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
@@ -8048,7 +8065,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.09, 0, 1, 0),
+						Position = UDim2.new(0.09, 0, 1, -1),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 0.9,
