@@ -520,27 +520,16 @@ end
 
 local function FitTextBeforeArrow(label, arrow)
 	if not label or not arrow then return end
-	-- Do NOT re-measure and rewrite the text: with TextScaled on, replacing the
-	-- string makes Roblox re-fit it and the glyph size drifts. Narrow the label so
-	-- it cannot reach the arrow, then let TextTruncate handle the overflow.
-	if label:IsA("TextLabel") or label:IsA("TextButton") then
-		label.TextWrapped = false
-		label.TextTruncate = Enum.TextTruncate.AtEnd
-	end
 	task.defer(function()
 		if not label.Parent or not arrow.Parent then return end
-		local parent = label.Parent
-		if not parent or not parent:IsA("GuiObject") then return end
-		local parentX = parent.AbsolutePosition.X
-		local parentW = parent.AbsoluteSize.X
-		if parentW <= 0 then return end
-		local room = (arrow.AbsolutePosition.X - label.AbsolutePosition.X) - 6
-		if room <= 4 then return end
-		local scaleX = (label.AbsolutePosition.X - parentX) / parentW
-		local scaleW = (label.AbsolutePosition.X - parentX + room) / parentW
-		if scaleX < 0 then scaleX = 0 end
-		if scaleW > 1 then scaleW = 1 end
-		label.Size = UDim2.new(scaleW, 0, label.Size.Y.Scale, label.Size.Y.Offset)
+		local arrowX = arrow.AbsolutePosition.X
+		local labelX = label.AbsolutePosition.X
+		local width = label.AbsoluteSize.X
+		if label.TextXAlignment == Enum.TextXAlignment.Right then
+			EllipsizeTo(label, arrowX - labelX - 6)
+		else
+			EllipsizeTo(label, math.min(width, arrowX - labelX - 6))
+		end
 	end)
 end
 
@@ -2665,7 +2654,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		local obj = {}
 		function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TextDefault.Text = val; updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
 		function obj:Get() return selected end
-		MakeReadableText(Row, 12, 18)
+		MakeReadableText(Row, 11, 18)
 		return obj
 	end
 
@@ -2842,7 +2831,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			InvokeCallback(callback, normalized)
 		end
 		function obj:Get() return Color3.fromHSV(color[1],color[2],color[3]) end
-		MakeReadableText(Row, 12, 18)
+		MakeReadableText(Row, 11, 18)
 		return obj
 	end
 
@@ -5481,7 +5470,7 @@ if maxY <= 0 then return end
 					return obj
 				end
 
-				MakeReadableText(SettingsFrame, 12, 18)
+				MakeReadableText(SettingsFrame, 11, 18)
 				settingsCache[parentFrame] = SettingsObj
 				return SettingsObj
 			end
@@ -5611,7 +5600,7 @@ if maxY <= 0 then return end
 					TextXAlignment = Enum.TextXAlignment.Left,
 					ZIndex = 8001,
 				}, _contextMenu)
-				AddTextConstraint(item, 12, 15, true)
+				AddTextConstraint(item, 11, 15, true)
 				item.MouseButton1Click:Connect(function()
 					local target = _contextTarget
 					CloseContextMenu()
@@ -8357,11 +8346,11 @@ if maxY <= 0 then return end
 					return obj
 				end
 
-				MakeReadableText(Section2Frame, 12, 18)
+				MakeReadableText(Section2Frame, 11, 18)
 				return AccordionObj
 			end
 
-			MakeReadableText(Section, 12, 18)
+			MakeReadableText(Section, 11, 18)
 			return SectionObj
 		end
 
@@ -8865,7 +8854,7 @@ if maxY <= 0 then return end
 		return customMenus
 	end
 
-	MakeReadableText(NeverloseCS2, 12, 18)
+	MakeReadableText(NeverloseCS2, 11, 18)
 	CleanBorders(MainFrame)
 
 	return WindowObj
