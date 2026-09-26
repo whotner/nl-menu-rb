@@ -1226,7 +1226,7 @@ UIAspectRatio_MSText.Parent = MSText
 
 local UserIcon = Instance.new('ImageLabel')
 UserIcon.Name = "UserIcon"
-UserIcon.Position = UDim2.new(0.615, 0, 0.28, 0)
+UserIcon.Position = UDim2.new(0.612, 0, 0.30, 0)
 UserIcon.Size = UDim2.new(0.09, 0, 0.5, 0)
 UserIcon.BackgroundTransparency = 1
 UserIcon.Image = "rbxthumb://type=Asset&id=123112467890707&w=420&h=420"
@@ -1238,8 +1238,8 @@ UIAspectRatio_UserIcon.Parent = UserIcon
 
 local Username = Instance.new('TextLabel')
 Username.Name = "Username"
-Username.Position = UDim2.new(0.695, 0, 0.268, 0)
-Username.Size = UDim2.new(0.15, 0, 0.49, 0)
+Username.Position = UDim2.new(0.690, 0, 0.268, 0)
+Username.Size = UDim2.new(0.135, 0, 0.49, 0)
 Username.TextTruncate = Enum.TextTruncate.AtEnd
 Username.BackgroundTransparency = 1
 Username.Text = LocalPlayer.DisplayName
@@ -1252,8 +1252,8 @@ Username.Parent = GameInfo
 
 local NeverIcon = Instance.new('ImageLabel')
 NeverIcon.Name = "NeverIcon"
-NeverIcon.Position = UDim2.new(0.862, 0, 0.12, 0)
-NeverIcon.Size = UDim2.new(0.042, 0, 0.76, 0)
+NeverIcon.Position = UDim2.new(0.838, 0, 0.14, 0)
+NeverIcon.Size = UDim2.new(0.040, 0, 0.72, 0)
 NeverIcon.BackgroundTransparency = 1
 NeverIcon.Image = "rbxthumb://type=Asset&id=118608145176297&w=420&h=420"
 NeverIcon.Parent = GameInfo
@@ -1267,8 +1267,8 @@ UICorner_NeverIcon.Parent = NeverIcon
 
 local Profile = Instance.new('ImageLabel')
 Profile.Name = "Profile"
-Profile.Position = UDim2.new(0.918, 0, 0.12, 0)
-Profile.Size = UDim2.new(0.042, 0, 0.76, 0)
+Profile.Position = UDim2.new(0.892, 0, 0.14, 0)
+Profile.Size = UDim2.new(0.040, 0, 0.72, 0)
 Profile.BackgroundColor3 = Color3.fromRGB(127, 127, 127)
 Profile.Image = ("rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=420&h=420")
 Profile.Parent = GameInfo
@@ -1310,6 +1310,7 @@ Aspect.AspectRatio = 1.4
 		BackgroundColor3 = Color3.fromRGB(19,22,33),
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
+		ScaleType = Enum.ScaleType.Fit,
 	}, MainFrame)
 	New("UICorner", { CornerRadius = UDim.new(0, 6) }, HubIcon)
 	New("UIAspectRatioConstraint", {
@@ -1347,8 +1348,8 @@ Aspect.AspectRatio = 1.4
 
 	local Info = Instance.new('Frame')
 	Info.Name = "Info"
-	Info.Position = UDim2.new(0.020, 0, 0.918, 0)
-	Info.Size = UDim2.new(0.196, 0, 0.069, 0)
+	Info.Position = UDim2.new(0.017, 0, 0.916, 0)
+	Info.Size = UDim2.new(0.196, 0, 0.070, 0)
 	Info.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	Info.BackgroundTransparency = 1
 	Info.BorderSizePixel = 0
@@ -1457,13 +1458,14 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 	local WindowSettingsFrame = Instance.new('Frame')
 	WindowSettingsFrame.Name = "WindowSettingsFrame"
-	WindowSettingsFrame.Position = UDim2.new(0.009, 0, 0.44, 0)
-	WindowSettingsFrame.Size = UDim2.new(0.28, 0, 0, 0)
+	WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
+	WindowSettingsFrame.Size = UDim2.new(0.218, 0, 0, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21,24,36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
@@ -1534,7 +1536,117 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	SettingsContainer.ZIndex = 13
 	SettingsContainer.AutomaticSize = Enum.AutomaticSize.Y
 	SettingsContainer.Parent = WindowSettingsFrame
-	do local ll = Instance.new("UIListLayout"); ll.Padding = UDim.new(0,1); ll.Parent = SettingsContainer end
+	do local ll = Instance.new("UIListLayout"); ll.Padding = UDim.new(0,4); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Parent = SettingsContainer end
+
+	local menuBind = Enum.KeyCode.RightShift
+	local menuBindProxy
+
+	do
+		local Row = Instance.new("Frame")
+		Row.Name = "MenuBind"
+		Row.Size = UDim2.new(1, 0, 0, 28)
+		Row.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
+		Row.BackgroundTransparency = 1
+		Row.BorderSizePixel = 0
+		Row.ZIndex = 120
+		Row.LayoutOrder = 90
+		Row.Parent = SettingsContainer
+		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = Row end
+
+		local BLabel = Instance.new("TextLabel")
+		BLabel.Name = "Text"
+		BLabel.Position = UDim2.new(0.04, 0, 0.5, 0)
+		BLabel.Size = UDim2.new(0.5, 0, 0.5, 0)
+		BLabel.AnchorPoint = Vector2.new(0, 0.5)
+		BLabel.BackgroundTransparency = 1
+		BLabel.Text = "Menu Bind"
+		BLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		BLabel.TextScaled = true
+		BLabel.Font = Enum.Font.SourceSansSemibold
+		BLabel.TextTransparency = 0.1
+		BLabel.ZIndex = 130
+		BLabel.TextXAlignment = Enum.TextXAlignment.Left
+		BLabel.Parent = Row
+
+		local BValue = Instance.new("TextLabel")
+		BValue.Name = "BindValue"
+		BValue.Position = UDim2.new(0.56, 0, 0.17, 0)
+		BValue.Size = UDim2.new(0.38, 0, 0.66, 0)
+		BValue.BackgroundColor3 = Color3.fromRGB(32, 35, 50)
+		BValue.BackgroundTransparency = 0
+		BValue.BorderSizePixel = 0
+		BValue.Text = ""
+		BValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+		BValue.TextScaled = true
+		BValue.Font = Enum.Font.SourceSansSemibold
+		BValue.TextTransparency = 0.1
+		BValue.ZIndex = 130
+		BValue.TextXAlignment = Enum.TextXAlignment.Center
+		BValue.Parent = Row
+		New("UICorner", { CornerRadius = UDim.new(0, 5) }, BValue)
+
+		local capturing = false
+		local captureConn = nil
+
+		local function refreshBind()
+			if capturing then
+				BValue.Text = "..."
+				BValue.TextColor3 = mainColor
+			elseif menuBind == Enum.KeyCode.Unknown then
+				BValue.Text = "None"
+				BValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+			else
+				BValue.Text = string.gsub(menuBind.Name, "_", " ")
+				BValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+			end
+		end
+
+		local function stopCapture()
+			capturing = false
+			if captureConn then captureConn:Disconnect(); captureConn = nil end
+			refreshBind()
+		end
+
+		menuBindProxy = function(key)
+			if key == nil then return menuBind end
+			menuBind = key
+			refreshBind()
+			return menuBind
+		end
+		refreshBind()
+
+		local BHit = Instance.new("TextButton")
+		BHit.Name = "Bind"
+		BHit.Position = UDim2.new(0.54, 0, 0, 0)
+		BHit.Size = UDim2.new(0.44, 0, 1, 0)
+		BHit.BackgroundTransparency = 1
+		BHit.Text = ""
+		BHit.ZIndex = 131
+		BHit.Parent = Row
+
+		BHit.MouseButton1Click:Connect(function()
+			if capturing then
+				Tween(Row, {BackgroundTransparency = 1}, 0.12)
+				stopCapture()
+				return
+			end
+			capturing = true
+			Tween(Row, {BackgroundTransparency = 0.93}, 0.12)
+			refreshBind()
+			captureConn = UserInputService.InputBegan:Connect(function(input, processed)
+				if processed then return end
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then return end
+				if input.KeyCode == Enum.KeyCode.Escape then
+					Tween(Row, {BackgroundTransparency = 1}, 0.12)
+					stopCapture()
+					return
+				end
+				menuBind = input.KeyCode
+				Tween(Row, {BackgroundTransparency = 1}, 0.12)
+				stopCapture()
+			end)
+		end)
+	end
 
 	-- Colorpicker row
 	local WSColorpicker = Instance.new("Frame")
@@ -1774,10 +1886,10 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	}, SettingsContainer)
 	local logoLine = New("Frame", {
 		Name = "Lines",
-		Position = UDim2.new(0.05, 0, 1, 0),
-		Size = UDim2.new(0.86, 0, 0, 1),
+		Position = UDim2.new(0.09, 0, 1, 0),
+		Size = UDim2.new(0.80, 0, 0, 1),
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
-		BackgroundTransparency = 0.96,
+		BackgroundTransparency = 0.97,
 		BorderSizePixel = 0,
 		ZIndex = 150,
 	}, WSLogoRow)
@@ -2240,7 +2352,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			wsOpen = not wsOpen
 			if wsOpen then
 				CloseAllPopupsExcept(WindowSettingsFrame)
-				WindowSettingsFrame.Position = UDim2.new(0.009, 0, 0.44, 0)
+				WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
 				SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
 				PositionPopupWithinMain(WindowSettingsFrame, false, 6, Info)
 				RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
@@ -3740,7 +3852,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		searchOpen = not searchOpen
 		if searchOpen then
 			SearchBox.Visible = true
+			SearchBox.BackgroundTransparency = 1
 			SearchBox.Size = UDim2.new(0, 0, 0.6000000238418579, 0)
+			Tween(SearchBox, { BackgroundTransparency = 0 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			Tween(SearchBox, { Size = UDim2.new(0.4000000059604645, 0, 0.6000000238418579, 0) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			task.wait(0.3)
 			SearchBox:CaptureFocus()
@@ -3936,7 +4050,7 @@ Line9.Parent = MainFrame
 	local function toggleGui()
     guiOpen = not guiOpen
     if not guiOpen then
-		CloseAllPopupsExcept(nil)
+		-- popups are closed in the same frame the window disappears
 	end
     ToggleBtn.Text = guiOpen and "Close [H]" or "Open  [H]"
     Tween(ToggleBtn, {
@@ -3963,6 +4077,7 @@ Line9.Parent = MainFrame
             if guiOpen then return end
             MainFrame.Visible = false
             -- everything disappears together with the window
+            CloseAllPopupsExcept(nil)
             if ConfigMainFrame then ConfigMainFrame.Visible = false end
             if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
             if Save then Save.Visible = false end
@@ -3976,7 +4091,7 @@ end
 
 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		if gameProcessed then return end
-		if input.KeyCode == Enum.KeyCode.H then
+		if menuBind and input.KeyCode == menuBind then
 			toggleGui()
 		end
 	end)
@@ -4519,10 +4634,10 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.05, 0, 1, 0),
-						Size = UDim2.new(0.86, 0, 0, 1),
+						Position = UDim2.new(0.09, 0, 1, 0),
+						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.96,
+						BackgroundTransparency = 0.97,
 						ZIndex = 1000,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -4685,10 +4800,10 @@ UIAspectRatioConstraint.Parent = Slider
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.05, 0, 1, 0),
-						Size = UDim2.new(0.86, 0, 0, 1),
+						Position = UDim2.new(0.09, 0, 1, 0),
+						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.96,
+						BackgroundTransparency = 0.97,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -5065,10 +5180,10 @@ UIAspectRatioConstraint.Parent = Colorpicker
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.05, 0, 1, 0),
+						Position = UDim2.new(0.09, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.96,
+						BackgroundTransparency = 0.97,
 						BorderSizePixel = 0,
 						ZIndex = 1001,
 					}, Colorpicker)
@@ -5575,10 +5690,10 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.86, 0, 0, 1),
+					Position = UDim2.new(0.09, 0, 1, 0),
+					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.96,
+					BackgroundTransparency = 0.97,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -5655,10 +5770,10 @@ if maxY <= 0 then return end
 				New("UIAspectRatioConstraint", {AspectRatio = 9, AspectType = Enum.AspectType.ScaleWithParentSize}, CheckBoxToggle)
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.86, 0, 0, 1),
+					Position = UDim2.new(0.09, 0, 1, 0),
+					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.96,
+					BackgroundTransparency = 0.97,
 					BorderSizePixel = 0,
 					ZIndex = 100,
 				}, CheckBoxToggle)
@@ -5759,10 +5874,10 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.86, 0, 0, 1),
+					Position = UDim2.new(0.09, 0, 1, 0),
+					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.96,
+					BackgroundTransparency = 0.97,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -6081,10 +6196,10 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.86, 0, 0, 1),
+					Position = UDim2.new(0.09, 0, 1, 0),
+					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.96,
+					BackgroundTransparency = 0.97,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Slider)
@@ -6240,10 +6355,10 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.86, 0, 0, 1),
+					Position = UDim2.new(0.09, 0, 1, 0),
+					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.96,
+					BackgroundTransparency = 0.97,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Dropdown)
@@ -6854,10 +6969,10 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.05, 0, 1, 0),
+					Position = UDim2.new(0.09, 0, 1, 0),
 					Size = UDim2.new(0.89, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.96,
+					BackgroundTransparency = 0.97,
 					BorderSizePixel = 0,
 					ZIndex = 3,
 				}, Colorpicker)
@@ -7232,10 +7347,10 @@ if maxY <= 0 then return end
 
 				New("Frame", {
 					Name = "Lines",
-					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.86, 0, 0, 1),
+					Position = UDim2.new(0.09, 0, 1, 0),
+					Size = UDim2.new(0.80, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.96,
+					BackgroundTransparency = 0.97,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, DropdownSection)
@@ -7351,10 +7466,10 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.05, 0, 1, 0),
-						Size = UDim2.new(0.86, 0, 0, 1),
+						Position = UDim2.new(0.09, 0, 1, 0),
+						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.96,
+						BackgroundTransparency = 0.97,
 						ZIndex = 100,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -7778,10 +7893,10 @@ UIAspectRatioConstraint.Parent = Slider
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.05, 0, 1, 0),
-						Size = UDim2.new(0.86, 0, 0, 1),
+						Position = UDim2.new(0.09, 0, 1, 0),
+						Size = UDim2.new(0.80, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.96,
+						BackgroundTransparency = 0.97,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -7936,10 +8051,10 @@ UIAspectRatioConstraint.Parent = Colorpicker
 
 					New("Frame", {
 						Name = "Lines",
-						Position = UDim2.new(0.05, 0, 1, 0),
+						Position = UDim2.new(0.09, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.96,
+						BackgroundTransparency = 0.97,
 						BorderSizePixel = 0,
 						ZIndex = 101,
 					}, Colorpicker)
@@ -8506,6 +8621,16 @@ if maxY <= 0 then return end
 
 	function WindowObj:GetMainFrame()
 		return MainFrame
+	end
+
+	function WindowObj:GetMenuBind()
+		if menuBindProxy then return menuBindProxy() end
+		return nil
+	end
+
+	function WindowObj:SetMenuBind(key)
+		if menuBindProxy then menuBindProxy(key) end
+		return self
 	end
 
 	local defaultCustomization = {
