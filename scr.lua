@@ -496,23 +496,9 @@ local function EllipsizeTo(label, maxWidth)
 	local function rendered(text)
 		return MeasureText(text, fontSize, font) * scale
 	end
-	local renderedSize = fontSize * scale
 	if rendered(full) <= maxWidth then
-		-- fits again: give the label back its automatic scaling
-		if label:GetAttribute("Ellipsized") then
-			label:SetAttribute("Ellipsized", nil)
-			label.TextScaled = true
-			if label:FindFirstChild("UITextSizeConstraint") then label.TextSize = fontSize end
-		end
 		if label.Text ~= full then label.Text = full end
 		return
-	end
-	-- truncating: lock the current rendered size so the text does not jump
-	if not label:GetAttribute("Ellipsized") then
-		label:SetAttribute("Ellipsized", true)
-		label:SetAttribute("EllipsizedSize", renderedSize)
-		label.TextScaled = false
-		label.TextSize = renderedSize
 	end
 	local low, high, best = 1, #full, ""
 	while low <= high do
@@ -526,8 +512,6 @@ local function EllipsizeTo(label, maxWidth)
 		end
 	end
 	label.Text = best ~= "" and best or ELLIPSIS
-	local locked = label:GetAttribute("EllipsizedSize")
-	if type(locked) == "number" and locked > 0 then label.TextSize = locked end
 end
 
 local function FitTextBeforeArrow(label, arrow)
@@ -910,7 +894,7 @@ local function SmoothClose(frame, dur, cb)
 	local token = (frame:GetAttribute("PopupToken") or 0) + 1
 	frame:SetAttribute("PopupToken", token)
 	CancelPopupTween(frame)
-	PlayPopupTween(frame, TweenInfo.new(dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
+	PlayPopupTween(frame, TweenInfo.new(math.min(dur or 0.18, 0.09), Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
 	task.delay((dur or 0.18) + 0.01, function()
 		if frame.Parent and frame:GetAttribute("PopupToken") == token then
 			frame.Visible = false
@@ -3065,7 +3049,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Name = "ConfigMainFrame"
 	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.075, 0)
 	ConfigMainFrame.Size = UDim2.new(0.4, 0, 0.42, 0)
-	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(17,20,30)
+	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(21,24,36)
 	ConfigMainFrame.BackgroundTransparency = 0
 	ConfigMainFrame.BorderSizePixel = 0
 	ConfigMainFrame.ZIndex = 110
@@ -3075,12 +3059,12 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Visible = false
 	ConfigMainFrame.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(74,84,118); s.Transparency = 0.22; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
 
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
 	CMHeader.Size = UDim2.new(1, 0, 0.22, 0)
-	CMHeader.BackgroundColor3 = Color3.fromRGB(21,24,36)
+	CMHeader.BackgroundColor3 = Color3.fromRGB(26,30,45)
 	CMHeader.BackgroundTransparency = 0
 	CMHeader.BorderSizePixel = 0
 	CMHeader.ClipsDescendants = true
@@ -3186,7 +3170,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	SearchContainer.Name = "SearchContainer"
 	SearchContainer.Position = UDim2.new(0.037, 0, 0.27, 0)
 	SearchContainer.Size = UDim2.new(0.928, 0, 0.143, 0)
-	SearchContainer.BackgroundColor3 = Color3.fromRGB(19,22,33)
+	SearchContainer.BackgroundColor3 = Color3.fromRGB(28,32,48)
 	SearchContainer.BorderSizePixel = 0
 	SearchContainer.ZIndex = 1000
 	SearchContainer.Parent = ConfigMainFrame
@@ -3268,8 +3252,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	-- ── List Container ────────────────────────────────────────────
 	local ListContainer = Instance.new("ScrollingFrame")
 	ListContainer.Name = "ListContainer"
-	ListContainer.Position = UDim2.new(0.037, 0, 0.48, 0)
-	ListContainer.Size = UDim2.new(0.93, 0, 0.5, 0)
+	ListContainer.Position = UDim2.new(0.037, 0, 0.435, 0)
+	ListContainer.Size = UDim2.new(0.93, 0, 0.55, 0)
 	ListContainer.BackgroundTransparency = 1
 	ListContainer.BorderSizePixel = 0
 	ListContainer.ZIndex = 100
@@ -4178,6 +4162,11 @@ end
 			TextYAlignment = Enum.TextYAlignment.Center,
 			LayoutOrder = tabOrder,
 		}, Tab)
+		New("UIPadding", {
+			PaddingLeft = UDim.new(0, 4),
+			PaddingTop = UDim.new(0, 14),
+			PaddingBottom = UDim.new(0, 6),
+		}, lbl)
 		return lbl
 	end
 
@@ -4431,7 +4420,7 @@ AddTextConstraint(SectionLabel, 9, 12, true)
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(74,84,118); s.Transparency = 0.22; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
