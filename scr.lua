@@ -1211,7 +1211,7 @@ local Stats = game:GetService('Stats')
 local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
 GameInfo.AnchorPoint = Vector2.new(1, 0)
-GameInfo.Position = UDim2.new(0.985, 0, 0.02, 0)
+GameInfo.Position = UDim2.new(1, -18, 0, 14)
 GameInfo.Size = UDim2.fromOffset(380, 40)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
 GameInfo.BackgroundColor3 = Color3.fromRGB(13, 15, 22)
@@ -1264,7 +1264,7 @@ t.Parent = GameInfo
 return t
 end
 
-local NeverIcon = PillIcon("NeverIcon", "rbxthumb://type=Asset&id=118608145176297&w=420&h=420", 1, ACCENT)
+local NeverIcon = PillIcon("NeverIcon", "rbxthumb://type=Asset&id=118608145176297&w=420&h=420", 1, Color3.new(1, 1, 1))
 NeverIcon.Size = UDim2.fromOffset(24, 24)
 NeverIcon.BackgroundTransparency = 0
 NeverIcon.BackgroundColor3 = Color3.fromRGB(19, 22, 33)
@@ -3531,7 +3531,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SettingsFrame end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -4239,10 +4239,7 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 						for _, d in ipairs(item:GetDescendants()) do
 							if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
 						end
-						for _, t in ipairs(texts) do Tween(t, {TextTransparency = 1}, 0.12) end
-						local card = item:FindFirstChild("Elements") or item:FindFirstChild("Container")
-						local listStroke = card and card:FindFirstChildOfClass("UIStroke")
-						if listStroke then Tween(listStroke, {Transparency = 1}, 0.12) end
+						for _, t in ipairs(texts) do t.TextTransparency = 1 end
 					end
 				end
 			end
@@ -4264,22 +4261,16 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 						if list and list:IsA("GuiObject") then
 							list.BackgroundTransparency = 1
 							Tween(list, {BackgroundTransparency = 0}, 0.3, Enum.EasingStyle.Quad)
-							local listStroke = list:FindFirstChildOfClass("UIStroke")
-							if listStroke then
-							listStroke.Transparency = 1
-							Tween(listStroke, {Transparency = 0.3}, 0.3, Enum.EasingStyle.Quad)
-							end
 							for _, item in ipairs(list:GetChildren()) do
 								if item:IsA("GuiObject") then
 									local texts = {}
 									for _, d in ipairs(item:GetDescendants()) do
 										if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
 									end
-									-- no TextTransparency = 1 here: an interrupted fade used to leave text invisible forever
-									local delay = 0.02
+									-- no tween here: ShowContent and HideContent fought over the same property
 									for _, t in ipairs(texts) do
 									if t.Parent then
-									Tween(t, {TextTransparency = t.Name == "TextDefault" and 0.5 or 0}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, delay)
+									t.TextTransparency = t.Name == "TextDefault" and 0.5 or 0
 									end
 									end
 								end
@@ -4701,7 +4692,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 						ZIndex = 1001,
 					}, Toggle)
-					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
+					New("UICorner", { CornerRadius = UDim.new(0, 4) }, Effect)
 					New("UIStroke", { Transparency = 0.800000011920929, Thickness = 0.800000011920929 }, Effect)
 
 					local Icon = New("Frame", {
@@ -5047,6 +5038,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Name = "Dropdown",
 						Position = UDim2.new(0.02,0,1,2),
 						Size = UDim2.new(0.6899999737739563, 0, 0, 100),
+						AutomaticCanvasSize = Enum.AutomaticSize.Y,
 						BackgroundColor3 = Color3.fromRGB(16,19,28),
 						BackgroundTransparency = 1,
 						BorderSizePixel = 0,
@@ -5054,6 +5046,7 @@ UIAspectRatioConstraint.Parent = Slider
 						ZIndex = 5000,
 					}, Selection)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, DropPopup)
+						do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
 					New("UIStroke", {
 						Color = Color3.fromRGB(28,32,48),
 						Transparency = 0.800000011920929,
@@ -5178,7 +5171,15 @@ UIAspectRatioConstraint.Parent = Slider
 							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
 					task.defer(function()
 						-- SmoothOpen only reveals the popup: re-measure now that it has its real size
-						if DropPopup.Parent and DropPopup.Visible then PositionPopupWithinMain(DropPopup, true) end
+						if not (DropPopup.Parent and DropPopup.Visible) then return end
+						local content = 0
+						if DropContainer:IsA("ScrollingFrame") then
+							content = math.max(DropContainer.AbsoluteContentSize.Y, DropContainer.AbsoluteSize.Y)
+						end
+						if content > 1 then
+							DropPopup.Size = UDim2.new(0.6899999737739563, 0, 0, math.clamp(content + 8, 40, 280))
+						end
+						PositionPopupWithinMain(DropPopup, true)
 					end)
 							SmoothOpen(DropPopup, 0, 0.2)
 							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -5760,7 +5761,7 @@ if maxY <= 0 then return end
 					Size = UDim2.new(0.11035999655723572, 0, 0.5600000023841858, 0),
 					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 				}, Toggle)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
+				New("UICorner", { CornerRadius = UDim.new(0, 4) }, Effect)
 				New("UIStroke", { Transparency = 0.800000011920929, Thickness = 0.800000011920929 }, Effect)
 
 				local Icon = New("Frame", {
@@ -5945,7 +5946,7 @@ if maxY <= 0 then return end
 					Size = UDim2.new(0.11035999655723572, 0, 0.5600000023841858, 0),
 					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 				}, Toggle)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
+				New("UICorner", { CornerRadius = UDim.new(0, 4) }, Effect)
 				New("UIStroke", { Transparency = 0.800000011920929, Thickness = 0.800000011920929 }, Effect)
 
 				local Icon = New("Frame", {
@@ -7537,7 +7538,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 						ZIndex = 101,
 					}, Toggle)
-					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
+					New("UICorner", { CornerRadius = UDim.new(0, 4) }, Effect)
 					New("UIStroke", { Transparency = 0.800000011920929, Thickness = 0.800000011920929 }, Effect)
 
 					local Icon = New("Frame", {
@@ -8549,11 +8550,10 @@ if maxY <= 0 then return end
 										for _, d in ipairs(item:GetDescendants()) do
 											if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
 										end
-										-- no TextTransparency = 1 here: an interrupted fade used to leave text invisible forever
-										local delay = 0.02
+										-- no tween here: ShowContent and HideContent fought over the same property
 										for _, t in ipairs(texts) do
 										if t.Parent then
-										Tween(t, {TextTransparency = t.Name == "TextDefault" and 0.5 or 0}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, delay)
+										t.TextTransparency = t.Name == "TextDefault" and 0.5 or 0
 										end
 										end
 									end
