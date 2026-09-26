@@ -406,6 +406,25 @@ end
 
 local CenterElement
 
+-- UIStroke sits inside the MainFrame UIScale hierarchy, so an authored 1px
+-- stroke is drawn at 0.78-0.9 physical pixels and pixel snapping drops whole
+-- edges (a border visible on the right, gone on the left). Remember the
+-- authored thickness once, then counter-scale it so it never falls under 1px.
+local strokeAuthored = setmetatable({}, { __mode = "k" })
+local strokeScale = 1
+local function ApplyStrokeScale(stroke, scale)
+	if not stroke or not stroke:IsA("UIStroke") then return end
+	local base = strokeAuthored[stroke]
+	if not base then base = stroke.Thickness; strokeAuthored[stroke] = base end
+	stroke.Thickness = math.max(1, base / scale)
+end
+local function RescaleStrokes(root, scale)
+	strokeScale = scale
+	if not root then return end
+	ApplyStrokeScale(root, scale)
+	for _, d in ipairs(root:GetDescendants()) do ApplyStrokeScale(d, scale) end
+end
+
 local function New(class, props, parent)
 	local obj = Instance.new(class)
 	if obj:IsA("GuiObject") and obj.BorderSizePixel == 1 then obj.BorderSizePixel = 0 end
@@ -416,6 +435,7 @@ local function New(class, props, parent)
 		obj.TextYAlignment = Enum.TextYAlignment.Center
 	end
 	if parent then obj.Parent = parent end
+	if obj:IsA("UIStroke") then ApplyStrokeScale(obj, strokeScale) end
 	AddTextConstraint(obj, 7, 16)
 	return obj
 end
@@ -1679,6 +1699,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	local function ApplyScale(value)
 		if type(value) ~= "number" or value ~= value then return end
 		UIScale.Scale = math.clamp(value, 0.5, 1.1)
+		RescaleStrokes(MainFrame, UIScale.Scale)
 	end
 	local function UpdateScale()
 		ApplyScale(automaticScale and GetAutomaticScale() or manualScale)
@@ -4066,7 +4087,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	}, Frame2)
 	New("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
-		Padding = UDim.new(0, 8),
+		Padding = UDim.new(0, 13),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, TabHose)
 
@@ -4399,7 +4420,7 @@ New("UIAspectRatioConstraint", {
 
 		local Left = New("ScrollingFrame", {
 			Name = "Left",
-			Size = UDim2.new(0.47, 0, 1, 0),
+			Size = UDim2.new(0.47999998927116394, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			ClipsDescendants = true,
@@ -4413,7 +4434,7 @@ New("UIAspectRatioConstraint", {
 		
 		local Right = New("ScrollingFrame", {
 			Name = "Right",
-			Size = UDim2.new(0.47, 0, 1, 0),
+			Size = UDim2.new(0.47999998927116394, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			LayoutOrder = 1,
@@ -8631,7 +8652,7 @@ if maxY <= 0 then return end
 			-- Content columns in TabHose
 			local stLeft = New("ScrollingFrame", {
 				Name = "STLeft_" .. name,
-				Size = UDim2.new(0.47, 0, 1, 0),
+				Size = UDim2.new(0.47999998927116394, 0, 1, 0),
 				BackgroundTransparency = 1,
 				Visible = false,
 				ClipsDescendants = true,
@@ -8645,7 +8666,7 @@ if maxY <= 0 then return end
 
 			local stRight = New("ScrollingFrame", {
 				Name = "STRight_" .. name,
-				Size = UDim2.new(0.47, 0, 1, 0),
+				Size = UDim2.new(0.47999998927116394, 0, 1, 0),
 				BackgroundTransparency = 1,
 				LayoutOrder = 1,
 				Visible = false,
