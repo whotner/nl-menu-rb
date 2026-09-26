@@ -319,10 +319,6 @@ local function AddTextConstraint(object, minimum, maximum, force)
 	end
 	constraint.MinTextSize = minimum or 9
 	constraint.MaxTextSize = maximum or 16
-	if object:IsA("TextLabel") or object:IsA("TextButton") then
-		object.TextWrapped = false
-		object.TextTruncate = Enum.TextTruncate.AtEnd
-	end
 end
 
 local function MakeReadableText(root, minimum, maximum)
