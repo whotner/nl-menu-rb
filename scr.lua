@@ -4390,17 +4390,6 @@ end
 				SortOrder = Enum.SortOrder.LayoutOrder,
 			}, Elements)
 			WatchRowDividers(Elements)
-			-- UIStroke on an AutomaticSize frame is not redrawn until the container
-			-- recalculates its size: nudge the width by a pixel and put it back
-			do
-				local keep = Elements.Size
-				local auto = Elements.AutomaticSize
-				Elements.AutomaticSize = Enum.AutomaticSize.None
-				Elements.Size = UDim2.new(keep.XScale, keep.XOffset - 1, keep.YScale, keep.YOffset)
-				Elements.Size = keep
-				Elements.AutomaticSize = auto
-			end
-
 
 			local SectionObj = {}
 			local elemCount = 0
