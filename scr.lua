@@ -905,7 +905,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		Size = UDim2.new(0.78, 0, 0.78, 0),
 		Position = UDim2.new(0.5, 0, 0.43, 0),
 	BackgroundColor3 = Color3.fromRGB(13,15,22),
-	BackgroundTransparency = 0,
+	BackgroundTransparency = 0.1,
 	BorderSizePixel = 0,
 	ClipsDescendants = true,
 	}, NeverloseCS2)
@@ -914,6 +914,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	GetDragShield(MainFrame)
     local Watermark = New("TextLabel", {
 	Name = "Watermark",
+	Visible = false,
     Position = UDim2.new(0.982, 0, 0.984, 0),
     Size = UDim2.new(0.150, 0, 0.026, 0),
     AnchorPoint = Vector2.new(1, 1),
@@ -1354,12 +1355,12 @@ Aspect.AspectRatio = 1.4
 	Info.Active = true
 	Info.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = Info end
-	Info.MouseEnter:Connect(function()
-		Tween(Info, {BackgroundTransparency = 0.94}, 0.15)
-	end)
-	Info.MouseLeave:Connect(function()
-		Tween(Info, {BackgroundTransparency = 1}, 0.15)
-	end)
+	local InfoStroke = New("UIStroke", {
+		Color = Color3.fromRGB(70, 78, 110),
+		Transparency = 1,
+		Thickness = 1,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+	}, Info)
 
 	local UserImageEl = Instance.new('ImageLabel')
 	UserImageEl.Name = "UserImage"
@@ -1369,8 +1370,8 @@ Aspect.AspectRatio = 1.4
 	UserImageEl.Parent = Info
 	New("UICorner", { CornerRadius = UDim.new(1,0) }, UserImageEl)
 	New("UIAspectRatioConstraint", { AspectType = Enum.AspectType.ScaleWithParentSize }, UserImageEl)
-	New("UIStroke", {
-		Color = Color3.fromRGB(70, 78, 110),
+	local UserImageStroke = New("UIStroke", {
+		Color = Color3.fromRGB(90, 100, 140),
 		Transparency = 0.35,
 		Thickness = 1,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
@@ -1432,7 +1433,21 @@ ImageLabel.ImageTransparency = 0.2
 ImageLabel.ScaleType = Enum.ScaleType.Fit
 ImageLabel.Rotation = 270
 ImageLabel.ZIndex = 102
-ImageLabel.Parent = WindowSettings
+local SettingsArrow = ImageLabel
+
+	Info.MouseEnter:Connect(function()
+		Tween(Info, {BackgroundTransparency = 0.93}, 0.15)
+		Tween(InfoStroke, {Transparency = 0.55}, 0.15)
+		Tween(UserImageStroke, {Transparency = 0.15}, 0.15)
+		Tween(SettingsArrow, {ImageTransparency = 0}, 0.15)
+	end)
+	Info.MouseLeave:Connect(function()
+		Tween(Info, {BackgroundTransparency = 1}, 0.15)
+		Tween(InfoStroke, {Transparency = 1}, 0.15)
+		Tween(UserImageStroke, {Transparency = 0.35}, 0.15)
+		Tween(SettingsArrow, {ImageTransparency = 0.2}, 0.15)
+	end)
+	ImageLabel.Parent = WindowSettings
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
@@ -1760,9 +1775,9 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	local logoLine = New("Frame", {
 		Name = "Lines",
 		Position = UDim2.new(0.05, 0, 1, 0),
-		Size = UDim2.new(0.9, 0, 0, 1),
+		Size = UDim2.new(0.86, 0, 0, 1),
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
-		BackgroundTransparency = 0.93,
+		BackgroundTransparency = 0.96,
 		BorderSizePixel = 0,
 		ZIndex = 150,
 	}, WSLogoRow)
@@ -2682,7 +2697,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Position = UDim2.new(0.23000000417232513, 0, 0, 0),
 		Size = UDim2.new(0.7699999809265137, 0, 1, 0),
 		BackgroundColor3 = Color3.fromRGB(16,19,28),
-		BackgroundTransparency = 0,
+		BackgroundTransparency = 0.12,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	}, MainFrame)
@@ -3861,7 +3876,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	Line3.Position = UDim2.new(-0.009999999776482582,0,0,0)
 	Line3.Size = UDim2.new(0,1,1,0)
 	Line3.BackgroundColor3 = Color3.fromRGB(162,162,162)
-	Line3.BackgroundTransparency = 0.9
+	Line3.BackgroundTransparency = 0.93
 	Line3.BorderSizePixel = 0
 	Line3.Parent = Frame2
 
@@ -3870,7 +3885,7 @@ Line9.Name = "Line9"
 Line9.Position = UDim2.new(0.22900649905204773,0,0.07999999821186066,0)
 Line9.Size = UDim2.new(0.7600772976875305,0,0,1)
 Line9.BackgroundColor3 = Color3.fromRGB(162,162,162)
-Line9.BackgroundTransparency = 0.9
+Line9.BackgroundTransparency = 0.93
 Line9.BorderSizePixel = 0
 Line9.Parent = MainFrame
 
@@ -3879,7 +3894,7 @@ Line9.Parent = MainFrame
 	Line1.Position = UDim2.new(0.009999999776482582,0,0.08,0)
 	Line1.Size = UDim2.new(0.20900000631809235,0,0,1)
 	Line1.BackgroundColor3 = Color3.fromRGB(162,162,162)
-	Line1.BackgroundTransparency = 0.9
+	Line1.BackgroundTransparency = 0.93
 	Line1.BorderSizePixel = 0
 	Line1.Parent = MainFrame
 
@@ -3888,7 +3903,7 @@ Line9.Parent = MainFrame
 	Line4.Position = UDim2.new(0.00800000037997961,0,0.8999999761581421,0)
 	Line4.Size = UDim2.new(0.20900000631809235,0,0,1)
 	Line4.BackgroundColor3 = Color3.fromRGB(162,162,162)
-	Line4.BackgroundTransparency = 0.9
+	Line4.BackgroundTransparency = 0.93
 	Line4.BorderSizePixel = 0
 	Line4.Parent = MainFrame
 
@@ -3922,23 +3937,20 @@ Line9.Parent = MainFrame
     guiOpen = not guiOpen
     if not guiOpen then
 		CloseAllPopupsExcept(nil)
-		if ConfigMainFrame then ConfigMainFrame.Visible = false end
-		if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
-		if Save then Save.Visible = false end
-		if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
 	end
     ToggleBtn.Text = guiOpen and "Close [H]" or "Open  [H]"
     Tween(ToggleBtn, {
         BackgroundColor3 = guiOpen and Color3.fromRGB(16,19,28) or Color3.fromRGB(33,37,53)
     }, 0.1)
     	if guiOpen then
+        if Save then Save.Visible = true end
         MainFrame.BackgroundTransparency = 1
         MainFrame.Visible = true
         AcrylicBlur.Instances.Part.Transparency = 1
         if AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = true end
         if AcrylicBlur.Signal then pcall(function() AcrylicBlur.Signal:Disconnect() end); AcrylicBlur.Signal = nil end
         AcrylicBlur.Signal = game:GetService("RunService").RenderStepped:Connect(AcrylicBlur.Update)
-        Tween(MainFrame, { BackgroundTransparency = 0 }, 0.12)
+        Tween(MainFrame, { BackgroundTransparency = 0.1 }, 0.12)
         Tween(AcrylicBlur.Instances.Part, { Transparency = AcrylicBlur.Instances.Part:GetAttribute("TargetTransparency") or 0.8 }, 0.12)
     else
         if AcrylicBlur.Signal then
@@ -3950,6 +3962,11 @@ Line9.Parent = MainFrame
         task.delay(0.13, function()
             if guiOpen then return end
             MainFrame.Visible = false
+            -- everything disappears together with the window
+            if ConfigMainFrame then ConfigMainFrame.Visible = false end
+            if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
+            if Save then Save.Visible = false end
+            if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
             if AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = false end
         end)
     end
@@ -3965,7 +3982,7 @@ end
 	end)
 
 	MainFrame.BackgroundTransparency = 1
-	Tween(MainFrame, { BackgroundTransparency = 0 }, 0.5)
+	Tween(MainFrame, { BackgroundTransparency = 0.1 }, 0.5)
 
 
 
@@ -4503,9 +4520,9 @@ UIAspectRatioConstraint.Parent = Toggle
 					New("Frame", {
 						Name = "Lines",
 						Position = UDim2.new(0.05, 0, 1, 0),
-						Size = UDim2.new(0.9, 0, 0, 1),
+						Size = UDim2.new(0.86, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.93,
+						BackgroundTransparency = 0.96,
 						ZIndex = 1000,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -4669,9 +4686,9 @@ UIAspectRatioConstraint.Parent = Slider
 					New("Frame", {
 						Name = "Lines",
 						Position = UDim2.new(0.05, 0, 1, 0),
-						Size = UDim2.new(0.9, 0, 0, 1),
+						Size = UDim2.new(0.86, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.93,
+						BackgroundTransparency = 0.96,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -5051,7 +5068,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.93,
+						BackgroundTransparency = 0.96,
 						BorderSizePixel = 0,
 						ZIndex = 1001,
 					}, Colorpicker)
@@ -5559,9 +5576,9 @@ if maxY <= 0 then return end
 				New("Frame", {
 					Name = "Lines",
 					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.9, 0, 0, 1),
+					Size = UDim2.new(0.86, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.93,
+					BackgroundTransparency = 0.96,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -5639,9 +5656,9 @@ if maxY <= 0 then return end
 				New("Frame", {
 					Name = "Lines",
 					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.9, 0, 0, 1),
+					Size = UDim2.new(0.86, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.93,
+					BackgroundTransparency = 0.96,
 					BorderSizePixel = 0,
 					ZIndex = 100,
 				}, CheckBoxToggle)
@@ -5743,9 +5760,9 @@ if maxY <= 0 then return end
 				New("Frame", {
 					Name = "Lines",
 					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.9, 0, 0, 1),
+					Size = UDim2.new(0.86, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.93,
+					BackgroundTransparency = 0.96,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -6065,9 +6082,9 @@ if maxY <= 0 then return end
 				New("Frame", {
 					Name = "Lines",
 					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.9, 0, 0, 1),
+					Size = UDim2.new(0.86, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.93,
+					BackgroundTransparency = 0.96,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Slider)
@@ -6224,9 +6241,9 @@ if maxY <= 0 then return end
 				New("Frame", {
 					Name = "Lines",
 					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.9, 0, 0, 1),
+					Size = UDim2.new(0.86, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.93,
+					BackgroundTransparency = 0.96,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Dropdown)
@@ -6840,7 +6857,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.89, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.93,
+					BackgroundTransparency = 0.96,
 					BorderSizePixel = 0,
 					ZIndex = 3,
 				}, Colorpicker)
@@ -7216,9 +7233,9 @@ if maxY <= 0 then return end
 				New("Frame", {
 					Name = "Lines",
 					Position = UDim2.new(0.05, 0, 1, 0),
-					Size = UDim2.new(0.9, 0, 0, 1),
+					Size = UDim2.new(0.86, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.93,
+					BackgroundTransparency = 0.96,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, DropdownSection)
@@ -7335,9 +7352,9 @@ UIAspectRatioConstraint.Parent = Toggle
 					New("Frame", {
 						Name = "Lines",
 						Position = UDim2.new(0.05, 0, 1, 0),
-						Size = UDim2.new(0.9, 0, 0, 1),
+						Size = UDim2.new(0.86, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.93,
+						BackgroundTransparency = 0.96,
 						ZIndex = 100,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -7762,9 +7779,9 @@ UIAspectRatioConstraint.Parent = Slider
 					New("Frame", {
 						Name = "Lines",
 						Position = UDim2.new(0.05, 0, 1, 0),
-						Size = UDim2.new(0.9, 0, 0, 1),
+						Size = UDim2.new(0.86, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.93,
+						BackgroundTransparency = 0.96,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -7922,7 +7939,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.93,
+						BackgroundTransparency = 0.96,
 						BorderSizePixel = 0,
 						ZIndex = 101,
 					}, Colorpicker)
