@@ -646,12 +646,30 @@ local function RefreshRowDividers(listFrame)
 	end
 end
 
+local _watchedDividers = {}
+
 local function WatchRowDividers(listFrame)
-	if not listFrame then return end
+	if not listFrame or _watchedDividers[listFrame] then return end
+	_watchedDividers[listFrame] = true
 	RefreshRowDividers(listFrame)
 	listFrame.ChildAdded:Connect(function() task.defer(RefreshRowDividers, listFrame) end)
 	listFrame.ChildRemoved:Connect(function() task.defer(RefreshRowDividers, listFrame) end)
+	table.insert(_watchedDividers, listFrame)
 end
+
+task.spawn(function()
+	while true do
+		task.wait(0.4)
+		for i = #_watchedDividers, 1, -1 do
+			local frame = _watchedDividers[i]
+			if frame and frame.Parent then
+				RefreshRowDividers(frame)
+			else
+				table.remove(_watchedDividers, i)
+			end
+		end
+	end
+end)
 
 local function GetSliderStep(min, max)
 	local span = max - min
@@ -1352,8 +1370,8 @@ Aspect.AspectRatio = 1.4
 
 	local HubIcon = New("ImageLabel", {
 		Name = "HubIcon",
-		Position = UDim2.new(0.014000000432133675, 0, 0.006000000052154064, 0),
-		Size = UDim2.new(0.038000000685453415, 0, 0, 0),
+		Position = UDim2.new(0.014000000432133675, 0, 0, 4),
+		Size = UDim2.new(0, 66, 0, 66),
 		BackgroundColor3 = Color3.fromRGB(19,22,33),
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
@@ -1512,7 +1530,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21,24,36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
@@ -2391,7 +2409,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		WSScale.Scale = 0.92
 		Tween(WSScale, { Scale = 1 }, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
-				PositionPopupWithinMain(WindowSettingsFrame, false, 18, Info)
+				PositionPopupWithinMain(WindowSettingsFrame, false, 30, Info)
 				RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
 				Tween(ImageLabel, {Rotation = 180}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			else
@@ -3045,7 +3063,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Visible = false
 	ConfigMainFrame.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(46,52,74); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
 
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
@@ -3492,10 +3510,12 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		row.ZIndex = 1000
 		row.Parent = ListContainer
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = row end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = row end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.3; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = row end
 		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = row end
 
 		local rowStroke = row:FindFirstChildWhichIsA("UIStroke")
+		row.MouseEnter:Connect(function() Tween(row, {BackgroundTransparency = 0.85}, 0.12) end)
+		row.MouseLeave:Connect(function() Tween(row, {BackgroundTransparency = 0}, 0.12) end)
 
 		-- Name label
 		local Rename = Instance.new("TextBox")
@@ -3555,7 +3575,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -4026,7 +4046,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 local Line9 = Instance.new('Frame')
 Line9.Name = "Line9"
-Line9.Position = UDim2.new(0.010000000707268715,0,0.07999999821186066,0)
+Line9.Position = UDim2.new(0.010000000707268715,0,0.08799999952316284,0)
 Line9.Size = UDim2.new(0.9789999723434448,0,0,1)
 Line9.BackgroundColor3 = Color3.fromRGB(162,162,162)
 Line9.BackgroundTransparency = 0.93
@@ -4249,6 +4269,19 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 		end
 
 		local function HideContent()
+			for _, column in ipairs({Left, Right}) do
+				local list = column:FindFirstChildOfClass("UIListLayout")
+				local items = column:GetChildren()
+				for _, item in ipairs(items) do
+					if item:IsA("GuiObject") then
+						local texts = {}
+						for _, d in ipairs(item:GetDescendants()) do
+							if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
+						end
+						for _, t in ipairs(texts) do Tween(t, {TextTransparency = 1}, 0.12) end
+					end
+				end
+			end
 			Left.Visible = false
 			Right.Visible = false
 		end
@@ -4484,8 +4517,8 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(44,50,72)
-				UIStroke.Transparency = 0.45
+				UIStroke.Color = Color3.fromRGB(60,68,96)
+				UIStroke.Transparency = 0.25
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				UIStroke.Parent = SettingsFrame
@@ -6449,8 +6482,8 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
-					Color = Color3.fromRGB(44, 50, 72),
-					Transparency = 0.45,
+					Color = Color3.fromRGB(60, 68, 96),
+					Transparency = 0.25,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, DownBar)
@@ -6673,8 +6706,8 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
-					Color = Color3.fromRGB(44, 50, 72),
-					Transparency = 0.45,
+					Color = Color3.fromRGB(60, 68, 96),
+					Transparency = 0.25,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, DownBar)
@@ -7329,8 +7362,8 @@ if maxY <= 0 then return end
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(44, 50, 72)
-				UIStroke.Transparency = 0.45
+				UIStroke.Color = Color3.fromRGB(60, 68, 96)
+				UIStroke.Transparency = 0.25
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				UIStroke.Parent = Section2Frame
