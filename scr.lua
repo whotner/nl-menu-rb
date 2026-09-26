@@ -882,7 +882,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		watermarkConstraint.MaxTextSize = 9
 	end
 	customization.watermark = Watermark
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = MainFrame end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 20); c.Parent = MainFrame end
 	local DragHandle = New("Frame", {
 		Name = "DragHandle",
 		Size = UDim2.new(0.3, 0, 0.08, 0),
@@ -1241,21 +1241,7 @@ RunService.RenderStepped:Connect(function(dt)
 end)
 
 
-local DropShadow = Instance.new("ImageLabel")
-DropShadow.Name = "DropShadow"
-	DropShadow.Parent = MainFrame
-	DropShadow.AnchorPoint = Vector2.new(0.5, 0.5)
-	DropShadow.BackgroundTransparency = 1.000
-	DropShadow.BorderSizePixel = 0
-	DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-	DropShadow.Size = UDim2.new(1, 47, 1, 47)
-	DropShadow.ZIndex = -1
-	DropShadow.Image = "rbxassetid://6014261993"
-	DropShadow.ImageColor3 = Color3.fromRGB(16,19,28)
-	DropShadow.ImageTransparency = 0.34
-	DropShadow.ScaleType = Enum.ScaleType.Slice
-	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
-	DropShadow.Rotation = 0.001
+-- rounded window: no square drop-shadow image (its corners broke the rounding)
 
 local Aspect = Instance.new("UIAspectRatioConstraint")
 Aspect.Parent = MainFrame
@@ -1386,7 +1372,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.ZIndex = 101
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = WindowSettingsFrame end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
 
 
 	do
@@ -1697,7 +1683,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Position = UDim2.new(0.05, 0, 1, 0),
 		Size = UDim2.new(0.9, 0, 0, 1),
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
-		BackgroundTransparency = 0.9,
+		BackgroundTransparency = 0.94,
 		BorderSizePixel = 0,
 		ZIndex = 150,
 	}, WSLogoRow)
@@ -2622,7 +2608,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		ClipsDescendants = true,
 	}, MainFrame)
 
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Frame2 end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = Frame2 end
 
 	local Header = New("Frame", {
 		Name = "Header",
@@ -2815,7 +2801,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Active = true
 	ConfigMainFrame.Visible = false
 	ConfigMainFrame.Parent = Frame2
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = ConfigMainFrame end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
 	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.800000011920929; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
 
 	local CMHeader = Instance.new("Frame")
@@ -3083,7 +3069,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Active = true
 	RecentlyDeletedPanel.Visible = false
 	RecentlyDeletedPanel.Parent = Frame2
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = RecentlyDeletedPanel end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = RecentlyDeletedPanel end
 	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.8; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = RecentlyDeletedPanel end
 
 	-- RD Header
@@ -3844,21 +3830,7 @@ Line9.Parent = MainFrame
 	ToggleBtn.Parent = NeverloseCS2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = ToggleBtn end
 	
-local DropShadow = Instance.new("ImageLabel")
-DropShadow.Name = "DropShadow"
-	DropShadow.Parent = ToggleBtn
-	DropShadow.AnchorPoint = Vector2.new(0.5, 0.5)
-	DropShadow.BackgroundTransparency = 1.000
-	DropShadow.BorderSizePixel = 0
-	DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-	DropShadow.Size = UDim2.new(1, 47, 1, 47)
-	DropShadow.ZIndex = -1
-	DropShadow.Image = "rbxassetid://6014261993"
-	DropShadow.ImageColor3 = Color3.fromRGB(12,14,22)
-	DropShadow.ImageTransparency = 0
-	DropShadow.ScaleType = Enum.ScaleType.Slice
-	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
-	DropShadow.Rotation = 0.001
+-- rounded open button: no square drop-shadow image
 
 
 
@@ -4463,7 +4435,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.900000011920929,
+						BackgroundTransparency = 0.939999997615814,
 						ZIndex = 1000,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -4629,7 +4601,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.900000011920929,
+						BackgroundTransparency = 0.939999997615814,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -5008,7 +4980,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.9,
+						BackgroundTransparency = 0.94,
 						BorderSizePixel = 0,
 						ZIndex = 1001,
 					}, Colorpicker)
@@ -5518,7 +5490,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.900000011920929,
+					BackgroundTransparency = 0.939999997615814,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -5598,7 +5570,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.9,
+					BackgroundTransparency = 0.94,
 					BorderSizePixel = 0,
 					ZIndex = 100,
 				}, CheckBoxToggle)
@@ -5702,7 +5674,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.900000011920929,
+					BackgroundTransparency = 0.939999997615814,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -6024,7 +5996,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.900000011920929,
+					BackgroundTransparency = 0.939999997615814,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Slider)
@@ -6182,7 +6154,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.900000011920929,
+					BackgroundTransparency = 0.939999997615814,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Dropdown)
@@ -6781,7 +6753,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.89, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.9,
+					BackgroundTransparency = 0.94,
 					BorderSizePixel = 0,
 					ZIndex = 3,
 				}, Colorpicker)
@@ -7090,12 +7062,15 @@ if maxY <= 0 then return end
 
 				local UICorner = Instance.new('UICorner')
 				UICorner.Name = "UICorner"
+				UICorner.CornerRadius = UDim.new(0, 14)
 				UICorner.Parent = Section2Frame
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(255, 255, 255)
-				UIStroke.Transparency = 0.9
+				UIStroke.Color = Color3.fromRGB(48, 54, 78)
+				UIStroke.Transparency = 0.45
+				UIStroke.Thickness = 1
+				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				UIStroke.Parent = Section2Frame
 
 				local function GetAccordionLabelHeight()
@@ -7104,8 +7079,8 @@ if maxY <= 0 then return end
 
 				local Container = Instance.new('ScrollingFrame')
 				Container.Name = "Container"
-				Container.Position = UDim2.new(0.05, 0, 0, GetAccordionLabelHeight())
-				Container.Size = UDim2.new(0.9, 0, 1, -GetAccordionLabelHeight() - 8 / GetMainFrameScale())
+				Container.Position = UDim2.new(0.04, 0, 0, 3 / GetMainFrameScale())
+				Container.Size = UDim2.new(0.92, 0, 1, -6 / GetMainFrameScale())
 				Container.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
 				Container.BackgroundTransparency = 1
 				Container.AnchorPoint = Vector2.new(0, 0)
@@ -7114,8 +7089,9 @@ if maxY <= 0 then return end
 				Container.Active = true
 				Container.AutomaticCanvasSize = Enum.AutomaticSize.Y
 				Container.CanvasSize = UDim2.new()
+				Container.ScrollingEnabled = false
 				Container.ScrollingDirection = Enum.ScrollingDirection.Y
-				Container.ScrollBarThickness = 2
+				Container.ScrollBarThickness = 0
 				Container.ScrollBarImageTransparency = 0.5
 				Container.ClipsDescendants = true
 				Container.Parent = Section2Frame
@@ -7126,11 +7102,12 @@ if maxY <= 0 then return end
 				UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				UIListLayout.Parent = Container
 
-				New("UICorner", {}, Container)
+				New("UICorner", { CornerRadius = UDim.new(0, 10) }, Container)
 				New("UIStroke", {
 					Name = "UIStroke",
-					Color = Color3.fromRGB(255,255,255),
-					Transparency = 0.9,
+					Color = Color3.fromRGB(40, 46, 68),
+					Transparency = 0.6,
+					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, Container)
 
@@ -7163,7 +7140,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.900000011920929,
+					BackgroundTransparency = 0.939999997615814,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, DropdownSection)
@@ -7173,8 +7150,8 @@ if maxY <= 0 then return end
 					UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
 					local contentVisual = GetAccordionContentHeight()
-					local desiredVisual = math.max(34 * scale, contentVisual + 14 * scale)
-					local maxVisual = math.max(34 * scale, MainFrame.AbsoluteSize.Y - 10 * scale)
+					local desiredVisual = math.max(34 * scale, contentVisual + 16 * scale)
+					local maxVisual = math.max(34 * scale, MainFrame.AbsoluteSize.Y * 0.92)
 					return math.min(desiredVisual, maxVisual) / scale
 				end
 
@@ -7242,7 +7219,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.900000011920929,
+						BackgroundTransparency = 0.939999997615814,
 						ZIndex = 100,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -7669,7 +7646,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.900000011920929,
+						BackgroundTransparency = 0.939999997615814,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -7826,7 +7803,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.9,
+						BackgroundTransparency = 0.94,
 						BorderSizePixel = 0,
 						ZIndex = 101,
 					}, Colorpicker)
@@ -8249,8 +8226,6 @@ if maxY <= 0 then return end
 							Tween(section, {BackgroundTransparency = section.Name == "Section" and 1 or 0.26}, 0.28, Enum.EasingStyle.Quad)
 							local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
 							if list and list:IsA("GuiObject") then
-								list.BackgroundTransparency = 1
-								Tween(list, {BackgroundTransparency = 0.26}, 0.3, Enum.EasingStyle.Quad)
 								local order = 0
 								for _, item in ipairs(list:GetChildren()) do
 									if item:IsA("GuiObject") then
