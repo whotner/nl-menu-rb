@@ -520,16 +520,27 @@ end
 
 local function FitTextBeforeArrow(label, arrow)
 	if not label or not arrow then return end
+	-- Do NOT re-measure and rewrite the text: with TextScaled on, replacing the
+	-- string makes Roblox re-fit it and the glyph size drifts. Narrow the label so
+	-- it cannot reach the arrow, then let TextTruncate handle the overflow.
+	if label:IsA("TextLabel") or label:IsA("TextButton") then
+		label.TextWrapped = false
+		label.TextTruncate = Enum.TextTruncate.AtEnd
+	end
 	task.defer(function()
 		if not label.Parent or not arrow.Parent then return end
-		local arrowX = arrow.AbsolutePosition.X
-		local labelX = label.AbsolutePosition.X
-		local width = label.AbsoluteSize.X
-		if label.TextXAlignment == Enum.TextXAlignment.Right then
-			EllipsizeTo(label, arrowX - labelX - 6)
-		else
-			EllipsizeTo(label, math.min(width, arrowX - labelX - 6))
-		end
+		local parent = label.Parent
+		if not parent or not parent:IsA("GuiObject") then return end
+		local parentX = parent.AbsolutePosition.X
+		local parentW = parent.AbsoluteSize.X
+		if parentW <= 0 then return end
+		local room = (arrow.AbsolutePosition.X - label.AbsolutePosition.X) - 6
+		if room <= 4 then return end
+		local scaleX = (label.AbsolutePosition.X - parentX) / parentW
+		local scaleW = (label.AbsolutePosition.X - parentX + room) / parentW
+		if scaleX < 0 then scaleX = 0 end
+		if scaleW > 1 then scaleW = 1 end
+		label.Size = UDim2.new(scaleW, 0, label.Size.Y.Scale, label.Size.Y.Offset)
 	end)
 end
 
@@ -1530,7 +1541,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21,24,36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.35; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
@@ -2654,7 +2665,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		local obj = {}
 		function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TextDefault.Text = val; updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
 		function obj:Get() return selected end
-		MakeReadableText(Row, 11, 18)
+		MakeReadableText(Row, 12, 18)
 		return obj
 	end
 
@@ -2831,7 +2842,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			InvokeCallback(callback, normalized)
 		end
 		function obj:Get() return Color3.fromHSV(color[1],color[2],color[3]) end
-		MakeReadableText(Row, 11, 18)
+		MakeReadableText(Row, 12, 18)
 		return obj
 	end
 
@@ -3063,7 +3074,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Visible = false
 	ConfigMainFrame.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.35; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
 
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
@@ -3510,7 +3521,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		row.ZIndex = 1000
 		row.Parent = ListContainer
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = row end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.3; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = row end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = row end
 		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = row end
 
 		local rowStroke = row:FindFirstChildWhichIsA("UIStroke")
@@ -3575,7 +3586,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.35; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -4425,7 +4436,7 @@ AddTextConstraint(SectionLabel, 9, 12, true)
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.35; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -4515,7 +4526,7 @@ AddTextConstraint(SectionLabel, 9, 12, true)
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(60,68,96)
+				UIStroke.Color = Color3.fromRGB(44, 50, 72)
 				UIStroke.Transparency = 0.25
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -5470,7 +5481,7 @@ if maxY <= 0 then return end
 					return obj
 				end
 
-				MakeReadableText(SettingsFrame, 11, 18)
+				MakeReadableText(SettingsFrame, 12, 18)
 				settingsCache[parentFrame] = SettingsObj
 				return SettingsObj
 			end
@@ -5600,7 +5611,7 @@ if maxY <= 0 then return end
 					TextXAlignment = Enum.TextXAlignment.Left,
 					ZIndex = 8001,
 				}, _contextMenu)
-				AddTextConstraint(item, 11, 15, true)
+				AddTextConstraint(item, 12, 15, true)
 				item.MouseButton1Click:Connect(function()
 					local target = _contextTarget
 					CloseContextMenu()
@@ -6478,8 +6489,8 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
-					Color = Color3.fromRGB(60, 68, 96),
-					Transparency = 0.35,
+					Color = Color3.fromRGB(44, 50, 72),
+					Transparency = 0.45,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, DownBar)
@@ -6693,8 +6704,8 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
-					Color = Color3.fromRGB(60, 68, 96),
-					Transparency = 0.35,
+					Color = Color3.fromRGB(44, 50, 72),
+					Transparency = 0.45,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, DownBar)
@@ -7349,8 +7360,8 @@ if maxY <= 0 then return end
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(60, 68, 96)
-				UIStroke.Transparency = 0.35
+				UIStroke.Color = Color3.fromRGB(44, 50, 72)
+				UIStroke.Transparency = 0.45
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				UIStroke.Parent = Section2Frame
@@ -8346,11 +8357,11 @@ if maxY <= 0 then return end
 					return obj
 				end
 
-				MakeReadableText(Section2Frame, 11, 18)
+				MakeReadableText(Section2Frame, 12, 18)
 				return AccordionObj
 			end
 
-			MakeReadableText(Section, 11, 18)
+			MakeReadableText(Section, 12, 18)
 			return SectionObj
 		end
 
@@ -8854,7 +8865,7 @@ if maxY <= 0 then return end
 		return customMenus
 	end
 
-	MakeReadableText(NeverloseCS2, 11, 18)
+	MakeReadableText(NeverloseCS2, 12, 18)
 	CleanBorders(MainFrame)
 
 	return WindowObj
