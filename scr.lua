@@ -601,6 +601,58 @@ local function GetDragShield(frame)
 	return shield
 end
 
+local function MeasureRowsHeight(container)
+	local count = 0
+	local total = 0
+	for _, child in ipairs(container:GetChildren()) do
+		if child:IsA("GuiObject") then
+			local okSize, sizeValue = pcall(function() return child.AbsoluteSize end)
+			if okSize and sizeValue and sizeValue.Y > 0 then total = total + sizeValue.Y end
+			count = count + 1
+		end
+	end
+	if count == 0 then return 0, 0 end
+	local padding = 0
+	local okLayout, layout = pcall(function() return container:FindFirstChildOfClass("UIListLayout") end)
+	if okLayout and layout then padding = layout.Padding.Offset or 0 end
+	return total + padding * (count - 1), count
+end
+
+local function EstimateRowsHeight(container, count, aspect)
+	if count <= 0 then return 0 end
+	local okSize, sizeValue = pcall(function() return container.AbsoluteSize end)
+	if not okSize or not sizeValue or sizeValue.X <= 0 then return 0 end
+	local padding = 0
+	local okLayout, layout = pcall(function() return container:FindFirstChildOfClass("UIListLayout") end)
+	if okLayout and layout then padding = layout.Padding.Offset or 0 end
+	return count * (sizeValue.X / (aspect or 7.5)) + padding * (count - 1)
+end
+
+local function GetSliderStep(min, max)
+	local span = max - min
+	if span <= 0 then return 1 end
+	if span >= 20 then return 1 end
+	return 0.1
+end
+
+local function Quantize(value, min, max, step)
+	local clamped = math.clamp(value, min, max)
+	local snapped = min + math.round((clamped - min) / step) * step
+	if math.abs(snapped - max) < step * 0.001 then snapped = max end
+	if math.abs(snapped - round(snapped)) < 0.0001 then snapped = round(snapped) end
+	return snapped
+end
+
+local function FormatSliderValue(value, suffix)
+	local text
+	if math.abs(value - round(value)) < 0.0001 then
+		text = tostring(round(value))
+	else
+		text = string.format("%.1f", value)
+	end
+	return text .. (suffix or "")
+end
+
 local function MakeDraggable(frame, handle)
 	handle = handle or frame
 	frame.Draggable = false
@@ -1288,8 +1340,8 @@ Aspect.AspectRatio = 1.4
 
 	local Info = Instance.new('Frame')
 	Info.Name = "Info"
-	Info.Position = UDim2.new(0.022, 0, 0.893, 0)
-	Info.Size = UDim2.new(0.215, 0, 0.082, 0)
+	Info.Position = UDim2.new(0.020, 0, 0.885, 0)
+	Info.Size = UDim2.new(0.196, 0, 0.075, 0)
 	Info.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	Info.BackgroundTransparency = 1
 	Info.BorderSizePixel = 0
@@ -1307,7 +1359,7 @@ Aspect.AspectRatio = 1.4
 	local User = Instance.new('TextLabel')
 	User.Name = "Username"
 	User.Position = UDim2.new(0.3, 0, 0.13, 0)
-	User.Size = UDim2.new(0.58, 0, 0.42, 0)
+	User.Size = UDim2.new(0.50, 0, 0.42, 0)
 	User.TextTruncate = Enum.TextTruncate.AtEnd
 	User.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	User.BackgroundTransparency = 1
@@ -1321,7 +1373,7 @@ Aspect.AspectRatio = 1.4
 	local DaysLeft = Instance.new('TextLabel')
 	DaysLeft.Name = "Daysleft"
 	DaysLeft.Position = UDim2.new(0.3, 0, 0.56, 0)
-	DaysLeft.Size = UDim2.new(0.58, 0, 0.3, 0)
+	DaysLeft.Size = UDim2.new(0.50, 0, 0.3, 0)
 	DaysLeft.TextTruncate = Enum.TextTruncate.AtEnd
 	DaysLeft.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	DaysLeft.BackgroundTransparency = 1
@@ -1347,14 +1399,14 @@ Aspect.AspectRatio = 1.4
 
 local ImageLabel = Instance.new('ImageLabel')
 ImageLabel.Name = "UserSettingsArrow"
-ImageLabel.Position = UDim2.new(0.99, 0, 0.5, 0)
-ImageLabel.Size = UDim2.new(0.52, 0, 0.52, 0)
+ImageLabel.Position = UDim2.new(0.97, 0, 0.5, 0)
+ImageLabel.Size = UDim2.new(0.46, 0, 0.46, 0)
 ImageLabel.AnchorPoint = Vector2.new(1, 0.5)
 ImageLabel.BackgroundTransparency = 1
 ImageLabel.Image = "rbxassetid://10709790948"
 ImageLabel.ImageTransparency = 0.2
 ImageLabel.ScaleType = Enum.ScaleType.Fit
-ImageLabel.Rotation = 90
+ImageLabel.Rotation = 270
 ImageLabel.ZIndex = 102
 ImageLabel.Parent = WindowSettings
 
@@ -1411,7 +1463,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	end
 	local function ApplyScale(value)
 		if type(value) ~= "number" or value ~= value then return end
-		UIScale.Scale = math.clamp(value, 0.5, 1.2)
+		UIScale.Scale = math.clamp(value, 0.5, 1.1)
 	end
 	local function UpdateScale()
 		ApplyScale(automaticScale and GetAutomaticScale() or manualScale)
@@ -1614,7 +1666,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ScaleArrow.ImageTransparency = 0.4000000059604645
 	ScaleArrow.ImageColor3 = Color3.fromRGB(255,255,255)
 	ScaleArrow.ScaleType = Enum.ScaleType.Fit
-	ScaleArrow.Rotation = 90
+	ScaleArrow.Rotation = 270
 	ScaleArrow.ZIndex = 1000
 	ScaleArrow.Parent = WSScaleRow
 
@@ -1764,7 +1816,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangArrow.ImageTransparency = 0.4000000059604645
 	LangArrow.ImageColor3 = Color3.fromRGB(255,255,255)
 	LangArrow.ScaleType = Enum.ScaleType.Fit
-	LangArrow.Rotation = 90
+	LangArrow.Rotation = 270
 	LangArrow.ZIndex = 1000
 	LangArrow.Parent = WSLangRow
 
@@ -1980,7 +2032,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 		local function closeScaleDropdown()
 			scaleOpen = false
-			Tween(ScaleArrow, {ImageTransparency = 0.4, Rotation = 90}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(ScaleArrow, {ImageTransparency = 0.4, Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			UnregisterPopup(ScaleDownBar)
 			SmoothClose(ScaleDownBar, 0.18)
 		end
@@ -2065,7 +2117,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 		local function closeLangDropdown()
 			langOpen = false
-			Tween(LangArrow, {ImageTransparency = 0.4, Rotation = 90}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(LangArrow, {ImageTransparency = 0.4, Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			UnregisterPopup(LangDownBar)
 			SmoothClose(LangDownBar, 0.18)
 		end
@@ -2143,7 +2195,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			ClosePopupsUnder(WindowSettingsFrame)
 			UnregisterPopup(WindowSettingsFrame)
 			SmoothClose(WindowSettingsFrame, 0.18)
-			Tween(ImageLabel, {Rotation = 90}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(ImageLabel, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		end
 		WindowSettings.MouseButton1Click:Connect(function()
 			wsOpen = not wsOpen
@@ -2173,7 +2225,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				if syncScaleSelection then syncScaleSelection("Auto") end
 			elseif type(value) == "number" and value == value then
 				automaticScale = false
-				manualScale = math.clamp(value, 0.5, 1.2)
+				manualScale = math.clamp(value, 0.5, 1.1)
 				ApplyScale(manualScale)
 				if syncScaleSelection then syncScaleSelection(tostring(math.round(manualScale * 100)) .. "%") end
 			end
@@ -2247,7 +2299,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Arrow.ImageTransparency = 0.4
 		Arrow.ImageColor3 = Color3.fromRGB(255,255,255)
 		Arrow.ScaleType = Enum.ScaleType.Fit
-		Arrow.Rotation = 90
+		Arrow.Rotation = 270
 		Arrow.ZIndex = 1000
 		Arrow.Parent = Row
 
@@ -2304,7 +2356,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 		local function closeDropdown()
 			dropOpen = false
-			Tween(Arrow, {ImageTransparency = 0.4, Rotation = 90}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(Arrow, {ImageTransparency = 0.4, Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			UnregisterPopup(DropPopup)
 			SmoothClose(DropPopup, 0.18)
 		end
@@ -2771,7 +2823,7 @@ SaveArrow.BackgroundTransparency = 1
 SaveArrow.Image = "rbxassetid://10709790948"
 SaveArrow.ImageColor3 = Color3.fromRGB(255,255,255)
 SaveArrow.ScaleType = Enum.ScaleType.Fit
-SaveArrow.Rotation = 90
+SaveArrow.Rotation = 270
 SaveArrow.ZIndex = 15
 SaveArrow.Parent = Save
 
@@ -3593,7 +3645,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		UnregisterPopup(RecentlyDeletedPanel)
 		Tween(ConfigMainFrame, {BackgroundTransparency = 1}, 0.2)
 		Tween(RecentlyDeletedPanel, {BackgroundTransparency = 1}, 0.2)
-		Tween(SaveArrow, {Rotation = 90}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		Tween(SaveArrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		task.delay(0.22, function()
 			if configOpen then return end
 			ConfigMainFrame.Visible = false
@@ -4153,17 +4205,12 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.72; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 6),
 				SortOrder = Enum.SortOrder.LayoutOrder,
 			}, Elements)
 
-local UIStroke = Instance.new('UIStroke')
-UIStroke.Name = "UIStroke"
-UIStroke.Color = Color3.fromRGB(162, 162, 162)
-UIStroke.Transparency = 0.900000000023
-UIStroke.Parent = Elements
 
 			local SectionObj = {}
 			local elemCount = 0
@@ -4228,8 +4275,8 @@ UIStroke.Parent = Elements
 				SettingsFrame.Name = "SettingsFrame"
 				SettingsFrame.Position = UDim2.new(0.02, 0, 1, 2)
 				SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
-				SettingsFrame.BackgroundColor3 = Color3.fromRGB(14, 16, 25)
-				SettingsFrame.BackgroundTransparency = 0.18
+				SettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+				SettingsFrame.BackgroundTransparency = 0.35
 				SettingsFrame.BorderSizePixel = 0
 				SettingsFrame.Visible = false
 				SettingsFrame.ZIndex = 5000
@@ -4244,7 +4291,7 @@ UIStroke.Parent = Elements
 				UICorner.Parent = SettingsFrame
 
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(48,54,78)
+				UIStroke.Color = Color3.fromRGB(44,50,72)
 				UIStroke.Transparency = 0.45
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -4275,12 +4322,6 @@ UIStroke.Parent = Elements
 				SFLayout.Parent = SFContainer
 
 				do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = SFContainer end
-				New("UIStroke", {
-					Name = "UIStroke",
-					Color = Color3.fromRGB(255,255,255),
-					Transparency = 0.9,
-					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-				}, SFContainer)
 
 				local function UpdateSettingsLayout()
 					local scale = GetMainFrameScale()
@@ -4289,19 +4330,16 @@ UIStroke.Parent = Elements
 				end
 
 				local function GetSettingsContentHeight()
-					local okLayout, layout = pcall(function() return SFContainer:FindFirstChildOfClass("UIListLayout") end)
-					if okLayout and layout then
-						local okSize, contentSize = pcall(function() return layout.AbsoluteContentSize end)
-						if okSize and contentSize and contentSize.Y > 0 then return contentSize.Y end
-					end
-					local okCanvas, canvasSize = pcall(function() return SFContainer.AbsoluteCanvasSize end)
-					if okCanvas and canvasSize and canvasSize.Y > 0 then return canvasSize.Y end
+					local measured = MeasureRowsHeight(SFContainer)
+					if measured > 0 then return measured end
 					local rowCount = 0
 					for _, child in ipairs(SFContainer:GetChildren()) do
 						if child:IsA("GuiObject") then rowCount = rowCount + 1 end
 					end
-					if rowCount > 0 then return rowCount * 28 * GetMainFrameScale() end
-					return 0
+					if rowCount <= 0 then return 0 end
+					local estimated = EstimateRowsHeight(SFContainer, rowCount, 7.5)
+					if estimated > 0 then return estimated end
+					return rowCount * 28 * GetMainFrameScale()
 				end
 
 				local function getSettingsHeight()
@@ -4387,7 +4425,7 @@ UIStroke.Parent = Elements
 					local function settle()
 						if not settingsOpen or not SettingsFrame.Parent then return end
 						placeSettings(getSettingsHeight())
-						Tween(SettingsFrame, {BackgroundTransparency = 0.019}, 0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(SettingsFrame, {BackgroundTransparency = 0.35}, 0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					end
 					task.defer(settle)
 					task.delay(0.05, settle)
@@ -4632,7 +4670,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.6990000009536743, 0, 0.10000000149011612, 0),
 						Size = UDim2.new(0.25, 0, 0.8080000281333923, 0),
 						BackgroundColor3 = Color3.fromRGB(33,37,53),
-						Text = tostring(value) .. suffix,
+						Text = FormatSliderValue(value, suffix),
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
 						Font = Enum.Font.SourceSansSemibold,
@@ -4685,10 +4723,10 @@ UIAspectRatioConstraint.Parent = Slider
 						local lineSize = Line.AbsoluteSize.X
 						if lineSize <= 0 then return end
 						local sizeScale = ClampRatio(pointer.X - Line.AbsolutePosition.X, lineSize)
-						value = ((max - min) * sizeScale) + min
+						value = Quantize(((max - min) * sizeScale) + min, min, max, GetSliderStep(min, max))
 						Tween(InLine, { Size = UDim2.fromScale(sizeScale, 1) }, 0.1)
 						Trigger.Position = UDim2.new(sizeScale, 0, -1.8000000715255737, 0)
-						SliderValue.Text = tostring(value) .. suffix
+						SliderValue.Text = FormatSliderValue(value, suffix)
 						InvokeCallback(callback, value)
 					end
 
@@ -4712,10 +4750,11 @@ UIAspectRatioConstraint.Parent = Slider
 					function obj:Set(val)
 						local numeric = type(val) == "number" and val == val and val or min
 						value = math.clamp(numeric, min, max)
-						local ratio = (value - min) / (max - min)
+						value = Quantize(value, min, max, GetSliderStep(min, max))
+					local ratio = (value - min) / (max - min)
 						InLine.Size = UDim2.fromScale(ratio, 1)
 						Trigger.Position = UDim2.new(ratio, 0, -1.8000000715255737, 0)
-						SliderValue.Text = tostring(value) .. suffix
+						SliderValue.Text = FormatSliderValue(value, suffix)
 						InvokeCallback(callback, value)
 					end
 					function obj:Get() return value end
@@ -4780,7 +4819,7 @@ UIAspectRatioConstraint.Parent = Slider
 						ImageColor3 = Color3.fromRGB(255, 255, 255),
 						ImageTransparency = 0.10000000149011612,
 						ScaleType = Enum.ScaleType.Fit,
-						Rotation = 90,
+						Rotation = 270,
 						ZIndex = 1000,
 					}, Selection)
 
@@ -4840,7 +4879,7 @@ UIAspectRatioConstraint.Parent = Slider
 
 					local function closeDropdown()
 						dropOpen = false
-						Tween(SelArrow, {Rotation = 90}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(SelArrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 					end
@@ -6025,7 +6064,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.6990000009536743, 0, 0.10000000149011612, 0),
 					Size = UDim2.new(0.25, 0, 0.8080000281333923, 0),
 					BackgroundColor3 = Color3.fromRGB(32, 35, 50),
-					Text = tostring(value) .. suffix,
+					Text = FormatSliderValue(value, suffix),
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = true,
 					Font = Enum.Font.SourceSansSemibold,
@@ -6076,10 +6115,10 @@ if maxY <= 0 then return end
 						local lineSize = Line.AbsoluteSize.X
 						if lineSize <= 0 then return end
 						local sizeScale = ClampRatio(pointer.X - Line.AbsolutePosition.X, lineSize)
-						value = ((max - min) * sizeScale) + min
+						value = Quantize(((max - min) * sizeScale) + min, min, max, GetSliderStep(min, max))
 						Tween(InLine, { Size = UDim2.fromScale(sizeScale, 1) }, 0.1)
 						Trigger.Position = UDim2.new(sizeScale, 0, -1.8000000715255737, 0)
-						SliderValue.Text = tostring(value) .. suffix
+						SliderValue.Text = FormatSliderValue(value, suffix)
 						InvokeCallback(callback, value)
 					end
 
@@ -6109,10 +6148,11 @@ if maxY <= 0 then return end
 				function obj:Set(val)
 					local numeric = type(val) == "number" and val == val and val or min
 						value = math.clamp(numeric, min, max)
+					value = Quantize(value, min, max, GetSliderStep(min, max))
 					local ratio = (value - min) / (max - min)
 					InLine.Size = UDim2.fromScale(ratio, 1)
 					Trigger.Position = UDim2.new(ratio, 0, -1.8000000715255737, 0)
-					SliderValue.Text = tostring(value) .. suffix
+					SliderValue.Text = FormatSliderValue(value, suffix)
 					InvokeCallback(callback, value)
 				end
 				function obj:Get() return value end
@@ -6195,7 +6235,7 @@ if maxY <= 0 then return end
 					Image = "rbxassetid://10709790948",
 					ImageColor3 = Color3.fromRGB(255, 255, 255),
 					ScaleType = Enum.ScaleType.Fit,
-					Rotation = 90,
+					Rotation = 270,
 					ZIndex = 7,
 				}, TopBar)
 
@@ -6231,7 +6271,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = 90}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					Tween(Arrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -6395,7 +6435,7 @@ if maxY <= 0 then return end
 					Image = "rbxassetid://10709790948",
 					ImageColor3 = Color3.fromRGB(255, 255, 255),
 					ScaleType = Enum.ScaleType.Fit,
-					Rotation = 90,
+					Rotation = 270,
 					ZIndex = 7,
 				}, TopBar)
 
@@ -6436,7 +6476,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = 90}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					Tween(Arrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -7019,7 +7059,7 @@ if maxY <= 0 then return end
 				TextArrow.ImageColor3 = Color3.fromRGB(255, 255, 255)
 				TextArrow.ImageTransparency = 0.10000000149011612
 				TextArrow.ScaleType = Enum.ScaleType.Fit
-				TextArrow.Rotation = 90
+				TextArrow.Rotation = 270
 				TextArrow.Parent = DropdownSection
 
 				local Text = Instance.new('TextLabel')
@@ -7049,7 +7089,7 @@ if maxY <= 0 then return end
 				Section2Frame.Name = "AccordionFrame"
 				Section2Frame.Position = UDim2.new(0.02, 0, 1, 2 / GetMainFrameScale())
 				Section2Frame.Size = UDim2.new(0.96, 0, 0, 0)
-				Section2Frame.BackgroundColor3 = Color3.fromRGB(14, 16, 25)
+				Section2Frame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 				Section2Frame.BackgroundTransparency = 1
 				Section2Frame.BorderSizePixel = 0
 				Section2Frame.Visible = false
@@ -7065,7 +7105,7 @@ if maxY <= 0 then return end
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(48, 54, 78)
+				UIStroke.Color = Color3.fromRGB(44, 50, 72)
 				UIStroke.Transparency = 0.45
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -7103,19 +7143,16 @@ if maxY <= 0 then return end
 				-- single panel: the inner container is layout-only, no second card
 
 				local function GetAccordionContentHeight()
-					local okLayout, layout = pcall(function() return Container:FindFirstChildOfClass("UIListLayout") end)
-					if okLayout and layout then
-						local okSize, contentSize = pcall(function() return layout.AbsoluteContentSize end)
-						if okSize and contentSize and contentSize.Y > 0 then return contentSize.Y end
-					end
-					local okCanvas, canvasSize = pcall(function() return Container.AbsoluteCanvasSize end)
-					if okCanvas and canvasSize and canvasSize.Y > 0 then return canvasSize.Y end
+					local measured = MeasureRowsHeight(Container)
+					if measured > 0 then return measured end
 					local rowCount = 0
 					for _, child in ipairs(Container:GetChildren()) do
 						if child:IsA("GuiObject") then rowCount = rowCount + 1 end
 					end
-					if rowCount > 0 then return rowCount * 28 * GetMainFrameScale() end
-					return 0
+					if rowCount <= 0 then return 0 end
+					local estimated = EstimateRowsHeight(Container, rowCount, 7.5)
+					if estimated > 0 then return estimated end
+					return rowCount * 28 * GetMainFrameScale()
 				end
 
 				local function UpdateAccordionLayout()
@@ -7137,6 +7174,12 @@ if maxY <= 0 then return end
 				}, DropdownSection)
 
 				local accordionOpen = false
+				local accordionLayoutConnection = nil
+				local accordionRefitConnection = nil
+				local function fitAccordionHeight()
+					if not accordionOpen or not Section2Frame.Parent then return end
+					Section2Frame.Size = UDim2.new(0.96, 0, 0, getAccordionHeight())
+				end
 				local function getAccordionHeight()
 					UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
@@ -7152,7 +7195,7 @@ if maxY <= 0 then return end
 					ClosePopupsUnder(Section2Frame)
 					UnregisterPopup(Section2Frame)
 					Tween(Section2Frame, {Size = UDim2.new(0.96, 0, 0, 0), BackgroundTransparency = 1}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-					Tween(TextArrow, {Rotation = 90}, 0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					Tween(TextArrow, {Rotation = 270}, 0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					task.delay(0.21, function() if not accordionOpen then Section2Frame.Visible = false end end)
 					if _openAccordion == closeAccordion then _openAccordion = nil end
 				end
@@ -7176,11 +7219,42 @@ if maxY <= 0 then return end
 						PositionPopupWithinMain(Section2Frame, true, nil, nil, accordionKnown)
 						Tween(TextArrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						RegisterPopup(Section2Frame, closeAccordion, Open)
+						local function settle()
+							if not accordionOpen or not Section2Frame.Parent then return end
+							fitAccordionHeight()
+						end
 						task.defer(function()
 							if not accordionOpen or not Section2Frame.Parent then return end
-							Section2Frame.Size = UDim2.new(0.96, 0, 0, getAccordionHeight())
-							Tween(Section2Frame, {BackgroundTransparency = 0.019}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+							fitAccordionHeight()
+							Tween(Section2Frame, {BackgroundTransparency = 0.35}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						end)
+						task.delay(0.05, settle)
+						if not accordionRefitConnection then
+							local frames = 0
+							accordionRefitConnection = RunService.RenderStepped:Connect(function()
+								frames = frames + 1
+								if not accordionOpen then
+									accordionRefitConnection:Disconnect()
+									accordionRefitConnection = nil
+									return
+								end
+								fitAccordionHeight()
+								if frames >= 4 then
+									accordionRefitConnection:Disconnect()
+									accordionRefitConnection = nil
+								end
+							end)
+						end
+						if not accordionLayoutConnection then
+							local okLayout, layout = pcall(function() return Container:FindFirstChildOfClass("UIListLayout") end)
+							if okLayout and layout then
+								pcall(function()
+									accordionLayoutConnection = layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+										task.defer(settle)
+									end)
+								end)
+							end
+						end
 					end
 				end)
 
@@ -7417,7 +7491,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						ImageColor3 = Color3.fromRGB(255, 255, 255),
 						ImageTransparency = 0.10000000149011612,
 						ScaleType = Enum.ScaleType.Fit,
-						Rotation = 90,
+						Rotation = 270,
 						ZIndex = 1000,
 					}, Selection)
 
@@ -7480,7 +7554,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local function closeDropdown2()
 						dropOpen = false
-						Tween(SelArrow, {Rotation = 90}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(SelArrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 						if _openAccordionDropdown == closeDropdown2 then _openAccordionDropdown = nil end
@@ -7671,7 +7745,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.6990000009536743, 0, 0.10000000149011612, 0),
 						Size = UDim2.new(0.25, 0, 0.8080000281333923, 0),
 						BackgroundColor3 = Color3.fromRGB(33,37,53),
-						Text = tostring(value) .. suffix,
+						Text = FormatSliderValue(value, suffix),
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
 						Font = Enum.Font.SourceSansSemibold,
@@ -7724,10 +7798,10 @@ UIAspectRatioConstraint.Parent = Slider
 						local lineSize = Line.AbsoluteSize.X
 						if lineSize <= 0 then return end
 						local sizeScale = ClampRatio(pointer.X - Line.AbsolutePosition.X, lineSize)
-						value = ((max - min) * sizeScale) + min
+						value = Quantize(((max - min) * sizeScale) + min, min, max, GetSliderStep(min, max))
 						Tween(InLine, { Size = UDim2.fromScale(sizeScale, 1) }, 0.1)
 						Trigger.Position = UDim2.new(sizeScale, 0, -1.8000000715255737, 0)
-						SliderValue.Text = tostring(value) .. suffix
+						SliderValue.Text = FormatSliderValue(value, suffix)
 						InvokeCallback(callback, value)
 					end
 
@@ -7751,10 +7825,11 @@ UIAspectRatioConstraint.Parent = Slider
 					function obj:Set(val)
 						local numeric = type(val) == "number" and val == val and val or min
 						value = math.clamp(numeric, min, max)
-						local ratio = (value - min) / (max - min)
+						value = Quantize(value, min, max, GetSliderStep(min, max))
+					local ratio = (value - min) / (max - min)
 						InLine.Size = UDim2.fromScale(ratio, 1)
 						Trigger.Position = UDim2.new(ratio, 0, -1.8000000715255737, 0)
-						SliderValue.Text = tostring(value) .. suffix
+						SliderValue.Text = FormatSliderValue(value, suffix)
 						InvokeCallback(callback, value)
 					end
 				function obj:Get() return value end
@@ -8315,7 +8390,7 @@ if maxY <= 0 then return end
 		end
 		if type(value) ~= "number" or value ~= value then return UIScale.Scale end
 		automaticScale = false
-		manualScale = math.clamp(value, 0.5, 1.2)
+		manualScale = math.clamp(value, 0.5, 1.1)
 		ApplyScale(manualScale)
 		if syncScaleSelection then syncScaleSelection(tostring(math.round(manualScale * 100)) .. "%") end
 		return UIScale.Scale
