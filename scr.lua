@@ -416,7 +416,7 @@ local function New(class, props, parent)
 		obj.TextYAlignment = Enum.TextYAlignment.Center
 	end
 	if parent then obj.Parent = parent end
-	AddTextConstraint(obj, 7, 16)
+	AddTextConstraint(obj, 9, 16)
 	return obj
 end
 
@@ -496,9 +496,23 @@ local function EllipsizeTo(label, maxWidth)
 	local function rendered(text)
 		return MeasureText(text, fontSize, font) * scale
 	end
+	local renderedSize = fontSize * scale
 	if rendered(full) <= maxWidth then
+		-- fits again: give the label back its automatic scaling
+		if label:GetAttribute("Ellipsized") then
+			label:SetAttribute("Ellipsized", nil)
+			label.TextScaled = true
+			if label:FindFirstChild("UITextSizeConstraint") then label.TextSize = fontSize end
+		end
 		if label.Text ~= full then label.Text = full end
 		return
+	end
+	-- truncating: lock the current rendered size so the text does not jump
+	if not label:GetAttribute("Ellipsized") then
+		label:SetAttribute("Ellipsized", true)
+		label:SetAttribute("EllipsizedSize", renderedSize)
+		label.TextScaled = false
+		label.TextSize = renderedSize
 	end
 	local low, high, best = 1, #full, ""
 	while low <= high do
@@ -512,6 +526,8 @@ local function EllipsizeTo(label, maxWidth)
 		end
 	end
 	label.Text = best ~= "" and best or ELLIPSIS
+	local locked = label:GetAttribute("EllipsizedSize")
+	if type(locked) == "number" and locked > 0 then label.TextSize = locked end
 end
 
 local function FitTextBeforeArrow(label, arrow)
@@ -1371,7 +1387,7 @@ Aspect.AspectRatio = 1.4
 	local HubIcon = New("ImageLabel", {
 		Name = "HubIcon",
 		Position = UDim2.new(0.014000000432133675, 0, 0.006000000052154064, 0),
-		Size = UDim2.new(0.03300000014901161, 0, 0.05800000014901161, 0),
+		Size = UDim2.new(0.042000000178813934, 0, 0.07500000339746475, 0),
 		BackgroundColor3 = Color3.fromRGB(19,22,33),
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
@@ -2650,7 +2666,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		local obj = {}
 		function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TextDefault.Text = val; updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
 		function obj:Get() return selected end
-		MakeReadableText(Row, 10, 18)
+		MakeReadableText(Row, 11, 18)
 		return obj
 	end
 
@@ -2827,7 +2843,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			InvokeCallback(callback, normalized)
 		end
 		function obj:Get() return Color3.fromHSV(color[1],color[2],color[3]) end
-		MakeReadableText(Row, 10, 18)
+		MakeReadableText(Row, 11, 18)
 		return obj
 	end
 
@@ -5139,14 +5155,6 @@ UIAspectRatioConstraint.Parent = Slider
 							ZIndex = 5002,
 							TextXAlignment = Enum.TextXAlignment.Left,
 						}, BtnRow)
-						New("Frame", {
-							Name = "Lines",
-							Position = UDim2.new(0.05, 0, 1, -1),
-							Size = UDim2.new(0.9, 0, 0, 1),
-							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-							BackgroundTransparency = 0.9,
-							BorderSizePixel = 0,
-						}, BtnRow)
 
 						local SelBtn = New("TextButton", {
 							Name = "Selected",
@@ -5468,7 +5476,7 @@ if maxY <= 0 then return end
 					return obj
 				end
 
-				MakeReadableText(SettingsFrame, 10, 18)
+				MakeReadableText(SettingsFrame, 11, 18)
 				settingsCache[parentFrame] = SettingsObj
 				return SettingsObj
 			end
@@ -5598,7 +5606,7 @@ if maxY <= 0 then return end
 					TextXAlignment = Enum.TextXAlignment.Left,
 					ZIndex = 8001,
 				}, _contextMenu)
-				AddTextConstraint(item, 9, 13, true)
+				AddTextConstraint(item, 11, 15, true)
 				item.MouseButton1Click:Connect(function()
 					local target = _contextTarget
 					CloseContextMenu()
@@ -6533,15 +6541,6 @@ if maxY <= 0 then return end
 						ZIndex = 5002,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 7) }, Buttons)
-					New("Frame", {
-						Name = "Lines",
-						Position = UDim2.new(0.05, 0, 1, -1),
-						Size = UDim2.new(0.9, 0, 0, 1),
-						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.9,
-						ZIndex = 5003,
-						BorderSizePixel = 0,
-					}, Buttons)
 
 					Buttons.MouseEnter:Connect(function()
 						Tween(Buttons, { BackgroundTransparency = 0.15 }, 0.1)
@@ -6768,14 +6767,6 @@ if maxY <= 0 then return end
 						ZIndex = 5002,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, Btn)
-					New("Frame", {
-						Name = "Lines",
-						Position = UDim2.new(0.05, 0, 1, -1),
-						Size = UDim2.new(0.9, 0, 0, 1),
-						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.9,
-						BorderSizePixel = 0,
-					}, Btn)
 
 					Btn.MouseEnter:Connect(function()
 						Tween(Btn, { BackgroundTransparency = 0.6 }, 0.1)
@@ -7857,14 +7848,6 @@ UIAspectRatioConstraint.Parent = Toggle
 							ZIndex = 1002,
 							TextXAlignment = Enum.TextXAlignment.Left,
 						}, BtnRow)
-						New("Frame", {
-							Name = "Lines",
-							Position = UDim2.new(0.05, 0, 1, -1),
-							Size = UDim2.new(0.9, 0, 0, 1),
-							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-							BackgroundTransparency = 0.9,
-							BorderSizePixel = 0,
-						}, BtnRow)
 
 						local SelBtn = New("TextButton", {
 							Name = "Selected",
@@ -8369,11 +8352,11 @@ if maxY <= 0 then return end
 					return obj
 				end
 
-				MakeReadableText(Section2Frame, 10, 18)
+				MakeReadableText(Section2Frame, 11, 18)
 				return AccordionObj
 			end
 
-			MakeReadableText(Section, 10, 18)
+			MakeReadableText(Section, 11, 18)
 			return SectionObj
 		end
 
@@ -8441,6 +8424,25 @@ if maxY <= 0 then return end
 					st.right.Position = UDim2.new(0, 0, 0, 0)
 					st.left.Visible  = true
 					st.right.Visible = true
+					-- the content was faded out on hide: bring the labels back
+					for _, column in ipairs({st.left, st.right}) do
+						for _, section in ipairs(column:GetChildren()) do
+							if section:IsA("GuiObject") then
+								local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
+								if list and list:IsA("GuiObject") then
+									for _, item in ipairs(list:GetChildren()) do
+										if item:IsA("GuiObject") then
+											for _, d in ipairs(item:GetDescendants()) do
+												if d:IsA("TextLabel") or d:IsA("TextButton") then
+													Tween(d, {TextTransparency = d.Name == "TextDefault" and 0.5 or 0}, 0.18)
+												end
+											end
+										end
+									end
+								end
+							end
+						end
+					end
 					end
 				elseif #subTabs > 0 then
 					subTabs[1].activate()
@@ -8858,7 +8860,7 @@ if maxY <= 0 then return end
 		return customMenus
 	end
 
-	MakeReadableText(NeverloseCS2, 9, 16)
+	MakeReadableText(NeverloseCS2, 11, 18)
 	CleanBorders(MainFrame)
 
 	return WindowObj
