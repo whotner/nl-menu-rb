@@ -1010,37 +1010,49 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		end
 
 
-	local function PositionPopupWithinMain(popup, preferBelow, margin, anchorOverride)
+	local function positionPopupNow(popup, preferBelow, margin, anchorOverride, knownSize)
+		if not popup or not popup.Parent then return end
+		local parent = popup.Parent
+		local anchor = anchorOverride or (parent and (parent:FindFirstChild("TopBar") or parent:FindFirstChild("OpenBtn") or parent:FindFirstChild("ScaleOpenBtn") or parent:FindFirstChild("LangOpenBtn")))
+		local parentPosition = (anchor or parent).AbsolutePosition
+		local parentSize = (anchor or parent).AbsoluteSize
+		local mainPosition = MainFrame.AbsolutePosition
+		local mainSize = MainFrame.AbsoluteSize
+		if mainSize.X <= 0 or mainSize.Y <= 0 or parentSize.X <= 0 or parentSize.Y <= 0 then return end
+		local popupSize = knownSize or popup.AbsoluteSize
+		if popupSize.X <= 0 or popupSize.Y <= 0 then return end
+		local edge = type(margin) == "number" and math.max(0, margin) or 6
+		local minX = mainPosition.X + edge
+		local minY = mainPosition.Y + edge
+		local maxX = mainPosition.X + mainSize.X - popupSize.X - edge
+		local maxY = mainPosition.Y + mainSize.Y - popupSize.Y - edge
+		local y = preferBelow and parentPosition.Y + parentSize.Y + edge or parentPosition.Y - popupSize.Y - edge
+		if preferBelow and y > maxY then
+			local flipped = parentPosition.Y - popupSize.Y - edge
+			if flipped >= minY then y = flipped end
+		elseif not preferBelow and y < minY then
+			local flipped = parentPosition.Y + parentSize.Y + edge
+			if flipped <= maxY then y = flipped end
+		end
+		local currentX = select(1, AbsoluteFromPosition(popup))
+		local x = maxX < minX and minX or math.clamp(anchor and anchor.AbsolutePosition.X or currentX, minX, maxX)
+		if maxY < minY then y = minY end
+		MovePopupToAbsolute(popup, x, math.clamp(y, minY, math.max(minY, maxY)))
+	end
+
+	local function PositionPopupWithinMain(popup, preferBelow, margin, anchorOverride, knownSize)
 		if not popup or not popup.Parent then return end
 		RememberPopupClipping(popup)
+		if knownSize then
+			positionPopupNow(popup, preferBelow, margin, anchorOverride, knownSize)
+			if popup.Visible then ConstrainPopupToMainFrame(popup, margin) end
+			return
+		end
 		if popup.Visible then ConstrainPopupToMainFrame(popup, margin) end
 		task.defer(function()
 			if not popup.Parent or not popup.Visible then return end
-			local popupSize = popup.AbsoluteSize
-			if popupSize.X <= 0 or popupSize.Y <= 0 then return end
-			local parent = popup.Parent
-			local anchor = anchorOverride or (parent and (parent:FindFirstChild("TopBar") or parent:FindFirstChild("OpenBtn") or parent:FindFirstChild("ScaleOpenBtn") or parent:FindFirstChild("LangOpenBtn")))
-			local parentPosition = (anchor or parent).AbsolutePosition
-			local parentSize = (anchor or parent).AbsoluteSize
-			local mainPosition = MainFrame.AbsolutePosition
-			local mainSize = MainFrame.AbsoluteSize
-			if mainSize.X <= 0 or mainSize.Y <= 0 or parentSize.X <= 0 or parentSize.Y <= 0 then return end
+			positionPopupNow(popup, preferBelow, margin, anchorOverride, nil)
 			local edge = type(margin) == "number" and math.max(0, margin) or 6
-			local minX = mainPosition.X + edge
-			local minY = mainPosition.Y + edge
-			local maxX = mainPosition.X + mainSize.X - popupSize.X - edge
-			local maxY = mainPosition.Y + mainSize.Y - popupSize.Y - edge
-			local y = preferBelow and parentPosition.Y + parentSize.Y + edge or parentPosition.Y - popupSize.Y - edge
-			if preferBelow and y > maxY then
-				local flipped = parentPosition.Y - popupSize.Y - edge
-				if flipped >= minY then y = flipped end
-			elseif not preferBelow and y < minY then
-				local flipped = parentPosition.Y + parentSize.Y + edge
-				if flipped <= maxY then y = flipped end
-			end
-			local x = maxX < minX and minX or math.clamp(anchor and anchor.AbsolutePosition.X or popup.AbsolutePosition.X, minX, maxX)
-			if maxY < minY then y = minY end
-			MovePopupToAbsolute(popup, x, math.clamp(y, minY, math.max(minY, maxY)))
 			ConstrainPopupToMainFrame(popup, edge)
 		end)
 	end
@@ -4947,9 +4959,13 @@ UIAspectRatioConstraint.Parent = Slider
 						else
 							CloseAllPopupsExcept(DropPopup)
 							dropOpen = true
+							local knownH = math.max(24, math.min(100, math.max(MainFrame.AbsoluteSize.Y, 1)))
+							local knownW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
+							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
+							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
 							SmoothOpen(DropPopup, 0, 0.2)
 							Tween(SelArrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-							PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
+							RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 						end
 					end)
 
@@ -5729,7 +5745,7 @@ if maxY <= 0 then return end
 				local cpBtn = New("ImageButton", {
 					Name = "ColorpickerOpenButton",
 					AnchorPoint = Vector2.new(0.5, 0.5),
-					Position = UDim2.new(0.7900000214576721,0,0.55308997631073,0),
+					Position = UDim2.new(0.752, 0, 0.5, 0),
                Size = UDim2.new(0.06800000369548798,0,0.5600000023841858,0),
 					BackgroundColor3 = Color3.fromHSV(color[1], color[2], color[3]),
 					BorderSizePixel = 0,
@@ -6292,11 +6308,16 @@ if maxY <= 0 then return end
 						dropOpen = true
 						_openDropdown = closeDropdown
 						DownBar.Visible = true
-						DownBar.Size = UDim2.new(0.62, 0, 0, 0)
 						local h = math.min(#options * 22 + 8, 132)
-						Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, h) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						local finalSize = UDim2.new(0.62, 0, 0, h)
+						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.62, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
+						DownBar.Size = finalSize
+						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
+						DownBar.Size = UDim2.new(0.62, 0, 0, 0)
+						Tween(DownBar, { Size = finalSize }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						Tween(Arrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-						PositionPopupWithinMain(DownBar, true); task.delay(0.3, function() PositionPopupWithinMain(DownBar, true) end); RegisterPopup(DownBar, closeDropdown, TopBar)
+						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
+						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
 
@@ -6369,7 +6390,7 @@ if maxY <= 0 then return end
 				local cpBtn = New("ImageButton", {
 					Name = "ColorpickerOpenButton",
 					AnchorPoint = Vector2.new(0.5, 0.5),
-					Position = UDim2.new(0.44,0,0.55308997631073,0),
+					Position = UDim2.new(0.446, 0, 0.5, 0),
                Size = UDim2.new(0.06800000369548798,0,0.5600000023841858,0),
 					BackgroundColor3 = Color3.fromHSV(hue, sat, val),
 					BorderSizePixel = 0,
@@ -6511,11 +6532,16 @@ if maxY <= 0 then return end
 						dropOpen = true
 						_openDropdown = closeDropdown
 						DownBar.Visible = true
-						DownBar.Size = UDim2.new(0.62, 0, 0, 0)
 						local h = math.min(#options * 22 + 8, 132)
-						Tween(DownBar, { Size = UDim2.new(0.62, 0, 0, h) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						local finalSize = UDim2.new(0.62, 0, 0, h)
+						local knownSize = Vector2.new(math.max(Dropdown.AbsoluteSize.X * 0.62, 1), math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
+						DownBar.Size = finalSize
+						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
+						DownBar.Size = UDim2.new(0.62, 0, 0, 0)
+						Tween(DownBar, { Size = finalSize }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 						Tween(Arrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-						PositionPopupWithinMain(DownBar, true); task.delay(0.3, function() PositionPopupWithinMain(DownBar, true) end); RegisterPopup(DownBar, closeDropdown, TopBar)
+						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
+						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
 
@@ -7057,7 +7083,7 @@ if maxY <= 0 then return end
 				Section2Frame.BackgroundTransparency = 1
 				Section2Frame.BorderSizePixel = 0
 				Section2Frame.Visible = false
-				Section2Frame.ZIndex = 2000
+				Section2Frame.ZIndex = 5000
 				Section2Frame.ClipsDescendants = false
 				Section2Frame.AutomaticSize = Enum.AutomaticSize.None
 				Section2Frame.Parent = DropdownSection
@@ -7073,28 +7099,8 @@ if maxY <= 0 then return end
 				UIStroke.Parent = Section2Frame
 
 				local function GetAccordionLabelHeight()
-					return 28 / GetMainFrameScale()
+					return 0
 				end
-				local LabelContainer = Instance.new('TextLabel')
-				LabelContainer.Name = "LabelContainer"
-				LabelContainer.Position = UDim2.new(0.05000000074505806,0,0,0)
-				LabelContainer.Size = UDim2.new(0.9,0,0,GetAccordionLabelHeight())
-				LabelContainer.BackgroundColor3 = Color3.fromRGB(162,162,162)
-
-				LabelContainer.BackgroundTransparency = 1
-				LabelContainer.Text = text
-				LabelContainer.TextColor3 = Color3.fromRGB(255,255,255)
-				LabelContainer.TextScaled = true
-				LabelContainer.Font = Enum.Font.SourceSansSemibold
-				LabelContainer.ZIndex = 100
-				LabelContainer.TextXAlignment = Enum.TextXAlignment.Left
-				LabelContainer.Parent = Section2Frame
-
-				local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
-				UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
-				UIAspectRatioConstraint.AspectRatio = 14
-				UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-				UIAspectRatioConstraint.Parent = LabelContainer
 
 				local Container = Instance.new('ScrollingFrame')
 				Container.Name = "Container"
@@ -7104,7 +7110,7 @@ if maxY <= 0 then return end
 				Container.BackgroundTransparency = 1
 				Container.AnchorPoint = Vector2.new(0, 0)
 				Container.LayoutOrder = 1
-				Container.ZIndex = 100
+				Container.ZIndex = 5001
 				Container.Active = true
 				Container.AutomaticCanvasSize = Enum.AutomaticSize.Y
 				Container.CanvasSize = UDim2.new()
@@ -7128,13 +7134,28 @@ if maxY <= 0 then return end
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, Container)
 
+				local function GetAccordionContentHeight()
+					local okLayout, layout = pcall(function() return Container:FindFirstChildOfClass("UIListLayout") end)
+					if okLayout and layout then
+						local okSize, contentSize = pcall(function() return layout.AbsoluteContentSize end)
+						if okSize and contentSize and contentSize.Y > 0 then return contentSize.Y end
+					end
+					local okCanvas, canvasSize = pcall(function() return Container.AbsoluteCanvasSize end)
+					if okCanvas and canvasSize and canvasSize.Y > 0 then return canvasSize.Y end
+					local rowCount = 0
+					for _, child in ipairs(Container:GetChildren()) do
+						if child:IsA("GuiObject") then rowCount = rowCount + 1 end
+					end
+					if rowCount > 0 then return rowCount * 28 * GetMainFrameScale() end
+					return 0
+				end
+
 				local function UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
-					local labelHeight = 28 / scale
+					local labelHeight = GetAccordionLabelHeight()
 					Section2Frame.Position = UDim2.new(0.02, 0, 1, 2 / scale)
-					LabelContainer.Size = UDim2.new(0.9, 0, 0, labelHeight)
-					Container.Position = UDim2.new(0.05, 0, 0, labelHeight)
-					Container.Size = UDim2.new(0.9, 0, 1, -labelHeight - 8 / scale)
+					Container.Position = UDim2.new(0.04, 0, 0, 3 / scale)
+					Container.Size = UDim2.new(0.92, 0, 1, -6 / scale)
 				end
 
 				New("Frame", {
@@ -7151,11 +7172,9 @@ if maxY <= 0 then return end
 				local function getAccordionHeight()
 					UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
-					local okCanvas, canvasSize = pcall(function() return Container.AbsoluteCanvasSize end)
-					local contentVisual = okCanvas and canvasSize and canvasSize.Y or Container.AbsoluteSize.Y
-					local labelVisual = (LabelContainer.AbsoluteSize or Vector2.new(0, 20 * scale)).Y
-					local desiredVisual = math.max(44 * scale, contentVisual + labelVisual + 8 * scale)
-					local maxVisual = math.max(44 * scale, MainFrame.AbsoluteSize.Y - 12 * scale)
+					local contentVisual = GetAccordionContentHeight()
+					local desiredVisual = math.max(34 * scale, contentVisual + 14 * scale)
+					local maxVisual = math.max(34 * scale, MainFrame.AbsoluteSize.Y - 10 * scale)
 					return math.min(desiredVisual, maxVisual) / scale
 				end
 
@@ -7165,6 +7184,7 @@ if maxY <= 0 then return end
 					ClosePopupsUnder(Section2Frame)
 					UnregisterPopup(Section2Frame)
 					Tween(Section2Frame, {Size = UDim2.new(0.96, 0, 0, 0), BackgroundTransparency = 1}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					Tween(TextArrow, {Rotation = 90}, 0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					task.delay(0.21, function() if not accordionOpen then Section2Frame.Visible = false end end)
 					if _openAccordion == closeAccordion then _openAccordion = nil end
 				end
@@ -7179,8 +7199,15 @@ if maxY <= 0 then return end
 						_openAccordion = closeAccordion
 						Section2Frame.Visible = true
 						Section2Frame.BackgroundTransparency = 1
-						Section2Frame.Size = UDim2.new(0.96, 0, 0, getAccordionHeight())
-						PositionPopupWithinMain(Section2Frame, true); RegisterPopup(Section2Frame, closeAccordion, Open)
+						ApplyZIndexLadder(Section2Frame, 5000)
+						local accordionHeight = getAccordionHeight()
+						local accordionKnown = Vector2.new(
+							math.max(DropdownSection.AbsoluteSize.X * 0.96, 1),
+							math.min(accordionHeight * GetMainFrameScale(), math.max(MainFrame.AbsoluteSize.Y, 1)))
+						Section2Frame.Size = UDim2.new(0.96, 0, 0, accordionHeight)
+						PositionPopupWithinMain(Section2Frame, true, nil, nil, accordionKnown)
+						Tween(TextArrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						RegisterPopup(Section2Frame, closeAccordion, Open)
 						task.defer(function()
 							if not accordionOpen or not Section2Frame.Parent then return end
 							Section2Frame.Size = UDim2.new(0.96, 0, 0, getAccordionHeight())
@@ -7587,9 +7614,13 @@ UIAspectRatioConstraint.Parent = Toggle
 							if _openAccordionDropdown then _openAccordionDropdown() end
 							dropOpen = true
 							_openAccordionDropdown = closeDropdown2
+							local knownH = math.max(24, math.min(100, math.max(MainFrame.AbsoluteSize.Y, 1)))
+							local knownW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
+							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
+							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
 							SmoothOpen(DropPopup, 0, 0.2)
 							Tween(SelArrow, {Rotation = 0}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-							PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
+							RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
 						end
 					end)
 
