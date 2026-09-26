@@ -4390,6 +4390,16 @@ end
 				SortOrder = Enum.SortOrder.LayoutOrder,
 			}, Elements)
 			WatchRowDividers(Elements)
+			-- UIStroke on an AutomaticSize frame is not redrawn until the container
+			-- recalculates its size: nudge the width by a pixel and put it back
+			do
+				local keep = Elements.Size
+				local auto = Elements.AutomaticSize
+				Elements.AutomaticSize = Enum.AutomaticSize.None
+				Elements.Size = UDim2.new(keep.XScale, keep.XOffset - 1, keep.YScale, keep.YOffset)
+				Elements.Size = keep
+				Elements.AutomaticSize = auto
+			end
 
 
 			local SectionObj = {}
@@ -4681,7 +4691,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 						ZIndex = 1001,
 					}, Toggle)
-					New("UICorner", { CornerRadius = UDim.new(0, 4) }, Effect)
+					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
 					New("UIStroke", { Transparency = 0.800000011920929, Thickness = 0.800000011920929 }, Effect)
 
 					local Icon = New("Frame", {
@@ -4692,7 +4702,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundTransparency = enabled and 0 or 0.5,
 						ZIndex = 1002,
 					}, Effect)
-					New("UICorner", { CornerRadius = UDim.new(0, 2) }, Icon)
+					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
 					New("UIAspectRatioConstraint", {}, Icon)
 
 					local Btn = New("TextButton", {
@@ -5741,7 +5751,7 @@ if maxY <= 0 then return end
 					Size = UDim2.new(0.11035999655723572, 0, 0.5600000023841858, 0),
 					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 				}, Toggle)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, Effect)
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
 				New("UIStroke", { Transparency = 0.800000011920929, Thickness = 0.800000011920929 }, Effect)
 
 				local Icon = New("Frame", {
@@ -5751,7 +5761,7 @@ if maxY <= 0 then return end
 					BackgroundColor3 = Color3.fromRGB(255,255,255),
 					BackgroundTransparency = enabled and 0 or 0.5,
 				}, Effect)
-				New("UICorner", { CornerRadius = UDim.new(0, 2) }, Icon)
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
 				New("UIAspectRatioConstraint", {}, Icon)
 
 				local Btn = New("TextButton", {
@@ -5926,7 +5936,7 @@ if maxY <= 0 then return end
 					Size = UDim2.new(0.11035999655723572, 0, 0.5600000023841858, 0),
 					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 				}, Toggle)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, Effect)
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
 				New("UIStroke", { Transparency = 0.800000011920929, Thickness = 0.800000011920929 }, Effect)
 
 				local Icon = New("Frame", {
@@ -5936,7 +5946,7 @@ if maxY <= 0 then return end
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 					BackgroundTransparency = enabled and 0 or 0.5,
 				}, Effect)
-				New("UICorner", { CornerRadius = UDim.new(0, 2) }, Icon)
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
 				New("UIAspectRatioConstraint", {}, Icon)
 
 				-- Colorpicker open button (small colored square)
@@ -7518,7 +7528,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0),
 						ZIndex = 101,
 					}, Toggle)
-					New("UICorner", { CornerRadius = UDim.new(0, 4) }, Effect)
+					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
 					New("UIStroke", { Transparency = 0.800000011920929, Thickness = 0.800000011920929 }, Effect)
 
 					local Icon = New("Frame", {
@@ -7529,7 +7539,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundTransparency = enabled and 0 or 0.5,
 						ZIndex = 102,
 					}, Effect)
-					New("UICorner", { CornerRadius = UDim.new(0, 2) }, Icon)
+					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
 					New("UIAspectRatioConstraint", {}, Icon)
 
 					local Btn = New("TextButton", {
