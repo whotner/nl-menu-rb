@@ -319,6 +319,10 @@ local function AddTextConstraint(object, minimum, maximum, force)
 	end
 	constraint.MinTextSize = minimum or 9
 	constraint.MaxTextSize = maximum or 16
+	if object:IsA("TextLabel") or object:IsA("TextButton") then
+		object.TextWrapped = false
+		object.TextTruncate = Enum.TextTruncate.AtEnd
+	end
 end
 
 local function MakeReadableText(root, minimum, maximum)
@@ -1526,7 +1530,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21,24,36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.35; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
@@ -3059,7 +3063,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Visible = false
 	ConfigMainFrame.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(74,84,118); s.Transparency = 0.22; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.35; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
 
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
@@ -3571,7 +3575,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.35; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -4411,8 +4415,9 @@ AddTextConstraint(SectionLabel, 9, 12, true)
 
 			local Elements = New("Frame", {
 				Name = "Elements",
-				Size = UDim2.new(1, 0, 0, 30),
-				Position = UDim2.new(0, 0, 0, 0),
+				-- inset by 1px: the column clips, a flush border loses half its width
+				Size = UDim2.new(1, -2, 0, 30),
+				Position = UDim2.new(0, 1, 0, 0),
 				BackgroundColor3 = Color3.fromRGB(21,24,36),
 				BackgroundTransparency = 0,
 				BorderSizePixel = 0,
@@ -4420,7 +4425,7 @@ AddTextConstraint(SectionLabel, 9, 12, true)
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(74,84,118); s.Transparency = 0.22; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.35; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -6474,7 +6479,7 @@ if maxY <= 0 then return end
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
 					Color = Color3.fromRGB(60, 68, 96),
-					Transparency = 0.25,
+					Transparency = 0.35,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, DownBar)
@@ -6689,7 +6694,7 @@ if maxY <= 0 then return end
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
 					Color = Color3.fromRGB(60, 68, 96),
-					Transparency = 0.25,
+					Transparency = 0.35,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, DownBar)
@@ -7345,7 +7350,7 @@ if maxY <= 0 then return end
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
 				UIStroke.Color = Color3.fromRGB(60, 68, 96)
-				UIStroke.Transparency = 0.25
+				UIStroke.Transparency = 0.35
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				UIStroke.Parent = Section2Frame
