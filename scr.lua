@@ -1526,10 +1526,10 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.Size = UDim2.new(0.218, 0, 0, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
-	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(16,19,28)
+	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 54)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(100, 115, 160); s.Transparency = 0.15; s.Thickness = 1.3; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
@@ -2533,7 +2533,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		DropPopup.ZIndex = 1000
 		DropPopup.Parent = Row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = DropPopup end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropPopup end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(100, 115, 160); s.Transparency = 0.15; s.Thickness = 1.3; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropPopup end
 		do
 			local ds = Instance.new("ImageLabel"); ds.Name = "DropShadow"
 			ds.Position = UDim2.new(0.5,0,0.5,0); ds.Size = UDim2.new(1,47,1,47)
@@ -2862,7 +2862,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Name = "Frame2",
 		Position = UDim2.new(0.23000000417232513, 0, 0, 0),
 		Size = UDim2.new(0.7699999809265137, 0, 1, 0),
-		BackgroundColor3 = Color3.fromRGB(21,24,36),
+		BackgroundColor3 = Color3.fromRGB(16, 19, 28),
 		BackgroundTransparency = 0.12,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
@@ -3052,7 +3052,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Name = "ConfigMainFrame"
 	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.075, 0)
 	ConfigMainFrame.Size = UDim2.new(0.4, 0, 0.42, 0)
-	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(17,20,30)
+	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	ConfigMainFrame.BackgroundTransparency = 0
 	ConfigMainFrame.BorderSizePixel = 0
 	ConfigMainFrame.ZIndex = 110
@@ -3324,7 +3324,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Name = "RecentlyDeletedPanel"
 	RecentlyDeletedPanel.Position = UDim2.new(0.012, 0, 0.075, 0)
 	RecentlyDeletedPanel.Size = UDim2.new(0.4, 0, 0.42, 0)
-	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(17,20,30)
+	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	RecentlyDeletedPanel.BackgroundTransparency = 0
 	RecentlyDeletedPanel.BorderSizePixel = 0
 	RecentlyDeletedPanel.ZIndex = 120
@@ -3564,7 +3564,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Name = "SettingsFrame"
 		SettingsFrame.Position = UDim2.new(0.54, 0, 1, 2)
 		SettingsFrame.Size = UDim2.new(0.44, 0, 0, 0)
-		SettingsFrame.BackgroundColor3 = Color3.fromRGB(16,19,28)
+		SettingsFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 54)
 		SettingsFrame.BackgroundTransparency = 0
 		SettingsFrame.BorderSizePixel = 0
 		SettingsFrame.ZIndex = 6000
@@ -3574,7 +3574,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(100, 115, 160); s.Transparency = 0.15; s.Thickness = 1.3; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -4499,7 +4499,7 @@ end
 				SettingsFrame.Name = "SettingsFrame"
 				SettingsFrame.Position = UDim2.new(0.02, 0, 1, 4)
 				SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
-				SettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+				SettingsFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 54)
 				SettingsFrame.BackgroundTransparency = 0
 				SettingsFrame.BorderSizePixel = 0
 				SettingsFrame.Visible = false
@@ -5070,14 +5070,14 @@ UIAspectRatioConstraint.Parent = Slider
 						Name = "Dropdown",
 						Position = UDim2.new(0.02,0,1,2),
 						Size = UDim2.new(0.6899999737739563, 0, 0, 100),
-						BackgroundColor3 = Color3.fromRGB(21,24,36),
-						BackgroundTransparency = 1,
+						BackgroundColor3 = Color3.fromRGB(33, 38, 54),
+						BackgroundTransparency = 0,
 						BorderSizePixel = 0,
 						Visible = false,
 						ZIndex = 5000,
 					}, Selection)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, DropPopup)
-						do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropPopup end
+						do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(100, 115, 160); s.Transparency = 0.15; s.Thickness = 1.3; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = DropPopup end
 
 					local DropContainer = New("ScrollingFrame", {
 						AutomaticCanvasSize = Enum.AutomaticSize.Y,
@@ -6473,7 +6473,7 @@ if maxY <= 0 then return end
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 4),
 					Size = UDim2.new(0.72, 0, 0, 0),
-					BackgroundColor3 = Color3.fromRGB(16,19,28),
+					BackgroundColor3 = Color3.fromRGB(33, 38, 54),
 					BackgroundTransparency = 0,
 					Visible = false,
 					ZIndex = 5000,
@@ -6481,9 +6481,9 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
-					Color = Color3.fromRGB(60,68,96),
-					Transparency = 0.6,
-					Thickness = 1.2,
+					Color = Color3.fromRGB(100, 115, 160),
+					Transparency = 0.15,
+					Thickness = 1.3,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, DownBar)
 
@@ -6687,7 +6687,7 @@ if maxY <= 0 then return end
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 4),
 					Size = UDim2.new(0.72, 0, 0, 0),
-					BackgroundColor3 = Color3.fromRGB(16,19,28),
+					BackgroundColor3 = Color3.fromRGB(33, 38, 54),
 					BackgroundTransparency = 0,
 					ClipsDescendants = true,
 					Visible = false,
@@ -6695,9 +6695,9 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
-					Color = Color3.fromRGB(60,68,96),
-					Transparency = 0.6,
-					Thickness = 1.2,
+					Color = Color3.fromRGB(100, 115, 160),
+					Transparency = 0.15,
+					Thickness = 1.3,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				}, DownBar)
 
@@ -7334,7 +7334,7 @@ if maxY <= 0 then return end
 				Section2Frame.Name = "AccordionFrame"
 				Section2Frame.Position = UDim2.new(0.02, 0, 1, 2 / GetMainFrameScale())
 				Section2Frame.Size = UDim2.new(0.96, 0, 0, 0)
-				Section2Frame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+				Section2Frame.BackgroundColor3 = Color3.fromRGB(33, 38, 54)
 				Section2Frame.BackgroundTransparency = 1
 				Section2Frame.BorderSizePixel = 0
 				Section2Frame.Visible = false
@@ -7761,8 +7761,8 @@ UIAspectRatioConstraint.Parent = Toggle
 						Name = "Dropdown",
 						Position = UDim2.new(0.02,0,1,2),
 						Size = UDim2.new(0.6899999737739563, 0, 0, 100),
-						BackgroundColor3 = Color3.fromRGB(21,24,36),
-						BackgroundTransparency = 1,
+						BackgroundColor3 = Color3.fromRGB(33, 38, 54),
+						BackgroundTransparency = 0,
 						BorderSizePixel = 0,
 						Visible = false,
 						ZIndex = 5000,
