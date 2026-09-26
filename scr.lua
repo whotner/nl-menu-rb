@@ -1199,6 +1199,9 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local function PositionPopupWithinMain(popup, preferBelow, margin, anchorOverride, knownSize)
 		if not popup or not popup.Parent then return end
 		RememberPopupClipping(popup)
+		-- the shared ref count gets reset when an unrelated plate closes, which
+		-- put the column clipping back and cut this popup: force it off for good
+		ForceLiftClipping(popup)
 		if knownSize then
 			positionPopupNow(popup, preferBelow, margin, anchorOverride, knownSize)
 			if popup.Visible then ConstrainPopupToMainFrame(popup, margin) end
@@ -3193,6 +3196,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.AutomaticSize = Enum.AutomaticSize.None
 	ConfigMainFrame.ClipsDescendants = false
 	ConfigMainFrame.Active = true
+	ForceLiftClipping(ConfigMainFrame)
 	ConfigMainFrame.Visible = false
 	ConfigMainFrame.Parent = Frame2
 	local ConfigScale = Instance.new("UIScale")
@@ -3457,6 +3461,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.AutomaticSize = Enum.AutomaticSize.None
 	RecentlyDeletedPanel.ClipsDescendants = false
 	RecentlyDeletedPanel.Active = true
+	ForceLiftClipping(RecentlyDeletedPanel)
 	RecentlyDeletedPanel.Visible = false
 	RecentlyDeletedPanel.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = RecentlyDeletedPanel end
@@ -3586,6 +3591,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		Tween(RecentlyDeletedPanel, {BackgroundTransparency = 1}, 0.2)
 		task.delay(0.22, function()
 			if not configOpen then return end
+			ForceLiftClipping(RecentlyDeletedPanel)
 			RecentlyDeletedPanel.Visible = false
 			ConfigMainFrame.BackgroundTransparency = 0
 			ConfigMainFrame.Visible = true
@@ -3963,9 +3969,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		Tween(ConfigMainFrame, {BackgroundTransparency = 1}, 0.2)
 		task.delay(0.22, function()
 			if not configOpen then return end
+			ForceLiftClipping(ConfigMainFrame)
 			ConfigMainFrame.Visible = false
 			RefreshDeletedList()
 			RecentlyDeletedPanel.BackgroundTransparency = 0
+			ForceLiftClipping(RecentlyDeletedPanel)
 			RecentlyDeletedPanel.Visible = false
 			ApplyZIndexLadder(RecentlyDeletedPanel, NextPopupZ())
 			RecentlyDeletedPanel.Visible = true
@@ -3985,7 +3993,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		Tween(SaveArrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		task.delay(0.22, function()
 			if configOpen then return end
+			ForceLiftClipping(ConfigMainFrame)
 			ConfigMainFrame.Visible = false
+			ForceLiftClipping(RecentlyDeletedPanel)
 			RecentlyDeletedPanel.Visible = false
 			ClearActiveConfig()
 		end)
@@ -3994,9 +4004,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		configOpen = not configOpen
 		if configOpen then
 			CloseAllPopupsExcept(ConfigMainFrame)
+			ForceLiftClipping(RecentlyDeletedPanel)
 			RecentlyDeletedPanel.Visible = false
 			RefreshConfigList()
 			ConfigMainFrame.BackgroundTransparency = 0
+			ForceLiftClipping(ConfigMainFrame)
 			ConfigMainFrame.Visible = false
 			ConfigMainFrame.ZIndex = 7000
 			ApplyZIndexLadder(ConfigMainFrame, NextPopupZ())
@@ -4219,10 +4231,12 @@ Line9.Parent = MainFrame
 
 	local function HideWindowInstantly()
 		HideAllPopupsNow(true)
-		if ConfigMainFrame then ConfigMainFrame.Visible = false end
+		if ConfigMainFrame then ForceLiftClipping(ConfigMainFrame)
+ConfigMainFrame.Visible = false end
 		if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
 		if Save then Save.Visible = false end
-		if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
+		if RecentlyDeletedPanel then ForceLiftClipping(RecentlyDeletedPanel)
+RecentlyDeletedPanel.Visible = false end
 		if AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.Part then
 			AcrylicBlur.Instances.Part.Transparency = 1
 		end
@@ -4250,10 +4264,12 @@ Line9.Parent = MainFrame
 			end
 		else
 			HideAllPopupsNow(true)
-			if ConfigMainFrame then ConfigMainFrame.Visible = false end
+			if ConfigMainFrame then ForceLiftClipping(ConfigMainFrame)
+ConfigMainFrame.Visible = false end
 			if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
 			if Save then Save.Visible = false end
-			if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
+			if RecentlyDeletedPanel then ForceLiftClipping(RecentlyDeletedPanel)
+RecentlyDeletedPanel.Visible = false end
 			Tween(MainFrame, { BackgroundTransparency = 1 }, dur)
 			if MainFrameUIScale then Tween(MainFrameUIScale, { Scale = 0.96 }, dur) end
 			task.delay(dur + 0.02, function()
