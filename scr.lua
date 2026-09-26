@@ -4409,7 +4409,6 @@ New("UIAspectRatioConstraint", {
 			ScrollingDirection = Enum.ScrollingDirection.Y,
 			ScrollBarThickness = 3,
 		}, TabHose)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 1), PaddingRight = UDim.new(0, 1) }, Left)
 		
 		local Right = New("ScrollingFrame", {
 			Name = "Right",
@@ -4424,7 +4423,6 @@ New("UIAspectRatioConstraint", {
 			ScrollingDirection = Enum.ScrollingDirection.Y,
 			ScrollBarThickness = 3,
 		}, TabHose)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 1), PaddingRight = UDim.new(0, 1) }, Right)
 		Left:SetAttribute("SearchName", name)
 		Right:SetAttribute("SearchName", name)
 		Left:SetAttribute("TabIndex", tabIndex)
