@@ -1370,18 +1370,14 @@ Aspect.AspectRatio = 1.4
 
 	local HubIcon = New("ImageLabel", {
 		Name = "HubIcon",
-		Position = UDim2.new(0.014000000432133675, 0, 0, 4),
-		Size = UDim2.new(0, 66, 0, 66),
+		Position = UDim2.new(0.014000000432133675, 0, 0.006000000052154064, 0),
+		Size = UDim2.new(0.03300000014901161, 0, 0.05800000014901161, 0),
 		BackgroundColor3 = Color3.fromRGB(19,22,33),
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
 		ScaleType = Enum.ScaleType.Fit,
 	}, MainFrame)
 	New("UICorner", { CornerRadius = UDim.new(0, 6) }, HubIcon)
-	New("UIAspectRatioConstraint", {
-		AspectRatio = 1,
-		AspectType = Enum.AspectType.ScaleWithParentSize,
-	}, HubIcon)
 
 	New("TextLabel", {
 		Name = "Title",
@@ -4382,20 +4378,18 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 
 local SectionTitle = Instance.new('Frame')
 SectionTitle.Name = "SectionTitle"
-SectionTitle.Size = UDim2.new(1,0,0.045,0)
+SectionTitle.Size = UDim2.new(1,0,0.030,0)
 SectionTitle.BackgroundTransparency = 1
+SectionTitle.ClipsDescendants = false
+SectionTitle.Visible = true
 SectionTitle.Parent = Section
-
-local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
-UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
-UIAspectRatioConstraint.AspectRatio = 11
-UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UIAspectRatioConstraint.Parent = SectionTitle
 
 local SectionLabel = Instance.new('TextLabel')
 SectionLabel.Name = "SectionLabel"
 SectionLabel.Position = UDim2.new(0,0,0,0)
 SectionLabel.Size = UDim2.new(1,0,1,0)
+SectionLabel.Visible = true
+SectionLabel.ClipsDescendants = false
 SectionLabel.BackgroundColor3 = Color3.fromRGB(162,162,162)
 SectionLabel.BackgroundTransparency = 1
 SectionLabel.BorderSizePixel = 0
@@ -4408,12 +4402,6 @@ SectionLabel.TextTransparency = customization.sectionTitleTransparency or 0.35
 SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
 SectionLabel.Parent = SectionTitle
 AddTextConstraint(SectionLabel, 9, 12, true)
-
-local UIAspectRatioConstraint_2 = Instance.new('UIAspectRatioConstraint')
-UIAspectRatioConstraint_2.Name = "UIAspectRatioConstraint"
-UIAspectRatioConstraint_2.AspectRatio = 13
-UIAspectRatioConstraint_2.AspectType = Enum.AspectType.ScaleWithParentSize
-UIAspectRatioConstraint_2.Parent = SectionLabel
 
 
 			local Elements = New("Frame", {
@@ -4535,10 +4523,11 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 				SFContainer.Active = true
 				SFContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
 				SFContainer.CanvasSize = UDim2.new()
+				SFContainer.ScrollingEnabled = false
 				SFContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-				SFContainer.ScrollBarThickness = 2
-				SFContainer.ScrollBarImageTransparency = 0.5
-				SFContainer.ClipsDescendants = true
+				SFContainer.ScrollBarThickness = 0
+				SFContainer.ScrollBarImageTransparency = 1
+				SFContainer.ClipsDescendants = false
 				SFContainer.Parent = SettingsFrame
 
 				local SFLayout = Instance.new('UIListLayout')
@@ -4573,12 +4562,9 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 					UpdateSettingsLayout()
 					local scale = GetMainFrameScale()
 					local contentVisual = GetSettingsContentHeight()
-					local paddingVisual = 14 * scale
-					local minVisual = math.max(34 * scale, contentVisual + paddingVisual)
-					local desiredVisual = math.max(34 * scale, contentVisual + paddingVisual)
-					local maxVisual = math.max(34 * scale, MainFrame.AbsoluteSize.Y - 10 * scale)
-					if minVisual > maxVisual then minVisual = maxVisual end
-					return math.min(math.max(desiredVisual, minVisual), maxVisual) / scale
+					-- the panel grows to fit every row, even past the window edge
+					local desiredVisual = math.max(34 * scale, contentVisual + 14 * scale)
+					return desiredVisual / scale
 				end
 
 				local function placeSettings(height)
@@ -4589,8 +4575,7 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 					local minHeight = 30
 					local width = 0.96
 					local edge = 5 * scale
-					local maxHeight = math.max(minHeight, (mainSize.Y - 2 * edge) / scale)
-					height = math.clamp(type(height) == "number" and height == height and height or minHeight, minHeight, maxHeight)
+					height = math.max(minHeight, type(height) == "number" and height == height and height or minHeight)
 					local parentPosition = parentFrame.AbsolutePosition
 					local parentSize = parentFrame.AbsoluteSize
 					if mainSize.X <= 0 or mainSize.Y <= 0 or parentSize.X <= 0 or parentSize.Y <= 0 then return end
@@ -4613,15 +4598,16 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 					elseif aboveY >= mainTop + edge then
 						y = aboveY
 					else
+						-- neither side fits: keep the requested height and align to the top
 						y = mainTop + edge
-						height = maxHeight
-						visualHeight = height * scale
 					end
 
 					SettingsFrame.Position = UDim2.new((leftX - parentPosition.X) / parentSize.X, 0, 0, (y - parentPosition.Y) / scale)
 					SettingsFrame.Size = UDim2.new(width, 0, 0, height)
 					task.defer(function()
-						if SettingsFrame.Parent and SettingsFrame.Visible then ConstrainPopupToMainFrame(SettingsFrame) end
+						if SettingsFrame.Parent and SettingsFrame.Visible and visualHeight <= mainSize.Y then
+							ConstrainPopupToMainFrame(SettingsFrame)
+						end
 					end)
 				end
 
@@ -5152,6 +5138,14 @@ UIAspectRatioConstraint.Parent = Slider
 							TextTransparency = 0.10000000149011612,
 							ZIndex = 5002,
 							TextXAlignment = Enum.TextXAlignment.Left,
+						}, BtnRow)
+						New("Frame", {
+							Name = "Lines",
+							Position = UDim2.new(0.05, 0, 1, -1),
+							Size = UDim2.new(0.9, 0, 0, 1),
+							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+							BackgroundTransparency = 0.9,
+							BorderSizePixel = 0,
 						}, BtnRow)
 
 						local SelBtn = New("TextButton", {
@@ -6774,6 +6768,14 @@ if maxY <= 0 then return end
 						ZIndex = 5002,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, Btn)
+					New("Frame", {
+						Name = "Lines",
+						Position = UDim2.new(0.05, 0, 1, -1),
+						Size = UDim2.new(0.9, 0, 0, 1),
+						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+						BackgroundTransparency = 0.9,
+						BorderSizePixel = 0,
+					}, Btn)
 
 					Btn.MouseEnter:Connect(function()
 						Tween(Btn, { BackgroundTransparency = 0.6 }, 0.1)
@@ -7854,6 +7856,14 @@ UIAspectRatioConstraint.Parent = Toggle
 							TextTransparency = 0.10000000149011612,
 							ZIndex = 1002,
 							TextXAlignment = Enum.TextXAlignment.Left,
+						}, BtnRow)
+						New("Frame", {
+							Name = "Lines",
+							Position = UDim2.new(0.05, 0, 1, -1),
+							Size = UDim2.new(0.9, 0, 0, 1),
+							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+							BackgroundTransparency = 0.9,
+							BorderSizePixel = 0,
 						}, BtnRow)
 
 						local SelBtn = New("TextButton", {
