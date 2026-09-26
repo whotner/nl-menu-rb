@@ -1222,7 +1222,28 @@ GameInfo.Draggable = false
 GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = GameInfo end
-do local s = Instance.new("UIStroke"); s.Name = "Border"; s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.25; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = GameInfo end
+-- soft shadow: Roblox has no box-shadow, so stack translucent frames behind the pill
+do
+local shadow = {}
+for i = 1, 6 do
+local layer = Instance.new("Frame")
+layer.Name = "GameInfoShadow" .. tostring(i)
+layer.AnchorPoint = Vector2.new(0.5, 0.5)
+layer.BackgroundColor3 = Color3.new(0, 0, 0)
+layer.BackgroundTransparency = 0.5 + i * 0.07
+layer.BorderSizePixel = 0
+layer.ClipsDescendants = false
+layer.Active = false
+layer.Selectable = false
+layer.ZIndex = 0
+layer.Visible = false
+layer.Parent = NeverloseCS2
+do local sc = Instance.new("UICorner"); sc.CornerRadius = UDim.new(1, 0); sc.Parent = layer end
+shadow[i] = layer
+end
+GameInfoShadowLayers = shadow
+end
+do local s = Instance.new("UIStroke"); s.Name = "Border"; s.Color = Color3.fromRGB(60, 68, 96); s.Transparency = 0.5; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = GameInfo end
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 15); pd.PaddingRight = UDim.new(0, 19); pd.PaddingTop = UDim.new(0, 9); pd.PaddingBottom = UDim.new(0, 9); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
@@ -1291,31 +1312,72 @@ local TimeText = PillText("TimeText", "00:00", 7, 54)
 local SignalImage = PillIcon("SignalImage", "rbxthumb://type=Asset&id=113541980541438&w=420&h=420", 8, GOOD)
 local MSText = PillText("MSText", "0 MS", 9, 64)
 
--- live FPS + clock + ping
+-- only the text that actually changes gets animated; nothing else is touched
+local function setTextSmooth(label, newText)
+if label:GetAttribute("shownText") == newText then return end
+label:SetAttribute("shownText", newText)
+local fadeOut = TweenService:Create(label, TweenInfo.new(0.1, Enum.EasingStyle.Sine), {TextTransparency = 1})
+fadeOut:Play()
+fadeOut.Completed:Once(function()
+if not label or not label.Parent then return end
+label.Text = newText
+TweenService:Create(label, TweenInfo.new(0.16, Enum.EasingStyle.Sine), {TextTransparency = 0.15}):Play()
+end)
+end
+
+-- live FPS + clock + ping, smoothed so the numbers do not jump
 local fpsBuffer = {}
 local timeAcc = 0
+local shadowAcc = 0
 local lastMs
+local lastFps
+local shownFps = 60
+local shownMs = 0
 RunService.RenderStepped:Connect(function(dt)
 if type(dt) ~= "number" or dt <= 0 then return end
 table.insert(fpsBuffer, dt)
 if #fpsBuffer > 20 then table.remove(fpsBuffer, 1) end
 local avg = 0
 for _, v in ipairs(fpsBuffer) do avg = avg + v end
-if avg > 0 then FPSText.Text = tostring(math.round(#fpsBuffer / avg)) .. " FPS" end
+if avg > 0 then
+shownFps = shownFps + ((#fpsBuffer / avg) - shownFps) * 0.15
+local shownFpsInt = math.round(shownFps)
+if shownFpsInt ~= lastFps then
+lastFps = shownFpsInt
+setTextSmooth(FPSText, tostring(shownFpsInt) .. " FPS")
+end
+end
 timeAcc = timeAcc + dt
 if timeAcc >= 0.5 then
 timeAcc = 0
-TimeText.Text = os.date("%H:%M")
+setTextSmooth(TimeText, os.date("%H:%M"))
+end
+shadowAcc = shadowAcc + dt
+if shadowAcc >= 0.07 and GameInfoShadowLayers then
+shadowAcc = 0
+local pos = GameInfo.AbsolutePosition
+local size = GameInfo.AbsoluteSize
+if size.X > 1 and GameInfo.Visible then
+for i = 1, 6 do
+local layer = GameInfoShadowLayers[i]
+if layer then
+layer.Visible = true
+layer.Position = UDim2.fromOffset(pos.X + size.X / 2, pos.Y + size.Y / 2 + 2 + i)
+layer.Size = UDim2.fromOffset(size.X + i * 3, size.Y + i * 3)
+end
+end
+end
 end
 local ping = Stats and Stats.Network and Stats.Network.ServerStatsItem and Stats.Network.ServerStatsItem["Data Ping"]
 if ping then
 local ok, value = pcall(function() return ping:GetValue() end)
 if ok and type(value) == "number" then
-local ms = math.round(value)
-MSText.Text = tostring(ms) .. " MS"
-if ms ~= lastMs then
-lastMs = ms
-local tint = ms >= 150 and BAD or ms >= 80 and WARN or GOOD
+shownMs = shownMs + (value - shownMs) * 0.15
+local shownMsInt = math.round(shownMs)
+if shownMsInt ~= lastMs then
+lastMs = shownMsInt
+setTextSmooth(MSText, tostring(shownMsInt) .. " MS")
+local tint = shownMsInt >= 150 and BAD or shownMsInt >= 80 and WARN or GOOD
 MSText.TextColor3 = tint
 SignalImage.ImageColor3 = tint
 end
@@ -1486,7 +1548,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21,24,36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.55;  s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
@@ -1856,7 +1918,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ScaleDownBar.ZIndex = 1000
 	ScaleDownBar.Parent = WSScaleRow
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = ScaleDownBar end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ScaleDownBar end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.65;  s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ScaleDownBar end
 	do
 		local ds = Instance.new("ImageLabel"); ds.Name = "DropShadow"
 		ds.Position = UDim2.new(0.5,0,0.5,0); ds.Size = UDim2.new(1,47,1,47)
@@ -1878,7 +1940,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ScaleContainer.ScrollBarImageTransparency = 0.5
 	ScaleContainer.Parent = ScaleDownBar
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = ScaleContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.800000011920929; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ScaleContainer end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.800000011920929; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ScaleContainer end
 	do local ll = Instance.new("UIListLayout"); ll.FillDirection = Enum.FillDirection.Vertical; ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0,2); ll.Parent = ScaleContainer end
 
 	local ScaleOpenBtn = Instance.new("TextButton"); ScaleOpenBtn.Name = "OpenBtn"
@@ -2006,7 +2068,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangDownBar.ZIndex = 1000
 	LangDownBar.Parent = WSLangRow
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = LangDownBar end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = LangDownBar end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.65;  s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = LangDownBar end
 	do
 		local ds = Instance.new("ImageLabel"); ds.Name = "DropShadow"
 		ds.Position = UDim2.new(0.5,0,0.5,0); ds.Size = UDim2.new(1,47,1,47)
@@ -2028,7 +2090,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangContainer.ScrollBarImageTransparency = 0.5
 	LangContainer.Parent = LangDownBar
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = LangContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.800000011920929; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = LangContainer end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.800000011920929; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = LangContainer end
 	do local ll = Instance.new("UIListLayout"); ll.FillDirection = Enum.FillDirection.Vertical; ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0,2); ll.Parent = LangContainer end
 
 	local LangOpenBtn = Instance.new("TextButton"); LangOpenBtn.Name = "OpenBtn"
@@ -2490,7 +2552,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		DropPopup.ZIndex = 1000
 		DropPopup.Parent = Row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = DropPopup end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.6;  s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
 		do
 			local ds = Instance.new("ImageLabel"); ds.Name = "DropShadow"
 			ds.Position = UDim2.new(0.5,0,0.5,0); ds.Size = UDim2.new(1,47,1,47)
@@ -2513,7 +2575,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		DropContainer.ScrollBarImageTransparency = 0.5
 		DropContainer.Parent = DropPopup
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = DropContainer end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.8; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropContainer end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(28,32,48); s.Transparency = 0.8; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropContainer end
 		do local ll = Instance.new("UIListLayout"); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Parent = DropContainer end
 
 		local function closeDropdown()
@@ -3019,7 +3081,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Visible = false
 	ConfigMainFrame.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.25; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ConfigMainFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6;  s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ConfigMainFrame end
 
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
@@ -3135,7 +3197,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	SearchContainer.ZIndex = 1000
 	SearchContainer.Parent = ConfigMainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = SearchContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SearchContainer end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.65;  s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SearchContainer end
 	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = SearchContainer end
 
 	local SearchIconImg = Instance.new("ImageLabel")
@@ -3176,7 +3238,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	NameInputContainer.Visible = false
 	NameInputContainer.Parent = ConfigMainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = NameInputContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = NameInputContainer end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.65;  s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = NameInputContainer end
 	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = NameInputContainer end
 
 	local NameOfConfig = Instance.new("TextBox")
@@ -3291,7 +3353,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Visible = false
 	RecentlyDeletedPanel.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = RecentlyDeletedPanel end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(46,52,74); s.Transparency = 0.45; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = RecentlyDeletedPanel end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(46,52,74); s.Transparency = 0.6;  s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = RecentlyDeletedPanel end
 
 	-- RD Header
 	local RDHeader = Instance.new("Frame")
@@ -3362,7 +3424,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			drow.ZIndex = 122
 			drow.Parent = RDList
 			do local c = Instance.new("UICorner"); c.Parent = drow end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(180,60,60); s.Transparency = 0.7; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = drow end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(180,60,60); s.Transparency = 0.7; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = drow end
 			do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = drow end
 
 			local dlbl = Instance.new("TextLabel")
@@ -3466,7 +3528,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		row.ZIndex = 1000
 		row.Parent = ListContainer
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = row end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.3; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = row end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6;  s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = row end
 		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 10; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = row end
 
 		local rowStroke = row:FindFirstChildWhichIsA("UIStroke")
@@ -3531,7 +3593,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SettingsFrame end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(60,68,96); s.Transparency = 0.6;  s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -4384,7 +4446,7 @@ end
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.3; s.Thickness = 1.4; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.65;  s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -5033,12 +5095,7 @@ UIAspectRatioConstraint.Parent = Slider
 						ZIndex = 5000,
 					}, Selection)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, DropPopup)
-						do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.5; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
-					New("UIStroke", {
-						Color = Color3.fromRGB(28,32,48),
-						Transparency = 0.800000011920929,
-						ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-					}, DropPopup)
+						do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
 
 					local DropContainer = New("ScrollingFrame", {
 						AutomaticCanvasSize = Enum.AutomaticSize.Y,
@@ -6442,7 +6499,7 @@ if maxY <= 0 then return end
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
 					Color = Color3.fromRGB(60, 68, 96),
-					Transparency = 0.25,
+					Transparency = 0.6,
 					Thickness = 1.2,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
 				}, DownBar)
@@ -6657,7 +6714,7 @@ if maxY <= 0 then return end
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
 					Color = Color3.fromRGB(60, 68, 96),
-					Transparency = 0.25,
+					Transparency = 0.6,
 					Thickness = 1.2,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
 				}, DownBar)
@@ -7729,11 +7786,6 @@ UIAspectRatioConstraint.Parent = Toggle
 						ZIndex = 5000,
 					}, Selection)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, DropPopup)
-					New("UIStroke", {
-						Color = Color3.fromRGB(28,32,48),
-						Transparency = 0.800000011920929,
-						ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-					}, DropPopup)
 
 					-- Inner container for buttons
 					local DropContainer = New("ScrollingFrame", {
