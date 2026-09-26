@@ -775,7 +775,7 @@ end
 			if frame and frame.Parent then
 				if entry.connection then pcall(function() entry.connection:Disconnect() end) end
 				RestorePopupClipping(frame)
-				Tween(frame, { BackgroundTransparency = 1 }, 0.12)
+				Tween(frame, { BackgroundTransparency = 1 }, 0.18)
 			end
 		end
 		table.clear(_openPopups)
@@ -1184,7 +1184,7 @@ UIScale.Parent = GameInfo
 
 local FpsIcon = Instance.new('ImageLabel')
 FpsIcon.Name = "FpsIcon"
-FpsIcon.Position = UDim2.new(0.02, 0, 0.34, 0)
+FpsIcon.Position = UDim2.new(0.022, 0, 0.30, 0)
 FpsIcon.Size = UDim2.new(0.1, 0, 0.4, 0)
 FpsIcon.BackgroundTransparency = 1
 FpsIcon.Image = "rbxthumb://type=Asset&id=137471315687443&w=420&h=420"
@@ -1196,8 +1196,8 @@ UIAspectRatio_FpsIcon.Parent = FpsIcon
 
 local FPSText = Instance.new('TextLabel')
 FPSText.Name = "FPSText"
-FPSText.Position = UDim2.new(0.12, 0, 0.269, 0)
-FPSText.Size = UDim2.new(0.18, 0, 0.49, 0)
+FPSText.Position = UDim2.new(0.115, 0, 0.315, 0)
+FPSText.Size = UDim2.new(0.17, 0, 0.37, 0)
 FPSText.BackgroundTransparency = 1
 FPSText.Text = "0 FPS"
 FPSText.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1213,8 +1213,8 @@ UIAspectRatio_FPSText.Parent = FPSText
 
 local SignalImage = Instance.new('ImageLabel')
 SignalImage.Name = "SignalImage"
-SignalImage.Position = UDim2.new(0.34, 0, 0.34, 0)
-SignalImage.Size = UDim2.new(0.1, 0, 0.4, 0)
+SignalImage.Position = UDim2.new(0.338, 0, 0.32, 0)
+SignalImage.Size = UDim2.new(0.085, 0, 0.36, 0)
 SignalImage.BackgroundTransparency = 1
 SignalImage.Image = "rbxthumb://type=Asset&id=113541980541438&w=420&h=420"
 SignalImage.ImageColor3 = Color3.fromRGB(0, 168, 255)
@@ -1225,8 +1225,8 @@ UIAspectRatio_SignalImage.Parent = SignalImage
 
 local MSText = Instance.new('TextLabel')
 MSText.Name = "MSText"
-MSText.Position = UDim2.new(0.44, 0, 0.268, 0)
-MSText.Size = UDim2.new(0.16, 0, 0.49, 0)
+MSText.Position = UDim2.new(0.435, 0, 0.315, 0)
+MSText.Size = UDim2.new(0.15, 0, 0.37, 0)
 MSText.BackgroundTransparency = 1
 MSText.Text = "0 MS"
 MSText.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1242,7 +1242,7 @@ UIAspectRatio_MSText.Parent = MSText
 
 local UserIcon = Instance.new('ImageLabel')
 UserIcon.Name = "UserIcon"
-UserIcon.Position = UDim2.new(0.612, 0, 0.30, 0)
+UserIcon.Position = UDim2.new(0.618, 0, 0.25, 0)
 UserIcon.Size = UDim2.new(0.09, 0, 0.5, 0)
 UserIcon.BackgroundTransparency = 1
 UserIcon.Image = "rbxthumb://type=Asset&id=123112467890707&w=420&h=420"
@@ -1254,8 +1254,8 @@ UIAspectRatio_UserIcon.Parent = UserIcon
 
 local Username = Instance.new('TextLabel')
 Username.Name = "Username"
-Username.Position = UDim2.new(0.690, 0, 0.268, 0)
-Username.Size = UDim2.new(0.152, 0, 0.49, 0)
+Username.Position = UDim2.new(0.690, 0, 0.30, 0)
+Username.Size = UDim2.new(0.140, 0, 0.40, 0)
 Username.TextTruncate = Enum.TextTruncate.AtEnd
 Username.BackgroundTransparency = 1
 Username.Text = LocalPlayer.DisplayName
@@ -1268,8 +1268,8 @@ Username.Parent = GameInfo
 
 local NeverIcon = Instance.new('ImageLabel')
 NeverIcon.Name = "NeverIcon"
-NeverIcon.Position = UDim2.new(0.856, 0, 0.16, 0)
-NeverIcon.Size = UDim2.new(0.046, 0, 0.68, 0)
+NeverIcon.Position = UDim2.new(0.845, 0, 0.18, 0)
+NeverIcon.Size = UDim2.new(0.044, 0, 0.64, 0)
 NeverIcon.BackgroundTransparency = 1
 NeverIcon.Image = "rbxthumb://type=Asset&id=118608145176297&w=420&h=420"
 NeverIcon.Parent = GameInfo
@@ -1283,8 +1283,8 @@ UICorner_NeverIcon.Parent = NeverIcon
 
 local Profile = Instance.new('ImageLabel')
 Profile.Name = "Profile"
-Profile.Position = UDim2.new(0.908, 0, 0.16, 0)
-Profile.Size = UDim2.new(0.046, 0, 0.68, 0)
+Profile.Position = UDim2.new(0.912, 0, 0.18, 0)
+Profile.Size = UDim2.new(0.044, 0, 0.64, 0)
 Profile.BackgroundColor3 = Color3.fromRGB(127, 127, 127)
 Profile.Image = ("rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=420&h=420")
 Profile.Parent = GameInfo
@@ -4074,16 +4074,16 @@ Line9.Parent = MainFrame
         if AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = true end
         if AcrylicBlur.Signal then pcall(function() AcrylicBlur.Signal:Disconnect() end); AcrylicBlur.Signal = nil end
         AcrylicBlur.Signal = game:GetService("RunService").RenderStepped:Connect(AcrylicBlur.Update)
-        Tween(MainFrame, { BackgroundTransparency = 0.1 }, 0.12)
-        Tween(AcrylicBlur.Instances.Part, { Transparency = AcrylicBlur.Instances.Part:GetAttribute("TargetTransparency") or 0.8 }, 0.12)
+        Tween(MainFrame, { BackgroundTransparency = 0.1 }, 0.18)
+        Tween(AcrylicBlur.Instances.Part, { Transparency = AcrylicBlur.Instances.Part:GetAttribute("TargetTransparency") or 0.8 }, 0.18)
     else
         if AcrylicBlur.Signal then
             AcrylicBlur.Signal:Disconnect()
             AcrylicBlur.Signal = nil
         end
-        Tween(MainFrame, { BackgroundTransparency = 1 }, 0.12)
-        Tween(AcrylicBlur.Instances.Part, { Transparency = 1 }, 0.12)
-        task.delay(0.13, function()
+        Tween(MainFrame, { BackgroundTransparency = 1 }, 0.18)
+        Tween(AcrylicBlur.Instances.Part, { Transparency = 1 }, 0.18)
+        task.delay(0.19, function()
             if guiOpen then return end
             MainFrame.Visible = false
             -- everything disappears together with the window
@@ -4107,7 +4107,7 @@ end
 	end)
 
 	MainFrame.BackgroundTransparency = 1
-	Tween(MainFrame, { BackgroundTransparency = 0.1 }, 0.5)
+	Tween(MainFrame, { BackgroundTransparency = 0.1 }, 0.18)
 
 
 
@@ -4380,7 +4380,7 @@ UIAspectRatioConstraint_2.Parent = SectionLabel
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
 			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44,50,72); s.Transparency = 0.45; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
 			New("UIListLayout", {
-				Padding = UDim.new(0, 6),
+				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
 			}, Elements)
 
@@ -7306,10 +7306,6 @@ if maxY <= 0 then return end
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				UIStroke.Parent = Section2Frame
 
-				local function GetAccordionLabelHeight()
-					return 0
-				end
-
 				local Container = Instance.new('ScrollingFrame')
 				Container.Name = "Container"
 				Container.Position = UDim2.new(0.04, 0, 0, 3 / GetMainFrameScale())
@@ -7352,7 +7348,6 @@ if maxY <= 0 then return end
 
 				local function UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
-					local labelHeight = GetAccordionLabelHeight()
 					Section2Frame.Position = UDim2.new(0.02, 0, 1, 2 / scale)
 					Container.Position = UDim2.new(0.04, 0, 0, 3 / scale)
 					Container.Size = UDim2.new(0.92, 0, 1, -6 / scale)
