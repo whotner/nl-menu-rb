@@ -1288,8 +1288,8 @@ Aspect.AspectRatio = 1.4
 
 	local Info = Instance.new('Frame')
 	Info.Name = "Info"
-	Info.Position = UDim2.new(0.008999999612569809,0,0.9070000052452087,0)
-	Info.Size = UDim2.new(0.20000000298023224,0,0.07900000363588333,0)
+	Info.Position = UDim2.new(0.022, 0, 0.893, 0)
+	Info.Size = UDim2.new(0.215, 0, 0.082, 0)
 	Info.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	Info.BackgroundTransparency = 1
 	Info.BorderSizePixel = 0
@@ -1306,8 +1306,9 @@ Aspect.AspectRatio = 1.4
 
 	local User = Instance.new('TextLabel')
 	User.Name = "Username"
-	User.Position = UDim2.new(0.3000060021877289,0,0.15000000596046448,0)
-	User.Size = UDim2.new(0.6000010371208191,0,0.4000006318092346,0)
+	User.Position = UDim2.new(0.3, 0, 0.13, 0)
+	User.Size = UDim2.new(0.58, 0, 0.42, 0)
+	User.TextTruncate = Enum.TextTruncate.AtEnd
 	User.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	User.BackgroundTransparency = 1
 	User.Text = LocalPlayer.Name
@@ -1319,8 +1320,9 @@ Aspect.AspectRatio = 1.4
 
 	local DaysLeft = Instance.new('TextLabel')
 	DaysLeft.Name = "Daysleft"
-	DaysLeft.Position = UDim2.new(0.30002495646476746,0,0.5999998450279236,0)
-	DaysLeft.Size = UDim2.new(0.6000000834465027,0,0.25,0)
+	DaysLeft.Position = UDim2.new(0.3, 0, 0.56, 0)
+	DaysLeft.Size = UDim2.new(0.58, 0, 0.3, 0)
+	DaysLeft.TextTruncate = Enum.TextTruncate.AtEnd
 	DaysLeft.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	DaysLeft.BackgroundTransparency = 1
 	DaysLeft.Text = daysLeft
@@ -1684,7 +1686,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Position = UDim2.new(0.05, 0, 1, 0),
 		Size = UDim2.new(0.9, 0, 0, 1),
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
-		BackgroundTransparency = 0.965,
+		BackgroundTransparency = 0.86,
 		BorderSizePixel = 0,
 		ZIndex = 150,
 	}, WSLogoRow)
@@ -3303,7 +3305,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Name = "SettingsFrame"
 		SettingsFrame.Position = UDim2.new(0.54, 0, 1, 2)
 		SettingsFrame.Size = UDim2.new(0.44, 0, 0, 0)
-		SettingsFrame.BackgroundColor3 = Color3.fromRGB(17,20,30)
+		SettingsFrame.BackgroundColor3 = Color3.fromRGB(15,17,26)
 		SettingsFrame.BackgroundTransparency = 0.05
 		SettingsFrame.BorderSizePixel = 0
 		SettingsFrame.ZIndex = 6000
@@ -4227,7 +4229,7 @@ UIStroke.Parent = Elements
 				SettingsFrame.Position = UDim2.new(0.02, 0, 1, 2)
 				SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
 				SettingsFrame.BackgroundColor3 = Color3.fromRGB(14, 16, 25)
-				SettingsFrame.BackgroundTransparency = 1
+				SettingsFrame.BackgroundTransparency = 0.18
 				SettingsFrame.BorderSizePixel = 0
 				SettingsFrame.Visible = false
 				SettingsFrame.ZIndex = 5000
@@ -4238,26 +4240,14 @@ UIStroke.Parent = Elements
 
 				local UICorner = Instance.new('UICorner')
 				UICorner.Name = "UICorner"
-				UICorner.CornerRadius = UDim.new(0, 12)
+				UICorner.CornerRadius = UDim.new(0, 14)
 				UICorner.Parent = SettingsFrame
 
-				local SettingsShadow = Instance.new('ImageLabel')
-				SettingsShadow.Name = "DropShadow"
-				SettingsShadow.AnchorPoint = Vector2.new(0.5, 0.5)
-				SettingsShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-				SettingsShadow.Size = UDim2.new(1, 40, 1, 40)
-				SettingsShadow.BackgroundTransparency = 1
-				SettingsShadow.BorderSizePixel = 0
-				SettingsShadow.Image = "rbxassetid://6014261993"
-				SettingsShadow.ImageColor3 = Color3.fromRGB(8, 10, 16)
-				SettingsShadow.ImageTransparency = 0.35
-				SettingsShadow.ZIndex = 4990
-				SettingsShadow.Parent = SettingsFrame
-
-				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(40,44,65)
-				UIStroke.Transparency = 0.9
+				UIStroke.Color = Color3.fromRGB(48,54,78)
+				UIStroke.Transparency = 0.45
+				UIStroke.Thickness = 1
+				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				UIStroke.Parent = SettingsFrame
 
 				local SFContainer = Instance.new('ScrollingFrame')
@@ -4442,7 +4432,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.965,
+						BackgroundTransparency = 0.86,
 						ZIndex = 1000,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -4590,7 +4580,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Slider = New("Frame", {
 						Name = "Slider",
-						Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+						Size = UDim2.new(1, 0, 0, 0),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 1,
 						LayoutOrder = settingsElemCount,
@@ -4608,7 +4598,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.965,
+						BackgroundTransparency = 0.86,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -4869,7 +4859,7 @@ UIAspectRatioConstraint.Parent = Slider
 					for i, opt in ipairs(options) do
 						local BtnRow = New("Frame", {
 							Name = "Buttons",
-							Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+							Size = UDim2.new(1, 0, 0, 0),
 							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 							BackgroundTransparency = 1,
 							ZIndex = 5001,
@@ -4987,7 +4977,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.965,
+						BackgroundTransparency = 0.86,
 						BorderSizePixel = 0,
 						ZIndex = 1001,
 					}, Colorpicker)
@@ -5482,7 +5472,7 @@ if maxY <= 0 then return end
 
 				local Toggle = New("Frame", {
 					Name = "Toggle",
-					Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+					Size = UDim2.new(1, 0, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
@@ -5497,7 +5487,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.965,
+					BackgroundTransparency = 0.86,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -5566,7 +5556,7 @@ if maxY <= 0 then return end
 				local enabled = default == true
 				local CheckBoxToggle = New("Frame", {
 					Name = "CheckBoxToggle",
-					Size = UDim2.new(1, 0, 0.2, 0),
+					Size = UDim2.new(1, 0, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
@@ -5577,7 +5567,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.965,
+					BackgroundTransparency = 0.86,
 					BorderSizePixel = 0,
 					ZIndex = 100,
 				}, CheckBoxToggle)
@@ -5666,7 +5656,7 @@ if maxY <= 0 then return end
 
 				local Toggle = New("Frame", {
 					Name = "Toggle",
-					Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+					Size = UDim2.new(1, 0, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
@@ -5681,7 +5671,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.965,
+					BackgroundTransparency = 0.86,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Toggle)
@@ -5988,7 +5978,7 @@ if maxY <= 0 then return end
 
 				local Slider = New("Frame", {
 					Name = "Slider",
-					Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+					Size = UDim2.new(1, 0, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
@@ -6003,7 +5993,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.965,
+					BackgroundTransparency = 0.86,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Slider)
@@ -6145,7 +6135,7 @@ if maxY <= 0 then return end
 
 				local Dropdown = New("Frame", {
 					Name = "Dropdown",
-					Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+					Size = UDim2.new(1, 0, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
@@ -6161,7 +6151,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.965,
+					BackgroundTransparency = 0.86,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, Dropdown)
@@ -6331,7 +6321,7 @@ if maxY <= 0 then return end
 				-- Root row frame (matches design exactly)
 				local Dropdown = New("Frame", {
 					Name = "Dropdown",
-					Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+					Size = UDim2.new(1, 0, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
@@ -6747,7 +6737,7 @@ if maxY <= 0 then return end
 
 				local Colorpicker = New("Frame", {
 					Name = "Colorpicker",
-					Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+					Size = UDim2.new(1, 0, 0, 0),
 					BackgroundTransparency = 1,
 					BorderSizePixel = 0,
 					LayoutOrder = elemCount,
@@ -6761,7 +6751,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.89, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.965,
+					BackgroundTransparency = 0.86,
 					BorderSizePixel = 0,
 					ZIndex = 3,
 				}, Colorpicker)
@@ -7007,7 +6997,7 @@ if maxY <= 0 then return end
 
 				local DropdownSection = Instance.new('Frame')
 				DropdownSection.Name = "Accordion"
-				DropdownSection.Size = UDim2.new(1, 0, 0.20000000298023224, 0)
+				DropdownSection.Size = UDim2.new(1, 0, 0, 0)
 				DropdownSection.BackgroundColor3 = Color3.fromRGB(21,24,36)
 				DropdownSection.BackgroundTransparency = 1
 				DropdownSection.LayoutOrder = elemCount
@@ -7059,7 +7049,7 @@ if maxY <= 0 then return end
 				Section2Frame.Name = "AccordionFrame"
 				Section2Frame.Position = UDim2.new(0.02, 0, 1, 2 / GetMainFrameScale())
 				Section2Frame.Size = UDim2.new(0.96, 0, 0, 0)
-				Section2Frame.BackgroundColor3 = Color3.fromRGB(17,20,30)
+				Section2Frame.BackgroundColor3 = Color3.fromRGB(14, 16, 25)
 				Section2Frame.BackgroundTransparency = 1
 				Section2Frame.BorderSizePixel = 0
 				Section2Frame.Visible = false
@@ -7141,7 +7131,7 @@ if maxY <= 0 then return end
 					Position = UDim2.new(0.05, 0, 1, 0),
 					Size = UDim2.new(0.9, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-					BackgroundTransparency = 0.965,
+					BackgroundTransparency = 0.86,
 					ZIndex = 100,
 					BorderSizePixel = 0,
 				}, DropdownSection)
@@ -7220,7 +7210,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.965,
+						BackgroundTransparency = 0.86,
 						ZIndex = 100,
 						BorderSizePixel = 0,
 					}, Toggle)
@@ -7510,7 +7500,7 @@ UIAspectRatioConstraint.Parent = Toggle
 					for i, opt in ipairs(options) do
 						local BtnRow = New("Frame", {
 							Name = "Buttons",
-							Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+							Size = UDim2.new(1, 0, 0, 0),
 							BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 							BackgroundTransparency = 1,
 							ZIndex = 1001,
@@ -7629,7 +7619,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local Slider = New("Frame", {
 						Name = "Slider",
-						Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+						Size = UDim2.new(1, 0, 0, 0),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 1,
 						LayoutOrder = accordionElemCount,
@@ -7647,7 +7637,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.9, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.965,
+						BackgroundTransparency = 0.86,
 						ZIndex = 1002,
 						BorderSizePixel = 0,
 					}, Slider)
@@ -7804,7 +7794,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Position = UDim2.new(0.05, 0, 1, 0),
 						Size = UDim2.new(0.89, 0, 0, 1),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
-						BackgroundTransparency = 0.965,
+						BackgroundTransparency = 0.86,
 						BorderSizePixel = 0,
 						ZIndex = 101,
 					}, Colorpicker)
