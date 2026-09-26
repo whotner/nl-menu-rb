@@ -1264,8 +1264,8 @@ local Stats = game:GetService('Stats')
 
 local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
-GameInfo.AnchorPoint = Vector2.new(0, 0)
-GameInfo.Position = UDim2.new(0, 6, 0, 2)
+GameInfo.AnchorPoint = Vector2.new(1, 0)
+GameInfo.Position = UDim2.new(1, -6, 0, 2)
 GameInfo.Size = UDim2.fromOffset(380, 40)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
 GameInfo.BackgroundColor3 = Color3.fromRGB(13, 15, 22)
