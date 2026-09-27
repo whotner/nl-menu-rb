@@ -731,6 +731,7 @@ local function FormatSliderValue(value, suffix)
 	return text .. (suffix or "")
 end
 
+local RepositionOpenPopups
 local function MakeDraggable(frame, handle)
 	handle = handle or frame
 	frame.Draggable = false
@@ -751,6 +752,9 @@ local function MakeDraggable(frame, handle)
 			position = UDim2.fromOffset(x, y)
 		end
 		frame.Position = position
+		-- open plates are positioned with absolute offsets, so they stayed behind
+		-- and drifted outside the menu while it was being dragged
+		if RepositionOpenPopups then RepositionOpenPopups() end
 	end
 
 	handle.InputBegan:Connect(function(input)
@@ -856,7 +860,18 @@ end
 				if instant then
 					frame.Visible = false
 				else
+					-- the old code only faded the background and then dropped the entry:
+					-- the plate stayed Visible for good with opaque labels inside, which
+					-- is what left ghost plates sitting outside the menu
+					local token = (frame:GetAttribute("PopupToken") or 0) + 1
+					frame:SetAttribute("PopupToken", token)
 					Tween(frame, { BackgroundTransparency = 1 }, 0.18)
+					task.delay(0.19, function()
+						if not frame.Parent or frame:GetAttribute("PopupToken") ~= token then return end
+						frame.Visible = false
+						local home = frame.Parent
+						if home and home:IsA("GuiObject") then ApplyZIndexLadder(frame, home.ZIndex) end
+					end)
 				end
 			end
 		end
@@ -1119,10 +1134,10 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		return MainFrame.AbsolutePosition, MainFrame.AbsoluteSize
 	end
 
-	local function ConstrainPopupToMainFrame(popup, margin)
+	local function ConstrainPopupToMainFrame(popup, margin, knownSize)
 		margin = type(margin) == "number" and math.max(0, margin) or 6
 		if not popup or not popup.Parent or not popup:IsA("GuiObject") then return end
-		local size = popup.AbsoluteSize
+		local size = knownSize or popup.AbsoluteSize
 		if size.X <= 0 or size.Y <= 0 then return end
 		local mainPosition, mainSize = PopupSafeArea()
 		if mainSize.X <= 0 or mainSize.Y <= 0 then return end
@@ -1216,12 +1231,25 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		MovePopupToAbsolute(popup, x, math.clamp(y, minY, math.max(minY, maxY)))
 	end
 
+	RepositionOpenPopups = function()
+		local copy = {}
+		for i, entry in ipairs(_openPopups) do copy[i] = entry end
+		for _, entry in ipairs(copy) do
+			local frame = entry.frame
+			if frame and frame.Parent and frame.Visible then
+				ConstrainPopupToMainFrame(frame, 6)
+			end
+		end
+	end
+
 	local function PositionPopupWithinMain(popup, preferBelow, margin, anchorOverride, knownSize)
 		if not popup or not popup.Parent then return end
 		RememberPopupClipping(popup)
 		if knownSize then
 			positionPopupNow(popup, preferBelow, margin, anchorOverride, knownSize)
-			if popup.Visible then ConstrainPopupToMainFrame(popup, margin) end
+			-- no Visible guard: the dropdowns position themselves while still hidden,
+			-- so the old guard skipped the clamp and they opened outside the menu
+			ConstrainPopupToMainFrame(popup, margin, knownSize)
 			return
 		end
 		if popup.Visible then ConstrainPopupToMainFrame(popup, margin) end
@@ -1700,6 +1728,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		if type(value) ~= "number" or value ~= value then return end
 		UIScale.Scale = math.clamp(value, 0.5, 1.1)
 		RescaleStrokes(MainFrame, UIScale.Scale)
+		if RepositionOpenPopups then RepositionOpenPopups() end
 	end
 	local function UpdateScale()
 		ApplyScale(automaticScale and GetAutomaticScale() or manualScale)
