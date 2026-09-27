@@ -1116,22 +1116,29 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 
 	local function MovePopupToAbsolute(popup, x, y)
 		if not popup or not popup.Parent then return end
-		local baseX, baseY, sizeX, sizeY = GetPopupParentOrigin(popup)
+		-- a hidden frame reports AbsoluteSize 0, so it cannot be placed reliably
+		if not popup.Visible or popup.AbsoluteSize.X <= 0 or popup.AbsoluteSize.Y <= 0 then return end
 		local scaleX, scaleY = GetVisualScale(popup)
 		local position = popup.Position
-		local targetX = (x - baseX) / scaleX - position.X.Scale * sizeX
-		local targetY = (y - baseY) / scaleY - position.Y.Scale * sizeY
-		if math.abs(position.X.Offset - targetX) < 0.5 and math.abs(position.Y.Offset - targetY) < 0.5 then return end
-		popup.Position = UDim2.new(position.X.Scale, targetX, position.Y.Scale, targetY)
+		-- measure where it really is, then apply only the correction
+		local dx = (x - popup.AbsolutePosition.X) / scaleX
+		local dy = (y - popup.AbsolutePosition.Y) / scaleY
+		if math.abs(dx) < 0.5 and math.abs(dy) < 0.5 then return end
+		popup.Position = UDim2.new(position.X.Scale, position.X.Offset + dx, position.Y.Scale, position.Y.Offset + dy)
 	end
 
-	-- a popup is allowed to leave the window, so it is bounded by the screen instead
+	-- a popup has to stay attached to the menu window. this used to return
+	-- MainFrame.Parent, which is the ScreenGui, so the bounds were the whole
+	-- screen and every plate was free to drift past the right edge of the menu
 	local function PopupSafeArea()
+		if MainFrame and MainFrame.AbsoluteSize.X > 0 and MainFrame.AbsoluteSize.Y > 0 then
+			return MainFrame.AbsolutePosition, MainFrame.AbsoluteSize
+		end
 		local gui = MainFrame and MainFrame.Parent
 		if gui and gui:IsA("ScreenGui") and gui.AbsoluteSize.X > 0 and gui.AbsoluteSize.Y > 0 then
 			return gui.AbsolutePosition, gui.AbsoluteSize
 		end
-		return MainFrame.AbsolutePosition, MainFrame.AbsoluteSize
+		return Vector2.new(0, 0), Vector2.new(0, 0)
 	end
 
 	local function ConstrainPopupToMainFrame(popup, margin, knownSize)
@@ -1145,6 +1152,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		local minY = mainPosition.Y + margin
 		local maxX = mainPosition.X + mainSize.X - size.X - margin
 		local maxY = mainPosition.Y + mainSize.Y - size.Y - margin
+		if maxX < minX then minX, maxX = mainPosition.X, mainPosition.X end
 		local currentX, currentY = AbsoluteFromPosition(popup)
 		local x = maxX < minX and minX or math.clamp(currentX, minX, maxX)
 		local y = maxY < minY and minY or math.clamp(currentY, minY, maxY)
@@ -1217,6 +1225,9 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		local minY = mainPosition.Y + edge
 		local maxX = mainPosition.X + mainSize.X - popupSize.X - edge
 		local maxY = mainPosition.Y + mainSize.Y - popupSize.Y - edge
+		-- too wide for the menu: line it up with the menu instead of letting it
+		-- hang past the right edge
+		if maxX < minX then minX, maxX = mainPosition.X, mainPosition.X end
 		local y = preferBelow and parentPosition.Y + parentSize.Y + edge or parentPosition.Y - popupSize.Y - edge
 		if preferBelow and y > maxY then
 			local flipped = parentPosition.Y - popupSize.Y - edge
@@ -1245,20 +1256,28 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local function PositionPopupWithinMain(popup, preferBelow, margin, anchorOverride, knownSize)
 		if not popup or not popup.Parent then return end
 		RememberPopupClipping(popup)
-		if knownSize then
-			positionPopupNow(popup, preferBelow, margin, anchorOverride, knownSize)
-			-- no Visible guard: the dropdowns position themselves while still hidden,
-			-- so the old guard skipped the clamp and they opened outside the menu
-			ConstrainPopupToMainFrame(popup, margin, knownSize)
-			return
+		-- placement is measured from the real AbsolutePosition, and a hidden frame
+		-- reports zeros, so it is shown (fully transparent) just long enough to
+		-- place it and hidden again right after
+		local wasVisible = popup.Visible
+		local savedTransparency = popup.BackgroundTransparency
+		if not wasVisible then
+			popup.Visible = true
+			popup.BackgroundTransparency = 1
 		end
-		if popup.Visible then ConstrainPopupToMainFrame(popup, margin) end
-		task.defer(function()
-			if not popup.Parent or not popup.Visible then return end
-			positionPopupNow(popup, preferBelow, margin, anchorOverride, nil)
-			local edge = type(margin) == "number" and math.max(0, margin) or 6
-			ConstrainPopupToMainFrame(popup, edge)
-		end)
+		positionPopupNow(popup, preferBelow, margin, anchorOverride, knownSize)
+		ConstrainPopupToMainFrame(popup, margin, knownSize)
+		if not wasVisible then
+			-- the transparency has to be restored too: the callers set their own
+			-- value before calling, and leaving it at 1 would hide the plate
+			popup.BackgroundTransparency = savedTransparency
+			popup.Visible = false
+			task.defer(function()
+				if popup.Parent and popup.Visible then
+					PositionPopupWithinMain(popup, preferBelow, margin, anchorOverride)
+				end
+			end)
+		end
 	end
 
 	local function AnimateColorPickerOpen(popup, trigger, open, onClose)
