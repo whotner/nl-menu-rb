@@ -4139,6 +4139,24 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, TabHose)
 
+	-- the subtab columns used to sit in TabHose as well, and UIListLayout counts
+	-- invisible children: four 48% columns overflowed to the right of the window
+	-- and ClipsDescendants = false let them render over the game. they get their
+	-- own container now, so TabHose only ever holds Left and Right
+	local SubTabHose = New("Frame", {
+		Name = "SubTabHose",
+		Position = UDim2.new(0.009999999776482582, 0, 0.092, 0),
+		Size = UDim2.new(0.9900000095367432, 0, 0.8960000033378601, 0),
+		BackgroundColor3 = Color3.fromRGB(162, 162, 161),
+		BackgroundTransparency = 1,
+		ClipsDescendants = false,
+	}, Frame2)
+	New("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		Padding = UDim.new(0, 13),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	}, SubTabHose)
+
 	local function GetSearchText(object)
 		local pieces = {}
 		if not object then return "" end
@@ -8707,7 +8725,7 @@ if maxY <= 0 then return end
 				CanvasSize = UDim2.new(),
 				ScrollingDirection = Enum.ScrollingDirection.Y,
 				ScrollBarThickness = 0,
-			}, TabHose)
+			}, SubTabHose)
 			New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder }, stLeft)
 
 			local stRight = New("ScrollingFrame", {
@@ -8722,7 +8740,7 @@ if maxY <= 0 then return end
 				CanvasSize = UDim2.new(),
 				ScrollingDirection = Enum.ScrollingDirection.Y,
 				ScrollBarThickness = 0,
-			}, TabHose)
+			}, SubTabHose)
 			stLeft:SetAttribute("SearchName", name)
 			stRight:SetAttribute("SearchName", name)
 			stLeft:SetAttribute("TabIndex", tabIndex)
@@ -8807,8 +8825,13 @@ if maxY <= 0 then return end
 				STScale.Scale = 0.86
 				Tween(STScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-				stLeft.Position  = UDim2.new(0, 0, 0, 0)
-				stRight.Position = UDim2.new(0, 0, 0, 0)
+				-- own the first two layout slots: the hidden pairs are still counted
+				-- by UIListLayout, so anything else would sit outside the window
+				for otherIndex, other in ipairs(subTabs) do
+					local rank = otherIndex == stIndex and 0 or 100 + otherIndex
+					other.left.LayoutOrder  = rank
+					other.right.LayoutOrder = rank
+				end
 				stLeft.Visible  = true
 				stRight.Visible = true
 				for _, column in ipairs({stLeft, stRight}) do
