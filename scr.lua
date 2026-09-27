@@ -1127,16 +1127,16 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		popup.Position = UDim2.new(position.X.Scale, position.X.Offset + dx, position.Y.Scale, position.Y.Offset + dy)
 	end
 
-	-- a popup has to stay attached to the menu window. this used to return
-	-- MainFrame.Parent, which is the ScreenGui, so the bounds were the whole
-	-- screen and every plate was free to drift past the right edge of the menu
+	-- an opened plate may hang over the edge of the menu, so it is bounded by
+	-- the screen. the menu itself is only the fallback when the screen size is
+	-- not available yet
 	local function PopupSafeArea()
-		if MainFrame and MainFrame.AbsoluteSize.X > 0 and MainFrame.AbsoluteSize.Y > 0 then
-			return MainFrame.AbsolutePosition, MainFrame.AbsoluteSize
-		end
 		local gui = MainFrame and MainFrame.Parent
 		if gui and gui:IsA("ScreenGui") and gui.AbsoluteSize.X > 0 and gui.AbsoluteSize.Y > 0 then
 			return gui.AbsolutePosition, gui.AbsoluteSize
+		end
+		if MainFrame and MainFrame.AbsoluteSize.X > 0 and MainFrame.AbsoluteSize.Y > 0 then
+			return MainFrame.AbsolutePosition, MainFrame.AbsoluteSize
 		end
 		return Vector2.new(0, 0), Vector2.new(0, 0)
 	end
