@@ -1350,6 +1350,16 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 
 local Stats = game:GetService('Stats')
 
+-- handles the code below (stats loop, SetWatermark) needs after the pill is
+-- built; everything else stays block-scoped so AddWindow stays under the
+-- compiler's 200 live-local register limit
+local FPSText, MSText, TimeText, RamText, SignalImage
+local ACCENT = mainColor or Color3.fromRGB(26, 123, 255)
+local GOOD = Color3.fromRGB(120, 220, 140)
+local WARN = Color3.fromRGB(240, 180, 80)
+local BAD = Color3.fromRGB(233, 90, 130)
+
+do
 local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
 GameInfo.AnchorPoint = Vector2.new(1, 0)
@@ -1368,11 +1378,6 @@ do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Paren
 do local s = Instance.new("UIStroke"); s.Name = "Border"; s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = GameInfo end
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 12); pd.PaddingRight = UDim.new(0, 14); pd.PaddingTop = UDim.new(0, 7); pd.PaddingBottom = UDim.new(0, 7); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
-
-local ACCENT = mainColor or Color3.fromRGB(26, 123, 255)
-local GOOD = Color3.fromRGB(120, 220, 140)
-local WARN = Color3.fromRGB(240, 180, 80)
-local BAD = Color3.fromRGB(233, 90, 130)
 
 -- icon assets lifted straight from the calltaro pasta's icon table
 local ICON_LAYERS   = "rbxassetid://114499998778667"
@@ -1501,10 +1506,14 @@ UserIcon.Parent = UserCell
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = UserIcon end
 local Username = UserCell:FindFirstChild("Username")
 
-local FpsCell, FpsCellIcon, FPSText = WMCell("FPS", 6, ICON_LAYERS, "0")
-local PingCell, SignalImage, MSText = WMCell("Ping", 8, ICON_WIFI, "0ms")
-local RamCell, RamCellIcon, RamText = WMCell("RAM", 10, ICON_RAM, "0mb")
-local TimeCell, TimeCellIcon, TimeText = WMCell("Time", 12, ICON_CLOCK, os.date("%H:%M"))
+local FpsCell, FpsCellIcon
+FpsCell, FpsCellIcon, FPSText = WMCell("FPS", 6, ICON_LAYERS, "0")
+local PingCell
+PingCell, SignalImage, MSText = WMCell("Ping", 8, ICON_WIFI, "0ms")
+local RamCell, RamCellIcon
+RamCell, RamCellIcon, RamText = WMCell("RAM", 10, ICON_RAM, "0mb")
+local TimeCell, TimeCellIcon
+TimeCell, TimeCellIcon, TimeText = WMCell("Time", 12, ICON_CLOCK, os.date("%H:%M"))
 
 local WMCells = { brand = BrandCell, user = UserCell, fps = FpsCell, ping = PingCell, ram = RamCell, time = TimeCell }
 local WMDefaultOrder = { "brand", "user", "fps", "ping", "ram", "time" }
@@ -1552,6 +1561,7 @@ WindowObj.Watermark = {
 	logo = NeverIcon,
 	title = BrandTitle,
 	user = Username,
+	avatar = UserIcon,
 	fps = FPSText,
 	time = TimeText,
 	ping = MSText,
@@ -1560,6 +1570,7 @@ WindowObj.Watermark = {
 	cells = WMCells,
 	applyLayout = ApplyWatermarkLayout,
 }
+end -- pill scope
 
 --[[
 	Win:SetWatermark({
@@ -1602,7 +1613,7 @@ function WindowObj:SetWatermark(options)
 		-- calltaro keeps stat icons neutral white: the accent only lands on
 		-- the small glyphs, never on the avatar photo or the brand logo
 		for _, icon in ipairs(wm.icons) do
-			if icon and icon:IsA("ImageLabel") and icon ~= wm.logo and icon ~= UserIcon then
+			if icon and icon:IsA("ImageLabel") and icon ~= wm.logo and icon ~= wm.avatar then
 				icon.ImageColor3 = options.accent
 				icon.ImageTransparency = 0.15
 			end
@@ -1718,7 +1729,10 @@ AttachShadow(MainFrame, { radius = 20, layers = 5, step = 1.7, bias = 3 })
 
 -- ═══ calltaro overlays: keybind list + spectator list stacked under the
 -- watermark in one right-aligned column, like the pasta's overlay group ═══
-local RefreshKeybindOverlay
+local RefreshKeybindOverlay -- forward-declared: SetTargetBind pokes it
+do
+local ICON_EYE = "rbxassetid://127234874352422"
+local ICON_KEYBOARD = "rbxassetid://121978468376124"
 local OverlayStack = New("Frame", {
 	Name = "OverlayStack",
 	AnchorPoint = Vector2.new(1, 0),
@@ -2102,6 +2116,7 @@ task.defer(function()
 	if RefreshKeybindOverlay then RefreshKeybindOverlay() end
 	RefreshSpectatorOverlay()
 end)
+end -- overlay scope
 
 local Aspect = Instance.new("UIAspectRatioConstraint")
 Aspect.Parent = MainFrame
