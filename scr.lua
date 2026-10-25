@@ -3757,25 +3757,27 @@ asss.Parent = SearchBtn
 	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(40,44,65); s.Transparency = 0.85; s.Parent = Save end
 
 	-- binds plate trigger sitting next to the config chip
-	local BindsBtn = Instance.new("ImageButton")
-	BindsBtn.Name = "BindsButton"
-	BindsBtn.Position = UDim2.new(0.305, 0, 0.2, 0)
-	BindsBtn.Size = UDim2.new(0.07, 0, 0.62, 0)
-	BindsBtn.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
-	BindsBtn.BackgroundTransparency = 0
-	BindsBtn.BorderSizePixel = 0
-	BindsBtn.Image = "rbxassetid://121978468376124"
-	BindsBtn.ImageColor3 = Color3.fromRGB(176, 180, 198)
-	BindsBtn.ScaleType = Enum.ScaleType.Fit
-	BindsBtn.ZIndex = 10
-	BindsBtn.Parent = Header
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 5); c.Parent = BindsBtn end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(40,44,65); s.Transparency = 0.85; s.Parent = BindsBtn end
-	BindsBtn.MouseEnter:Connect(function() Tween(BindsBtn, {ImageColor3 = Color3.fromRGB(255,255,255)}, 0.1) end)
-	BindsBtn.MouseLeave:Connect(function() Tween(BindsBtn, {ImageColor3 = Color3.fromRGB(176,180,198)}, 0.15) end)
-	BindsBtn.MouseButton1Click:Connect(function()
-		if WindowObj.OpenBinds then WindowObj.OpenBinds() end
-	end)
+	do
+		local BindsBtn = Instance.new("ImageButton")
+		BindsBtn.Name = "BindsButton"
+		BindsBtn.Position = UDim2.new(0.305, 0, 0.2, 0)
+		BindsBtn.Size = UDim2.new(0.07, 0, 0.62, 0)
+		BindsBtn.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+		BindsBtn.BackgroundTransparency = 0
+		BindsBtn.BorderSizePixel = 0
+		BindsBtn.Image = "rbxassetid://121978468376124"
+		BindsBtn.ImageColor3 = Color3.fromRGB(176, 180, 198)
+		BindsBtn.ScaleType = Enum.ScaleType.Fit
+		BindsBtn.ZIndex = 10
+		BindsBtn.Parent = Header
+		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 5); c.Parent = BindsBtn end
+		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(40,44,65); s.Transparency = 0.85; s.Parent = BindsBtn end
+		BindsBtn.MouseEnter:Connect(function() Tween(BindsBtn, {ImageColor3 = Color3.fromRGB(255,255,255)}, 0.1) end)
+		BindsBtn.MouseLeave:Connect(function() Tween(BindsBtn, {ImageColor3 = Color3.fromRGB(176,180,198)}, 0.15) end)
+		BindsBtn.MouseButton1Click:Connect(function()
+			if WindowObj.OpenBinds then WindowObj.OpenBinds() end
+		end)
+	end
 
 	local SaveIcon = Instance.new('ImageLabel')
 SaveIcon.Name = "SaveIcon"
@@ -3894,15 +3896,17 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = CMHeader end
 
 	-- divider under the header, NL-style
-	local CMHeaderRule = Instance.new("Frame")
-	CMHeaderRule.Name = "HeaderRule"
-	CMHeaderRule.Position = UDim2.new(0, 14, 1, -1)
-	CMHeaderRule.Size = UDim2.new(1, -28, 0, 1)
-	CMHeaderRule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	CMHeaderRule.BackgroundTransparency = 0.92
-	CMHeaderRule.BorderSizePixel = 0
-	CMHeaderRule.ZIndex = 1000
-	CMHeaderRule.Parent = CMHeader
+	do
+		local CMHeaderRule = Instance.new("Frame")
+		CMHeaderRule.Name = "HeaderRule"
+		CMHeaderRule.Position = UDim2.new(0, 14, 1, -1)
+		CMHeaderRule.Size = UDim2.new(1, -28, 0, 1)
+		CMHeaderRule.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		CMHeaderRule.BackgroundTransparency = 0.92
+		CMHeaderRule.BorderSizePixel = 0
+		CMHeaderRule.ZIndex = 1000
+		CMHeaderRule.Parent = CMHeader
+	end
 
 	-- configs icon (calltaro icon set)
 	local CloudIcon = Instance.new("ImageLabel")
@@ -3951,39 +3955,43 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		ll.Parent = CMHeaderRight
 	end
 
-	-- NL-style header icon buttons with a hover tint
+	-- NL-style header icon buttons with a hover tint; the builder itself is
+	-- block-scoped so AddWindow keeps registers free (200 local limit)
 	local IDLE_ICON_TINT = Color3.fromRGB(176, 180, 198)
-	local function HeaderIconButton(name, asset, order)
-		local btn = Instance.new("ImageButton")
-		btn.Name = name
-		btn.Size = UDim2.fromOffset(18, 18)
-		btn.BackgroundTransparency = 1
-		btn.Image = asset
-		btn.ImageColor3 = IDLE_ICON_TINT
-		btn.ScaleType = Enum.ScaleType.Fit
-		btn.ZIndex = 1000
-		btn.LayoutOrder = order
-		btn.Parent = CMHeaderRight
-		btn.MouseEnter:Connect(function()
-			Tween(btn, { ImageColor3 = Color3.fromRGB(255, 255, 255) }, 0.1)
-		end)
-		btn.MouseLeave:Connect(function()
-			if btn:GetAttribute("Pinned") ~= true then
-				Tween(btn, { ImageColor3 = IDLE_ICON_TINT }, 0.15)
-			end
-		end)
-		return btn
-	end
-
-	-- AutoSave button (toggle)
 	local autoSaveEnabled = false
-	local AutoSaveBtn = HeaderIconButton("AutomaticSave", "rbxassetid://122894934359450", 1)
+	local AutoSaveBtn, RecentlyDeletedBtn, InsertConfigBtn
+	do
+		local function HeaderIconButton(name, asset, order)
+			local btn = Instance.new("ImageButton")
+			btn.Name = name
+			btn.Size = UDim2.fromOffset(18, 18)
+			btn.BackgroundTransparency = 1
+			btn.Image = asset
+			btn.ImageColor3 = IDLE_ICON_TINT
+			btn.ScaleType = Enum.ScaleType.Fit
+			btn.ZIndex = 1000
+			btn.LayoutOrder = order
+			btn.Parent = CMHeaderRight
+			btn.MouseEnter:Connect(function()
+				Tween(btn, { ImageColor3 = Color3.fromRGB(255, 255, 255) }, 0.1)
+			end)
+			btn.MouseLeave:Connect(function()
+				if btn:GetAttribute("Pinned") ~= true then
+					Tween(btn, { ImageColor3 = IDLE_ICON_TINT }, 0.15)
+				end
+			end)
+			return btn
+		end
 
-	-- RecentlyDeleted button
-	local RecentlyDeletedBtn = HeaderIconButton("RecentlyDeleted", "rbxassetid://126010725826757", 2)
+		-- AutoSave button (toggle)
+		AutoSaveBtn = HeaderIconButton("AutomaticSave", "rbxassetid://122894934359450", 1)
 
-	-- InsertConfig (add new) button
-	local InsertConfigBtn = HeaderIconButton("InsertConfig", "rbxassetid://101123124881873", 3)
+		-- RecentlyDeleted button
+		RecentlyDeletedBtn = HeaderIconButton("RecentlyDeleted", "rbxassetid://126010725826757", 2)
+
+		-- InsertConfig (add new) button
+		InsertConfigBtn = HeaderIconButton("InsertConfig", "rbxassetid://101123124881873", 3)
+	end
 
 	-- ── Search Container ─────────────────────────────────────────
 	local SearchContainer = Instance.new("Frame")
@@ -4632,7 +4640,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	end)
 
 	-- bottom accent action, exactly where NL keeps it
-	local CreateNewBtn = Instance.new("TextButton")
+	do
+		local CreateNewBtn = Instance.new("TextButton")
 	CreateNewBtn.Name = "CreateNew"
 	CreateNewBtn.Position = UDim2.new(0, 14, 1, -46)
 	CreateNewBtn.Size = UDim2.new(1, -28, 0, 32)
@@ -4657,6 +4666,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			task.spawn(function() NameOfConfig:CaptureFocus() end)
 		end
 	end)
+	end
 
 	ConfirmAddBtn.MouseButton1Click:Connect(function()
 		local n = NameOfConfig.Text
@@ -10343,8 +10353,10 @@ if maxY <= 0 then return end
 	CleanBorders(MainFrame)
 
 	-- preload the icon textures so the first open of a plate isn't blank:
-	-- offscreen 1px images force the engine to fetch every decal up front
-	do
+	-- offscreen 1px images force the engine to fetch every decal up front.
+	-- runs inside a closure: its locals live in the closure's own register
+	-- frame and never count against AddWindow's 200-local limit
+	task.defer(function()
 		local preloadAssets = {
 			"rbxassetid://97828544806816", "rbxassetid://122894934359450",
 			"rbxassetid://126010725826757", "rbxassetid://101123124881873",
@@ -10376,7 +10388,7 @@ if maxY <= 0 then return end
 		task.delay(4, function()
 			if preloader.Parent then preloader:Destroy() end
 		end)
-	end
+	end)
 
 	return WindowObj
 end
