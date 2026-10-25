@@ -601,6 +601,17 @@ end
 local Z_BASE = 10000
 local _popupZStep = 0
 
+-- fade a plate's shadow layers with it: an opaque black halo while the
+-- plate itself is still transparent is exactly the "janky animation" look
+local function TweenShadowLayers(frame, show, dur, dir)
+	for _, node in ipairs(frame:GetDescendants()) do
+		if node:GetAttribute("IsShadowLayer") then
+			local alpha = node:GetAttribute("ShadowAlpha") or 0.8
+			Tween(node, { BackgroundTransparency = show and alpha or 1 }, dur or 0.2, Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out)
+		end
+	end
+end
+
 -- each open gets its own rung, so the newest popup always wins.
 -- the step has to clear the deepest subtree, otherwise rows of the parent
 -- plate end up drawn over the popup that opened inside it
@@ -884,6 +895,7 @@ end
 					local token = (frame:GetAttribute("PopupToken") or 0) + 1
 					frame:SetAttribute("PopupToken", token)
 					Tween(frame, { BackgroundTransparency = 1 }, 0.18)
+					TweenShadowLayers(frame, false, 0.18, Enum.EasingDirection.In)
 					task.delay(0.19, function()
 						if not frame.Parent or frame:GetAttribute("PopupToken") ~= token then return end
 						frame.Visible = false
@@ -966,6 +978,7 @@ local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	CancelPopupTween(frame)
 	frame.BackgroundTransparency = 1
 	frame.Visible = true
+	TweenShadowLayers(frame, true, dur or 0.2)
 	-- fade the border together with the plate so the stroke never pops in
 	local stroke = frame:FindFirstChildOfClass("UIStroke")
 	if stroke then
@@ -978,7 +991,7 @@ local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	-- one soft grow, no bounce: bouncy scales read as jerky next to the menu
 	local scale = GetPopupScale(frame)
 	if scale then
-		scale.Scale = 0.97
+		scale.Scale = 0.98
 		Tween(scale, { Scale = 1 }, (dur or 0.2) + 0.04, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end
 	PlayPopupTween(frame, TweenInfo.new(dur or 0.2, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out), {BackgroundTransparency = targetAlpha})
@@ -989,13 +1002,14 @@ local function SmoothClose(frame, dur, cb)
 	local token = (frame:GetAttribute("PopupToken") or 0) + 1
 	frame:SetAttribute("PopupToken", token)
 	CancelPopupTween(frame)
+	TweenShadowLayers(frame, false, dur or 0.18, Enum.EasingDirection.In)
 	local stroke = frame:FindFirstChildOfClass("UIStroke")
 	if stroke then
 		Tween(stroke, { Transparency = 1 }, dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 	end
 	local scale = GetPopupScale(frame)
 	if scale then
-		Tween(scale, { Scale = 0.98 }, dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		Tween(scale, { Scale = 0.99 }, dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 	end
 	PlayPopupTween(frame, TweenInfo.new(dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
 	task.delay((dur or 0.18) + 0.01, function()
@@ -1565,12 +1579,14 @@ ApplyWatermarkLayout(nil, nil)
 
 local WMShadowSync
 do
-	-- pill shadow lives in a sibling host frame: shadow layers INSIDE the pill
-	-- itself would feed its AutomaticSize and make the width grow forever
+	-- pill shadow lives in a sibling host frame that MIRRORS the pill's size
+	-- (layers sized 1,+N inside an AutomaticSize frame would feed the layout
+	-- and grow forever; a zero-size host put the layers in the wrong place)
 	local WMShadowHost = Instance.new("Frame")
 	WMShadowHost.Name = "WMShadow"
 	WMShadowHost.AnchorPoint = Vector2.new(1, 0)
 	WMShadowHost.Position = UDim2.new(1, -6, 0, 2)
+	WMShadowHost.Size = UDim2.fromOffset(10, 36)
 	WMShadowHost.BackgroundTransparency = 1
 	WMShadowHost.BorderSizePixel = 0
 	WMShadowHost.ZIndex = Z_BASE + 899
@@ -1581,11 +1597,11 @@ do
 		local layer = Instance.new("Frame")
 		layer.Name = "Layer" .. i
 		layer.BackgroundColor3 = Color3.new(0, 0, 0)
-		layer.BackgroundTransparency = 0.60 + (i - 1) * 0.085
+		layer.BackgroundTransparency = 0.62 + (i - 1) * 0.09
 		layer.BorderSizePixel = 0
 		layer.ZIndex = Z_BASE + 899
 		layer.Parent = WMShadowHost
-		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10 + i * 2); c.Parent = layer end
+		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 12); c.Parent = layer end
 		layers[i] = layer
 	end
 
@@ -1593,14 +1609,16 @@ do
 		local w, h = GameInfo.AbsoluteSize.X, GameInfo.AbsoluteSize.Y
 		WMShadowHost.Visible = GameInfo.Visible and w > 0
 		if not WMShadowHost.Visible then return end
+		WMShadowHost.Size = UDim2.fromOffset(w, h)
 		for i, layer in ipairs(layers) do
 			local s = i * 1.6
-			layer.Position = UDim2.fromOffset(-s, 3 - s)
-			layer.Size = UDim2.fromOffset(math.max(1, w + s * 2), math.max(1, h + s * 2 + 3))
+			layer.Position = UDim2.new(0, -s, 0, 2 - s)
+			layer.Size = UDim2.new(1, s * 2, 1, s * 2 + 2)
 		end
 	end
 	GameInfo:GetPropertyChangedSignal("AbsoluteSize"):Connect(WMShadowSync)
 	GameInfo:GetPropertyChangedSignal("Visible"):Connect(WMShadowSync)
+	task.defer(WMShadowSync)
 end
 
 -- everything the loader needs to restyle or hide parts of the pill
@@ -1792,8 +1810,10 @@ local OverlayStack = New("Frame", {
 	Name = "OverlayStack",
 	AnchorPoint = Vector2.new(1, 0),
 	Position = UDim2.new(1, -6, 0, 46),
-	Size = UDim2.fromOffset(0, 0),
-	AutomaticSize = Enum.AutomaticSize.XY,
+	-- fixed-width column, panels right-aligned inside: AutomaticSize XY
+	-- with a (1,0) anchor made the whole stack wander as panels resized
+	Size = UDim2.fromOffset(220, 0),
+	AutomaticSize = Enum.AutomaticSize.Y,
 	BackgroundTransparency = 1,
 	BorderSizePixel = 0,
 	Visible = false,
@@ -1802,6 +1822,7 @@ local OverlayStack = New("Frame", {
 New("UIListLayout", {
 	FillDirection = Enum.FillDirection.Vertical,
 	HorizontalAlignment = Enum.HorizontalAlignment.Right,
+	VerticalAlignment = Enum.VerticalAlignment.Top,
 	Padding = UDim.new(0, 8),
 	SortOrder = Enum.SortOrder.LayoutOrder,
 }, OverlayStack)
@@ -6843,7 +6864,15 @@ if maxY <= 0 then return end
 			local function CloseBindMenu()
 				UnregisterPopup(_bindMenu)
 				if not _bindMenu then return end
-				_bindMenu.Visible = false
+				if _bindMenu.Visible then
+					Tween(_bindMenu, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					TweenShadowLayers(_bindMenu, false, 0.12, Enum.EasingDirection.In)
+					task.delay(0.13, function()
+						if _bindMenu and _bindMenu.Parent and not _bindTarget then
+							_bindMenu.Visible = false
+						end
+					end)
+				end
 				_bindTarget = nil
 			end
 
@@ -6949,6 +6978,7 @@ if maxY <= 0 then return end
 				_bindMenu.Visible = true
 				_bindMenu.BackgroundTransparency = 1
 				Tween(_bindMenu, { BackgroundTransparency = 0.02 }, 0.15)
+				TweenShadowLayers(_bindMenu, true, 0.15)
 				local bindScale = GetPopupScale(_bindMenu)
 				if bindScale then
 					bindScale.Scale = 0.9
@@ -7159,13 +7189,15 @@ if maxY <= 0 then return end
 						CloseBindMenu()
 						return
 					end
-					-- side mouse buttons are bindable keys too
-					if IsExtraMouseType(input.UserInputType) then
+					-- M3 re-targets the prompt like RMB does; MB4/MB5 assign
+					if input.UserInputType == Enum.UserInputType.MouseButton4
+						or input.UserInputType == Enum.UserInputType.MouseButton5 then
 						SetTargetBind(_bindTarget, input.UserInputType)
 						CloseBindMenu()
 						return
 					end
-					if input.UserInputType == Enum.UserInputType.MouseButton2 then
+					if input.UserInputType == Enum.UserInputType.MouseButton2
+						or input.UserInputType == Enum.UserInputType.MouseButton3 then
 						local bindPoint = GetInputPosition(input)
 						local retargeted = false
 						for bindRow, bindTargetRow in pairs(_contextTargets) do
@@ -7193,9 +7225,23 @@ if maxY <= 0 then return end
 							return
 						end
 					end
-				elseif (input.UserInputType == Enum.UserInputType.Keyboard or IsExtraMouseType(input.UserInputType)) and IsEditableTarget() then
-					local target = _keybinds[input.KeyCode] or _keybinds[input.UserInputType]
-					if target then RunBoundFunction(target, "down") end
+				end
+			end)
+
+			-- bound keys fire regardless of which branch the click took:
+			-- keyboard and side buttons here, wheel in InputChanged below
+			UserInputService.InputBegan:Connect(function(input, gameProcessed)
+				if _bindTarget then return end
+				local key = input.KeyCode
+				if key == nil or key == Enum.KeyCode.Unknown then
+					local t = input.UserInputType
+					if t ~= Enum.UserInputType.MouseButton4 and t ~= Enum.UserInputType.MouseButton5 then return end
+					key = t
+				end
+				if not IsEditableTarget() then return end
+				local target = _keybinds[key]
+				if target and target.bindMode ~= "hold" then
+					RunBoundFunction(target, "down")
 				end
 			end)
 
@@ -7214,10 +7260,12 @@ if maxY <= 0 then return end
 				if target then RunBoundFunction(target, "down") end
 			end)
 
-			-- hold-mode binds release with the key
+			-- hold-mode binds release with the key (any bound input type)
 			UserInputService.InputEnded:Connect(function(input)
 				if not IsEditableTarget() then return end
-				local target = _keybinds[input.KeyCode] or _keybinds[input.UserInputType]
+				local key = input.KeyCode
+				if key == nil or key == Enum.KeyCode.Unknown then key = input.UserInputType end
+				local target = key and _keybinds[key] or nil
 				if target and target.bindMode == "hold" then
 					RunBoundFunction(target, "up")
 				end
