@@ -390,18 +390,54 @@ elseif name == "layers" then image.Image = "rbxassetid://99581501168713"
 	elseif name == "egg" then image.Image = "rbxassetid://110250017854460"
 	elseif name == "sprinkler" then image.Image = "rbxassetid://139620040051222"
 	elseif name == "gear" then image.Image = "rbxassetid://134488580093972"
+	-- Semantic aliases keep common navigation names mapped to the same icon family.
+	elseif name == "aimbot" or name == "rage" or name == "combat" then image.Image = "rbxassetid://107944169329467"
+	elseif name == "legit" then image.Image = "rbxassetid://94866180901611"
+	elseif name == "visuals" then image.Image = "rbxassetid://111273759419615"
+	elseif name == "inventory" or name == "other" then image.Image = "rbxassetid://99581501168713"
+	elseif name == "miscellaneous" or name == "settings" then image.Image = "rbxassetid://134488580093972"
+	elseif name == "profile" or name == "account" then image.Image = "rbxassetid://10494577250"
+	elseif name == "configs" or name == "config" then
+		image.Image = NigImage; image.ImageRectOffset = Vector2.new(805,45); image.ImageRectSize = Vector2.new(35,35)
 	end
 end
 
 local Library = {}
 Library.__index = Library
 
+-- Track running tweens by object/property so repeated hover and popup inputs do
+-- not fight each other. Tweens for unrelated properties can still run in parallel.
+local _liveTweensByObject = setmetatable({}, { __mode = "k" })
 local function Tween(obj, props, t, style, dir, delay)
-	if not obj or not obj.Parent then return end
+	if not obj or not obj.Parent or type(props) ~= "table" then return nil end
 	style = style or Enum.EasingStyle.Quad
 	dir = dir or Enum.EasingDirection.Out
-	local ok, tween = pcall(function() return TweenService:Create(obj, TweenInfo.new(t or 0.2, style, dir, 0, false, delay or 0), props) end)
-	if ok and tween then tween:Play() end
+	local bucket = _liveTweensByObject[obj]
+	if not bucket then bucket = {}; _liveTweensByObject[obj] = bucket end
+	local cancel = {}
+	for property in pairs(props) do
+		local running = bucket[property]
+		if running then cancel[running] = true end
+	end
+	for running in pairs(cancel) do pcall(function() running:Cancel() end) end
+	-- Cancelling a tween fires Completed(Cancelled), whose callback may remove the bucket.
+	bucket = _liveTweensByObject[obj]
+	if not bucket then bucket = {}; _liveTweensByObject[obj] = bucket end
+	local ok, tween = pcall(function()
+		return TweenService:Create(obj, TweenInfo.new(t or 0.2, style, dir, 0, false, delay or 0), props)
+	end)
+	if not ok or not tween then return nil end
+	for property in pairs(props) do bucket[property] = tween end
+	tween.Completed:Connect(function()
+		local current = _liveTweensByObject[obj]
+		if not current then return end
+		for property in pairs(props) do
+			if current[property] == tween then current[property] = nil end
+		end
+		if next(current) == nil then _liveTweensByObject[obj] = nil end
+	end)
+	tween:Play()
+	return tween
 end
 
 local CenterElement
@@ -5023,7 +5059,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		PlaceholderText = "Search",
 		PlaceholderColor3 = Color3.fromRGB(130, 134, 152),
 		TextColor3 = Color3.fromRGB(228, 230, 238),
-		TextScaled = true,
+		TextScaled = false,
+		TextSize = 13,
 		Font = Enum.Font.Gotham,
 		TextTransparency = 0.05,
 		Visible = false,
@@ -5052,22 +5089,29 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local ApplySearch
 
 	local searchOpen = false
+	local searchTransitionToken = 0
 	SearchBtn.MouseButton1Click:Connect(function()
 		searchOpen = not searchOpen
+		searchTransitionToken = searchTransitionToken + 1
+		local token = searchTransitionToken
 		if searchOpen then
 			SearchBox.Visible = true
 			SearchBox.BackgroundTransparency = 1
 			SearchBox.Size = UDim2.new(0, 0, 0.6000000238418579, 0)
-			Tween(SearchBox, { BackgroundTransparency = 0 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			Tween(SearchBox, { Size = UDim2.new(0.4000000059604645, 0, 0.6000000238418579, 0) }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			task.wait(0.3)
-			SearchBox:CaptureFocus()
+			Tween(SearchBox, { BackgroundTransparency = 0 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(SearchBox, { Size = UDim2.new(0.4000000059604645, 0, 0.6000000238418579, 0) }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			task.delay(0.23, function()
+				if searchOpen and searchTransitionToken == token and SearchBox.Visible then pcall(function() SearchBox:CaptureFocus() end) end
+			end)
 		else
-			Tween(SearchBox, { Size = UDim2.new(0, 0, 0.6000000238418579, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-			task.wait(0.21)
-			SearchBox.Visible = false
-			SearchBox.Text = ""
-			if ApplySearch then ApplySearch("") end
+			pcall(function() SearchBox:ReleaseFocus() end)
+			Tween(SearchBox, { Size = UDim2.new(0, 0, 0.6000000238418579, 0), BackgroundTransparency = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+			task.delay(0.17, function()
+				if searchOpen or searchTransitionToken ~= token then return end
+				SearchBox.Visible = false
+				SearchBox.Text = ""
+				if ApplySearch then ApplySearch("") end
+			end)
 		end
 	end)
 
@@ -5129,10 +5173,79 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		return subTabIndex == nil
 	end
 
+	local function SearchMatches(haystack, query)
+		haystack = string.lower(tostring(haystack or ""))
+		query = string.lower(tostring(query or "")):gsub("^%s+", ""):gsub("%s+$", "")
+		if query == "" then return true end
+		for word in query:gmatch("%S+") do
+			if not haystack:find(word, 1, true) then return false end
+		end
+		return true
+	end
+
+	local function ColumnHasSearchMatch(column, query)
+		if not column or query == "" then return query == "" end
+		for _, section in ipairs(column:GetChildren()) do
+			if section:IsA("Frame") and section.Name == "Section" then
+				local elementsFrame = section:FindFirstChild("Elements")
+				local sectionLabel = section:FindFirstChild("SectionLabel", true) or section:FindFirstChild("SectionTitle", true)
+				if sectionLabel and SearchMatches(GetSearchText(sectionLabel), query) then return true end
+				if elementsFrame then
+					for _, element in ipairs(elementsFrame:GetChildren()) do
+						if element:IsA("GuiObject") and SearchMatches(GetSearchText(element), query) then return true end
+					end
+				end
+			end
+		end
+		return false
+	end
+
+	local function FindSearchTarget(query)
+		if query == "" then return nil, nil, false end
+		-- Prefer content in the current tab/subtab to prevent the search from jumping unnecessarily.
+		for _, holder in ipairs({ TabHose, SubTabHose }) do
+			for _, column in ipairs(holder:GetChildren()) do
+				if column:IsA("ScrollingFrame") and column:GetAttribute("TabIndex") == activeTabIndex
+					and (holder == TabHose or column:GetAttribute("SubTabIndex") == (tabs[activeTabIndex] and tabs[activeTabIndex].activeSubTabIndex))
+					and ColumnHasSearchMatch(column, query) then
+					return activeTabIndex, holder == SubTabHose and column:GetAttribute("SubTabIndex") or nil, false
+				end
+			end
+		end
+		-- Then search settings in other tabs and subtabs.
+		for _, holder in ipairs({ TabHose, SubTabHose }) do
+			for _, column in ipairs(holder:GetChildren()) do
+				if column:IsA("ScrollingFrame") and ColumnHasSearchMatch(column, query) then
+					return column:GetAttribute("TabIndex"), holder == SubTabHose and column:GetAttribute("SubTabIndex") or nil, false
+				end
+			end
+		end
+		-- Finally allow navigation labels (tab/subtab names) to be searched as well.
+		for _, tab in ipairs(tabs) do
+			if SearchMatches(tab.name, query) then return tab.tabIndex, nil, true end
+			for _, subtab in ipairs(tab.subTabs or {}) do
+				if SearchMatches(subtab.name, query) then return tab.tabIndex, subtab.index, true end
+			end
+		end
+		return nil, nil, false
+	end
+
 	local function _applySearchImpl(query)
 		query = string.lower(tostring(query or "")):gsub("^%s+", ""):gsub("%s+$", "")
+		if query ~= "" then
+			local targetTab, targetSubTab, navOnly = FindSearchTarget(query)
+			if targetTab and targetTab ~= activeTabIndex and tabs[targetTab] and tabs[targetTab].activate then
+				tabs[targetTab].activate()
+			end
+			if targetTab and targetSubTab and tabs[targetTab] and tabs[targetTab].subTabs then
+				local target = tabs[targetTab].subTabs[targetSubTab]
+				if target and target.activate and targetSubTab ~= tabs[targetTab].activeSubTabIndex then target.activate() end
+			end
+			if navOnly then query = "" end
+		end
 		local columnHasMatch = false
-		for _, column in ipairs(TabHose:GetChildren()) do
+		for _, holder in ipairs({ TabHose, SubTabHose }) do
+		for _, column in ipairs(holder:GetChildren()) do
 			if column:IsA("ScrollingFrame") and (column.Name == "Left" or column.Name == "Right" or string.sub(column.Name, 1, 6) == "STLeft" or string.sub(column.Name, 1, 7) == "STRight") then
 				local activeColumn = IsSearchColumnActive(column)
 				if not activeColumn then
@@ -5144,13 +5257,13 @@ UIAspectRatioConstraint.Parent = SaveArrow
 							local elementsFrame = section:FindFirstChild("Elements")
 							local sectionLabel = section:FindFirstChild("SectionLabel", true) or section:FindFirstChild("SectionTitle", true)
 							local sectionText = sectionLabel and GetSearchText(sectionLabel) or ""
-							local sectionMatch = query == "" or sectionText:find(query, 1, true) ~= nil
+							local sectionMatch = query == "" or SearchMatches(sectionText, query)
 							local anyVisible = false
 							if elementsFrame then
 								for _, element in ipairs(elementsFrame:GetChildren()) do
 									if element:IsA("GuiObject") then
 										local elementText = GetSearchText(element)
-										local matches = query == "" or sectionMatch or elementText:find(query, 1, true) ~= nil
+										local matches = query == "" or sectionMatch or SearchMatches(elementText, query)
 										element.Visible = matches
 										if matches then anyVisible = true end
 									end
@@ -5167,12 +5280,21 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				end
 			end
 		end
+		end
 		for _, row in ipairs(Tab:GetChildren()) do
 			if row.Name == "TabButton" then
 				local label = row:FindFirstChild("TabText")
-				local matches = query == ""
-				if label and label:IsA("TextLabel") then
-					matches = query == "" or string.lower(label.Text or ""):find(query, 1, true) ~= nil
+				local matches = query == "" or (label and SearchMatches(label.Text, query)) or false
+				if not matches and query ~= "" then
+					local rowTabIndex = row:GetAttribute("TabIndex")
+					for _, holder in ipairs({ TabHose, SubTabHose }) do
+						for _, column in ipairs(holder:GetChildren()) do
+							if column:IsA("ScrollingFrame") and column:GetAttribute("TabIndex") == rowTabIndex and ColumnHasSearchMatch(column, query) then
+								matches = true; break
+							end
+						end
+						if matches then break end
+					end
 				end
 				row.Visible = matches
 			elseif row.Name == "SubTabContainer" then
@@ -5183,9 +5305,15 @@ UIAspectRatioConstraint.Parent = SaveArrow
 					for _, child in ipairs(row:GetChildren()) do
 						if child:IsA("Frame") and string.sub(child.Name, 1, 6) == "STRow" then
 							local label = child:FindFirstChild("STLabel")
-							local matches = query == ""
-							if label and label:IsA("TextLabel") then
-								matches = query == "" or string.lower(label.Text or ""):find(query, 1, true) ~= nil
+							local matches = query == "" or (label and SearchMatches(label.Text, query)) or false
+							if not matches and query ~= "" then
+								local rowTabIndex = child:GetAttribute("TabIndex")
+								local rowSubTabIndex = child:GetAttribute("SubTabIndex")
+								for _, column in ipairs(SubTabHose:GetChildren()) do
+									if column:IsA("ScrollingFrame") and column:GetAttribute("TabIndex") == rowTabIndex and column:GetAttribute("SubTabIndex") == rowSubTabIndex and ColumnHasSearchMatch(column, query) then
+										matches = true; break
+									end
+								end
 							end
 							child.Visible = matches
 							if matches then anyVisible = true end
@@ -5195,6 +5323,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				end
 			end
 		end
+
 		return columnHasMatch
 	end
 
@@ -5357,12 +5486,24 @@ end
 			BackgroundTransparency = isFirst and 0.9 or 1,
 			LayoutOrder = tabOrder,
 		}, Tab)
+		TabButtonFrame:SetAttribute("TabIndex", tabIndex)
 		New("UICorner", { CornerRadius = UDim.new(0, 5) }, TabButtonFrame)
 		New("UIAspectRatioConstraint", {
 			AspectRatio = 5,
 			AspectType = Enum.AspectType.ScaleWithParentSize,
 		}, TabButtonFrame)
 		local TabScale = New("UIScale", { Scale = 1 }, TabButtonFrame)
+		local TabIndicator = New("Frame", {
+			Name = "SelectedIndicator",
+			AnchorPoint = Vector2.new(0, 0.5),
+			Position = UDim2.new(0, 0, 0.5, 0),
+			Size = UDim2.new(0, 2, 0.58, 0),
+			BackgroundColor3 = mainColor,
+			BackgroundTransparency = isFirst and 0 or 1,
+			BorderSizePixel = 0,
+			ZIndex = 3,
+		}, TabButtonFrame)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, TabIndicator)
 
 		local TabIcon = New("ImageLabel", {
 			Name = "TabIcon",
@@ -5461,13 +5602,15 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 			for _, t in ipairs(tabs) do
 				t.btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 				t.btn.BackgroundTransparency = 1
+				if t.indicator then Tween(t.indicator, { BackgroundTransparency = 1 }, 0.11, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
 				t.icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 				t.icon.ImageTransparency = 0.6
 				t.txt.TextTransparency = 0.6
 				t.hide()
 			end
-			TabButtonFrame.BackgroundColor3 = Color3.fromRGB(255,255,255)
-			TabButtonFrame.BackgroundTransparency = 0.9
+			TabButtonFrame.BackgroundColor3 = Color3.fromRGB(35, 48, 74)
+			TabButtonFrame.BackgroundTransparency = 0.22
+			Tween(TabIndicator, { BackgroundTransparency = 0 }, 0.11, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			TabIcon.ImageColor3 = mainColor
 			TabIcon.ImageTransparency = 0
 			TabText.TextTransparency = 0
@@ -5497,12 +5640,14 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 		table.insert(tabs, {
 			btn = TabButtonFrame,
 			icon = TabIcon,
+			indicator = TabIndicator,
 			txt = TabText,
 			hide = HideContent,
 			show = ShowContent,
 			tabIndex = tabIndex,
 			name = name,
 			activeSubTabIndex = nil,
+			activate = ActivateTab,
 		})
 
 		if isFirst then activeTabIndex = 1 end
@@ -5584,7 +5729,15 @@ end
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 11); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(58, 64, 84); s.Transparency = 0.49; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
+			do
+				local s = Instance.new("UIStroke")
+				s.Name = "GroupOutline"
+				s.Color = Color3.fromRGB(58, 64, 84)
+				s.Transparency = 0.36
+				s.Thickness = 1
+				s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+				s.Parent = Elements
+			end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -6124,12 +6277,12 @@ UIAspectRatioConstraint.Parent = Slider
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(initRatio, 0, 0.5, 0),
 						Size = UDim2.fromOffset(8, 8),
-						BackgroundColor3 = mainColor,
+						BackgroundColor3 = Color3.fromRGB(248, 250, 255),
 						BorderSizePixel = 0,
 						ZIndex = Line.ZIndex + 3,
 					}, Line)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
-					New("UIStroke", { Color = Color3.fromRGB(228, 238, 255), Transparency = 0.3, Thickness = 1 }, Thumb)
+					New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 					Line.MouseEnter:Connect(function()
 						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
@@ -7879,12 +8032,12 @@ if maxY <= 0 then return end
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					Position = UDim2.new(initRatio, 0, 0.5, 0),
 					Size = UDim2.fromOffset(8, 8),
-					BackgroundColor3 = mainColor,
+					BackgroundColor3 = Color3.fromRGB(248, 250, 255),
 					BorderSizePixel = 0,
 					ZIndex = Line.ZIndex + 3,
 				}, Line)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
-				New("UIStroke", { Color = Color3.fromRGB(228, 238, 255), Transparency = 0.3, Thickness = 1 }, Thumb)
+				New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 				Line.MouseEnter:Connect(function()
 					Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end)
@@ -9750,12 +9903,12 @@ UIAspectRatioConstraint.Parent = Slider
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(initRatio, 0, 0.5, 0),
 						Size = UDim2.fromOffset(8, 8),
-						BackgroundColor3 = mainColor,
+						BackgroundColor3 = Color3.fromRGB(248, 250, 255),
 						BorderSizePixel = 0,
 						ZIndex = Line.ZIndex + 3,
 					}, Line)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
-					New("UIStroke", { Color = Color3.fromRGB(228, 238, 255), Transparency = 0.3, Thickness = 1 }, Thumb)
+					New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 					Line.MouseEnter:Connect(function()
 						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
@@ -10143,6 +10296,7 @@ if maxY <= 0 then return end
 		local subTabs = {}
 		local activeSubTabIndex = nil
 		local subTabContainer = nil
+		tabs[tabIndex].subTabs = subTabs
 
 		local function EnsureSubTabContainer()
 			if subTabContainer then return end
@@ -10264,14 +10418,25 @@ if maxY <= 0 then return end
 				BackgroundTransparency = isFirstST and 0.9 or 1,
 				LayoutOrder = stIndex,
 			}, subTabContainer)
+			STRow:SetAttribute("TabIndex", tabIndex)
+			STRow:SetAttribute("SubTabIndex", stIndex)
 			New("UICorner", { CornerRadius = UDim.new(0, 5) }, STRow)
 			New("UIAspectRatioConstraint", {
 				AspectRatio = 4.6,
 				AspectType = Enum.AspectType.ScaleWithParentSize,
 			}, STRow)
 			local STScale = New("UIScale", { Scale = 1 }, STRow)
-
-
+			local STIndicator = New("Frame", {
+				Name = "SelectedIndicator",
+				AnchorPoint = Vector2.new(0, 0.5),
+				Position = UDim2.new(0, 0, 0.5, 0),
+				Size = UDim2.new(0, 2, 0.58, 0),
+				BackgroundColor3 = mainColor,
+				BackgroundTransparency = isFirstST and 0 or 1,
+				BorderSizePixel = 0,
+				ZIndex = 3,
+			}, STRow)
+			New("UICorner", { CornerRadius = UDim.new(1, 0) }, STIndicator)
 
 			local iconRef = nil
 			if icon and icon ~= "" then
@@ -10313,6 +10478,7 @@ if maxY <= 0 then return end
 				for _, st in ipairs(subTabs) do
 					st.row.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 					st.row.BackgroundTransparency = 1
+					if st.indicator then Tween(st.indicator, { BackgroundTransparency = 1 }, 0.11, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
 					st.lbl.TextTransparency = 0.55
 					if st.icon then
 						st.icon.ImageColor3 = Color3.fromRGB(200, 200, 210)
@@ -10321,8 +10487,9 @@ if maxY <= 0 then return end
 					st.left.Visible  = false
 					st.right.Visible = false
 				end
-				STRow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				STRow.BackgroundTransparency = 0.9
+				STRow.BackgroundColor3 = Color3.fromRGB(35, 48, 74)
+				STRow.BackgroundTransparency = 0.22
+				Tween(STIndicator, { BackgroundTransparency = 0 }, 0.11, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 				STLabel.TextTransparency = 0
 				if iconRef then
 					iconRef.ImageColor3 = mainColor
@@ -10349,11 +10516,14 @@ if maxY <= 0 then return end
 			table.insert(subTabs, {
 				row  = STRow,
 				lbl  = STLabel,
+				indicator = STIndicator,
 				icon = iconRef,
 				scale = STScale,
 				left = stLeft,
 				right = stRight,
 				activate = ActivateSubTab,
+				index = stIndex,
+				name = name,
 			})
 
 			STClick.MouseButton1Click:Connect(ActivateSubTab)
