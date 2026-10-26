@@ -433,6 +433,37 @@ local function New(class, props, parent)
 	if parent then obj.Parent = parent end
 	if obj:IsA("UIStroke") then ApplyStrokeScale(obj, strokeScale) end
 	AddTextConstraint(obj, 7, 16)
+
+	-- Consistent, restrained hover/press feedback for real button surfaces.
+	-- Fully transparent hit-targets are left alone so they don't tint controls beneath them.
+	if (obj:IsA("TextButton") or obj:IsA("ImageButton")) and obj.BackgroundTransparency < 0.98 then
+		local baseColor = obj.BackgroundColor3
+		local hoverColor = baseColor:Lerp(Color3.fromRGB(255, 255, 255), 0.055)
+		local pressedColor = baseColor:Lerp(Color3.fromRGB(255, 255, 255), 0.10)
+		local hoverOn = false
+		obj.MouseEnter:Connect(function()
+			-- Capture the current state color each time; selected buttons may change color dynamically.
+			baseColor = obj.BackgroundColor3
+			hoverColor = baseColor:Lerp(Color3.fromRGB(255, 255, 255), 0.055)
+			pressedColor = baseColor:Lerp(Color3.fromRGB(255, 255, 255), 0.10)
+			hoverOn = true
+			Tween(obj, { BackgroundColor3 = hoverColor }, 0.12, Enum.EasingStyle.Quad)
+		end)
+		obj.MouseLeave:Connect(function()
+			hoverOn = false
+			Tween(obj, { BackgroundColor3 = baseColor }, 0.14, Enum.EasingStyle.Quad)
+		end)
+		obj.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				Tween(obj, { BackgroundColor3 = pressedColor }, 0.06, Enum.EasingStyle.Quad)
+			end
+		end)
+		obj.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				Tween(obj, { BackgroundColor3 = hoverOn and hoverColor or baseColor }, 0.10, Enum.EasingStyle.Quad)
+			end
+		end)
+	end
 	return obj
 end
 
@@ -1363,8 +1394,8 @@ GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(1, -6, 0, 2)
 GameInfo.Size = UDim2.fromOffset(0, 36)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
-GameInfo.BackgroundColor3 = Color3.fromRGB(13, 15, 22)
-GameInfo.BackgroundTransparency = 0.1
+GameInfo.BackgroundColor3 = Color3.fromRGB(15, 17, 25)
+GameInfo.BackgroundTransparency = 0.06
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
@@ -1372,7 +1403,7 @@ GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = GameInfo end
-do local s = Instance.new("UIStroke"); s.Name = "Border"; s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = GameInfo end
+do local s = Instance.new("UIStroke"); s.Name = "Border"; s.Color = Color3.fromRGB(67, 75, 101); s.Transparency = 0.38; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = GameInfo end
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 12); pd.PaddingRight = UDim.new(0, 14); pd.PaddingTop = UDim.new(0, 7); pd.PaddingBottom = UDim.new(0, 7); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
@@ -1420,7 +1451,7 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	label.BorderSizePixel = 0
 	label.Text = text
 	label.TextColor3 = Color3.fromRGB(255, 255, 255)
-	label.TextTransparency = 0.08
+	label.TextTransparency = 0.04
 	label.TextScaled = false
 	label.TextSize = 13
 	label.Font = Enum.Font.GothamBold
@@ -1436,7 +1467,7 @@ local function WMDivider()
 	d.Name = "Divider"
 	d.Size = UDim2.fromOffset(1, 14)
 	d.BackgroundColor3 = Color3.fromRGB(120, 126, 150)
-	d.BackgroundTransparency = 0.45
+	d.BackgroundTransparency = 0.58
 	d.BorderSizePixel = 0
 	d.Visible = false
 	d.ZIndex = Z_BASE + 901
