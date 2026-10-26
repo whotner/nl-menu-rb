@@ -1730,13 +1730,13 @@ local function AttachShadow(frame, opts)
 		return
 	end
 	opts = opts or {}
-	local layers = math.clamp(opts.layers or 5, 1, 8)
-	local step = opts.step or 1.7
-	local bias = opts.bias or 3
+	local layers = math.clamp(opts.layers or 4, 1, 6)
+	local step = opts.step or 1.35
+	local bias = opts.bias or 2
 	local radius = opts.radius or 16
 	for i = 1, layers do
 		local spread = math.floor(i * step + 0.5)
-		local alpha = 0.60 + (i - 1) * (0.34 / layers)
+		local alpha = math.clamp(0.76 + (i - 1) * 0.045, 0.76, 0.94)
 		local shadow = New("Frame", {
 			Name = "ShadowLayer" .. i,
 			Position = UDim2.new(0, -spread, 0, bias - spread),
@@ -1751,7 +1751,7 @@ local function AttachShadow(frame, opts)
 		New("UICorner", { CornerRadius = UDim.new(0, radius + spread) }, shadow)
 	end
 end
-AttachShadow(MainFrame, { radius = 20, layers = 5, step = 1.7, bias = 3 })
+AttachShadow(MainFrame, { radius = 20, layers = 4, step = 1.35, bias = 2 })
 
 local RefreshKeybindOverlay
 do
@@ -5493,8 +5493,8 @@ end
 				AutomaticSize = Enum.AutomaticSize.Y,
 				LayoutOrder = 1,
 			}, Section)
-			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
+			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 9); c.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Name = "GroupOutline"; s.Color = Color3.fromRGB(48, 53, 70); s.Transparency = 0.28; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -5578,7 +5578,7 @@ end
 
 				local UICorner = Instance.new('UICorner')
 				UICorner.Name = "UICorner"
-				UICorner.CornerRadius = UDim.new(0, THEME.radius)
+				UICorner.CornerRadius = UDim.new(0, 9)
 				UICorner.Parent = SettingsFrame
 
 				local UIStroke = Instance.new('UIStroke')
@@ -6734,7 +6734,7 @@ if maxY <= 0 then return end
 				}, MainFrame)
 				New("UICorner", { CornerRadius = UDim.new(0, THEME.radius) }, _bindMenu)
 				New("UIStroke", { Color = THEME.stroke, Transparency = THEME.strokeAlpha, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual }, _bindMenu)
-				AttachShadow(_bindMenu, { radius = THEME.radius, layers = 4, step = 1.5, bias = 3 })
+				AttachShadow(_bindMenu, { radius = 8, layers = 3, step = 1.2, bias = 2 })
 
 				local body = New("Frame", { Name = "Body", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = Z_BASE + 951 }, _bindMenu)
 				New("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, body)
@@ -7079,8 +7079,8 @@ if maxY <= 0 then return end
 			end)
 
 			UserInputService.InputChanged:Connect(function(input, gameProcessed)
-				local wheelType = input.UserInputType
-				if wheelType ~= Enum.UserInputType.MouseWheelUp and wheelType ~= Enum.UserInputType.MouseWheelDown then return end
+				if input.UserInputType ~= Enum.UserInputType.MouseWheel then return end
+				local wheelType = input.Position.Z > 0 and "MouseWheelUp" or "MouseWheelDown"
 				if _bindTarget then
 					SetTargetBind(_bindTarget, wheelType)
 					CloseBindMenu()
@@ -8871,15 +8871,15 @@ if maxY <= 0 then return end
 
 				local UICorner = Instance.new('UICorner')
 				UICorner.Name = "UICorner"
-				UICorner.CornerRadius = UDim.new(0, 14)
+				UICorner.CornerRadius = UDim.new(0, 9)
 				UICorner.Parent = Section2Frame
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = THEME.stroke
-				UIStroke.Transparency = 0.3
+				UIStroke.Color = Color3.fromRGB(48, 53, 70)
+				UIStroke.Transparency = 0.24
 				UIStroke.Thickness = 1
-				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				UIStroke.Parent = Section2Frame
 
 				local Container = Instance.new('ScrollingFrame')
