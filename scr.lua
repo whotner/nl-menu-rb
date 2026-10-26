@@ -758,6 +758,13 @@ local function RefreshRowDividers(listFrame)
 	local rows = {}
 	for _, child in ipairs(listFrame:GetChildren()) do
 		if child:IsA("GuiObject") then
+			if listFrame:GetAttribute("NLGroupOutlineInset") and not child:GetAttribute("NLGroupInsetApplied") then
+				local rowSize = child.Size
+				-- UIPadding sets the 2px left/right inset; shrink the row to the
+				-- same width so UIListLayout cannot cover the outline at either edge.
+				child.Size = UDim2.new(rowSize.X.Scale, rowSize.X.Offset - 4, rowSize.Y.Scale, rowSize.Y.Offset)
+				child:SetAttribute("NLGroupInsetApplied", true)
+			end
 			local divider = child:FindFirstChild("Lines")
 			if divider and divider:IsA("GuiObject") then
 				divider.Visible = true
@@ -863,17 +870,46 @@ end
 
 local function AnimateSectionColumn(column)
     if not column or not column.Parent or not column.Visible then return end
+    local token = (column:GetAttribute("NLSectionMotionToken") or 0) + 1
+    column:SetAttribute("NLSectionMotionToken", token)
+    local sections = {}
     for _, section in ipairs(column:GetChildren()) do
         if section:IsA("GuiObject") and section.Visible then
-            section.BackgroundTransparency = 1
-            Tween(section, { BackgroundTransparency = section.Name == "Section" and 1 or 0 }, 0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+            table.insert(sections, section)
+        end
+    end
+    table.sort(sections, function(a, b) return a.LayoutOrder < b.LayoutOrder end)
+    for index, section in ipairs(sections) do
+        local delaySeconds = math.min((index - 1) * 0.018, 0.054)
+        task.delay(delaySeconds, function()
+            if not column.Parent or not column.Visible or column:GetAttribute("NLSectionMotionToken") ~= token then return end
+            if not section.Parent or not section.Visible then return end
+            -- Keep text at its authored opacity. The former fade-to-transparent pass
+            -- was responsible for one-frame label flashes on tab changes.
+            local motionScale = section:FindFirstChild("SectionMotionScale")
+            if not motionScale then
+                motionScale = Instance.new("UIScale")
+                motionScale.Name = "SectionMotionScale"
+                motionScale.Scale = 1
+                motionScale.Parent = section
+            end
+            motionScale.Scale = 0.965
+            Tween(motionScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
             local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
             if list and list:IsA("GuiObject") then
-                list.BackgroundTransparency = 1
-                Tween(list, { BackgroundTransparency = 0 }, 0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-                RevealContentRows(list)
+                local outline = list:FindFirstChild("GroupOutline")
+                if outline and outline:IsA("UIStroke") then
+                    local target = outline:GetAttribute("NLBaseTransparency")
+                    if type(target) ~= "number" then
+                        target = outline.Transparency
+                        outline:SetAttribute("NLBaseTransparency", target)
+                    end
+                    outline.Transparency = math.min(0.82, target + 0.13)
+                    Tween(outline, { Transparency = target }, 0.17, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+                end
             end
-        end
+        end)
     end
 end
 
@@ -1321,7 +1357,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 
 	local function MovePopupToAbsolute(popup, x, y)
 		if not popup or not popup.Parent then return end
-		if not popup.Visible or popup.AbsoluteSize.X <= 0 or popup.AbsoluteSize.Y <= 0 then return end
+		if popup.AbsoluteSize.X <= 0 or popup.AbsoluteSize.Y <= 0 then return end
 		local scaleX, scaleY = GetVisualScale(popup)
 		local position = popup.Position
 		local dx = (x - popup.AbsolutePosition.X) / scaleX
@@ -2371,8 +2407,8 @@ Aspect.AspectRatio = 1.4
 
 	local WindowSettings = Instance.new('TextButton')
 	WindowSettings.Name = "WindowSettings"
-	WindowSettings.Position = UDim2.new(0.5, 0, 0.25, 0)
-	WindowSettings.Size = UDim2.new(0.5, 0, 0.5, 0)
+	WindowSettings.Position = UDim2.new(0, 0, 0, 0)
+	WindowSettings.Size = UDim2.new(1, 0, 1, 0)
 	WindowSettings.BackgroundColor3 = Color3.fromRGB(255,255,255)
 	WindowSettings.BackgroundTransparency = 1
 	WindowSettings.Text = ""
@@ -2417,17 +2453,17 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	local WindowSettingsFrame = Instance.new('Frame')
 	WindowSettingsFrame.Name = "WindowSettingsFrame"
 	WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
-	WindowSettingsFrame.Size = UDim2.new(0.218, 0, 0, 0)
+	WindowSettingsFrame.Size = UDim2.new(0.278, 0, 0, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(55, 62, 82); s.Transparency = 0.34; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = WindowSettingsFrame end
-	AttachShadow(WindowSettingsFrame, { radius = 18, layers = 4, step = 1.5, bias = 3 })
+	AttachShadow(WindowSettingsFrame, { radius = 13, layers = 3, step = 1.2, bias = 2 })
 
 
 	local WSScale = New("UIScale", { Scale = 1 }, WindowSettingsFrame)
@@ -2477,17 +2513,115 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 	local SettingsContainer = Instance.new("Frame")
 	SettingsContainer.Name = "SettingsContainer"
-	SettingsContainer.Position = UDim2.new(0,0,0.03,0)
-	SettingsContainer.Size = UDim2.new(1,0,0,50)
+	SettingsContainer.Position = UDim2.new(0,10,0,0)
+	SettingsContainer.Size = UDim2.new(1,-20,0,50)
 	SettingsContainer.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	SettingsContainer.BackgroundTransparency = 1
 	SettingsContainer.ZIndex = 13
 	SettingsContainer.AutomaticSize = Enum.AutomaticSize.Y
 	SettingsContainer.Parent = WindowSettingsFrame
-	do local ll = Instance.new("UIListLayout"); ll.Padding = UDim.new(0,4); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Parent = SettingsContainer end
+	do
+        local ll = Instance.new("UIListLayout")
+        ll.Padding = UDim.new(0, 3)
+        ll.SortOrder = Enum.SortOrder.LayoutOrder
+        ll.Parent = SettingsContainer
+        local pad = Instance.new("UIPadding")
+        pad.PaddingTop = UDim.new(0, 8)
+        pad.PaddingBottom = UDim.new(0, 8)
+        pad.Parent = SettingsContainer
+    end
 
-	local menuBind = Enum.KeyCode.RightShift
-	local menuBindProxy
+	-- Compact account block matching the Neverlose profile popover reference.
+		do
+			local header = Instance.new("Frame")
+			header.Name = "ProfileHeader"
+			header.Size = UDim2.new(1, 0, 0, 68)
+			header.BackgroundTransparency = 1
+			header.BorderSizePixel = 0
+			header.LayoutOrder = 0
+			header.ZIndex = 120
+			header.Parent = SettingsContainer
+
+			local avatar = Instance.new("ImageLabel")
+			avatar.Name = "ProfileAvatar"
+			avatar.Position = UDim2.new(0, 2, 0, 11)
+			avatar.Size = UDim2.fromOffset(38, 38)
+			avatar.BackgroundColor3 = Color3.fromRGB(28, 31, 44)
+			avatar.BackgroundTransparency = 0
+			avatar.BorderSizePixel = 0
+			avatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId or 0) .. "&w=150&h=150"
+			avatar.ScaleType = Enum.ScaleType.Crop
+			avatar.ZIndex = 121
+			avatar.Parent = header
+			local avatarCorner = Instance.new("UICorner")
+			avatarCorner.CornerRadius = UDim.new(1, 0)
+			avatarCorner.Parent = avatar
+			local avatarStroke = Instance.new("UIStroke")
+			avatarStroke.Color = Color3.fromRGB(75, 91, 132)
+			avatarStroke.Transparency = 0.22
+			avatarStroke.Thickness = 1
+			avatarStroke.Parent = avatar
+
+			local name = Instance.new("TextLabel")
+			name.Name = "ProfileName"
+			name.Position = UDim2.new(0, 50, 0, 8)
+			name.Size = UDim2.new(1, -56, 0, 17)
+			name.BackgroundTransparency = 1
+			name.BorderSizePixel = 0
+			name.Text = tostring(LocalPlayer.Name or "Player")
+			name.TextColor3 = Color3.fromRGB(232, 234, 242)
+			name.TextSize = 13
+			name.Font = Enum.Font.GothamSemibold
+			name.TextXAlignment = Enum.TextXAlignment.Left
+			name.TextYAlignment = Enum.TextYAlignment.Center
+			name.TextTruncate = Enum.TextTruncate.AtEnd
+			name.ZIndex = 121
+			name.Parent = header
+
+			local plan = Instance.new("TextLabel")
+			plan.Name = "ProfilePlan"
+			plan.Position = UDim2.new(0, 50, 0, 26)
+			plan.Size = UDim2.new(1, -56, 0, 14)
+			plan.BackgroundTransparency = 1
+			plan.BorderSizePixel = 0
+			plan.Text = daysLeft == "Lifetime" and "Lifetime access" or ("Till: " .. tostring(daysLeft))
+			plan.TextColor3 = Color3.fromRGB(151, 157, 175)
+			plan.TextSize = 11
+			plan.Font = Enum.Font.Gotham
+			plan.TextXAlignment = Enum.TextXAlignment.Left
+			plan.TextYAlignment = Enum.TextYAlignment.Center
+			plan.TextTruncate = Enum.TextTruncate.AtEnd
+			plan.ZIndex = 121
+			plan.Parent = header
+
+			local renew = Instance.new("TextLabel")
+			renew.Name = "RenewLabel"
+			renew.Position = UDim2.new(0, 50, 0, 42)
+			renew.Size = UDim2.new(1, -56, 0, 14)
+			renew.BackgroundTransparency = 1
+			renew.BorderSizePixel = 0
+			renew.Text = "Renew"
+			renew.TextColor3 = mainColor
+			renew.TextSize = 11
+			renew.Font = Enum.Font.GothamMedium
+			renew.TextXAlignment = Enum.TextXAlignment.Left
+			renew.TextYAlignment = Enum.TextYAlignment.Center
+			renew.ZIndex = 121
+			renew.Parent = header
+
+			local separator = Instance.new("Frame")
+			separator.Name = "ProfileDivider"
+			separator.Position = UDim2.new(0, 0, 1, -1)
+			separator.Size = UDim2.new(1, 0, 0, 1)
+			separator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			separator.BackgroundTransparency = 0.91
+			separator.BorderSizePixel = 0
+			separator.ZIndex = 121
+			separator.Parent = header
+		end
+
+		local menuBind = Enum.KeyCode.RightShift
+		local menuBindProxy
 
 	do
 		local Row = Instance.new("Frame")
@@ -2497,7 +2631,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Row.BackgroundTransparency = 1
 		Row.BorderSizePixel = 0
 		Row.ZIndex = 120
-		Row.LayoutOrder = 90
+		Row.LayoutOrder = 60
 		Row.Parent = SettingsContainer
 		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = Row end
 
@@ -2598,13 +2732,13 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 	local WSColorpicker = Instance.new("Frame")
 	WSColorpicker.Name = "Colorpicker"
-	WSColorpicker.Size = UDim2.new(1,0,0.20000000298023224,0)
+	-- Fixed row height prevents a circular AutoSize dependency with the popup.
+	WSColorpicker.Size = UDim2.new(1, 0, 0, 30)
 	WSColorpicker.BackgroundTransparency = 1
 	WSColorpicker.BorderSizePixel = 0
 	WSColorpicker.ZIndex = 130
-	WSColorpicker.LayoutOrder = 1
+	WSColorpicker.LayoutOrder = 30
 	WSColorpicker.Parent = SettingsContainer
-	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = WSColorpicker end
 	do
 		local ln = Instance.new("Frame"); ln.Name = "Lines"
 		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
@@ -2620,7 +2754,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		lbl.Size = UDim2.new(0.6499999761581421,0,0.5,0)
 		lbl.AnchorPoint = Vector2.new(0,0.5)
 		lbl.BackgroundTransparency = 1
-		lbl.Text = "Main Color"
+		lbl.Text = "Style"
 		lbl.TextColor3 = Color3.fromRGB(255,255,255)
 		lbl.TextScaled = true
 		lbl.Font = Enum.Font.SourceSansSemibold
@@ -2779,7 +2913,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WSScaleRow.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	WSScaleRow.BackgroundTransparency = 1
 	WSScaleRow.ZIndex = 120
-	WSScaleRow.LayoutOrder = 3
+	WSScaleRow.LayoutOrder = 20
 	WSScaleRow.Parent = SettingsContainer
 	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = WSScaleRow end
 	do
@@ -2869,7 +3003,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
 		BackgroundTransparency = 1,
 		ZIndex = 120,
-		LayoutOrder = 2,
+		LayoutOrder = 40,
 	}, SettingsContainer)
 	New("Frame", {
 		Name = "Lines",
@@ -2922,7 +3056,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WSLangRow.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	WSLangRow.BackgroundTransparency = 1
 	WSLangRow.ZIndex = 120
-	WSLangRow.LayoutOrder = 4
+	WSLangRow.LayoutOrder = 10
 	WSLangRow.Parent = SettingsContainer
 	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = WSLangRow end
 	do
@@ -3159,7 +3293,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 		local function closeScaleDropdown()
 			scaleOpen = false
-			Tween(ScaleArrow, {ImageTransparency = 0.4, Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(ScaleArrow, {ImageTransparency = 0.4, Rotation = 270}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			UnregisterPopup(ScaleDownBar)
 			SmoothClose(ScaleDownBar, 0.18)
 		end
@@ -3233,7 +3367,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				SmoothOpen(ScaleDownBar, 0.5, 0.2)
 				ApplyZIndexLadder(ScaleDownBar, NextPopupZ())
 PositionPopupWithinMain(ScaleDownBar, true)
-				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				RegisterPopup(ScaleDownBar, closeScaleDropdown, ScaleOpenBtn)
 			end
 		end)
@@ -3244,7 +3378,7 @@ PositionPopupWithinMain(ScaleDownBar, true)
 
 		local function closeLangDropdown()
 			langOpen = false
-			Tween(LangArrow, {ImageTransparency = 0.4, Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(LangArrow, {ImageTransparency = 0.4, Rotation = 270}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			UnregisterPopup(LangDownBar)
 			SmoothClose(LangDownBar, 0.18)
 		end
@@ -3308,7 +3442,7 @@ PositionPopupWithinMain(ScaleDownBar, true)
 				CloseAllPopupsExcept(LangDownBar)
 				langOpen = true
 				SmoothOpen(LangDownBar, 0.5, 0.2)
-			Tween(LangArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(LangArrow, {Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				ApplyZIndexLadder(LangDownBar, NextPopupZ())
 PositionPopupWithinMain(LangDownBar, true)
 				Tween(LangArrow, {ImageTransparency = 0}, 0.2)
@@ -3321,40 +3455,72 @@ PositionPopupWithinMain(LangDownBar, true)
 			wsOpen = false
 			ClosePopupsUnder(WindowSettingsFrame)
 			UnregisterPopup(WindowSettingsFrame)
-			Tween(WSScale, { Scale = 0.975 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-			SmoothClose(WindowSettingsFrame, 0.18)
+			Tween(WSScale, { Scale = 0.975 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+			SmoothClose(WindowSettingsFrame, 0.14)
 			Tween(ImageLabel, { Rotation = 270 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		end
 		WindowSettings.MouseButton1Click:Connect(function()
 			wsOpen = not wsOpen
 			if wsOpen then
 				CloseAllPopupsExcept(WindowSettingsFrame)
-				WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
-		WSScale.Scale = 0.97
-		Tween(WSScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
+				WindowSettingsFrame.BackgroundTransparency = 1
 				WindowSettingsFrame.Visible = false
-					ApplyZIndexLadder(WindowSettingsFrame, NextPopupZ())
-					PositionPopupWithinMain(WindowSettingsFrame, false, 44, WindowSettings)
-					do
-						local anchorPos = WindowSettings and WindowSettings.AbsolutePosition
-						local anchorSize = WindowSettings and WindowSettings.AbsoluteSize
-						local size = WindowSettingsFrame.AbsoluteSize
-						local gui = NeverloseCS2
-						if anchorPos and anchorSize and size.X > 0 and gui.AbsoluteSize.X > 0 then
-							local wanted = anchorPos.X + anchorSize.X / 2 - size.X / 2
-							local minX = gui.AbsolutePosition.X + 6
-							local maxX = gui.AbsolutePosition.X + gui.AbsoluteSize.X - size.X - 6
-							local x = maxX < minX and minX or math.clamp(wanted, minX, maxX)
-							MovePopupToAbsolute(WindowSettingsFrame, x, WindowSettingsFrame.AbsolutePosition.Y)
-						end
+				WSScale.Scale = 1
+				ApplyZIndexLadder(WindowSettingsFrame, NextPopupZ())
+
+				-- Let AutomaticSize/UIListLayout finish before measuring. A hidden
+				-- first-open popup otherwise reports a short height and jumps on open.
+				task.spawn(function()
+					task.wait()
+					if not wsOpen or not WindowSettingsFrame.Parent then return end
+					local popupSize = WindowSettingsFrame.AbsoluteSize
+					if popupSize.X <= 0 or popupSize.Y <= 0 then
+						-- The first layout pass may not have completed yet. Yield once more,
+						-- still hidden, rather than flashing the panel at its default origin.
+						task.wait()
+						if not wsOpen or not WindowSettingsFrame.Parent then return end
+						popupSize = WindowSettingsFrame.AbsoluteSize
 					end
+					if popupSize.X <= 0 or popupSize.Y <= 0 then
+						-- Fallback for unusual GUI scale/layout timing.
+						WindowSettingsFrame.Visible = true
+						PositionPopupWithinMain(WindowSettingsFrame, false, 8, WindowSettings)
+						popupSize = WindowSettingsFrame.AbsoluteSize
+						WindowSettingsFrame.Visible = false
+					end
+					if not wsOpen or popupSize.X <= 0 or popupSize.Y <= 0 then return end
+
+					local anchorPos = Info.AbsolutePosition
+					local anchorSize = Info.AbsoluteSize
+					local gui = NeverloseCS2
+					if gui and gui.AbsoluteSize.X > 0 and gui.AbsoluteSize.Y > 0 then
+						local edge = 8
+						local safeLeft = gui.AbsolutePosition.X + edge
+						local safeTop = gui.AbsolutePosition.Y + edge
+						local safeRight = gui.AbsolutePosition.X + gui.AbsoluteSize.X - edge
+						local safeBottom = gui.AbsolutePosition.Y + gui.AbsoluteSize.Y - edge
+						local x = anchorPos.X + anchorSize.X + edge
+						if x + popupSize.X > safeRight then x = anchorPos.X - popupSize.X - edge end
+						local maxX = math.max(safeLeft, safeRight - popupSize.X)
+						local maxY = math.max(safeTop, safeBottom - popupSize.Y)
+						x = math.clamp(x, safeLeft, maxX)
+						local y = math.clamp(anchorPos.Y + anchorSize.Y - popupSize.Y, safeTop, maxY)
+						MovePopupToAbsolute(WindowSettingsFrame, x, y)
+					else
+						WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
+					end
+
+					local settled = WindowSettingsFrame.Position
+					WindowSettingsFrame.Position = UDim2.new(settled.X.Scale, settled.X.Offset - 8, settled.Y.Scale, settled.Y.Offset + 4)
+					WSScale.Scale = 0.955
 					WindowSettingsFrame.Visible = true
-				local wsSettled = WindowSettingsFrame.Position
-				WindowSettingsFrame.Position = UDim2.new(wsSettled.X.Scale, wsSettled.X.Offset - 12, wsSettled.Y.Scale, wsSettled.Y.Offset)
-				Tween(WindowSettingsFrame, { Position = wsSettled }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
-				Tween(ImageLabel, { Rotation = 180 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					ApplyZIndexLadder(WindowSettingsFrame, NextPopupZ())
+					SmoothOpen(WindowSettingsFrame, 0.01, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					Tween(WSScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					Tween(WindowSettingsFrame, { Position = settled }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
+					Tween(ImageLabel, { Rotation = 360 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+				end)
 			else
 				closeWS()
 			end
@@ -3390,11 +3556,11 @@ PositionPopupWithinMain(LangDownBar, true)
 	do
 		local WMRow = Instance.new("Frame")
 		WMRow.Name = "WatermarkRow"
-		WMRow.Size = UDim2.new(1, 0, 0, 48)
+		WMRow.Size = UDim2.new(1, 0, 0, 60)
 		WMRow.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
 		WMRow.BackgroundTransparency = 1
 		WMRow.ZIndex = 120
-		WMRow.LayoutOrder = 5
+		WMRow.LayoutOrder = 50
 		WMRow.Parent = SettingsContainer
 
 		local wmLabel = Instance.new("TextLabel")
@@ -3413,14 +3579,17 @@ PositionPopupWithinMain(LangDownBar, true)
 
 		local chipsHost = Instance.new("Frame")
 		chipsHost.Name = "Chips"
-		chipsHost.Position = UDim2.new(0, 12, 0, 22)
-		chipsHost.Size = UDim2.new(1, -24, 0, 20)
+		chipsHost.Position = UDim2.new(0, 12, 0, 20)
+		chipsHost.Size = UDim2.new(1, -24, 0, 38)
+		chipsHost.ClipsDescendants = true
 		chipsHost.BackgroundTransparency = 1
 		chipsHost.ZIndex = 150
 		chipsHost.Parent = WMRow
-		local chipsLayout = Instance.new("UIListLayout")
+		local chipsLayout = Instance.new("UIGridLayout")
 		chipsLayout.FillDirection = Enum.FillDirection.Horizontal
-		chipsLayout.Padding = UDim.new(0, 4)
+		chipsLayout.FillDirectionMaxCells = 3
+		chipsLayout.CellSize = UDim2.new(0.31, 0, 0, 17)
+		chipsLayout.CellPadding = UDim2.fromOffset(4, 3)
 		chipsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 		chipsLayout.Parent = chipsHost
 
@@ -3429,8 +3598,7 @@ PositionPopupWithinMain(LangDownBar, true)
 			local key, caption = def[1], def[2]
 			local chip = Instance.new("TextButton")
 			chip.Name = "Chip_" .. caption
-			chip.AutomaticSize = Enum.AutomaticSize.X
-			chip.Size = UDim2.new(0, 0, 1, 0)
+			chip.Size = UDim2.new(1, 0, 1, 0)
 			chip.BackgroundColor3 = Color3.fromRGB(28, 31, 44)
 			chip.BackgroundTransparency = 0.2
 			chip.BorderSizePixel = 0
@@ -3443,14 +3611,17 @@ PositionPopupWithinMain(LangDownBar, true)
 			chip.LayoutOrder = index
 			chip.Parent = chipsHost
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 4); c.Parent = chip end
-			do local p = Instance.new("UIPadding"); p.PaddingLeft = UDim.new(0, 8); p.PaddingRight = UDim.new(0, 8); p.Parent = chip end
+			do local p = Instance.new("UIPadding"); p.PaddingLeft = UDim.new(0, 5); p.PaddingRight = UDim.new(0, 5); p.Parent = chip end
 
+			local hovered = false
 			local function paintChip()
 				local on = WindowObj.Watermark.isShown and WindowObj.Watermark.isShown(key)
-				chip.BackgroundColor3 = on and mainColor or Color3.fromRGB(28, 31, 44)
-				chip.BackgroundTransparency = on and 0.15 or 0.2
-				chip.TextColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 154, 172)
+				chip.BackgroundColor3 = on and mainColor or (hovered and Color3.fromRGB(40, 45, 62) or Color3.fromRGB(28, 31, 44))
+				chip.BackgroundTransparency = on and 0.12 or (hovered and 0.08 or 0.2)
+				chip.TextColor3 = on and Color3.fromRGB(255, 255, 255) or (hovered and Color3.fromRGB(224, 228, 239) or Color3.fromRGB(150, 154, 172))
 			end
+			chip.MouseEnter:Connect(function() hovered = true; Tween(chip, {BackgroundTransparency = 0.08}, 0.09, Enum.EasingStyle.Sine, Enum.EasingDirection.Out); paintChip() end)
+			chip.MouseLeave:Connect(function() hovered = false; paintChip() end)
 			paintChip()
 			chip.MouseButton1Click:Connect(function()
 				local on = WindowObj.Watermark.isShown and WindowObj.Watermark.isShown(key)
@@ -3464,14 +3635,21 @@ PositionPopupWithinMain(LangDownBar, true)
 
 	local UsageContainer = Instance.new("Frame")
 	UsageContainer.Name = "UsageContainer"
-	UsageContainer.Position = UDim2.new(0,0,0.45,0)
-	UsageContainer.Size = UDim2.new(1,0,0,50)
+	UsageContainer.Position = UDim2.new(0,0,0,0)
+	UsageContainer.Size = UDim2.new(1,0,0,0)
 	UsageContainer.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	UsageContainer.BackgroundTransparency = 1
-	UsageContainer.ZIndex = 13
+	UsageContainer.BorderSizePixel = 0
+	UsageContainer.ZIndex = 120
+	UsageContainer.LayoutOrder = 70
 	UsageContainer.AutomaticSize = Enum.AutomaticSize.Y
-	UsageContainer.Parent = WindowSettingsFrame
-	do local ll = Instance.new("UIListLayout"); ll.Padding = UDim.new(0,1); ll.Parent = UsageContainer end
+	UsageContainer.Parent = SettingsContainer
+	do
+		local ll = Instance.new("UIListLayout")
+		ll.Padding = UDim.new(0, 3)
+		ll.SortOrder = Enum.SortOrder.LayoutOrder
+		ll.Parent = UsageContainer
+	end
 
 	local UsageObj = {}
 	local usageElemCount = 0
@@ -3587,7 +3765,7 @@ PositionPopupWithinMain(LangDownBar, true)
 
 		local function closeDropdown()
 			dropOpen = false
-			Tween(Arrow, {ImageTransparency = 0.4, Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(Arrow, {ImageTransparency = 0.4, Rotation = 270}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			UnregisterPopup(DropPopup)
 			SmoothClose(DropPopup, 0.18)
 		end
@@ -3682,7 +3860,7 @@ PositionPopupWithinMain(LangDownBar, true)
 				DropPopup.Size = UDim2.new(0.96, 0, 0, math.clamp(26 * #options + 28, 46, 460))
 				DropPopup.BackgroundTransparency = 0
 						DropPopup.Visible = true
-		Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		Tween(Arrow, {Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				Tween(Arrow, {ImageTransparency = 0}, 0.2)
 				PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 			end
@@ -5099,14 +5277,14 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			SearchBox.BackgroundTransparency = 1
 			SearchBox.Size = UDim2.new(0, 0, 0.6000000238418579, 0)
 			Tween(SearchBox, { BackgroundTransparency = 0 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			Tween(SearchBox, { Size = UDim2.new(0.4000000059604645, 0, 0.6000000238418579, 0) }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			task.delay(0.23, function()
+			Tween(SearchBox, { Size = UDim2.new(0.4000000059604645, 0, 0.6000000238418579, 0) }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			task.delay(0.18, function()
 				if searchOpen and searchTransitionToken == token and SearchBox.Visible then pcall(function() SearchBox:CaptureFocus() end) end
 			end)
 		else
 			pcall(function() SearchBox:ReleaseFocus() end)
-			Tween(SearchBox, { Size = UDim2.new(0, 0, 0.6000000238418579, 0), BackgroundTransparency = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-			task.delay(0.17, function()
+			Tween(SearchBox, { Size = UDim2.new(0, 0, 0.6000000238418579, 0), BackgroundTransparency = 1 }, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+			task.delay(0.14, function()
 				if searchOpen or searchTransitionToken ~= token then return end
 				SearchBox.Visible = false
 				SearchBox.Text = ""
@@ -5125,7 +5303,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	}, Frame2)
 	New("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
-		Padding = UDim.new(0, 13),
+		-- A little extra gutter keeps the right-hand group cards from feeling glued
+		-- to the left column, while the narrower right column preserves the outer edge.
+		Padding = UDim.new(0, 22),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, TabHose)
 
@@ -5139,7 +5319,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	}, Frame2)
 	New("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
-		Padding = UDim.new(0, 13),
+		Padding = UDim.new(0, 22),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, SubTabHose)
 
@@ -5560,7 +5740,7 @@ New("UIAspectRatioConstraint", {
 		
 		local Right = New("ScrollingFrame", {
 			Name = "Right",
-			Size = UDim2.new(0.47999998927116394, 0, 1, 0),
+			Size = UDim2.new(0.4699999988079071, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			LayoutOrder = 1,
@@ -5602,20 +5782,20 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 			for _, t in ipairs(tabs) do
 				t.btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 				t.btn.BackgroundTransparency = 1
-				if t.indicator then Tween(t.indicator, { BackgroundTransparency = 1 }, 0.11, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
-				t.icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-				t.icon.ImageTransparency = 0.6
-				t.txt.TextTransparency = 0.6
+				if t.indicator then Tween(t.indicator, { BackgroundTransparency = 1 }, 0.10, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
 				t.hide()
+				if t.btn ~= TabButtonFrame then
+					Tween(t.icon, { ImageColor3 = Color3.fromRGB(255, 255, 255), ImageTransparency = 0.6 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(t.txt, { TextTransparency = 0.6 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+				end
 			end
 			TabButtonFrame.BackgroundColor3 = Color3.fromRGB(35, 48, 74)
 			TabButtonFrame.BackgroundTransparency = 0.22
-			Tween(TabIndicator, { BackgroundTransparency = 0 }, 0.11, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			TabIcon.ImageColor3 = mainColor
-			TabIcon.ImageTransparency = 0
-			TabText.TextTransparency = 0
-			TabScale.Scale = 0.965
-			Tween(TabScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(TabIndicator, { BackgroundTransparency = 0 }, 0.10, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(TabText, { TextTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			TabScale.Scale = 0.955
+			Tween(TabScale, { Scale = 1 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			ShowContent()
 			activeTabIndex = tabIndex
 			if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
@@ -5729,15 +5909,24 @@ end
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 11); c.Parent = Elements end
+			Elements:SetAttribute("NLGroupOutlineInset", true)
 			do
 				local s = Instance.new("UIStroke")
 				s.Name = "GroupOutline"
-				s.Color = Color3.fromRGB(58, 64, 84)
-				s.Transparency = 0.36
+				s.Color = Color3.fromRGB(53, 60, 81)
+				s.Transparency = 0.27
 				s.Thickness = 1
 				s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				s.Parent = Elements
 			end
+			-- Inset rows slightly from the card edges. This keeps each side of the
+			-- rounded outline visible even when a row uses an opaque background.
+			New("UIPadding", {
+				PaddingLeft = UDim.new(0, 2),
+				PaddingRight = UDim.new(0, 2),
+				PaddingTop = UDim.new(0, 1),
+				PaddingBottom = UDim.new(0, 1),
+			}, Elements)
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -6473,7 +6662,7 @@ UIAspectRatioConstraint.Parent = Slider
 
 					local function closeDropdown()
 						dropOpen = false
-						Tween(SelArrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(SelArrow, {Rotation = 270}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 					end
@@ -6578,7 +6767,7 @@ UIAspectRatioConstraint.Parent = Slider
 							PositionPopupWithinMain(DropPopup, true, nil, Selection, Vector2.new(popupW, popupH))
 							ForceLiftClipping(DropPopup)
 							DropPopup.Visible = true
-							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+							Tween(SelArrow, {Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 						end
 					end)
@@ -8479,7 +8668,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					Tween(Arrow, {Rotation = 270}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -8554,7 +8743,7 @@ if maxY <= 0 then return end
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
 						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
 						Tween(DownBar, { Size = finalSize }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(Arrow, {Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
@@ -9315,7 +9504,7 @@ if maxY <= 0 then return end
 							math.min(accordionHeight * GetMainFrameScale(), math.max(MainFrame.AbsoluteSize.Y, 1)))
 						Section2Frame.Size = UDim2.new(0.96, 0, 0, accordionHeight)
 						PositionPopupWithinMain(Section2Frame, true, nil, nil, accordionKnown)
-						Tween(TextArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(TextArrow, {Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						RegisterPopup(Section2Frame, closeAccordion, Open)
 						local function settle()
 							if not accordionOpen or not Section2Frame.Parent then return end
@@ -10392,7 +10581,7 @@ if maxY <= 0 then return end
 
 			local stRight = New("ScrollingFrame", {
 				Name = "STRight_" .. name,
-				Size = UDim2.new(0.47999998927116394, 0, 1, 0),
+				Size = UDim2.new(0.4699999988079071, 0, 1, 0),
 				BackgroundTransparency = 1,
 				LayoutOrder = 1,
 				Visible = false,
@@ -10478,25 +10667,25 @@ if maxY <= 0 then return end
 				for _, st in ipairs(subTabs) do
 					st.row.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 					st.row.BackgroundTransparency = 1
-					if st.indicator then Tween(st.indicator, { BackgroundTransparency = 1 }, 0.11, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
-					st.lbl.TextTransparency = 0.55
+					if st.indicator then Tween(st.indicator, { BackgroundTransparency = 1 }, 0.10, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
+					if st.row ~= STRow then
+						Tween(st.lbl, { TextTransparency = 0.55 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					end
 					if st.icon then
-						st.icon.ImageColor3 = Color3.fromRGB(200, 200, 210)
-						st.icon.ImageTransparency = 0.6
+						Tween(st.icon, { ImageColor3 = Color3.fromRGB(200, 200, 210), ImageTransparency = 0.6 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end
 					st.left.Visible  = false
 					st.right.Visible = false
 				end
 				STRow.BackgroundColor3 = Color3.fromRGB(35, 48, 74)
 				STRow.BackgroundTransparency = 0.22
-				Tween(STIndicator, { BackgroundTransparency = 0 }, 0.11, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-				STLabel.TextTransparency = 0
+				Tween(STIndicator, { BackgroundTransparency = 0 }, 0.10, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				Tween(STLabel, { TextTransparency = 0 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				if iconRef then
-					iconRef.ImageColor3 = mainColor
-					iconRef.ImageTransparency = 0
+					Tween(iconRef, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end
-				STScale.Scale = 0.965
-				Tween(STScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				STScale.Scale = 0.955
+				Tween(STScale, { Scale = 1 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
 				for otherIndex, other in ipairs(subTabs) do
 					local rank = otherIndex == stIndex and 0 or 100 + otherIndex
@@ -10547,15 +10736,12 @@ if maxY <= 0 then return end
 				ActivateSubTab()
 			elseif not isFirstST then
 				STRow.BackgroundTransparency = 1
-				STLabel.TextTransparency = 1
-				STScale.Scale = 0.97
-				if iconRef then iconRef.ImageTransparency = 1 end
+				STLabel.TextTransparency = 0.55
+				STScale.Scale = 0.985
+				if iconRef then iconRef.ImageTransparency = 0.6 end
 				task.defer(function()
 					if not STRow.Parent then return end
-					Tween(STRow, { BackgroundTransparency = 1 }, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-					Tween(STLabel, { TextTransparency = 0.55 }, 0.3)
-					Tween(STScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-					if iconRef then Tween(iconRef, { ImageTransparency = 0.6 }, 0.3) end
+					Tween(STScale, { Scale = 1 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				end)
 			end
 
