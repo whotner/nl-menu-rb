@@ -433,38 +433,25 @@ local function New(class, props, parent)
 	if parent then obj.Parent = parent end
 	if obj:IsA("UIStroke") then ApplyStrokeScale(obj, strokeScale) end
 	AddTextConstraint(obj, 7, 16)
-
-	-- Consistent, restrained hover/press feedback for real button surfaces.
-	-- Fully transparent hit-targets are left alone so they don't tint controls beneath them.
-	if (obj:IsA("TextButton") or obj:IsA("ImageButton")) and obj.BackgroundTransparency < 0.98 then
-		local baseColor = obj.BackgroundColor3
-		local hoverColor = baseColor:Lerp(Color3.fromRGB(255, 255, 255), 0.055)
-		local pressedColor = baseColor:Lerp(Color3.fromRGB(255, 255, 255), 0.10)
-		local hoverOn = false
-		obj.MouseEnter:Connect(function()
-			-- Capture the current state color each time; selected buttons may change color dynamically.
-			baseColor = obj.BackgroundColor3
-			hoverColor = baseColor:Lerp(Color3.fromRGB(255, 255, 255), 0.055)
-			pressedColor = baseColor:Lerp(Color3.fromRGB(255, 255, 255), 0.10)
-			hoverOn = true
-			Tween(obj, { BackgroundColor3 = hoverColor }, 0.12, Enum.EasingStyle.Quad)
-		end)
-		obj.MouseLeave:Connect(function()
-			hoverOn = false
-			Tween(obj, { BackgroundColor3 = baseColor }, 0.14, Enum.EasingStyle.Quad)
-		end)
-		obj.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				Tween(obj, { BackgroundColor3 = pressedColor }, 0.06, Enum.EasingStyle.Quad)
-			end
-		end)
-		obj.InputEnded:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				Tween(obj, { BackgroundColor3 = hoverOn and hoverColor or baseColor }, 0.10, Enum.EasingStyle.Quad)
-			end
-		end)
-	end
 	return obj
+end
+
+-- Restrained hover feedback for actual control rows. This is intentionally
+-- opt-in; transparent hitbox overlays are not decorated.
+local function AttachRowHover(row)
+	if not row or not row:IsA("GuiObject") or row:GetAttribute("NLRowHoverAttached") then return end
+	local ok, baseTransparency = pcall(function() return row.BackgroundTransparency end)
+	if not ok or type(baseTransparency) ~= "number" or baseTransparency < 0.98 then return end
+	local baseColor = row.BackgroundColor3
+	row:SetAttribute("NLRowHoverAttached", true)
+	row.MouseEnter:Connect(function()
+		if not row.Parent then return end
+		Tween(row, { BackgroundColor3 = Color3.fromRGB(245, 247, 255), BackgroundTransparency = 0.955 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+	end)
+	row.MouseLeave:Connect(function()
+		if not row.Parent then return end
+		Tween(row, { BackgroundColor3 = baseColor, BackgroundTransparency = baseTransparency }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+	end)
 end
 
 local function CleanBorders(root)
@@ -524,7 +511,14 @@ end
 
 local function BindKeyName(key)
 	if not key then return "—" end
-	local n = type(key) == "string" and key or (type(key) == "table" and key.Name or key.Name)
+	local n
+	if type(key) == "string" then
+		n = key
+	else
+		local ok, keyName = pcall(function() return key.Name end)
+		if ok then n = keyName end
+	end
+	if type(n) ~= "string" then return tostring(key) end
 	if n == "MouseButton3" then return "Mouse 3" end
 	if n == "MouseButton4" then return "Mouse 4" end
 	if n == "MouseButton5" then return "Mouse 5" end
@@ -731,7 +725,7 @@ local function RefreshRowDividers(listFrame)
 			local divider = child:FindFirstChild("Lines")
 			if divider and divider:IsA("GuiObject") then
 				divider.Visible = true
-				divider.BackgroundTransparency = 0.9
+				divider.BackgroundTransparency = 0.87
 				table.insert(rows, divider)
 			end
 		end
@@ -754,17 +748,98 @@ end
 
 task.spawn(function()
 	while true do
-		task.wait(0.4)
+		task.wait(2)
 		for i = #_watchedDividers, 1, -1 do
 			local frame = _watchedDividers[i]
-			if frame and frame.Parent then
-				RefreshRowDividers(frame)
-			else
-				table.remove(_watchedDividers, i)
-			end
+			if not frame or not frame.Parent then table.remove(_watchedDividers, i) end
 		end
 	end
 end)
+
+-- Preserve each widget's authored alpha and reveal real content rows with a
+-- short, staggered fade. State is cached per instance so tab switches do not
+-- overwrite intentionally muted labels, selected states, or control styling.
+local _contentAlphaState = setmetatable({}, { __mode = "k" })
+local _contentRevealTokens = setmetatable({}, { __mode = "k" })
+
+local function ContentAlphaTargets(object)
+    local state = _contentAlphaState[object]
+    if state then return state end
+    state = {}
+    -- Only text and strokes are animated on rows. Background/image alpha can
+    -- encode live states (checkboxes, toggles, previews), so they stay untouched.
+    if (object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")) and object.Text ~= "" then
+        state.TextTransparency = object.TextTransparency
+    end
+    if object:IsA("UIStroke") then
+        state.Transparency = object.Transparency
+    end
+    _contentAlphaState[object] = state
+    return state
+end
+
+local function HasVisiblePath(object, root)
+    local current = object
+    while current and current ~= root do
+        if current:IsA("GuiObject") and not current.Visible then return false end
+        current = current.Parent
+    end
+    return current == root
+end
+
+local function RevealContentRows(elements)
+    if not elements or not elements.Parent or not elements:IsA("GuiObject") or not elements.Visible then return end
+    local token = (_contentRevealTokens[elements] or 0) + 1
+    _contentRevealTokens[elements] = token
+    local rows = {}
+    for _, child in ipairs(elements:GetChildren()) do
+        if child:IsA("GuiObject") then table.insert(rows, child) end
+    end
+    table.sort(rows, function(a, b) return a.LayoutOrder < b.LayoutOrder end)
+    for index, row in ipairs(rows) do
+        if row.Visible then
+            local delaySeconds = math.min((index - 1) * 0.012, 0.10)
+            task.delay(delaySeconds, function()
+                if not elements.Parent or not row.Parent or _contentRevealTokens[elements] ~= token then return end
+                local objects = { row }
+                for _, descendant in ipairs(row:GetDescendants()) do
+                    table.insert(objects, descendant)
+                end
+                for _, object in ipairs(objects) do
+                    if object.Parent and HasVisiblePath(object, elements) then
+                        local targets = ContentAlphaTargets(object)
+                        local props = {}
+                        for property, target in pairs(targets) do
+                            if type(target) == "number" and target < 0.995 then
+                                props[property] = target
+                                pcall(function() object[property] = 1 end)
+                            end
+                        end
+                        if next(props) then
+                            Tween(object, props, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end
+
+local function AnimateSectionColumn(column)
+    if not column or not column.Parent or not column.Visible then return end
+    for _, section in ipairs(column:GetChildren()) do
+        if section:IsA("GuiObject") and section.Visible then
+            section.BackgroundTransparency = 1
+            Tween(section, { BackgroundTransparency = section.Name == "Section" and 1 or 0 }, 0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+            local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
+            if list and list:IsA("GuiObject") then
+                list.BackgroundTransparency = 1
+                Tween(list, { BackgroundTransparency = 0 }, 0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+                RevealContentRows(list)
+            end
+        end
+    end
+end
 
 local function GetSliderStep(min, max)
 	local span = max - min
@@ -962,27 +1037,30 @@ end
 		for _, fn in ipairs(toClose) do pcall(fn) end
 	end)
 
+-- Tween instances cannot be stored as Roblox attributes; keep live popup tweens
+-- in a weak-key table so destroyed frames do not remain referenced.
+local _activePopupTweens = setmetatable({}, { __mode = "k" })
+
 local function CancelPopupTween(frame)
-	if not frame or not frame.Parent then return end
-	local running = frame:GetAttribute("PopupTween")
+	if not frame then return end
+	local running = _activePopupTweens[frame]
+	_activePopupTweens[frame] = nil
 	if running then
 		pcall(function() running:Cancel() end)
 	end
-	frame:SetAttribute("PopupTween", nil)
 end
 
 local function PlayPopupTween(frame, info, props)
+	if not frame or not frame.Parent then return end
 	local ok, tween = pcall(function() return TweenService:Create(frame, info, props) end)
 	if not ok or not tween then return end
-	frame:SetAttribute("PopupTween", tween)
-	pcall(function() tween:Play() end)
-	pcall(function()
-		tween.Completed:Connect(function()
-			if frame:GetAttribute("PopupTween") == tween then
-				frame:SetAttribute("PopupTween", nil)
-			end
-		end)
+	_activePopupTweens[frame] = tween
+	tween.Completed:Connect(function()
+		if _activePopupTweens[frame] == tween then
+			_activePopupTweens[frame] = nil
+		end
 	end)
+	tween:Play()
 end
 
 local function GetPopupScale(frame)
@@ -1115,6 +1193,11 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	ClipsDescendants = false,
 	}, NeverloseCS2)
 	local MainFrameUIScale
+	local windowTargetSize = MainFrame.Size
+	local windowAnimSize = UDim2.new(
+		windowTargetSize.X.Scale * 0.97, windowTargetSize.X.Offset * 0.97,
+		windowTargetSize.Y.Scale * 0.97, windowTargetSize.Y.Offset * 0.97
+	)
 	local _windowContextTargets = {}
 	GetDragShield(MainFrame)
     local Watermark = New("TextLabel", {
@@ -1588,13 +1671,13 @@ do
 	-- Watermark shadow: more overlapping, low-contrast layers read as a soft
 	-- ambient shadow instead of four separate dark outlines.
 	local layers = {}
-	local shadowLayerCount = 8
+	local shadowLayerCount = 2
 	for i = 1, shadowLayerCount do
 		local layer = Instance.new("Frame")
 		layer.Name = "Layer" .. i
 		layer.BackgroundColor3 = Color3.new(0, 0, 0)
 		-- Strongest near the watermark, gradually fading outward.
-		layer.BackgroundTransparency = 0.50 + (i - 1) * (0.46 / (shadowLayerCount - 1))
+		layer.BackgroundTransparency = 0.82 + (i - 1) * 0.08
 		layer.BorderSizePixel = 0
 		layer.ZIndex = Z_BASE + 899
 		layer.Parent = WMShadowHost
@@ -1608,10 +1691,10 @@ do
 		if not WMShadowHost.Visible then return end
 		WMShadowHost.Size = UDim2.fromOffset(w, h)
 		for i, layer in ipairs(layers) do
-			local s = i * 2.15
-			-- Slight downward bias gives the watermark depth without a hard halo.
-			layer.Position = UDim2.new(0, -s, 0, 2 - s + (i * 0.12))
-			layer.Size = UDim2.new(1, s * 2, 1, s * 2 + 4)
+			local s = i * 0.65
+			-- Minimal near-field shade; keep the watermark crisp without a detached halo.
+			layer.Position = UDim2.new(0, -s, 0, 1 - s)
+			layer.Size = UDim2.new(1, s * 2, 1, s * 2 + 2)
 		end
 	end
 	GameInfo:GetPropertyChangedSignal("AbsoluteSize"):Connect(WMShadowSync)
@@ -2307,7 +2390,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = WindowSettingsFrame end
 	AttachShadow(WindowSettingsFrame, { radius = 18, layers = 4, step = 1.5, bias = 3 })
 
 
@@ -3202,16 +3285,17 @@ PositionPopupWithinMain(LangDownBar, true)
 			wsOpen = false
 			ClosePopupsUnder(WindowSettingsFrame)
 			UnregisterPopup(WindowSettingsFrame)
+			Tween(WSScale, { Scale = 0.975 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			SmoothClose(WindowSettingsFrame, 0.18)
-			Tween(ImageLabel, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(ImageLabel, { Rotation = 270 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		end
 		WindowSettings.MouseButton1Click:Connect(function()
 			wsOpen = not wsOpen
 			if wsOpen then
 				CloseAllPopupsExcept(WindowSettingsFrame)
 				WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
-		WSScale.Scale = 0.92
-		Tween(WSScale, { Scale = 1 }, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		WSScale.Scale = 0.97
+		Tween(WSScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
 				WindowSettingsFrame.Visible = false
 					ApplyZIndexLadder(WindowSettingsFrame, NextPopupZ())
@@ -3234,7 +3318,7 @@ PositionPopupWithinMain(LangDownBar, true)
 				WindowSettingsFrame.Position = UDim2.new(wsSettled.X.Scale, wsSettled.X.Offset - 12, wsSettled.Y.Scale, wsSettled.Y.Offset)
 				Tween(WindowSettingsFrame, { Position = wsSettled }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
-				Tween(ImageLabel, {Rotation = 180}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				Tween(ImageLabel, { Rotation = 180 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			else
 				closeWS()
 			end
@@ -4030,9 +4114,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local ConfigScale = Instance.new("UIScale")
 	ConfigScale.Scale = 1
 	ConfigScale.Parent = ConfigMainFrame
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = ConfigMainFrame end
 	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ConfigMainFrame end
-	AttachShadow(ConfigMainFrame, { radius = 18, layers = 4, step = 1.5, bias = 3 })
+	AttachShadow(ConfigMainFrame, { radius = 10, layers = 4, step = 1.25, bias = 2 })
 
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
@@ -4043,7 +4127,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CMHeader.ClipsDescendants = true
 	CMHeader.ZIndex = 100
 	CMHeader.Parent = ConfigMainFrame
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = CMHeader end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = CMHeader end
 
 	do
 		local CMHeaderRule = Instance.new("Frame")
@@ -4290,9 +4374,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Active = true
 	RecentlyDeletedPanel.Visible = false
 	RecentlyDeletedPanel.Parent = Frame2
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = RecentlyDeletedPanel end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = RecentlyDeletedPanel end
 	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = RecentlyDeletedPanel end
-	AttachShadow(RecentlyDeletedPanel, { radius = 18, layers = 4, step = 1.5, bias = 3 })
+	AttachShadow(RecentlyDeletedPanel, { radius = 10, layers = 4, step = 1.25, bias = 2 })
 
 	local RDHeader = Instance.new("Frame")
 	RDHeader.Name = "RDHeader"
@@ -4302,7 +4386,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RDHeader.ClipsDescendants = true
 	RDHeader.ZIndex = 121
 	RDHeader.Parent = RecentlyDeletedPanel
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = RDHeader end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = RDHeader end
 	do
 		local rule = Instance.new("Frame")
 		rule.Name = "HeaderRule"
@@ -4431,8 +4515,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConfigMainFrame.BackgroundTransparency = 1
 			ConfigMainFrame.Visible = true
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
-			ConfigScale.Scale = 0.96
-			Tween(ConfigScale, {Scale = 1}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			ConfigScale.Scale = 0.975
+			Tween(ConfigScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			Tween(ConfigMainFrame, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		end)
 	end)
@@ -4469,7 +4553,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		row.Name = "ConfigRow_" .. name
 		row.Size = UDim2.new(1, 0, 0, 36)
 		row.BackgroundColor3 = Color3.fromRGB(16, 18, 27)
-		row.BackgroundTransparency = 0
+		row.BackgroundTransparency = 0.25
 		row.BorderSizePixel = 0
 		row.ZIndex = 1000
 		row.Parent = ListContainer
@@ -4478,11 +4562,17 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		local rowStroke = Instance.new("UIStroke")
 		rowStroke.Color = mainColor
 		rowStroke.Transparency = 1
-		rowStroke.Thickness = 1.2
+		rowStroke.Thickness = 1
 		rowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 		rowStroke.Parent = row
-		row.MouseEnter:Connect(function() Tween(row, {BackgroundTransparency = 0.5}, 0.12) end)
-		row.MouseLeave:Connect(function() Tween(row, {BackgroundTransparency = 0.25}, 0.12) end)
+		row.MouseEnter:Connect(function()
+			Tween(row, { BackgroundTransparency = 0.12 }, 0.1, Enum.EasingStyle.Sine)
+			Tween(rowStroke, { Transparency = activeRow == row and 0 or 0.78 }, 0.1, Enum.EasingStyle.Sine)
+		end)
+		row.MouseLeave:Connect(function()
+			Tween(row, { BackgroundTransparency = activeRow == row and 0.5 or 0.25 }, 0.13, Enum.EasingStyle.Sine)
+			Tween(rowStroke, { Transparency = activeRow == row and 0 or 1 }, 0.13, Enum.EasingStyle.Sine)
+		end)
 
 		local Rename = Instance.new("TextBox")
 		Rename.Name = "Rename"
@@ -4550,8 +4640,13 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.ClipsDescendants = false
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
-		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SettingsFrame end
+		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = SettingsFrame end
+		local SettingsFrameStroke = Instance.new("UIStroke")
+		SettingsFrameStroke.Color = THEME.stroke
+		SettingsFrameStroke.Transparency = 0.6
+		SettingsFrameStroke.Thickness = 1
+		SettingsFrameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+		SettingsFrameStroke.Parent = SettingsFrame
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -4643,7 +4738,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		closeSfRow = function()
 			sfOpen = false
 			UnregisterPopup(SettingsFrame)
-			Tween(SettingsFrame, {Size = UDim2.new(0.44, 0, 0, 0), BackgroundTransparency = 1}, 0.18)
+			Tween(SettingsFrame, { Size = UDim2.new(0.44, 0, 0, 0), BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+			Tween(SettingsFrameStroke, { Transparency = 1 }, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
 			task.delay(0.19, function() if not sfOpen then SettingsFrame.Visible = false end end)
 		end
 		SettingsBtn.MouseButton1Click:Connect(function()
@@ -4652,9 +4748,16 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				CloseAllPopupsExcept(SettingsFrame)
 				SettingsFrame.BackgroundTransparency = 1
 				SettingsFrame.Visible = true
-				SettingsFrame.Size = UDim2.new(0.44, 0, 0, SF_ROW_HEIGHT)
-				PositionPopupWithinMain(SettingsFrame, true); RegisterPopup(SettingsFrame, closeSfRow, SettingsBtn)
-				Tween(SettingsFrame, {Size = UDim2.new(0.44, 0, 0, SF_ROW_HEIGHT), BackgroundTransparency = 0}, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				local targetSize = UDim2.new(0.44, 0, 0, SF_ROW_HEIGHT)
+				SettingsFrame.Size = targetSize
+				PositionPopupWithinMain(SettingsFrame, true)
+				local targetPosition = SettingsFrame.Position
+				SettingsFrame.Size = UDim2.new(0.44, 0, 0, 0)
+				SettingsFrame.Position = targetPosition
+				RegisterPopup(SettingsFrame, closeSfRow, SettingsBtn)
+				SettingsFrameStroke.Transparency = 1
+				Tween(SettingsFrame, { Size = targetSize, BackgroundTransparency = 0 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				Tween(SettingsFrameStroke, { Transparency = 0.6 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			else
 				closeSfRow()
 			end
@@ -4853,8 +4956,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			Tween(RecentlyDeletedPanel, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			local rdScale = GetPopupScale(RecentlyDeletedPanel)
 			if rdScale then
-				rdScale.Scale = 0.96
-				Tween(rdScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				rdScale.Scale = 0.975
+				Tween(rdScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			end
 		end)
 	end)
@@ -4866,9 +4969,12 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		ClosePopupsUnder(RecentlyDeletedPanel)
 		UnregisterPopup(ConfigMainFrame)
 		UnregisterPopup(RecentlyDeletedPanel)
-		Tween(ConfigMainFrame, {BackgroundTransparency = 1}, 0.2)
-		Tween(RecentlyDeletedPanel, {BackgroundTransparency = 1}, 0.2)
-		Tween(SaveArrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		Tween(ConfigMainFrame, { BackgroundTransparency = 1 }, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		Tween(ConfigScale, { Scale = 0.975 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		Tween(RecentlyDeletedPanel, { BackgroundTransparency = 1 }, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		local rdScale = RecentlyDeletedPanel:FindFirstChild("_PopScale")
+		if rdScale and rdScale:IsA("UIScale") then Tween(rdScale, { Scale = 0.975 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In) end
+		Tween(SaveArrow, { Rotation = 270 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		task.delay(0.22, function()
 			if configOpen then return end
 			ConfigMainFrame.Visible = false
@@ -4896,13 +5002,13 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				end
 			end)
 			ConfigMainFrame.Visible = true
-			ConfigScale.Scale = 0.96
-			Tween(ConfigScale, {Scale = 1}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			ConfigScale.Scale = 0.975
+			Tween(ConfigScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			Tween(ConfigMainFrame, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			local cfgSettled = ConfigMainFrame.Position
-			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 10)
-			Tween(ConfigMainFrame, { Position = cfgSettled }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		Tween(SaveArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 5)
+			Tween(ConfigMainFrame, { Position = cfgSettled }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Tween(SaveArrow, { Rotation = 360 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		else
 			closeConfigPanel()
 		end
@@ -4953,7 +5059,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			SearchBox.BackgroundTransparency = 1
 			SearchBox.Size = UDim2.new(0, 0, 0.6000000238418579, 0)
 			Tween(SearchBox, { BackgroundTransparency = 0 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			Tween(SearchBox, { Size = UDim2.new(0.4000000059604645, 0, 0.6000000238418579, 0) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			Tween(SearchBox, { Size = UDim2.new(0.4000000059604645, 0, 0.6000000238418579, 0) }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			task.wait(0.3)
 			SearchBox:CaptureFocus()
 		else
@@ -5138,21 +5244,6 @@ Line9.Parent = MainFrame
 	
 
 
-	local function HideWindowInstantly()
-		HideAllPopupsNow(true)
-		if ConfigMainFrame then ConfigMainFrame.Visible = false end
-		if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
-		if Save then Save.Visible = false end
-		if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
-		if AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.Part then
-			AcrylicBlur.Instances.Part.Transparency = 1
-		end
-		if AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.DepthOfField then
-			AcrylicBlur.Instances.DepthOfField.Enabled = false
-		end
-		MainFrame.BackgroundTransparency = 1
-		MainFrame.Visible = false
-	end
 
 	local guiOpen = true
 
@@ -5163,30 +5254,21 @@ Line9.Parent = MainFrame
 		if open then
 			MainFrame.Visible = true
 			MainFrame.BackgroundTransparency = 1
-			if MainFrameUIScale then MainFrameUIScale.Scale = 0.96 end
-			Tween(MainFrame, { BackgroundTransparency = 0.1 }, dur)
-			if MainFrameUIScale then
-				Tween(MainFrameUIScale, { Scale = 1 }, dur, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-			end
-			task.delay((dur or 0.3) + 0.05, function()
-				if not MainFrame.Visible or not MainFrameUIScale then return end
-				local target = MainFrameUIScale.Scale
-				MainFrameUIScale.Scale = target + 0.001
-				task.defer(function()
-					if MainFrameUIScale then MainFrameUIScale.Scale = target end
-				end)
-			end)
+			MainFrame.Size = windowAnimSize
+			Tween(MainFrame, { BackgroundTransparency = 0.1 }, dur, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(MainFrame, { Size = windowTargetSize }, dur, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		else
 			HideAllPopupsNow(true)
 			if ConfigMainFrame then ConfigMainFrame.Visible = false end
 			if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
 			if Save then Save.Visible = false end
 			if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
-			Tween(MainFrame, { BackgroundTransparency = 1 }, dur)
-			if MainFrameUIScale then Tween(MainFrameUIScale, { Scale = 0.96 }, dur) end
+			Tween(MainFrame, { BackgroundTransparency = 1 }, dur, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+			Tween(MainFrame, { Size = windowAnimSize }, dur, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			task.delay(dur + 0.02, function()
 				if guiOpen then return end
 				MainFrame.Visible = false
+				MainFrame.Size = windowTargetSize
 				if part then part.Transparency = 1 end
 				if dof then dof.Enabled = false end
 			end)
@@ -5200,9 +5282,6 @@ Line9.Parent = MainFrame
 
 	local function toggleGui()
     guiOpen = not guiOpen
-    if not guiOpen then
-		HideWindowInstantly()
-	end
     ToggleBtn.Text = guiOpen and "Close [RShift]" or "Open  [RShift]"
     Tween(ToggleBtn, {
         BackgroundColor3 = guiOpen and Color3.fromRGB(21, 24, 36) or Color3.fromRGB(33,37,53)
@@ -5373,32 +5452,8 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 			Right.Position = UDim2.new(0, 0, 0, 0)
 			Left.Visible = true
 			Right.Visible = true
-			for _, column in ipairs({Left, Right}) do
-				for _, section in ipairs(column:GetChildren()) do
-					if section:IsA("GuiObject") then
-						section.BackgroundTransparency = 1
-						Tween(section, {BackgroundTransparency = section.Name == "Section" and 1 or 0}, 0.28, Enum.EasingStyle.Quad)
-						local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
-						if list and list:IsA("GuiObject") then
-							list.BackgroundTransparency = 1
-							Tween(list, {BackgroundTransparency = 0}, 0.3, Enum.EasingStyle.Quad)
-							for _, item in ipairs(list:GetChildren()) do
-								if item:IsA("GuiObject") then
-									local texts = {}
-									for _, d in ipairs(item:GetDescendants()) do
-										if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
-									end
-									for _, t in ipairs(texts) do
-									if t.Parent then
-									t.TextTransparency = t.Name == "TextDefault" and 0.5 or 0
-									end
-									end
-								end
-							end
-						end
-					end
-				end
-			end
+			AnimateSectionColumn(Left)
+			AnimateSectionColumn(Right)
 		end
 
 		local function ActivateTab()
@@ -5416,14 +5471,28 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 			TabIcon.ImageColor3 = mainColor
 			TabIcon.ImageTransparency = 0
 			TabText.TextTransparency = 0
-			TabScale.Scale = 0.86
-			Tween(TabScale, { Scale = 1 }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			TabScale.Scale = 0.965
+			Tween(TabScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			ShowContent()
 			activeTabIndex = tabIndex
 			if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
 		end
 
 		ClickArea.MouseButton1Click:Connect(ActivateTab)
+
+		-- Hover feedback is limited to real navigation items. Transparent hit targets elsewhere stay inert.
+		TabButtonFrame.MouseEnter:Connect(function()
+			if activeTabIndex == tabIndex then return end
+			Tween(TabButtonFrame, { BackgroundTransparency = 0.94 }, 0.11, Enum.EasingStyle.Sine)
+			Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0.24 }, 0.11, Enum.EasingStyle.Sine)
+			Tween(TabText, { TextTransparency = 0.22 }, 0.11, Enum.EasingStyle.Sine)
+		end)
+		TabButtonFrame.MouseLeave:Connect(function()
+			if activeTabIndex == tabIndex then return end
+			Tween(TabButtonFrame, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Sine)
+			Tween(TabIcon, { ImageColor3 = Color3.fromRGB(255, 255, 255), ImageTransparency = 0.6 }, 0.14, Enum.EasingStyle.Sine)
+			Tween(TabText, { TextTransparency = 0.6 }, 0.14, Enum.EasingStyle.Sine)
+		end)
 
 		table.insert(tabs, {
 			btn = TabButtonFrame,
@@ -5514,8 +5583,8 @@ end
 				AutomaticSize = Enum.AutomaticSize.Y,
 				LayoutOrder = 1,
 			}, Section)
-			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
+			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 11); c.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(58, 64, 84); s.Transparency = 0.49; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -5758,7 +5827,7 @@ end
 					local function settle()
 						if not settingsOpen or not SettingsFrame.Parent then return end
 						placeSettings(getSettingsHeight())
-						Tween(SFScale, {Scale = 1}, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						Tween(SFScale, {Scale = 1}, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					end
 					task.defer(settle)
 					task.delay(0.05, settle)
@@ -5852,10 +5921,12 @@ UIAspectRatioConstraint.Parent = Toggle
 						ZIndex = 1010,
 					}, Toggle)
 
+					AttachRowHover(Btn.Parent)
+
 					local function Set(val)
 						enabled = val == true
-						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.16, Enum.EasingStyle.Sine)
+						Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.16, Enum.EasingStyle.Quad)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -5927,6 +5998,8 @@ UIAspectRatioConstraint.Parent = Toggle
 						ZIndex = 1010,
 					}, CheckBoxToggle)
 
+					AttachRowHover(Btn.Parent)
+
 					local function Set(val)
 						enabled = val == true
 						Tween(Check, { ImageTransparency = enabled and 0.1 or 1 }, 0.2)
@@ -5959,6 +6032,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						LayoutOrder = settingsElemCount,
 						ZIndex = 1000,
 					}, SettingsFrame_Container)
+					AttachRowHover(Slider)
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
@@ -6045,11 +6119,28 @@ UIAspectRatioConstraint.Parent = Slider
 					}, Line)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Trigger)
 					New("UIAspectRatioConstraint", {}, Trigger)
-
+					local Thumb = New("Frame", {
+						Name = "Thumb",
+						AnchorPoint = Vector2.new(0.5, 0.5),
+						Position = UDim2.new(initRatio, 0, 0.5, 0),
+						Size = UDim2.fromOffset(8, 8),
+						BackgroundColor3 = mainColor,
+						BorderSizePixel = 0,
+						ZIndex = Line.ZIndex + 3,
+					}, Line)
+					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
+					New("UIStroke", { Color = Color3.fromRGB(228, 238, 255), Transparency = 0.3, Thickness = 1 }, Thumb)
+					Line.MouseEnter:Connect(function()
+						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					end)
+					Line.MouseLeave:Connect(function()
+						Tween(Thumb, { Size = UDim2.fromOffset(8, 8) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					end)
 					local initialValue = value
 					task.defer(function()
 						if value ~= initialValue then return end
 						InLine.Size = UDim2.fromScale(initRatio, 1)
+						Thumb.Position = UDim2.new(initRatio, 0, 0.5, 0)
 						Trigger.Position = UDim2.new(initRatio, 0, -1.8000000715255737, 0)
 					end)
 
@@ -6058,11 +6149,16 @@ UIAspectRatioConstraint.Parent = Slider
 						local lineSize = Line.AbsoluteSize.X
 						if lineSize <= 0 then return end
 						local sizeScale = ClampRatio(pointer.X - Line.AbsolutePosition.X, lineSize)
-						value = Quantize(((max - min) * sizeScale) + min, min, max, GetSliderStep(min, max))
-						Tween(InLine, { Size = UDim2.fromScale(sizeScale, 1) }, 0.1)
-						Trigger.Position = UDim2.new(sizeScale, 0, -1.8000000715255737, 0)
+						local nextValue = Quantize(((max - min) * sizeScale) + min, min, max, GetSliderStep(min, max))
+						local changed = nextValue ~= value
+						value = nextValue
+						local span = max - min
+						local snappedRatio = span ~= 0 and math.clamp((value - min) / span, 0, 1) or 0
+						InLine.Size = UDim2.fromScale(snappedRatio, 1)
+						Trigger.Position = UDim2.new(snappedRatio, 0, -1.8000000715255737, 0)
+						Thumb.Position = UDim2.new(snappedRatio, 0, 0.5, 0)
 						SliderValue.Text = FormatSliderValue(value, suffix)
-						InvokeCallback(callback, value)
+						if changed then InvokeCallback(callback, value) end
 					end
 
 					Line.InputBegan:Connect(function(input)
@@ -6086,9 +6182,11 @@ UIAspectRatioConstraint.Parent = Slider
 						local numeric = type(val) == "number" and val == val and val or min
 						value = math.clamp(numeric, min, max)
 						value = Quantize(value, min, max, GetSliderStep(min, max))
-					local ratio = (value - min) / (max - min)
-						InLine.Size = UDim2.fromScale(ratio, 1)
+					local span = max - min
+					local ratio = span ~= 0 and math.clamp((value - min) / span, 0, 1) or 0
+						Tween(InLine, { Size = UDim2.fromScale(ratio, 1) }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						Trigger.Position = UDim2.new(ratio, 0, -1.8000000715255737, 0)
+						Tween(Thumb, { Position = UDim2.new(ratio, 0, 0.5, 0) }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						SliderValue.Text = FormatSliderValue(value, suffix)
 						InvokeCallback(callback, value)
 					end
@@ -6842,7 +6940,7 @@ if maxY <= 0 then return end
 				local pop = GetPopupScale(_bindMenu)
 				if pop then
 					pop.Scale = 0.96
-					Tween(pop, { Scale = 1 }, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+					Tween(pop, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				end
 				local row = target.row
 				MovePopupToAbsolute(_bindMenu,
@@ -7194,10 +7292,12 @@ if maxY <= 0 then return end
 					ZIndex = 5,
 				}, Toggle)
 
+				AttachRowHover(Btn.Parent)
+
 				local function Set(val)
 					enabled = val == true
-					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.16, Enum.EasingStyle.Sine)
+					Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.16, Enum.EasingStyle.Quad)
 					InvokeCallback(callback, enabled)
 				end
 
@@ -7269,6 +7369,8 @@ if maxY <= 0 then return end
 					Text = "",
 					ZIndex = 1010,
 				}, CheckBoxToggle)
+				AttachRowHover(Btn.Parent)
+
 				local function Set(val)
 					enabled = val == true
 					Tween(Check, {ImageTransparency = enabled and 0.1 or 1}, 0.2)
@@ -7599,10 +7701,12 @@ if maxY <= 0 then return end
 					updateColor()
 				end
 
+				AttachRowHover(Toggle)
+
 				local function SetEnabled(val)
 					enabled = val == true
-					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-					Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.16, Enum.EasingStyle.Sine)
+					Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.16, Enum.EasingStyle.Quad)
 					NotifyEnabled()
 				end
 
@@ -7689,6 +7793,7 @@ if maxY <= 0 then return end
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
 				}, Elements)
+				AttachRowHover(Slider)
 				New("UIAspectRatioConstraint", {
 					AspectRatio = 9,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
@@ -7769,11 +7874,28 @@ if maxY <= 0 then return end
 				}, Line)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Trigger)
 				New("UIAspectRatioConstraint", {}, Trigger)
-
+				local Thumb = New("Frame", {
+					Name = "Thumb",
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Position = UDim2.new(initRatio, 0, 0.5, 0),
+					Size = UDim2.fromOffset(8, 8),
+					BackgroundColor3 = mainColor,
+					BorderSizePixel = 0,
+					ZIndex = Line.ZIndex + 3,
+				}, Line)
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
+				New("UIStroke", { Color = Color3.fromRGB(228, 238, 255), Transparency = 0.3, Thickness = 1 }, Thumb)
+				Line.MouseEnter:Connect(function()
+					Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+				end)
+				Line.MouseLeave:Connect(function()
+					Tween(Thumb, { Size = UDim2.fromOffset(8, 8) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+				end)
 				local initialValue = value
 				task.defer(function()
 					if value ~= initialValue then return end
 					InLine.Size = UDim2.fromScale(initRatio, 1)
+					Thumb.Position = UDim2.new(initRatio, 0, 0.5, 0)
 					Trigger.Position = UDim2.new(initRatio, 0, -1.8000000715255737, 0)
 				end)
 
@@ -7782,11 +7904,16 @@ if maxY <= 0 then return end
 						local lineSize = Line.AbsoluteSize.X
 						if lineSize <= 0 then return end
 						local sizeScale = ClampRatio(pointer.X - Line.AbsolutePosition.X, lineSize)
-						value = Quantize(((max - min) * sizeScale) + min, min, max, GetSliderStep(min, max))
-						Tween(InLine, { Size = UDim2.fromScale(sizeScale, 1) }, 0.1)
-						Trigger.Position = UDim2.new(sizeScale, 0, -1.8000000715255737, 0)
+						local nextValue = Quantize(((max - min) * sizeScale) + min, min, max, GetSliderStep(min, max))
+						local changed = nextValue ~= value
+						value = nextValue
+						local span = max - min
+						local snappedRatio = span ~= 0 and math.clamp((value - min) / span, 0, 1) or 0
+						InLine.Size = UDim2.fromScale(snappedRatio, 1)
+						Trigger.Position = UDim2.new(snappedRatio, 0, -1.8000000715255737, 0)
+						Thumb.Position = UDim2.new(snappedRatio, 0, 0.5, 0)
 						SliderValue.Text = FormatSliderValue(value, suffix)
-						InvokeCallback(callback, value)
+						if changed then InvokeCallback(callback, value) end
 					end
 
 				local Hitbox = New("TextButton", {
@@ -7831,9 +7958,11 @@ if maxY <= 0 then return end
 					local numeric = type(val) == "number" and val == val and val or min
 						value = math.clamp(numeric, min, max)
 					value = Quantize(value, min, max, GetSliderStep(min, max))
-					local ratio = (value - min) / (max - min)
-					InLine.Size = UDim2.fromScale(ratio, 1)
+					local span = max - min
+					local ratio = span ~= 0 and math.clamp((value - min) / span, 0, 1) or 0
+					Tween(InLine, { Size = UDim2.fromScale(ratio, 1) }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					Trigger.Position = UDim2.new(ratio, 0, -1.8000000715255737, 0)
+					Tween(Thumb, { Position = UDim2.new(ratio, 0, 0.5, 0) }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					SliderValue.Text = FormatSliderValue(value, suffix)
 					InvokeCallback(callback, value)
 				end
@@ -7867,6 +7996,7 @@ if maxY <= 0 then return end
 					AspectRatio = 9,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Dropdown)
+				AttachRowHover(Dropdown)
 
 				New("Frame", {
 					Name = "Lines",
@@ -7933,9 +8063,9 @@ if maxY <= 0 then return end
 					ClipsDescendants = true,
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
-				New("UIStroke", {
+				local PopupStroke = New("UIStroke", {
 					Color = THEME.stroke,
-					Transparency = 0.6,
+					Transparency = 0.58,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
 				}, DownBar)
@@ -7962,22 +8092,29 @@ if maxY <= 0 then return end
 				}, Scrolls)
 
 				local function closeDropdown()
+					if not dropOpen and not DownBar.Visible then return end
 					dropOpen = false
-					Tween(Arrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
+					Tween(Arrow, { Rotation = 270 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(PopupStroke, { Transparency = 1 }, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					UnregisterPopup(DownBar)
+					local closeToken = (DownBar:GetAttribute("CloseToken") or 0) + 1
+					DownBar:SetAttribute("CloseToken", closeToken)
+					task.delay(0.16, function()
+						if DownBar.Parent and not dropOpen and DownBar:GetAttribute("CloseToken") == closeToken then DownBar.Visible = false end
+					end)
 					if _openDropdown == closeDropdown then _openDropdown = nil end
 				end
 
+				local optionRows = {}
 				for _, opt in ipairs(options) do
 					local Buttons = New("TextButton", {
 						Name = "Buttons",
 						Size = UDim2.new(1, -4, 0, 23),
 						Position = UDim2.new(0, 2, 0, 0),
 						ClipsDescendants = false,
-						BackgroundColor3 = Color3.fromRGB(33, 38, 56),
-						BackgroundTransparency = 1,
+						BackgroundColor3 = Color3.fromRGB(38, 46, 67),
+						BackgroundTransparency = selected == opt and 0.42 or 1,
 						Text = opt,
 						TextColor3 = Color3.fromRGB(226, 232, 244),
 						TextScaled = false,
@@ -7989,17 +8126,21 @@ if maxY <= 0 then return end
 						AutoButtonColor = false,
 						ZIndex = 5002,
 					}, Scrolls)
-					New("UICorner", { CornerRadius = UDim.new(0, 7) }, Buttons)
+					New("UICorner", { CornerRadius = UDim.new(0, 6) }, Buttons)
+					optionRows[opt] = Buttons
 
 					Buttons.MouseEnter:Connect(function()
-						Tween(Buttons, { BackgroundTransparency = 0.15 }, 0.1)
+						Tween(Buttons, { BackgroundTransparency = 0.18 }, 0.09, Enum.EasingStyle.Sine)
 					end)
 					Buttons.MouseLeave:Connect(function()
-						Tween(Buttons, { BackgroundTransparency = selected == opt and 0.35 or 1 }, 0.1)
+						Tween(Buttons, { BackgroundTransparency = selected == opt and 0.42 or 1 }, 0.12, Enum.EasingStyle.Sine)
 					end)
 					Buttons.MouseButton1Click:Connect(function()
 						selected = opt
 						SetTrimmedText(TopBar, opt); FitTextBeforeArrow(TopBar, Arrow)
+						for option, row in pairs(optionRows) do
+							Tween(row, { BackgroundTransparency = option == selected and 0.42 or 1 }, 0.12, Enum.EasingStyle.Sine)
+						end
 						InvokeCallback(callback, opt)
 						closeDropdown()
 					end)
@@ -8013,6 +8154,7 @@ if maxY <= 0 then return end
 						if _openDropdown then _openDropdown() end
 						dropOpen = true
 						_openDropdown = closeDropdown
+						DownBar:SetAttribute("CloseToken", (DownBar:GetAttribute("CloseToken") or 0) + 1)
 						DownBar.Visible = false
 						ApplyZIndexLadder(DownBar, NextPopupZ())
 						local h = math.clamp(#options * 23 + 8, 34, 460)
@@ -8022,15 +8164,26 @@ if maxY <= 0 then return end
 						DownBar.Visible = true
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
 						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
-						Tween(DownBar, { Size = finalSize }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						PopupStroke.Transparency = 1
+						Tween(DownBar, { Size = finalSize }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Tween(PopupStroke, { Transparency = 0.58 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Arrow, { Rotation = 360 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
 
 				local obj = {}
-				function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; SetTrimmedText(TopBar, val); FitTextBeforeArrow(TopBar, Arrow); if not silent then InvokeCallback(callback, val) end end
+				function obj:Set(val, silent)
+					val = GetValidOption(options, val)
+					selected = val
+					SetTrimmedText(TopBar, val)
+					FitTextBeforeArrow(TopBar, Arrow)
+					for option, row in pairs(optionRows) do
+						Tween(row, { BackgroundTransparency = option == selected and 0.42 or 1 }, 0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					end
+					if not silent then InvokeCallback(callback, val) end
+				end
 				function obj:Get() return selected end
 				function obj:AddSettings() return MakeSettings(Dropdown, "dropdown", text) end
 				
@@ -8247,7 +8400,7 @@ if maxY <= 0 then return end
 						DownBar.Visible = true
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
 						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
-						Tween(DownBar, { Size = finalSize }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						Tween(DownBar, { Size = finalSize }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
@@ -9018,7 +9171,7 @@ if maxY <= 0 then return end
 						task.defer(function()
 							if not accordionOpen or not Section2Frame.Parent then return end
 							fitAccordionHeight()
-							Tween(S2Scale, {Scale = 1}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+							Tween(S2Scale, {Scale = 1}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						end)
 						task.delay(0.05, settle)
 						if not accordionRefitConnection then
@@ -9125,10 +9278,12 @@ UIAspectRatioConstraint.Parent = Toggle
 						ZIndex = 110,
 					}, Toggle)
 
+					AttachRowHover(Btn.Parent)
+
 					local function Set(val)
 						enabled = val == true
-						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
-						Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.25, Enum.EasingStyle.Back)
+						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.16, Enum.EasingStyle.Sine)
+						Tween(Icon, { Position = enabled and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2), BackgroundTransparency = enabled and 0 or 0.5 }, 0.16, Enum.EasingStyle.Quad)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -9202,6 +9357,8 @@ UIAspectRatioConstraint.Parent = Toggle
 						Text = "",
 						ZIndex = 110,
 					}, CheckBoxToggle)
+
+					AttachRowHover(Btn.Parent)
 
 					local function Set(val)
 						enabled = val == true
@@ -9345,7 +9502,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local function closeDropdown2()
 						dropOpen = false
-						Tween(SelArrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(SelArrow, { Rotation = 270 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 						if _openAccordionDropdown == closeDropdown2 then _openAccordionDropdown = nil end
@@ -9462,7 +9619,7 @@ UIAspectRatioConstraint.Parent = Toggle
 							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
 							ForceLiftClipping(DropPopup)
 							DropPopup.Visible = true
-							Tween(SelArrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+							Tween(SelArrow, { Rotation = 360 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
 						end
 					end)
@@ -9501,6 +9658,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						LayoutOrder = accordionElemCount,
 						ZIndex = 100,
 					}, Container)
+					AttachRowHover(Slider)
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
@@ -9587,11 +9745,28 @@ UIAspectRatioConstraint.Parent = Slider
 					}, Line)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Trigger)
 					New("UIAspectRatioConstraint", {}, Trigger)
-
+					local Thumb = New("Frame", {
+						Name = "Thumb",
+						AnchorPoint = Vector2.new(0.5, 0.5),
+						Position = UDim2.new(initRatio, 0, 0.5, 0),
+						Size = UDim2.fromOffset(8, 8),
+						BackgroundColor3 = mainColor,
+						BorderSizePixel = 0,
+						ZIndex = Line.ZIndex + 3,
+					}, Line)
+					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
+					New("UIStroke", { Color = Color3.fromRGB(228, 238, 255), Transparency = 0.3, Thickness = 1 }, Thumb)
+					Line.MouseEnter:Connect(function()
+						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					end)
+					Line.MouseLeave:Connect(function()
+						Tween(Thumb, { Size = UDim2.fromOffset(8, 8) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					end)
 					local initialValue = value
 					task.defer(function()
 						if value ~= initialValue then return end
 						InLine.Size = UDim2.fromScale(initRatio, 1)
+						Thumb.Position = UDim2.new(initRatio, 0, 0.5, 0)
 						Trigger.Position = UDim2.new(initRatio, 0, -1.8000000715255737, 0)
 					end)
 
@@ -9600,11 +9775,16 @@ UIAspectRatioConstraint.Parent = Slider
 						local lineSize = Line.AbsoluteSize.X
 						if lineSize <= 0 then return end
 						local sizeScale = ClampRatio(pointer.X - Line.AbsolutePosition.X, lineSize)
-						value = Quantize(((max - min) * sizeScale) + min, min, max, GetSliderStep(min, max))
-						Tween(InLine, { Size = UDim2.fromScale(sizeScale, 1) }, 0.1)
-						Trigger.Position = UDim2.new(sizeScale, 0, -1.8000000715255737, 0)
+						local nextValue = Quantize(((max - min) * sizeScale) + min, min, max, GetSliderStep(min, max))
+						local changed = nextValue ~= value
+						value = nextValue
+						local span = max - min
+						local snappedRatio = span ~= 0 and math.clamp((value - min) / span, 0, 1) or 0
+						InLine.Size = UDim2.fromScale(snappedRatio, 1)
+						Trigger.Position = UDim2.new(snappedRatio, 0, -1.8000000715255737, 0)
+						Thumb.Position = UDim2.new(snappedRatio, 0, 0.5, 0)
 						SliderValue.Text = FormatSliderValue(value, suffix)
-						InvokeCallback(callback, value)
+						if changed then InvokeCallback(callback, value) end
 					end
 
 					Line.InputBegan:Connect(function(input)
@@ -9628,9 +9808,11 @@ UIAspectRatioConstraint.Parent = Slider
 						local numeric = type(val) == "number" and val == val and val or min
 						value = math.clamp(numeric, min, max)
 						value = Quantize(value, min, max, GetSliderStep(min, max))
-					local ratio = (value - min) / (max - min)
-						InLine.Size = UDim2.fromScale(ratio, 1)
+					local span = max - min
+					local ratio = span ~= 0 and math.clamp((value - min) / span, 0, 1) or 0
+						Tween(InLine, { Size = UDim2.fromScale(ratio, 1) }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						Trigger.Position = UDim2.new(ratio, 0, -1.8000000715255737, 0)
+						Tween(Thumb, { Position = UDim2.new(ratio, 0, 0.5, 0) }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						SliderValue.Text = FormatSliderValue(value, suffix)
 						InvokeCallback(callback, value)
 					end
@@ -10007,8 +10189,8 @@ if maxY <= 0 then return end
 						local delay = math.min((i - 1) * 0.04, 0.3)
 						task.delay(delay, function()
 							if not subTabContainer.Visible then return end
-							st.scale.Scale = 0.88
-							Tween(st.scale, { Scale = 1 }, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+							st.scale.Scale = 0.97
+							Tween(st.scale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						end)
 					end
 				end
@@ -10019,6 +10201,8 @@ if maxY <= 0 then return end
 					st.right.Position = UDim2.new(0, 0, 0, 0)
 					st.left.Visible  = true
 					st.right.Visible = true
+					AnimateSectionColumn(st.left)
+					AnimateSectionColumn(st.right)
 					end
 				elseif #subTabs > 0 then
 					subTabs[1].activate()
@@ -10144,8 +10328,8 @@ if maxY <= 0 then return end
 					iconRef.ImageColor3 = mainColor
 					iconRef.ImageTransparency = 0
 				end
-				STScale.Scale = 0.86
-				Tween(STScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				STScale.Scale = 0.965
+				Tween(STScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
 				for otherIndex, other in ipairs(subTabs) do
 					local rank = otherIndex == stIndex and 0 or 100 + otherIndex
@@ -10154,30 +10338,8 @@ if maxY <= 0 then return end
 				end
 				stLeft.Visible  = true
 				stRight.Visible = true
-				for _, column in ipairs({stLeft, stRight}) do
-					for _, section in ipairs(column:GetChildren()) do
-						if section:IsA("GuiObject") then
-							section.BackgroundTransparency = 1
-							Tween(section, {BackgroundTransparency = section.Name == "Section" and 1 or 0}, 0.28, Enum.EasingStyle.Quad)
-							local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
-							if list and list:IsA("GuiObject") then
-								for _, item in ipairs(list:GetChildren()) do
-									if item:IsA("GuiObject") then
-										local texts = {}
-										for _, d in ipairs(item:GetDescendants()) do
-											if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
-										end
-										for _, t in ipairs(texts) do
-										if t.Parent then
-										t.TextTransparency = t.Name == "TextDefault" and 0.5 or 0
-										end
-										end
-									end
-								end
-							end
-						end
-					end
-				end
+				AnimateSectionColumn(stLeft)
+				AnimateSectionColumn(stRight)
 
 				activeSubTabIndex = stIndex
 				if tabs[tabIndex] then tabs[tabIndex].activeSubTabIndex = stIndex end
@@ -10195,6 +10357,18 @@ if maxY <= 0 then return end
 			})
 
 			STClick.MouseButton1Click:Connect(ActivateSubTab)
+			STRow.MouseEnter:Connect(function()
+				if activeSubTabIndex == stIndex then return end
+				Tween(STRow, { BackgroundTransparency = 0.94 }, 0.11, Enum.EasingStyle.Sine)
+				Tween(STLabel, { TextTransparency = 0.22 }, 0.11, Enum.EasingStyle.Sine)
+				if iconRef then Tween(iconRef, { ImageColor3 = mainColor, ImageTransparency = 0.24 }, 0.11, Enum.EasingStyle.Sine) end
+			end)
+			STRow.MouseLeave:Connect(function()
+				if activeSubTabIndex == stIndex then return end
+				Tween(STRow, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Sine)
+				Tween(STLabel, { TextTransparency = 0.55 }, 0.14, Enum.EasingStyle.Sine)
+				if iconRef then Tween(iconRef, { ImageColor3 = Color3.fromRGB(200, 200, 210), ImageTransparency = 0.6 }, 0.14, Enum.EasingStyle.Sine) end
+			end)
 
 			if isFirstST and activeTabIndex == tabIndex then
 				Left.Visible = false
@@ -10204,13 +10378,13 @@ if maxY <= 0 then return end
 			elseif not isFirstST then
 				STRow.BackgroundTransparency = 1
 				STLabel.TextTransparency = 1
-				STScale.Scale = 0.7
+				STScale.Scale = 0.97
 				if iconRef then iconRef.ImageTransparency = 1 end
 				task.defer(function()
 					if not STRow.Parent then return end
 					Tween(STRow, { BackgroundTransparency = 1 }, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					Tween(STLabel, { TextTransparency = 0.55 }, 0.3)
-					Tween(STScale, { Scale = 1 }, 0.38, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+					Tween(STScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					if iconRef then Tween(iconRef, { ImageTransparency = 0.6 }, 0.3) end
 				end)
 			end
