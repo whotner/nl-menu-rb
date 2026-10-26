@@ -10698,7 +10698,9 @@ if maxY <= 0 then return end
 		return customization
 	end
 
-	local customMenus = {}
+	-- Keep this collection on WindowObj rather than allocating another AddWindow local.
+	-- AddWindow is deliberately large and Luau enforces a 200-local-register limit.
+	WindowObj._customMenus = {}
 
 	function WindowObj:AddCustomMenu(name, builder, options)
 		options = type(options) == "table" and options or {}
@@ -10748,8 +10750,8 @@ if maxY <= 0 then return end
 
 		function api:Destroy()
 			if self.frame.Parent then self.frame:Destroy() end
-			for i = #customMenus, 1, -1 do
-				if customMenus[i] == self then table.remove(customMenus, i) end
+			for i = #WindowObj._customMenus, 1, -1 do
+				if WindowObj._customMenus[i] == self then table.remove(WindowObj._customMenus, i) end
 			end
 		end
 
@@ -10757,14 +10759,14 @@ if maxY <= 0 then return end
 			local ok, err = pcall(builder, panel, api)
 			if not ok then warn("[scr] AddCustomMenu(" .. name .. ") builder error: " .. tostring(err)) end
 		end
-		table.insert(customMenus, api)
+		table.insert(WindowObj._customMenus, api)
 		return api
 	end
 
 	WindowObj.AddCustomPanel = WindowObj.AddCustomMenu
 
 	function WindowObj:GetCustomMenus()
-		return customMenus
+		return WindowObj._customMenus
 	end
 
 	MakeReadableText(NeverloseCS2, 9, 16)
