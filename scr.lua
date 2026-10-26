@@ -1554,12 +1554,16 @@ do
 	WMShadowHost.ZIndex = Z_BASE + 899
 	WMShadowHost.Parent = NeverloseCS2
 
+	-- Watermark shadow: more overlapping, low-contrast layers read as a soft
+	-- ambient shadow instead of four separate dark outlines.
 	local layers = {}
-	for i = 1, 4 do
+	local shadowLayerCount = 8
+	for i = 1, shadowLayerCount do
 		local layer = Instance.new("Frame")
 		layer.Name = "Layer" .. i
 		layer.BackgroundColor3 = Color3.new(0, 0, 0)
-		layer.BackgroundTransparency = 0.62 + (i - 1) * 0.09
+		-- Strongest near the watermark, gradually fading outward.
+		layer.BackgroundTransparency = 0.50 + (i - 1) * (0.46 / (shadowLayerCount - 1))
 		layer.BorderSizePixel = 0
 		layer.ZIndex = Z_BASE + 899
 		layer.Parent = WMShadowHost
@@ -1569,13 +1573,14 @@ do
 
 	WMShadowSync = function()
 		local w, h = GameInfo.AbsoluteSize.X, GameInfo.AbsoluteSize.Y
-		WMShadowHost.Visible = GameInfo.Visible and w > 0
+		WMShadowHost.Visible = GameInfo.Visible and w > 0 and h > 0
 		if not WMShadowHost.Visible then return end
 		WMShadowHost.Size = UDim2.fromOffset(w, h)
 		for i, layer in ipairs(layers) do
-			local s = i * 1.6
-			layer.Position = UDim2.new(0, -s, 0, 2 - s)
-			layer.Size = UDim2.new(1, s * 2, 1, s * 2 + 2)
+			local s = i * 2.15
+			-- Slight downward bias gives the watermark depth without a hard halo.
+			layer.Position = UDim2.new(0, -s, 0, 2 - s + (i * 0.12))
+			layer.Size = UDim2.new(1, s * 2, 1, s * 2 + 4)
 		end
 	end
 	GameInfo:GetPropertyChangedSignal("AbsoluteSize"):Connect(WMShadowSync)
