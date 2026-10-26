@@ -396,28 +396,12 @@ end
 local Library = {}
 Library.__index = Library
 
-local activeTweens = setmetatable({}, { __mode = "k" })
 local function Tween(obj, props, t, style, dir, delay)
 	if not obj or not obj.Parent then return end
 	style = style or Enum.EasingStyle.Quad
 	dir = dir or Enum.EasingDirection.Out
-	local objectTweens = activeTweens[obj]
-	if not objectTweens then objectTweens = {}; activeTweens[obj] = objectTweens end
-	for property in pairs(props) do
-		local previous = objectTweens[property]
-		if previous then pcall(function() previous:Cancel() end); objectTweens[property] = nil end
-	end
-	local ok, tween = pcall(function()
-		return TweenService:Create(obj, TweenInfo.new(t or 0.2, style, dir, 0, false, delay or 0), props)
-	end)
-	if not ok or not tween then return end
-	for property in pairs(props) do objectTweens[property] = tween end
-	tween.Completed:Connect(function()
-		for property in pairs(props) do
-			if objectTweens[property] == tween then objectTweens[property] = nil end
-		end
-	end)
-	tween:Play()
+	local ok, tween = pcall(function() return TweenService:Create(obj, TweenInfo.new(t or 0.2, style, dir, 0, false, delay or 0), props) end)
+	if ok and tween then tween:Play() end
 end
 
 local CenterElement
@@ -509,7 +493,7 @@ end
 
 local function BindKeyName(key)
 	if not key then return "—" end
-	local n = key.Name
+	local n = type(key) == "string" and key or (type(key) == "table" and key.Name or key.Name)
 	if n == "MouseButton3" then return "Mouse 3" end
 	if n == "MouseButton4" then return "Mouse 4" end
 	if n == "MouseButton5" then return "Mouse 5" end
@@ -1730,13 +1714,14 @@ local function AttachShadow(frame, opts)
 		return
 	end
 	opts = opts or {}
-	local layers = math.clamp(opts.layers or 4, 1, 6)
-	local step = opts.step or 1.35
+	local layers = math.clamp(opts.layers or 6, 1, 8)
+	local step = opts.step or 2.0
 	local bias = opts.bias or 2
 	local radius = opts.radius or 16
 	for i = 1, layers do
 		local spread = math.floor(i * step + 0.5)
-		local alpha = math.clamp(0.76 + (i - 1) * 0.045, 0.76, 0.94)
+		-- Keep the inner edge subtle; outer layers fade instead of forming a black halo.
+		local alpha = math.clamp(0.76 + (i - 1) * (0.22 / math.max(1, layers - 1)), 0.76, 0.98)
 		local shadow = New("Frame", {
 			Name = "ShadowLayer" .. i,
 			Position = UDim2.new(0, -spread, 0, bias - spread),
@@ -1751,7 +1736,7 @@ local function AttachShadow(frame, opts)
 		New("UICorner", { CornerRadius = UDim.new(0, radius + spread) }, shadow)
 	end
 end
-AttachShadow(MainFrame, { radius = 20, layers = 4, step = 1.35, bias = 2 })
+AttachShadow(MainFrame, { radius = 20, layers = 6, step = 2.0, bias = 2 })
 
 local RefreshKeybindOverlay
 do
@@ -2280,14 +2265,14 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.Size = UDim2.new(0.218, 0, 0, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
-	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(19, 21, 30)
+	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(47, 51, 66); s.Transparency = 0.34; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 9); c.Parent = WindowSettingsFrame end
-	AttachShadow(WindowSettingsFrame, { radius = 10, layers = 3, step = 1.25, bias = 2 })
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
+	AttachShadow(WindowSettingsFrame, { radius = 18, layers = 4, step = 1.5, bias = 3 })
 
 
 	local WSScale = New("UIScale", { Scale = 1 }, WindowSettingsFrame)
@@ -3190,7 +3175,7 @@ PositionPopupWithinMain(LangDownBar, true)
 				CloseAllPopupsExcept(WindowSettingsFrame)
 				WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
 		WSScale.Scale = 0.92
-		Tween(WSScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Tween(WSScale, { Scale = 1 }, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		SmoothOpen(WindowSettingsFrame, 0.01, 0.2)
 				WindowSettingsFrame.Visible = false
 					ApplyZIndexLadder(WindowSettingsFrame, NextPopupZ())
@@ -3541,7 +3526,7 @@ PositionPopupWithinMain(LangDownBar, true)
 				DropPopup.Size = UDim2.new(0.96, 0, 0, math.clamp(26 * #options + 28, 46, 460))
 				DropPopup.BackgroundTransparency = 0
 						DropPopup.Visible = true
-		Tween(Arrow, {Rotation = 180}, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 				Tween(Arrow, {ImageTransparency = 0}, 0.2)
 				PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 			end
@@ -4009,9 +3994,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local ConfigScale = Instance.new("UIScale")
 	ConfigScale.Scale = 1
 	ConfigScale.Parent = ConfigMainFrame
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 9); c.Parent = ConfigMainFrame end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(47, 51, 66); s.Transparency = 0.34; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ConfigMainFrame end
-	AttachShadow(ConfigMainFrame, { radius = 10, layers = 3, step = 1.25, bias = 2 })
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
+	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ConfigMainFrame end
+	AttachShadow(ConfigMainFrame, { radius = 18, layers = 4, step = 1.5, bias = 3 })
 
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
@@ -4269,9 +4254,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Active = true
 	RecentlyDeletedPanel.Visible = false
 	RecentlyDeletedPanel.Parent = Frame2
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 9); c.Parent = RecentlyDeletedPanel end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(47, 51, 66); s.Transparency = 0.34; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = RecentlyDeletedPanel end
-	AttachShadow(RecentlyDeletedPanel, { radius = 10, layers = 3, step = 1.25, bias = 2 })
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = RecentlyDeletedPanel end
+	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = RecentlyDeletedPanel end
+	AttachShadow(RecentlyDeletedPanel, { radius = 18, layers = 4, step = 1.5, bias = 3 })
 
 	local RDHeader = Instance.new("Frame")
 	RDHeader.Name = "RDHeader"
@@ -4346,7 +4331,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			local entry = _deletedConfigs[i]
 			local drow = Instance.new("Frame")
 			drow.Name = "DeletedRow"
-			drow.Size = UDim2.new(1, 0, 0, 34)
+			drow.Size = UDim2.new(1, 0, 0, 36)
 			drow.BackgroundColor3 = Color3.fromRGB(35,18,18)
 			drow.BackgroundTransparency = 0.25
 			drow.BorderSizePixel = 0
@@ -4411,7 +4396,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConfigMainFrame.Visible = true
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
 			ConfigScale.Scale = 0.96
-			Tween(ConfigScale, {Scale = 1}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(ConfigScale, {Scale = 1}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			Tween(ConfigMainFrame, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		end)
 	end)
@@ -4447,12 +4432,12 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		local row = Instance.new("Frame")
 		row.Name = "ConfigRow_" .. name
 		row.Size = UDim2.new(1, 0, 0, 36)
-		row.BackgroundColor3 = Color3.fromRGB(24, 27, 38)
-		row.BackgroundTransparency = 0.18
+		row.BackgroundColor3 = Color3.fromRGB(16, 18, 27)
+		row.BackgroundTransparency = 0
 		row.BorderSizePixel = 0
 		row.ZIndex = 1000
 		row.Parent = ListContainer
-		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = row end
+		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = row end
 
 		local rowStroke = Instance.new("UIStroke")
 		rowStroke.Color = mainColor
@@ -4460,8 +4445,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		rowStroke.Thickness = 1.2
 		rowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 		rowStroke.Parent = row
-		row.MouseEnter:Connect(function() Tween(row, {BackgroundTransparency = 0.04}, 0.12) end)
-		row.MouseLeave:Connect(function() Tween(row, {BackgroundTransparency = activeRow == row and 0.08 or 0.18}, 0.12) end)
+		row.MouseEnter:Connect(function() Tween(row, {BackgroundTransparency = 0.5}, 0.12) end)
+		row.MouseLeave:Connect(function() Tween(row, {BackgroundTransparency = 0.25}, 0.12) end)
 
 		local Rename = Instance.new("TextBox")
 		Rename.Name = "Rename"
@@ -4670,7 +4655,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				activeLoadBtn = LoadConfigBtn
 				SetActiveConfigName(name)
 				Tween(rowStroke, {Transparency = 0, Color = mainColor}, 0.2)
-				Tween(row, {BackgroundTransparency = 0.08}, 0.2)
+				Tween(row, {BackgroundTransparency = 0.5}, 0.2)
 				LoadConfigBtn.Image = SAVE_ICON
 				Tween(LoadConfigBtn, {ImageColor3 = mainColor}, 0.2)
 			end
@@ -4833,7 +4818,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			local rdScale = GetPopupScale(RecentlyDeletedPanel)
 			if rdScale then
 				rdScale.Scale = 0.96
-				Tween(rdScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				Tween(rdScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			end
 		end)
 	end)
@@ -4876,7 +4861,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			end)
 			ConfigMainFrame.Visible = true
 			ConfigScale.Scale = 0.96
-			Tween(ConfigScale, {Scale = 1}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(ConfigScale, {Scale = 1}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			Tween(ConfigMainFrame, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			local cfgSettled = ConfigMainFrame.Position
 			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 10)
@@ -5493,8 +5478,8 @@ end
 				AutomaticSize = Enum.AutomaticSize.Y,
 				LayoutOrder = 1,
 			}, Section)
-			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 9); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Name = "GroupOutline"; s.Color = Color3.fromRGB(48, 53, 70); s.Transparency = 0.28; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = Elements end
+			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -5578,7 +5563,7 @@ end
 
 				local UICorner = Instance.new('UICorner')
 				UICorner.Name = "UICorner"
-				UICorner.CornerRadius = UDim.new(0, 9)
+				UICorner.CornerRadius = UDim.new(0, THEME.radius)
 				UICorner.Parent = SettingsFrame
 
 				local UIStroke = Instance.new('UIStroke')
@@ -6642,7 +6627,7 @@ if maxY <= 0 then return end
 
 			local function GetTargetBindLabel(target)
 				if not target or not target.key then return "Not bound" end
-				return target.key.Name
+				return BindKeyName(target.key)
 			end
 
 			local function SetTargetBind(target, key)
@@ -6734,7 +6719,7 @@ if maxY <= 0 then return end
 				}, MainFrame)
 				New("UICorner", { CornerRadius = UDim.new(0, THEME.radius) }, _bindMenu)
 				New("UIStroke", { Color = THEME.stroke, Transparency = THEME.strokeAlpha, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual }, _bindMenu)
-				AttachShadow(_bindMenu, { radius = 8, layers = 3, step = 1.2, bias = 2 })
+				AttachShadow(_bindMenu, { radius = THEME.radius, layers = 4, step = 1.5, bias = 3 })
 
 				local body = New("Frame", { Name = "Body", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = Z_BASE + 951 }, _bindMenu)
 				New("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, body)
@@ -6816,12 +6801,12 @@ if maxY <= 0 then return end
 				PaintBindMenu(target)
 				_bindMenu.Visible = true
 				_bindMenu.BackgroundTransparency = 1
-				Tween(_bindMenu, { BackgroundTransparency = 0.02 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				Tween(_bindMenu, { BackgroundTransparency = 0.02 }, 0.15)
 				TweenShadowLayers(_bindMenu, true, 0.15)
 				local pop = GetPopupScale(_bindMenu)
 				if pop then
 					pop.Scale = 0.96
-					Tween(pop, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					Tween(pop, { Scale = 1 }, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 				end
 				local row = target.row
 				MovePopupToAbsolute(_bindMenu,
@@ -6845,7 +6830,7 @@ if maxY <= 0 then return end
 					Name = "ElementContextMenu",
 					Position = UDim2.new(0.5, 0, 0.5, 0),
 					Size = UDim2.fromOffset(150, 89),
-					BackgroundColor3 = Color3.fromRGB(19, 21, 30),
+					BackgroundColor3 = Color3.fromRGB(30, 30, 36),
 					BackgroundTransparency = 0.02,
 					BorderSizePixel = 0,
 					Visible = false,
@@ -6853,19 +6838,19 @@ if maxY <= 0 then return end
 					ClipsDescendants = false,
 				}, MainFrame)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, _contextMenu)
-				New("UIStroke", { Color = Color3.fromRGB(47, 51, 66), Transparency = 0.34, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual }, _contextMenu)
+				New("UIStroke", { Color = Color3.fromRGB(48, 48, 56), Transparency = 0.35, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual }, _contextMenu)
 				New("UIListLayout", { Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder }, _contextMenu)
 				New("UIPadding", { PaddingTop = UDim.new(0, 3), PaddingBottom = UDim.new(0, 3) }, _contextMenu)
-				AttachShadow(_contextMenu, { radius = 9, layers = 3, step = 1.25, bias = 2 })
+				AttachShadow(_contextMenu, { radius = 6, layers = 3, step = 1.4, bias = 2 })
 				return _contextMenu
 			end
 
 			local function AddContextItem(labelText, iconAsset, callback)
 				local item = New("TextButton", {
 					Name = "MenuItem",
-					Size = UDim2.new(1, -8, 0, 25),
+					Size = UDim2.new(1, -8, 0, 26),
 					Position = UDim2.new(0, 4, 0, 0),
-					BackgroundColor3 = Color3.fromRGB(43, 48, 64),
+					BackgroundColor3 = Color3.fromRGB(42, 42, 49),
 					BackgroundTransparency = 1,
 					AutoButtonColor = false,
 					Text = "  " .. labelText,
@@ -7079,15 +7064,19 @@ if maxY <= 0 then return end
 			end)
 
 			UserInputService.InputChanged:Connect(function(input, gameProcessed)
-				if input.UserInputType ~= Enum.UserInputType.MouseWheel then return end
-				local wheelType = input.Position.Z > 0 and "MouseWheelUp" or "MouseWheelDown"
+				-- Roblox exposes the wheel as MouseWheel; direction is input.Position.Z.
+				local wheelType = input.UserInputType
+				if wheelType ~= Enum.UserInputType.MouseWheel then return end
+				local wheelKey = input.Position.Z > 0 and "MouseWheelUp" or "MouseWheelDown"
+				if input.Position.Z == 0 then return end
 				if _bindTarget then
-					SetTargetBind(_bindTarget, wheelType)
+					-- Keep wheel direction as a string token; Roblox has no enum members for up/down.
+					SetTargetBind(_bindTarget, wheelKey)
 					CloseBindMenu()
 					return
 				end
 				if gameProcessed or not IsEditableTarget() then return end
-				local target = _keybinds[wheelType]
+				local target = _keybinds[wheelKey]
 				if target then RunBoundFunction(target, "down") end
 			end)
 
@@ -7901,7 +7890,7 @@ if maxY <= 0 then return end
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 4),
 					Size = UDim2.new(0.72, 0, 0, 0),
-					BackgroundColor3 = Color3.fromRGB(19, 21, 30),
+					BackgroundColor3 = Color3.fromRGB(21, 24, 36),
 					BackgroundTransparency = 0,
 					Visible = false,
 					ZIndex = 5000,
@@ -7938,7 +7927,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = 270}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					Tween(Arrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -7997,8 +7986,8 @@ if maxY <= 0 then return end
 						DownBar.Visible = true
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
 						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
-						Tween(DownBar, { Size = finalSize }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 180}, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(DownBar, { Size = finalSize }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
@@ -8148,7 +8137,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = 270}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					Tween(Arrow, {Rotation = 270}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -8222,8 +8211,8 @@ if maxY <= 0 then return end
 						DownBar.Visible = true
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
 						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
-						Tween(DownBar, { Size = finalSize }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 180}, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+						Tween(DownBar, { Size = finalSize }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+						Tween(Arrow, {Rotation = 360}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
@@ -8871,15 +8860,15 @@ if maxY <= 0 then return end
 
 				local UICorner = Instance.new('UICorner')
 				UICorner.Name = "UICorner"
-				UICorner.CornerRadius = UDim.new(0, 9)
+				UICorner.CornerRadius = UDim.new(0, 14)
 				UICorner.Parent = Section2Frame
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(48, 53, 70)
-				UIStroke.Transparency = 0.24
+				UIStroke.Color = THEME.stroke
+				UIStroke.Transparency = 0.3
 				UIStroke.Thickness = 1
-				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 				UIStroke.Parent = Section2Frame
 
 				local Container = Instance.new('ScrollingFrame')
