@@ -406,10 +406,6 @@ end
 
 local CenterElement
 
--- UIStroke sits inside the MainFrame UIScale hierarchy, so an authored 1px
--- stroke is drawn at 0.78-0.9 physical pixels and pixel snapping drops whole
--- edges (a border visible on the right, gone on the left). Remember the
--- authored thickness once, then counter-scale it so it never falls under 1px.
 local strokeAuthored = setmetatable({}, { __mode = "k" })
 local strokeScale = 1
 local function ApplyStrokeScale(stroke, scale)
@@ -473,8 +469,6 @@ CenterElement = function(el)
 	local effect = el:FindFirstChild("Effect")
 	if effect and effect:IsA("GuiObject") then
 		if effect:FindFirstChild("Icon") then
-			-- one fixed 36x20 switch for every row: percentage sizing made the
-			-- switch and its knob land differently on short and wide rows
 			effect.AnchorPoint = Vector2.new(1, 0.5)
 			effect.Position = UDim2.new(1, -8, 0.5, 0)
 			effect.Size = UDim2.fromOffset(36, 20)
@@ -497,7 +491,6 @@ local function MeasureText(text, fontSize, font)
 	return 0
 end
 
--- pretty names for mouse/wheel pseudo-keys on bind indicators
 local function BindKeyName(key)
 	if not key then return "—" end
 	local n = key.Name
@@ -599,10 +592,23 @@ end
 
 
 local Z_BASE = 10000
+
+-- ============================================================================
+-- PATCH 1: THEME tokens (from [G].txt §1)
+-- ============================================================================
+local THEME = {
+	plate = Color3.fromRGB(17, 19, 28),
+	row = Color3.fromRGB(32, 35, 50),
+	stroke = Color3.fromRGB(52, 58, 82),
+	strokeAlpha = 0.55,
+	text = Color3.fromRGB(232, 234, 242),
+	dim = Color3.fromRGB(122, 126, 146),
+	danger = Color3.fromRGB(233, 90, 110),
+	radius = 12,
+}
+
 local _popupZStep = 0
 
--- fade a plate's shadow layers with it: an opaque black halo while the
--- plate itself is still transparent is exactly the "janky animation" look
 local function TweenShadowLayers(frame, show, dur, dir)
 	for _, node in ipairs(frame:GetDescendants()) do
 		if node:GetAttribute("IsShadowLayer") then
@@ -612,9 +618,6 @@ local function TweenShadowLayers(frame, show, dur, dir)
 	end
 end
 
--- each open gets its own rung, so the newest popup always wins.
--- the step has to clear the deepest subtree, otherwise rows of the parent
--- plate end up drawn over the popup that opened inside it
 local Z_RUNG = 100
 local function NextPopupZ()
 	_popupZStep = _popupZStep + 1
@@ -633,9 +636,6 @@ local function ApplyZIndexLadder(root, base)
 		local depth = entry.depth
 		if instance:IsA("GuiObject") then
 			instance.ZIndex = base + depth
-			-- shadow layers must stay one step BELOW their own parent's
-			-- background even after a ladder pass, otherwise the fake drop
-			-- shadow would draw on top of the plate it belongs to
 			if instance:GetAttribute("IsShadowLayer") then
 				instance.ZIndex = base + depth - 2
 			end
@@ -781,8 +781,6 @@ local function MakeDraggable(frame, handle)
 			position = UDim2.fromOffset(x, y)
 		end
 		frame.Position = position
-		-- open plates are positioned with absolute offsets, so they stayed behind
-		-- and drifted outside the menu while it was being dragged
 		if RepositionOpenPopups then RepositionOpenPopups() end
 	end
 
@@ -889,9 +887,6 @@ end
 				if instant then
 					frame.Visible = false
 				else
-					-- the old code only faded the background and then dropped the entry:
-					-- the plate stayed Visible for good with opaque labels inside, which
-					-- is what left ghost plates sitting outside the menu
 					local token = (frame:GetAttribute("PopupToken") or 0) + 1
 					frame:SetAttribute("PopupToken", token)
 					Tween(frame, { BackgroundTransparency = 1 }, 0.18)
@@ -959,9 +954,6 @@ local function PlayPopupTween(frame, info, props)
 	end)
 end
 
--- one UIScale per popup: reuse ONLY our own "_PopScale". A panel that owns
--- its scale (WSScale, ConfigScale, SFScale) is animated by its own code —
--- fighting it on the same property is what made popups look jerky
 local function GetPopupScale(frame)
 	if not frame or not frame.Parent then return nil end
 	local existing = frame:FindFirstChildOfClass("UIScale")
@@ -979,7 +971,6 @@ local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	frame.BackgroundTransparency = 1
 	frame.Visible = true
 	TweenShadowLayers(frame, true, dur or 0.2)
-	-- fade the border together with the plate so the stroke never pops in
 	local stroke = frame:FindFirstChildOfClass("UIStroke")
 	if stroke then
 		if frame:GetAttribute("StrokeTarget") == nil then
@@ -988,7 +979,6 @@ local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 		stroke.Transparency = 1
 		Tween(stroke, { Transparency = frame:GetAttribute("StrokeTarget") }, dur or 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	end
-	-- one soft grow, no bounce: bouncy scales read as jerky next to the menu
 	local scale = GetPopupScale(frame)
 	if scale then
 		scale.Scale = 0.98
@@ -1016,7 +1006,6 @@ local function SmoothClose(frame, dur, cb)
 		if frame.Parent and frame:GetAttribute("PopupToken") == token then
 			frame.Visible = false
 			if scale then scale.Scale = 1 end
-			-- drop back to the parent's level so a later popup can never sit under this one
 			local home = frame.Parent
 			if home and home:IsA("GuiObject") then ApplyZIndexLadder(frame, home.ZIndex) end
 			if cb then cb() end
@@ -1082,7 +1071,6 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 
 
 
-
 	local MainFrame = New("Frame", {
 		Name = "MainFrame",
 		Active = true,
@@ -1093,7 +1081,6 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	BackgroundColor3 = Color3.fromRGB(13,15,22),
 	BackgroundTransparency = 0.1,
 	BorderSizePixel = 0,
-	-- false so a tall popup can stick out of the window instead of being cut
 	ClipsDescendants = false,
 	}, NeverloseCS2)
 	local MainFrameUIScale
@@ -1184,20 +1171,15 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 
 	local function MovePopupToAbsolute(popup, x, y)
 		if not popup or not popup.Parent then return end
-		-- a hidden frame reports AbsoluteSize 0, so it cannot be placed reliably
 		if not popup.Visible or popup.AbsoluteSize.X <= 0 or popup.AbsoluteSize.Y <= 0 then return end
 		local scaleX, scaleY = GetVisualScale(popup)
 		local position = popup.Position
-		-- measure where it really is, then apply only the correction
 		local dx = (x - popup.AbsolutePosition.X) / scaleX
 		local dy = (y - popup.AbsolutePosition.Y) / scaleY
 		if math.abs(dx) < 0.5 and math.abs(dy) < 0.5 then return end
 		popup.Position = UDim2.new(position.X.Scale, position.X.Offset + dx, position.Y.Scale, position.Y.Offset + dy)
 	end
 
-	-- an opened plate may hang over the edge of the menu, so it is bounded by
-	-- the screen. the menu itself is only the fallback when the screen size is
-	-- not available yet
 	local function PopupSafeArea()
 		local gui = MainFrame and MainFrame.Parent
 		if gui and gui:IsA("ScreenGui") and gui.AbsoluteSize.X > 0 and gui.AbsoluteSize.Y > 0 then
@@ -1237,8 +1219,6 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			return ancestors
 		end
 
-		-- the ref counted version can be undone by an unrelated close, which left the
-		-- column clipping again and cut the plate plus its left border, so force it
 		local function ForceLiftClipping(popup)
 			local current = popup and popup.Parent
 			while current and current ~= MainFrame do
@@ -1293,8 +1273,6 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		local minY = mainPosition.Y + edge
 		local maxX = mainPosition.X + mainSize.X - popupSize.X - edge
 		local maxY = mainPosition.Y + mainSize.Y - popupSize.Y - edge
-		-- too wide for the menu: line it up with the menu instead of letting it
-		-- hang past the right edge
 		if maxX < minX then minX, maxX = mainPosition.X, mainPosition.X end
 		local y = preferBelow and parentPosition.Y + parentSize.Y + edge or parentPosition.Y - popupSize.Y - edge
 		if preferBelow and y > maxY then
@@ -1324,9 +1302,6 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local function PositionPopupWithinMain(popup, preferBelow, margin, anchorOverride, knownSize)
 		if not popup or not popup.Parent then return end
 		RememberPopupClipping(popup)
-		-- placement is measured from the real AbsolutePosition, and a hidden frame
-		-- reports zeros, so it is shown (fully transparent) just long enough to
-		-- place it and hidden again right after
 		local wasVisible = popup.Visible
 		local savedTransparency = popup.BackgroundTransparency
 		if not wasVisible then
@@ -1336,8 +1311,6 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		positionPopupNow(popup, preferBelow, margin, anchorOverride, knownSize)
 		ConstrainPopupToMainFrame(popup, margin, knownSize)
 		if not wasVisible then
-			-- the transparency has to be restored too: the callers set their own
-			-- value before calling, and leaving it at 1 would hide the plate
 			popup.BackgroundTransparency = savedTransparency
 			popup.Visible = false
 			task.defer(function()
@@ -1377,9 +1350,6 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 
 local Stats = game:GetService('Stats')
 
--- handles the code below (stats loop, SetWatermark) needs after the pill is
--- built; everything else stays block-scoped so AddWindow stays under the
--- compiler's 200 live-local register limit
 local FPSText, MSText, TimeText, RamText, SignalImage
 local ACCENT = mainColor or Color3.fromRGB(26, 123, 255)
 local GOOD = Color3.fromRGB(120, 220, 140)
@@ -1402,11 +1372,10 @@ GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = GameInfo end
-do local s = Instance.new("UIStroke"); s.Name = "Border"; s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = GameInfo end
+do local s = Instance.new("UIStroke"); s.Name = "Border"; s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = GameInfo end
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 12); pd.PaddingRight = UDim.new(0, 14); pd.PaddingTop = UDim.new(0, 7); pd.PaddingBottom = UDim.new(0, 7); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
--- icon assets lifted straight from the calltaro pasta's icon table
 local ICON_LAYERS   = "rbxassetid://114499998778667"
 local ICON_WIFI     = "rbxassetid://104941258142372"
 local ICON_RAM      = "rbxassetid://82464660673318"
@@ -1414,7 +1383,6 @@ local ICON_CLOCK    = "rbxassetid://136533241128438"
 local ICON_EYE      = "rbxassetid://127234874352422"
 local ICON_KEYBOARD = "rbxassetid://121978468376124"
 
--- one auto-width cell: [icon] value, padded like the calltaro pill
 local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local cell = Instance.new("Frame")
 	cell.Name = name .. "Cell"
@@ -1463,8 +1431,6 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	return cell, icon, label
 end
 
--- thin vertical divider between watermark cells; bright enough to actually
--- read on the dark plate (0.72, the old 0.86 vanished at 1px)
 local function WMDivider()
 	local d = Instance.new("Frame")
 	d.Name = "Divider"
@@ -1478,7 +1444,6 @@ local function WMDivider()
 	return d
 end
 
--- brand header: hub logo next to a lowercase title
 local BrandCell = Instance.new("Frame")
 BrandCell.Name = "BrandCell"
 BrandCell.LayoutOrder = 2
@@ -1489,7 +1454,6 @@ BrandCell.BorderSizePixel = 0
 BrandCell.ZIndex = Z_BASE + 901
 BrandCell.Parent = GameInfo
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = BrandCell end
--- brand is logo-only: the hub icon already says the name, no text needed
 do local pd = Instance.new("UIPadding"); pd.PaddingRight = UDim.new(0, 12); pd.Parent = BrandCell end
 
 local NeverIcon = Instance.new("ImageLabel")
@@ -1529,13 +1493,15 @@ TimeCell, TimeCellIcon, TimeText = WMCell("Time", 12, ICON_CLOCK, os.date("%H:%M
 
 local WMCells = { brand = BrandCell, user = UserCell, fps = FpsCell, ping = PingCell, ram = RamCell, time = TimeCell }
 local WMDefaultOrder = { "brand", "fps", "ping", "user", "time", "ram" }
--- default pill: brand + user only, the rest is opt-in via the settings
--- chips / SetWatermark
 local WMShowMap = { logo = true, user = true, fps = false, ping = false, ram = false, time = false }
 local WMDividers = {}
 for key in pairs(WMCells) do WMDividers[key] = WMDivider() end
 
--- calltaro layout: a divider only between neighbouring visible cells
+-- ============================================================================
+-- PATCH 6: forward-declare WMShadowSync BEFORE ApplyWatermarkLayout
+-- ============================================================================
+local WMShadowSync
+
 local function ApplyWatermarkLayout(orderList, showMap)
 	if type(showMap) == "table" then
 		for key in pairs(WMShowMap) do
@@ -1571,17 +1537,13 @@ local function ApplyWatermarkLayout(orderList, showMap)
 			divider.LayoutOrder = shown[n].index * 2 - 1
 		end
 	end
-	-- nothing selected: hide the plate itself, an empty pill is just noise
 	GameInfo.Visible = #shown > 0
 	if WMShadowSync then WMShadowSync() end
 end
 ApplyWatermarkLayout(nil, nil)
 
-local WMShadowSync
+-- (WMShadowSync local declaration removed here — moved above ApplyWatermarkLayout)
 do
-	-- pill shadow lives in a sibling host frame that MIRRORS the pill's size
-	-- (layers sized 1,+N inside an AutomaticSize frame would feed the layout
-	-- and grow forever; a zero-size host put the layers in the wrong place)
 	local WMShadowHost = Instance.new("Frame")
 	WMShadowHost.Name = "WMShadow"
 	WMShadowHost.AnchorPoint = Vector2.new(1, 0)
@@ -1621,7 +1583,6 @@ do
 	task.defer(WMShadowSync)
 end
 
--- everything the loader needs to restyle or hide parts of the pill
 WindowObj.Watermark = {
 	frame = GameInfo,
 	logo = NeverIcon,
@@ -1643,21 +1604,8 @@ WindowObj.Watermark = {
 		ApplyWatermarkLayout(nil, nil)
 	end,
 }
-end -- pill scope
+end
 
---[[
-	Win:SetWatermark({
-		position = UDim2.new(0, 10, 0, 8),   -- UDim2
-		anchorPoint = Vector2.new(0, 0),
-		background = Color3.fromRGB(13, 15, 22),
-		backgroundTransparency = 0.1,
-		cornerRadius = 999,                   -- anything big makes it a pill
-		textSize = 13,
-		accent = Color3.fromRGB(26, 123, 255),
-		show = { logo = true, user = true, fps = true, time = true, ping = true },
-		order = { "logo", "user", "fps", "time", "ping" },
-	})
-]]
 function WindowObj:SetWatermark(options)
 	local wm = WindowObj.Watermark
 	if type(options) ~= "table" then return wm end
@@ -1683,8 +1631,6 @@ function WindowObj:SetWatermark(options)
 		end
 	end
 	if options.accent and typeof(options.accent) == "Color3" then
-		-- calltaro keeps stat icons neutral white: the accent only lands on
-		-- the small glyphs, never on the avatar photo or the brand logo
 		for _, icon in ipairs(wm.icons) do
 			if icon and icon:IsA("ImageLabel") and icon ~= wm.logo and icon ~= wm.avatar then
 				icon.ImageColor3 = options.accent
@@ -1698,7 +1644,6 @@ function WindowObj:SetWatermark(options)
 	return wm
 end
 
--- only the text that actually changes gets animated; nothing else is touched
 local function setTextSmooth(label, newText)
 if label:GetAttribute("shownText") == newText then return end
 label:SetAttribute("shownText", newText)
@@ -1711,18 +1656,7 @@ TweenService:Create(label, TweenInfo.new(0.16, Enum.EasingStyle.Sine), {TextTran
 end)
 end
 
--- live FPS + clock + ping: sampled every frame, written once per second
-local function setTextSmooth(label, newText)
-if label:GetAttribute("shownText") == newText then return end
-label:SetAttribute("shownText", newText)
-local fadeOut = TweenService:Create(label, TweenInfo.new(0.1, Enum.EasingStyle.Sine), {TextTransparency = 1})
-fadeOut:Play()
-fadeOut.Completed:Once(function()
-if not label or not label.Parent then return end
-label.Text = newText
-TweenService:Create(label, TweenInfo.new(0.16, Enum.EasingStyle.Sine), {TextTransparency = 0.15}):Play()
-end)
-end
+-- (duplicate setTextSmooth removed)
 
 local fpsBuffer = {}
 local clockAcc = 0
@@ -1764,18 +1698,21 @@ SignalImage.ImageColor3 = tint
 end
 end
 end
--- calltaro RAM readout: client memory in megabytes
-local okMem, memMb = pcall(game.GetTotalMemoryUsageMb, game)
+local okMem, memMb = pcall(function() return game:GetTotalMemoryUsageMb() end)
 if okMem and type(memMb) == "number" then
 setTextSmooth(RamText, tostring(math.floor(memMb)) .. "mb")
 end
 end)
 
--- ═══ soft drop shadow (restored): stacked rounded layers instead of the old
--- square shadow image whose corners broke the window's rounding. Layers sit
--- one ZIndex below their parent, so they can never draw over the plate ═══
+-- ============================================================================
+-- PATCH 2: AttachShadow guards against layout parents
+-- ============================================================================
 local function AttachShadow(frame, opts)
 	if not frame or not frame.Parent then return end
+	if frame:FindFirstChildWhichIsA("UIListLayout") or frame:FindFirstChildWhichIsA("UIGridLayout") then
+		warn("[ui] AttachShadow: " .. frame.Name .. " has a layout, shadow skipped")
+		return
+	end
 	opts = opts or {}
 	local layers = math.clamp(opts.layers or 5, 1, 8)
 	local step = opts.step or 1.7
@@ -1800,9 +1737,7 @@ local function AttachShadow(frame, opts)
 end
 AttachShadow(MainFrame, { radius = 20, layers = 5, step = 1.7, bias = 3 })
 
--- ═══ calltaro overlays: keybind list + spectator list stacked under the
--- watermark in one right-aligned column, like the pasta's overlay group ═══
-local RefreshKeybindOverlay -- forward-declared: SetTargetBind pokes it
+local RefreshKeybindOverlay
 do
 local ICON_EYE = "rbxassetid://127234874352422"
 local ICON_KEYBOARD = "rbxassetid://121978468376124"
@@ -1810,8 +1745,6 @@ local OverlayStack = New("Frame", {
 	Name = "OverlayStack",
 	AnchorPoint = Vector2.new(1, 0),
 	Position = UDim2.new(1, -6, 0, 46),
-	-- fixed-width column, panels right-aligned inside: AutomaticSize XY
-	-- with a (1,0) anchor made the whole stack wander as panels resized
 	Size = UDim2.fromOffset(220, 0),
 	AutomaticSize = Enum.AutomaticSize.Y,
 	BackgroundTransparency = 1,
@@ -1827,13 +1760,14 @@ New("UIListLayout", {
 	SortOrder = Enum.SortOrder.LayoutOrder,
 }, OverlayStack)
 
-local function MakeOverlayPanel(name, iconName, title)
+-- ============================================================================
+-- PATCH 3: MakeOverlayPanel rewritten — shadow lives in a panel WITHOUT layout,
+-- content goes into a Body child that owns the layout
+-- ============================================================================
+local function MakeOverlayPanel(name, iconAsset, title)
 	local panel = New("Frame", {
 		Name = name,
 		Size = UDim2.fromOffset(156, 46),
-		-- fixed height computed from the row count: AutomaticSize here plus
-		-- the shadow layers (1,+N) made the panel grow forever — the tall
-		-- empty column bug
 		BackgroundColor3 = Color3.fromRGB(13, 15, 22),
 		BackgroundTransparency = 0.1,
 		BorderSizePixel = 0,
@@ -1843,61 +1777,38 @@ local function MakeOverlayPanel(name, iconName, title)
 	}, OverlayStack)
 	New("UICorner", { CornerRadius = UDim.new(0, 10) }, panel)
 	New("UIStroke", { Color = Color3.fromRGB(52, 58, 82), Transparency = 0.6, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual }, panel)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8) }, panel)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
-	AttachShadow(panel, { radius = 10, layers = 3, step = 1.3, bias = 2 })
+	AttachShadow(panel, { radius = 10, layers = 3, step = 1.3, bias = 2 }) -- panel has NO layout now
 
-	local header = New("Frame", {
-		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 16),
+	local body = New("Frame", {
+		Name = "Body",
+		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
-		LayoutOrder = 1,
 		ZIndex = Z_BASE + 891,
 	}, panel)
+	New("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8) }, body)
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, body)
+
+	local header = New("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, LayoutOrder = 1, ZIndex = Z_BASE + 891 }, body)
 	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, header)
 	New("ImageLabel", {
-		Name = "HeaderIcon",
-		Size = UDim2.fromOffset(14, 14),
-		BackgroundTransparency = 1,
-		Image = iconName,
-		ImageColor3 = Color3.fromRGB(255, 255, 255),
-		ImageTransparency = 0.3,
-		ScaleType = Enum.ScaleType.Fit,
-		LayoutOrder = 1,
-		ZIndex = Z_BASE + 891,
+		Name = "HeaderIcon", Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1,
+		Image = iconAsset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 891,
 	}, header)
 	New("TextLabel", {
-		Name = "HeaderTitle",
-		Size = UDim2.new(0, 0, 1, 0),
-		AutomaticSize = Enum.AutomaticSize.X,
-		BackgroundTransparency = 1,
-		Text = title,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextTransparency = 0.08,
-		TextSize = 13,
-		Font = Enum.Font.GothamBold,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		LayoutOrder = 2,
-		ZIndex = Z_BASE + 891,
+		Name = "HeaderTitle", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(255, 255, 255), TextTransparency = 0.08,
+		TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, ZIndex = Z_BASE + 891,
 	}, header)
 
 	New("Frame", {
-		Name = "HeaderRule",
-		Size = UDim2.new(1, 0, 0, 1),
-		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-		BackgroundTransparency = 0.9,
-		LayoutOrder = 2,
-		ZIndex = Z_BASE + 891,
-	}, panel)
+		Name = "HeaderRule", Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		BackgroundTransparency = 0.9, BorderSizePixel = 0, LayoutOrder = 2, ZIndex = Z_BASE + 891,
+	}, body)
 
 	local rows = New("Frame", {
-		Name = "Rows",
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1,
-		LayoutOrder = 3,
-		ZIndex = Z_BASE + 891,
-	}, panel)
+		Name = "Rows", Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundTransparency = 1, LayoutOrder = 3, ZIndex = Z_BASE + 891,
+	}, body)
 	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, rows)
 	return panel, rows
 end
@@ -1907,8 +1818,6 @@ end
 		return 8 + 16 + 6 + 1 + 6 + (rowCount * 18 + math.max(0, rowCount - 1) * 2) + 8
 	end
 
-	-- everything inside the panel fades with it, so a closing panel never
-	-- leaves ghost text floating above the desktop
 	local function FadeOverlayContents(panel, show)
 	for _, node in ipairs(panel:GetDescendants()) do
 		if node:IsA("TextLabel") then
@@ -1955,7 +1864,6 @@ local function SetOverlayPanelShown(panel, shown)
 	end
 end
 
--- ─── keybind list: rows pulled live from the 3-dot bind system ───
 local KBPanel, KBRows = MakeOverlayPanel("Keybinds", ICON_KEYBOARD, "Keybinds")
 KBPanel.LayoutOrder = 1
 local kbEnabled = true
@@ -2009,8 +1917,6 @@ RefreshKeybindOverlay = function()
 		local ok, result = pcall(WindowObj._bindSnapshot)
 		if ok and type(result) == "table" then snapshot = result end
 	end
-	-- overlays belong to the menu itself: visible whenever it is, even with
-	-- nothing bound yet (header-only plate)
 	local target = kbEnabled and MainFrame.Visible
 	local sigParts = {}
 	for i, entry in ipairs(snapshot) do sigParts[i] = entry.label .. "=" .. entry.key end
@@ -2028,7 +1934,6 @@ RefreshKeybindOverlay = function()
 			MeasureText(entry.label, 12, Enum.Font.Gotham)
 			+ MeasureText(entry.key, 12, Enum.Font.GothamBold) + 58)
 	end
-	-- calltaro sizing: 24px padding, never narrower than 132
 	KBPanel.Size = UDim2.fromOffset(24 + math.max(132, math.ceil(maxW + 0.5)), OverlayPanelHeight(#snapshot))
 	SetOverlayPanelShown(KBPanel, target)
 end
@@ -2042,7 +1947,6 @@ WindowObj.KeybindList = {
 	refresh = function() RefreshKeybindOverlay() end,
 }
 
--- ─── spectator list: auto-detected roster plus a manual override API ───
 local SpecPanel, SpecRows = MakeOverlayPanel("Spectators", ICON_EYE, "Spectators")
 SpecPanel.LayoutOrder = 2
 local specEnabled = true
@@ -2135,8 +2039,6 @@ local function NormalizeSpectatorList(list)
 	return out
 end
 
--- heuristic: someone without a living character is riding a camera, most
--- likely yours while you're the one still standing
 local function UpdateAutoSpectators()
 	if not specAuto then return end
 	local list = {}
@@ -2180,11 +2082,7 @@ function WindowObj:SetSpectatorsAuto(enabled)
 	return specAuto
 end
 
--- overlays follow the menu: opening it reveals both headers even with empty
--- rows, exactly the way the calltaro menu treats its overlay group
 MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-	-- hard switch on the whole column: nothing of ours may linger on screen
-	-- while the menu is closed, even mid-fade
 	OverlayStack.Visible = MainFrame.Visible
 	if RefreshKeybindOverlay then RefreshKeybindOverlay() end
 	RefreshSpectatorOverlay()
@@ -2205,7 +2103,7 @@ task.defer(function()
 	if RefreshKeybindOverlay then RefreshKeybindOverlay() end
 	RefreshSpectatorOverlay()
 end)
-end -- overlay scope
+end
 
 local Aspect = Instance.new("UIAspectRatioConstraint")
 Aspect.Parent = MainFrame
@@ -2369,7 +2267,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = WindowSettingsFrame end
@@ -2421,7 +2319,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ConnectScaleCamera()
 	pcall(function() workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(OnCurrentCameraChanged) end)
 
-	-- Settings Container (Main Color + dropdowns)
 	local SettingsContainer = Instance.new("Frame")
 	SettingsContainer.Name = "SettingsContainer"
 	SettingsContainer.Position = UDim2.new(0,0,0.03,0)
@@ -2543,7 +2440,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		end)
 	end
 
-	-- Colorpicker row
 	local WSColorpicker = Instance.new("Frame")
 	WSColorpicker.Name = "Colorpicker"
 	WSColorpicker.Size = UDim2.new(1,0,0.20000000298023224,0)
@@ -2604,7 +2500,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(255,255,255); s.Transparency = 0.9200000166893005; s.Parent = wsColorFrame end
 	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 1.100000023841858; a.Parent = wsColorFrame end
 
-	-- SV square: hue base, white fade left→right, black fade top→bottom
 	local wsRGB = Instance.new("ImageButton")
 	wsRGB.Name = "RGB"
 	wsRGB.Position = UDim2.new(0.06700000166893005,0,0.06800000369548798,0)
@@ -2650,7 +2545,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	wsRGBCircle.ZIndex = 163
 	wsRGBCircle.Parent = wsRGB
 
-	-- vertical rainbow hue bar
 	local wsDark = Instance.new("ImageButton")
 	wsDark.Name = "Darkness"
 	wsDark.Position = UDim2.new(0.70,0,0.06800000369548798,0)
@@ -2687,7 +2581,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	wsDarkCircle.Parent = wsDark
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1,0); c.Parent = wsDarkCircle end
 
-	-- live preview swatch next to the hex readout
 	local wsPreview = Instance.new("Frame")
 	wsPreview.Name = "Preview"
 	wsPreview.Position = UDim2.new(0.067,0,0.71,0)
@@ -2724,7 +2617,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	wsCopy.Parent = wsColorFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,4); c.Parent = wsCopy end
 
-	-- Menu Scale selection row (new accordion-style)
 	local WSScaleRow = Instance.new("Frame")
 	WSScaleRow.Name = "Selection"
 	WSScaleRow.Size = UDim2.new(1,0,0,28)
@@ -2793,7 +2685,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ScaleDownBar.ZIndex = 1000
 	ScaleDownBar.Parent = WSScaleRow
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = ScaleDownBar end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ScaleDownBar end
+	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ScaleDownBar end
 	local ScaleContainer = Instance.new("ScrollingFrame")
 	ScaleContainer.Name = "Container"
 	ScaleContainer.Position = UDim2.new(0.05,0,0.05,0)
@@ -2808,7 +2700,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ScaleContainer.ScrollBarImageTransparency = 0.5
 	ScaleContainer.Parent = ScaleDownBar
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = ScaleContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ScaleContainer end
+	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ScaleContainer end
 	do local ll = Instance.new("UIListLayout"); ll.FillDirection = Enum.FillDirection.Vertical; ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0,2); ll.Parent = ScaleContainer end
 
 	local ScaleOpenBtn = Instance.new("TextButton"); ScaleOpenBtn.Name = "OpenBtn"
@@ -2936,7 +2828,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangDownBar.ZIndex = 1000
 	LangDownBar.Parent = WSLangRow
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = LangDownBar end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = LangDownBar end
+	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = LangDownBar end
 	local LangContainer = Instance.new("ScrollingFrame")
 	LangContainer.Name = "Container"
 	LangContainer.Position = UDim2.new(0.05,0,0.05,0)
@@ -2951,7 +2843,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangContainer.ScrollBarImageTransparency = 0.5
 	LangContainer.Parent = LangDownBar
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = LangContainer end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = LangContainer end
+	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = LangContainer end
 	do local ll = Instance.new("UIListLayout"); ll.FillDirection = Enum.FillDirection.Vertical; ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0,2); ll.Parent = LangContainer end
 
 	local LangOpenBtn = Instance.new("TextButton"); LangOpenBtn.Name = "OpenBtn"
@@ -2959,7 +2851,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangOpenBtn.Text = ""; LangOpenBtn.ZIndex = 500; LangOpenBtn.Parent = WSLangRow
 
 	do
-		-- Colorpicker logic
 		local wsColorHSV = { Color3.toHSV(mainColor) }
 		local wsWheelDown, wsSlideDown = false, false
 		local wsPickerOpen = false
@@ -3098,7 +2989,6 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		end)
 		wsHex.Text = wsToHex(mainColor)
 
-		-- Scale dropdown (new accordion style)
 		local scales = {"Auto", "100%", "90%", "80%", "70%", "60%", "50%"}
 		local scaleVals = {nil, 1, 0.9, 0.8, 0.7, 0.6, 0.5}
 		local scaleOpen = false
@@ -3192,7 +3082,6 @@ PositionPopupWithinMain(ScaleDownBar, true)
 			end
 		end)
 
-		-- Language dropdown (new accordion style)
 		local langs = {"English", "Filipino", "Chinese", "Russian", "Italian"}
 		local langOpen = false
 		local langSelectedBtns = {}
@@ -3271,7 +3160,6 @@ PositionPopupWithinMain(LangDownBar, true)
 			end
 		end)
 
-		-- Open/close panel
 		local wsOpen = false
 		local function closeWS()
 			wsOpen = false
@@ -3291,7 +3179,6 @@ PositionPopupWithinMain(LangDownBar, true)
 				WindowSettingsFrame.Visible = false
 					ApplyZIndexLadder(WindowSettingsFrame, NextPopupZ())
 					PositionPopupWithinMain(WindowSettingsFrame, false, 44, WindowSettings)
-					-- centre the plate on the arrow instead of hanging it off the left edge
 					do
 						local anchorPos = WindowSettings and WindowSettings.AbsolutePosition
 						local anchorSize = WindowSettings and WindowSettings.AbsoluteSize
@@ -3306,7 +3193,6 @@ PositionPopupWithinMain(LangDownBar, true)
 						end
 					end
 					WindowSettingsFrame.Visible = true
-				-- settle in from the left edge instead of blinking on
 				local wsSettled = WindowSettingsFrame.Position
 				WindowSettingsFrame.Position = UDim2.new(wsSettled.X.Scale, wsSettled.X.Offset - 12, wsSettled.Y.Scale, wsSettled.Y.Offset)
 				Tween(WindowSettingsFrame, { Position = wsSettled }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -3344,8 +3230,6 @@ PositionPopupWithinMain(LangDownBar, true)
 		end,
 	})
 
-	-- Watermark row: chips toggle which stats the pill shows (defaults to
-	-- logo + user only); block-scoped, handlers capture their own chips
 	do
 		local WMRow = Instance.new("Frame")
 		WMRow.Name = "WatermarkRow"
@@ -3421,7 +3305,6 @@ PositionPopupWithinMain(LangDownBar, true)
 		end
 	end
 
-	-- UsageContainer: dynamic rows added via WindowObj:GetUsage()
 	local UsageContainer = Instance.new("Frame")
 	UsageContainer.Name = "UsageContainer"
 	UsageContainer.Position = UDim2.new(0,0,0.45,0)
@@ -3500,21 +3383,22 @@ PositionPopupWithinMain(LangDownBar, true)
 		TextDefault.TextXAlignment = Enum.TextXAlignment.Right
 		TextDefault.Parent = Row
 
+		-- ============================================================================
+		-- PATCH 4: Settings dropdown — THEME.plate, radius, stroke; no divider watcher
+		-- ============================================================================
 		local DropPopup = Instance.new("Frame")
 		DropPopup.Name = "Dropdown"
 		DropPopup.Position = UDim2.new(0.02,0,1,2)
 		DropPopup.Size = UDim2.new(0.96,0,0,100)
-		DropPopup.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+		DropPopup.BackgroundColor3 = THEME.plate
 		DropPopup.BackgroundTransparency = 0
 		DropPopup.BorderSizePixel = 0
 		DropPopup.Visible = false
 		DropPopup.ZIndex = 1000
 		DropPopup.Parent = Row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = DropPopup end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44, 44, 52); s.Transparency = 0.2; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
-		DropPopup.BackgroundColor3 = Color3.fromRGB(23, 23, 27)
+		do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = THEME.strokeAlpha; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
 
-		-- NL-style plate header: the setting name above the options
 		local DropHeader = Instance.new("TextLabel")
 		DropHeader.Name = "HeaderLabel"
 		DropHeader.Position = UDim2.new(0, 10, 0, 5)
@@ -3522,7 +3406,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		DropHeader.BackgroundTransparency = 1
 		DropHeader.Text = tostring(text or "")
 		DropHeader.TextColor3 = Color3.fromRGB(122, 124, 136)
-		DropHeader.TextSize = 11
+			DropHeader.TextSize = 11
 		DropHeader.Font = Enum.Font.GothamBold
 		DropHeader.TextXAlignment = Enum.TextXAlignment.Left
 		DropHeader.TextTruncate = Enum.TextTruncate.AtEnd
@@ -3720,7 +3604,6 @@ PositionPopupWithinMain(LangDownBar, true)
 		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(255,255,255); s.Transparency = 0.92; s.Parent = cpFrame end
 		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 1.1; a.Parent = cpFrame end
 
-		-- SV square: hue base, white fade left→right, black fade top→bottom
 		local RGB = Instance.new("ImageButton")
 		RGB.BackgroundColor3 = Color3.fromHSV(hue, 1, 1); RGB.BorderSizePixel = 0
 		RGB.Position = UDim2.new(0.067,0,0.068,0); RGB.Size = UDim2.new(0.60,0,0.60,0)
@@ -3748,7 +3631,6 @@ PositionPopupWithinMain(LangDownBar, true)
 		RGBCircle.ImageRectOffset = Vector2.new(628,420); RGBCircle.ImageRectSize = Vector2.new(48,48)
 		RGBCircle.ZIndex = 363; RGBCircle.Parent = RGB
 
-		-- vertical rainbow hue bar
 		local Darkness = Instance.new("ImageButton")
 		Darkness.BackgroundColor3 = Color3.new(1,1,1); Darkness.BorderSizePixel = 0
 		Darkness.Position = UDim2.new(0.70,0,0.068,0); Darkness.Size = UDim2.new(0.06,0,0.60,0)
@@ -3774,7 +3656,6 @@ PositionPopupWithinMain(LangDownBar, true)
 		DarknessCircle.Size = UDim2.new(1.4,0,0,4); DarknessCircle.ZIndex = 361; DarknessCircle.Parent = Darkness
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1,0); c.Parent = DarknessCircle end
 
-		-- live preview swatch next to the hex readout
 		local Preview = Instance.new("Frame")
 		Preview.BackgroundColor3 = NormalizeColor(defaultColor); Preview.BorderSizePixel = 0
 		Preview.Position = UDim2.new(0.067,0,0.71,0); Preview.Size = UDim2.new(0.09,0,0.085,0)
@@ -3806,7 +3687,6 @@ PositionPopupWithinMain(LangDownBar, true)
 			InvokeCallback(callback, c)
 		end
 
-		-- hue bar: vertical rainbow, top = 0, bottom = 1
 		local function UpdateSlide(input)
 			local m = GetInputPosition(input)
 			local maxY = Darkness.AbsoluteSize.Y
@@ -3818,7 +3698,6 @@ PositionPopupWithinMain(LangDownBar, true)
 			update()
 		end
 
-		-- SV square: x = saturation, y = 1 - value
 		local function UpdateRing(input)
 			local m = GetInputPosition(input)
 			local x = ClampRatio(m.X - RGB.AbsolutePosition.X, RGB.AbsoluteSize.X)
@@ -4041,7 +3920,6 @@ SaveText.TextTransparency = 0.20000000298023224
 SaveText.TextXAlignment = Enum.TextXAlignment.Left
 SaveText.Parent = Save
 
-	-- short pulse so a save is visible, plus the name of what is stored
 	local function FlashSaved()
 		if not Save then return end
 		Tween(Save, { BackgroundColor3 = mainColor }, 0.09)
@@ -4099,7 +3977,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	TriggerSaveConfig.ZIndex = 15
 	TriggerSaveConfig.Parent = Save
 
-	-- ── ConfigMainFrame (new design panel) ──────────────────────
 	local ConfigMainFrame = Instance.new("Frame")
 	ConfigMainFrame.Name = "ConfigMainFrame"
 	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.075, 0)
@@ -4117,7 +3994,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigScale.Scale = 1
 	ConfigScale.Parent = ConfigMainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = ConfigMainFrame end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ConfigMainFrame end
+	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ConfigMainFrame end
 	AttachShadow(ConfigMainFrame, { radius = 18, layers = 4, step = 1.5, bias = 3 })
 
 	local CMHeader = Instance.new("Frame")
@@ -4131,7 +4008,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CMHeader.Parent = ConfigMainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = CMHeader end
 
-	-- divider under the header, NL-style
 	do
 		local CMHeaderRule = Instance.new("Frame")
 		CMHeaderRule.Name = "HeaderRule"
@@ -4144,7 +4020,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		CMHeaderRule.Parent = CMHeader
 	end
 
-	-- configs icon (calltaro icon set)
 	local CloudIcon = Instance.new("ImageLabel")
 	CloudIcon.Name = "CloudIcon"
 	CloudIcon.AnchorPoint = Vector2.new(0, 0.5)
@@ -4157,7 +4032,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CloudIcon.ZIndex = 1000
 	CloudIcon.Parent = CMHeader
 
-	-- Title
 	local CMTitle = Instance.new("TextLabel")
 	CMTitle.Name = "TitleLabel"
 	CMTitle.Position = UDim2.new(0, 44, 0, 0)
@@ -4172,7 +4046,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CMTitle.TextXAlignment = Enum.TextXAlignment.Left
 	CMTitle.Parent = CMHeader
 
-	-- Header right buttons
 	local CMHeaderRight = Instance.new("Frame")
 	CMHeaderRight.Name = "HeaderRight"
 	CMHeaderRight.AnchorPoint = Vector2.new(1, 0)
@@ -4191,8 +4064,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		ll.Parent = CMHeaderRight
 	end
 
-	-- NL-style header icon buttons with a hover tint; the builder itself is
-	-- block-scoped so AddWindow keeps registers free (200 local limit)
 	local IDLE_ICON_TINT = Color3.fromRGB(176, 180, 198)
 	local autoSaveEnabled = false
 	local AutoSaveBtn, RecentlyDeletedBtn, InsertConfigBtn
@@ -4219,17 +4090,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			return btn
 		end
 
-		-- AutoSave button (toggle)
 		AutoSaveBtn = HeaderIconButton("AutomaticSave", "rbxassetid://122894934359450", 1)
-
-		-- RecentlyDeleted button
 		RecentlyDeletedBtn = HeaderIconButton("RecentlyDeleted", "rbxassetid://126010725826757", 2)
-
-		-- InsertConfig (add new) button
 		InsertConfigBtn = HeaderIconButton("InsertConfig", "rbxassetid://101123124881873", 3)
 	end
 
-	-- ── Search Container ─────────────────────────────────────────
 	local SearchContainer = Instance.new("Frame")
 	SearchContainer.Name = "SearchContainer"
 	SearchContainer.Position = UDim2.new(0, 14, 0, 56)
@@ -4269,7 +4134,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigSearchBox.ClearTextOnFocus = false
 	ConfigSearchBox.Parent = SearchContainer
 
-	-- ── Config Name Input (shown when InsertConfig clicked) ──────
 	local NameInputContainer = Instance.new("Frame")
 	NameInputContainer.Name = "NameInputContainer"
 	NameInputContainer.Position = UDim2.new(0, 14, 0, 56)
@@ -4313,7 +4177,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfirmAddBtn.Parent = NameInputContainer
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = ConfirmAddBtn end
 
-	-- ── List Container ────────────────────────────────────────────
 	local ListContainer = Instance.new("ScrollingFrame")
 	ListContainer.Name = "ListContainer"
 	ListContainer.Position = UDim2.new(0, 14, 0, 98)
@@ -4337,7 +4200,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		ll.Parent = ListContainer
 	end
 
-	-- Spacing frame
 	local Space = Instance.new("Frame")
 	Space.Name = "Space"
 	Space.Size = UDim2.new(1, 0, 0, 3)
@@ -4345,13 +4207,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	Space.ZIndex = 100
 	Space.Parent = ListContainer
 
-	-- ── Icons ────────────────────────────────────────────────────
-	local SAVE_ICON = "rbxassetid://122894934359450"  -- floppy/save (calltaro)
-	local LOAD_ICON = "rbxassetid://109698732019071"  -- download/load (calltaro)
+	local SAVE_ICON = "rbxassetid://122894934359450"
+	local LOAD_ICON = "rbxassetid://109698732019071"
 
-	-- ── Deleted configs store (in-memory + file persistence) ─────
 	local DELETED_FILE = "NeverloseDeleted_" .. windowConfigId .. ".json"
-	local _deletedConfigs = {} -- { name=string, data=table }
+	local _deletedConfigs = {}
 
 	local function LoadDeletedList()
 		if type(readfile) ~= "function" or type(isfile) ~= "function" then return end
@@ -4380,7 +4240,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	LoadDeletedList()
 
-	-- ── Recently Deleted Panel ────────────────────────────────────
 	local RecentlyDeletedPanel = Instance.new("Frame")
 	RecentlyDeletedPanel.Name = "RecentlyDeletedPanel"
 	RecentlyDeletedPanel.Position = UDim2.new(0.012, 0, 0.075, 0)
@@ -4395,10 +4254,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Visible = false
 	RecentlyDeletedPanel.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 18); c.Parent = RecentlyDeletedPanel end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = RecentlyDeletedPanel end
+	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = RecentlyDeletedPanel end
 	AttachShadow(RecentlyDeletedPanel, { radius = 18, layers = 4, step = 1.5, bias = 3 })
 
-	-- RD Header
 	local RDHeader = Instance.new("Frame")
 	RDHeader.Name = "RDHeader"
 	RDHeader.Size = UDim2.new(1, 0, 0, 46)
@@ -4448,7 +4306,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RDBackBtn.Parent = RDHeader
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = RDBackBtn end
 
-	-- RD list
 	local RDList = Instance.new("ScrollingFrame")
 	RDList.Name = "RDList"
 	RDList.Position = UDim2.new(0, 14, 0, 60)
@@ -4469,7 +4326,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		for _, c in ipairs(RDList:GetChildren()) do
 			if c:IsA("Frame") then c:Destroy() end
 		end
-		for i = #_deletedConfigs, 1, -1 do -- newest first
+		for i = #_deletedConfigs, 1, -1 do
 			local entry = _deletedConfigs[i]
 			local drow = Instance.new("Frame")
 			drow.Name = "DeletedRow"
@@ -4526,7 +4383,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	end
 
-	-- Back button
 	local closeConfigPanel
 	local configOpen = false
 	RDBackBtn.MouseButton1Click:Connect(function()
@@ -4544,9 +4400,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		end)
 	end)
 
-	-- ── Active row tracking ───────────────────────────────────────
-	local activeRow = nil     -- the currently "loaded" row frame
-	local activeLoadBtn = nil -- its LoadConfig ImageButton
+	local activeRow = nil
+	local activeLoadBtn = nil
 	local activeConfigName = nil
 
 	local function SetActiveConfigName(name)
@@ -4565,16 +4420,13 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	end
 
 	local function DeactivateRow(rowFrame, loadBtn)
-		-- back to the quiet look: hidden accent stroke, dim plate
 		local s = rowFrame:FindFirstChildWhichIsA("UIStroke")
 		if s then Tween(s, {Transparency = 1}, 0.15) end
 		Tween(rowFrame, {BackgroundTransparency = 0.25}, 0.15)
-		-- Reset icon back to LOAD
 		loadBtn.Image = LOAD_ICON
 		Tween(loadBtn, {ImageColor3 = Color3.fromRGB(180, 180, 200)}, 0.15)
 	end
 
-	-- ── Helper: create a config row ───────────────────────────────
 	local function MakeConfigButton(name)
 		local row = Instance.new("Frame")
 		row.Name = "ConfigRow_" .. name
@@ -4595,7 +4447,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		row.MouseEnter:Connect(function() Tween(row, {BackgroundTransparency = 0.5}, 0.12) end)
 		row.MouseLeave:Connect(function() Tween(row, {BackgroundTransparency = 0.25}, 0.12) end)
 
-		-- Name label
 		local Rename = Instance.new("TextBox")
 		Rename.Name = "Rename"
 		Rename.Position = UDim2.new(0, 10, 0, 0)
@@ -4614,7 +4465,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		pcall(function() Rename.ReadOnly = true end)
 		Rename.Parent = row
 
-		-- "..." button rendered with the calltaro dots icon
 		local SettingsBtn = Instance.new("TextButton")
 		SettingsBtn.Name = "Settings"
 		SettingsBtn.AnchorPoint = Vector2.new(1, 0)
@@ -4638,7 +4488,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			dotsIcon.Parent = SettingsBtn
 		end
 
-		-- Load/Save icon button
 		local LoadConfigBtn = Instance.new("ImageButton")
 		LoadConfigBtn.Name = "LoadConfig"
 		LoadConfigBtn.AnchorPoint = Vector2.new(1, 0.5)
@@ -4651,7 +4500,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		LoadConfigBtn.ZIndex = 3000
 		LoadConfigBtn.Parent = row
 
-		-- ── Settings Frame (shown on "..." click) ─────────────────
 		local SettingsFrame = Instance.new("Frame")
 		SettingsFrame.Name = "SettingsFrame"
 		SettingsFrame.Position = UDim2.new(0.02, 0, 1, 2)
@@ -4666,7 +4514,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = SettingsFrame end
-		do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SettingsFrame end
+		do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = SettingsFrame end
 		do
 			local ll = Instance.new("UIListLayout")
 			ll.Padding = UDim.new(0, 2)
@@ -4687,7 +4535,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			btn.ZIndex = 6001
 			btn.Parent = SettingsFrame
 
-			-- hover highlight
 			btn.MouseEnter:Connect(function()
 				Tween(btn, {BackgroundTransparency = 0.7}, 0.1)
 				btn.BackgroundColor3 = Color3.fromRGB(25,28,42)
@@ -4702,9 +4549,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			return btn
 		end
 
-		-- Delete button
 		MakeSettingBtn("Delete", Color3.fromRGB(255, 80, 80), function()
-			-- Save deleted config data before removing file
 			local configData = {}
 			for _, entry in ipairs(_registeredElements) do
 				local ok, val = pcall(function() return entry.obj:Get() end)
@@ -4713,7 +4558,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 					if s ~= nil then configData[entry.key] = s end
 				end
 			end
-			-- Try to read from file if it exists
 			local path = GetConfigPath(name)
 			if type(readfile) == "function" and type(isfile) == "function" then
 				local existsOk, exists = pcall(isfile, path)
@@ -4726,11 +4570,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 					if type(delfile) == "function" then pcall(delfile, path) end
 				end
 			end
-			-- Add to deleted list (max 20 entries)
 			table.insert(_deletedConfigs, { name = name, data = configData })
 			if #_deletedConfigs > 20 then table.remove(_deletedConfigs, 1) end
 			SaveDeletedList()
-			-- Deactivate if this was the active row
 			if activeRow == row then
 				ClearActiveConfig()
 			end
@@ -4738,7 +4580,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			task.delay(0.22, function() row:Destroy() end)
 		end)
 
-		-- Duplicate button
 		MakeSettingBtn("Duplicate", Color3.fromRGB(180, 200, 255), function()
 			local dupName = name .. " (Copy)"
 			local saved = false
@@ -4762,7 +4603,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			if saved then MakeConfigButton(dupName) end
 		end)
 
-		-- "..." toggles settings frame
 		closeSfRow = function()
 			sfOpen = false
 			UnregisterPopup(SettingsFrame)
@@ -4783,10 +4623,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			end
 		end)
 
-		-- Close settings frame when clicking elsewhere on the row
 		local RowOverlay = Instance.new("TextButton")
 		RowOverlay.Name = "RowOverlay"
-		RowOverlay.Size = UDim2.new(1, -72, 1, 0) -- covers everything except dots and load btn
+		RowOverlay.Size = UDim2.new(1, -72, 1, 0)
 		RowOverlay.BackgroundTransparency = 1
 		RowOverlay.Text = ""
 		RowOverlay.ZIndex = 2500
@@ -4795,10 +4634,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			if sfOpen then closeSfRow() end
 		end)
 
-		-- ── Load / Save button logic ──────────────────────────────
 		LoadConfigBtn.MouseButton1Click:Connect(function()
 			if activeRow == row then
-				-- Already loaded → SAVE
 				SaveNamedConfig(name)
 				Tween(LoadConfigBtn, {ImageColor3 = Color3.fromRGB(80, 255, 140)}, 0.1)
 				task.delay(0.6, function()
@@ -4828,9 +4665,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		return row
 	end
 
-	-- ── Refresh main list ─────────────────────────────────────────
-	-- panel height follows its content: no dead space under short lists,
-	-- tall lists clamp to the window (NL plates hug their rows)
 	local function UpdateConfigPanelHeight()
 		local frame2H = Frame2.AbsoluteSize.Y
 		local maxH = math.max(240, (frame2H > 0 and frame2H or 480) - 48)
@@ -4863,7 +4697,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		UpdateConfigPanelHeight()
 	end
 
-	-- ── InsertConfig button ───────────────────────────────────────
 	local insertMode = false
 	InsertConfigBtn.MouseButton1Click:Connect(function()
 		insertMode = not insertMode
@@ -4879,7 +4712,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		end
 	end)
 
-	-- bottom accent action, exactly where NL keeps it
 	do
 		local CreateNewBtn = Instance.new("TextButton")
 	CreateNewBtn.Name = "CreateNew"
@@ -4920,7 +4752,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		Tween(InsertConfigBtn, {ImageColor3 = Color3.fromRGB(200, 200, 220)}, 0.2)
 	end)
 
-	-- ── Search filter ─────────────────────────────────────────────
 	ConfigSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local query = ConfigSearchBox.Text:lower()
 		for _, c in ipairs(ListContainer:GetChildren()) do
@@ -4933,9 +4764,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		end
 	end)
 
-	-- ── AutoSave toggle ───────────────────────────────────────────
-	-- AutoSave: saves the currently loaded config to file on a 30s loop
-	-- so settings persist across rejoin. Also saves immediately on enable.
 	local function SaveActiveConfig()
 		if not autoSaveEnabled then return end
 		if not activeRow or not activeLoadBtn then return end
@@ -4951,7 +4779,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		if autoSaveEnabled then
 			AutoSaveBtn:SetAttribute("Pinned", true)
 			Tween(AutoSaveBtn, {ImageColor3 = mainColor}, 0.2)
-			-- Immediate save when toggled on
 			SaveActiveConfig()
 		else
 			AutoSaveBtn:SetAttribute("Pinned", false)
@@ -4959,8 +4786,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		end
 	end)
 
-	-- Auto-save loop: periodically saves the active config so it
-	-- persists between sessions (load it next time with the Load button)
 	if type(writefile) == "function" then
 		task.spawn(function()
 			while true do
@@ -4970,14 +4795,12 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		end)
 	end
 
-	-- Also save on character removing (best-effort "on close")
 	if LocalPlayer and LocalPlayer.CharacterRemoving then
 		LocalPlayer.CharacterRemoving:Connect(function()
 			SaveActiveConfig()
 		end)
 	end
 
-	-- ── Recently Deleted button ───────────────────────────────────
 	RecentlyDeletedBtn.MouseButton1Click:Connect(function()
 		UnregisterPopup(ConfigMainFrame)
 		Tween(ConfigMainFrame, {BackgroundTransparency = 1}, 0.2)
@@ -4990,7 +4813,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ApplyZIndexLadder(RecentlyDeletedPanel, NextPopupZ())
 			RecentlyDeletedPanel.Visible = true
 			ConstrainPopupToMainFrame(RecentlyDeletedPanel); task.defer(function() ConstrainPopupToMainFrame(RecentlyDeletedPanel) end); RegisterPopup(RecentlyDeletedPanel, closeConfigPanel, RecentlyDeletedBtn)
-			-- fade + pop so the swap mirrors the config panel's entrance
 			Tween(RecentlyDeletedPanel, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			local rdScale = GetPopupScale(RecentlyDeletedPanel)
 			if rdScale then
@@ -5028,9 +4850,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConfigMainFrame.ZIndex = 7000
 			ApplyZIndexLadder(ConfigMainFrame, NextPopupZ())
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
-			-- width guard: if the plate is wider than the window safe area,
-			-- pull its scale down instead of letting it stick out (NL plates
-			-- never escape the window)
 			task.delay(0.26, function()
 				if not ConfigMainFrame.Visible then return end
 				local safe = PopupSafeArea()
@@ -5042,7 +4861,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConfigMainFrame.Visible = true
 			ConfigScale.Scale = 0.96
 			Tween(ConfigScale, {Scale = 1}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-			-- fade the plate in and let it settle from slightly above
 			Tween(ConfigMainFrame, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			local cfgSettled = ConfigMainFrame.Position
 			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 10)
@@ -5088,7 +4906,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	}, SearchBox)
 	New("UIPadding", { PaddingLeft = UDim.new(0, 30) }, SearchBox)
 
-	-- ApplySearch forward-declared; fully defined after TabHose is created below.
 	local ApplySearch
 
 	local searchOpen = false
@@ -5125,10 +4942,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, TabHose)
 
-	-- the subtab columns used to sit in TabHose as well, and UIListLayout counts
-	-- invisible children: four 48% columns overflowed to the right of the window
-	-- and ClipsDescendants = false let them render over the game. they get their
-	-- own container now, so TabHose only ever holds Left and Right
 	local SubTabHose = New("Frame", {
 		Name = "SubTabHose",
 		Position = UDim2.new(0.009999999776482582, 0, 0.092, 0),
@@ -5286,8 +5099,6 @@ Line9.Parent = MainFrame
 	ToggleBtn.Parent = NeverloseCS2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = ToggleBtn end
 	
--- rounded open button: no square drop-shadow image
-
 
 
 	local function HideWindowInstantly()
@@ -5308,7 +5119,6 @@ Line9.Parent = MainFrame
 
 	local guiOpen = true
 
-	-- window, acrylic and scale all move together in the same time window
 	local function AnimateWindow(open)
 		local dur = open and 0.2 or 0.16
 		local part = AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.Part
@@ -5321,8 +5131,6 @@ Line9.Parent = MainFrame
 			if MainFrameUIScale then
 				Tween(MainFrameUIScale, { Scale = 1 }, dur, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			end
-			-- warm the layout: aspect-constrained rows built while the window
-			-- was hidden sometimes stay at zero size until the next relayout
 			task.delay((dur or 0.3) + 0.05, function()
 				if not MainFrame.Visible or not MainFrameUIScale then return end
 				local target = MainFrameUIScale.Scale
@@ -5519,8 +5327,6 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 		end
 
 		local			function HideContent()
-			-- no transparency fiddling: a hidden column hides its text anyway,
-			-- and ShowContent restores the value when the tab comes back
 			Left.Visible = false
 			Right.Visible = false
 		end
@@ -5545,7 +5351,6 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 									for _, d in ipairs(item:GetDescendants()) do
 										if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
 									end
-									-- no tween here: ShowContent and HideContent fought over the same property
 									for _, t in ipairs(texts) do
 									if t.Parent then
 									t.TextTransparency = t.Name == "TextDefault" and 0.5 or 0
@@ -5664,8 +5469,6 @@ end
 
 			local Elements = New("Frame", {
 				Name = "Elements",
-				-- 2px inset: Border paints half outside and the column clips, so the
-				-- left edge needs real room or it loses its outline
 				Size = UDim2.new(1, -2, 0, 30),
 				Position = UDim2.new(0, 1, 0, 0),
 				BackgroundColor3 = Color3.fromRGB(21,24,36),
@@ -5675,7 +5478,7 @@ end
 				LayoutOrder = 1,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Elements end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(52, 58, 82); s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
+			do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = Elements end
 			New("UIListLayout", {
 				Padding = UDim.new(0, 4),
 				SortOrder = Enum.SortOrder.LayoutOrder,
@@ -5746,7 +5549,7 @@ end
 				SettingsFrame.Name = "SettingsFrame"
 				SettingsFrame.Position = UDim2.new(0.02, 0, 1, 4)
 				SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
-				SettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+				SettingsFrame.BackgroundColor3 = THEME.plate
 				SettingsFrame.BackgroundTransparency = 0
 				SettingsFrame.BorderSizePixel = 0
 				SettingsFrame.Visible = false
@@ -5759,22 +5562,38 @@ end
 
 				local UICorner = Instance.new('UICorner')
 				UICorner.Name = "UICorner"
-				UICorner.CornerRadius = UDim.new(0, 14)
+				UICorner.CornerRadius = UDim.new(0, THEME.radius)
 				UICorner.Parent = SettingsFrame
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(52, 58, 82)
-				UIStroke.Transparency = 0.25
+				UIStroke.Color = THEME.stroke
+				UIStroke.Transparency = THEME.strokeAlpha
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 				UIStroke.Parent = SettingsFrame
 
+				-- PATCH 4: settings plate header + no divider watcher
+				local PLATE_HEADER = 26
+				New("TextLabel", {
+					Name = "PlateTitle",
+					Position = UDim2.new(0, 14, 0, 6),
+					Size = UDim2.new(1, -28, 0, 18),
+					BackgroundTransparency = 1,
+					Text = label,
+					TextColor3 = THEME.text,
+					TextSize = 13,
+					Font = Enum.Font.GothamBold,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextTruncate = Enum.TextTruncate.AtEnd,
+					ZIndex = 5001,
+				}, SettingsFrame)
+
 				local SFContainer = Instance.new('ScrollingFrame')
 				SFContainer.Name = "Container"
 				SFContainer.AnchorPoint = Vector2.new(0, 0)
-				SFContainer.Position = UDim2.new(0.04, 0, 0, 3 / GetMainFrameScale())
-				SFContainer.Size = UDim2.new(0.92, 0, 1, -6 / GetMainFrameScale())
+				SFContainer.Position = UDim2.new(0.04, 0, 0, PLATE_HEADER + 3 / GetMainFrameScale())
+				SFContainer.Size = UDim2.new(0.92, 0, 1, -(PLATE_HEADER + 6 / GetMainFrameScale()))
 				SFContainer.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
 				SFContainer.BackgroundTransparency = 1
 				SFContainer.LayoutOrder = 1
@@ -5794,14 +5613,17 @@ end
 				SFLayout.Padding = UDim.new(0, 3)
 				SFLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				SFLayout.Parent = SFContainer
-				WatchRowDividers(SFContainer)
+
+				SFContainer.DescendantAdded:Connect(function(d)
+					if d.Name == "Lines" and d:IsA("GuiObject") then d.Visible = false end
+				end)
 
 				do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = SFContainer end
 
 				local function UpdateSettingsLayout()
 					local scale = GetMainFrameScale()
-					SFContainer.Position = UDim2.new(0.04, 0, 0, 3 / scale)
-					SFContainer.Size = UDim2.new(0.92, 0, 1, -6 / scale)
+					SFContainer.Position = UDim2.new(0.04, 0, 0, PLATE_HEADER + 3 / scale)
+					SFContainer.Size = UDim2.new(0.92, 0, 1, -(PLATE_HEADER + 6 / scale))
 				end
 
 				local function GetSettingsContentHeight()
@@ -5821,8 +5643,7 @@ end
 					UpdateSettingsLayout()
 					local scale = GetMainFrameScale()
 					local contentVisual = GetSettingsContentHeight()
-					-- the panel grows to fit every row, even past the window edge
-					local desiredVisual = math.max(34 * scale, contentVisual + 14 * scale)
+					local desiredVisual = math.max(34 * scale, contentVisual + (14 + PLATE_HEADER) * scale)
 					return desiredVisual / scale
 				end
 
@@ -5857,7 +5678,6 @@ end
 					elseif aboveY >= mainTop + edge then
 						y = aboveY
 					else
-						-- neither side fits: keep the requested height and align to the top
 						y = mainTop + edge
 					end
 
@@ -5889,14 +5709,11 @@ end
 					if settingsOpen then return self end
 					settingsOpen = true
 					CloseAllPopupsExcept(SettingsFrame)
-					-- this plate is positioned by placeSettings, so it has to lift the
-					-- ancestor clipping itself or the column cuts it in half
 					RememberPopupClipping(SettingsFrame)
 					ForceLiftClipping(SettingsFrame)
 					SettingsFrame.BackgroundTransparency = 0
 					SettingsFrame.Visible = false
 					SFScale.Scale = 0.94
-					-- stack and place first, only then let it be seen
 					ApplyZIndexLadder(SettingsFrame, NextPopupZ())
 					placeSettings(getSettingsHeight())
 					SettingsFrame.Visible = true
@@ -6319,20 +6136,22 @@ UIAspectRatioConstraint.Parent = Slider
 						TextXAlignment = Enum.TextXAlignment.Right,
 					}, Selection)
 
+					-- ============================================================================
+					-- PATCH 4: settings-level dropdown uses THEME.plate
+					-- ============================================================================
 					local DropPopup = New("Frame", {
 						Name = "Dropdown",
 						Position = UDim2.new(0.02,0,1,2),
 						Size = UDim2.new(0.6899999737739563, 0, 0, 100),
-						BackgroundColor3 = Color3.fromRGB(23, 23, 27),
+						BackgroundColor3 = THEME.plate,
 						BackgroundTransparency = 0,
 						BorderSizePixel = 0,
 						Visible = false,
 						ZIndex = 5000,
 					}, Selection)
 					New("UICorner", { CornerRadius = UDim.new(0, 6) }, DropPopup)
-						do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44, 44, 52); s.Transparency = 0.2; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
+						do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = THEME.strokeAlpha; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
 
-					-- NL-style plate header: the setting name above the options
 					New("TextLabel", {
 						Name = "HeaderLabel",
 						Position = UDim2.new(0, 10, 0, 5),
@@ -6462,19 +6281,11 @@ UIAspectRatioConstraint.Parent = Slider
 						else
 							CloseAllPopupsExcept(DropPopup)
 							dropOpen = true
-							-- knownSize has to state the real width: the popup is 69%, not 96%,
-							-- otherwise the clamp inside PositionPopupWithinMain pushes it sideways
-							-- the popup is as wide as the row it belongs to; anchoring it to the
-							-- TopBar instead pushed it off to the right of the settings panel
 							local popupW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
-							-- fixed 26px option rows under the 22px header strip
 							local popupH = math.clamp(26 * #options + 28, 46, 460)
 							DropPopup.Size = UDim2.new(0.96, 0, 0, popupH)
-							-- opaque from the first frame, the grow animation is enough
 							DropPopup.BackgroundTransparency = 0
 							DropPopup.Visible = false
-							-- own rung: without it the panel text drawn later sat on top and
-							-- showed through the list
 							ApplyZIndexLadder(DropPopup, NextPopupZ())
 							PositionPopupWithinMain(DropPopup, true, nil, Selection, Vector2.new(popupW, popupH))
 							ForceLiftClipping(DropPopup)
@@ -6569,7 +6380,6 @@ UIAspectRatioConstraint.Parent = Colorpicker
 					New("UIAspectRatioConstraint", { AspectRatio = 1.1 }, colorpickerFrame)
 					FitColorPickerPopup(colorpickerFrame)
 
-					-- SV square: hue base, white fade left→right, black fade top→bottom
 					local RGB = New("ImageButton", {
 						Name = "RGB",
 						BackgroundColor3 = Color3.fromHSV(hue, 1, 1),
@@ -6622,7 +6432,6 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						ZIndex = 1363,
 					}, RGB)
 
-					-- vertical rainbow hue bar
 					local Darkness = New("ImageButton", {
 						Name = "Darkness",
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -6658,7 +6467,6 @@ UIAspectRatioConstraint.Parent = Colorpicker
 					}, Darkness)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, DarknessCircle)
 
-					-- live preview swatch next to the hex readout
 					local Preview = New("Frame", {
 						Name = "Preview",
 						Position = UDim2.new(0.067, 0, 0.71, 0),
@@ -6708,7 +6516,6 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						InvokeCallback(callback, c)
 					end
 
-					-- hue bar: vertical rainbow, top = 0, bottom = 1
 						local function UpdateSlide(input)
 						local ml = GetInputPosition(input)
 						local y = ml.Y - Darkness.AbsolutePosition.Y
@@ -6723,7 +6530,6 @@ if maxY <= 0 then return end
 						update()
 					end
 
-					-- SV square: x = saturation, y = 1 - value
 					local function UpdateRing(input)
 						local ml = GetInputPosition(input)
 						local x = ml.X - RGB.AbsolutePosition.X
@@ -6843,17 +6649,18 @@ if maxY <= 0 then return end
 					local indicator = target.dots:FindFirstChild("BindLabel")
 					if indicator then indicator.Text = key and BindKeyName(key) or "" end
 				end
-				-- keep the on-screen keybind list in step with every change
 				if RefreshKeybindOverlay then
 					task.defer(RefreshKeybindOverlay)
 				end
 			end
 
-			-- snapshot for the calltaro keybind overlay: {label, key} pairs
+			-- ============================================================================
+			-- PATCH 5: hide hidden binds from the snapshot
+			-- ============================================================================
 			WindowObj._bindSnapshot = function()
 				local out = {}
 				for key, target in pairs(_keybinds) do
-					if target and target.label and key then
+					if target and target.label and key and not target.hideInList then
 						table.insert(out, { label = target.label, key = BindKeyName(key) })
 					end
 				end
@@ -6881,84 +6688,108 @@ if maxY <= 0 then return end
 				return target and target.bindMode or "toggle"
 			end
 
+			-- ============================================================================
+			-- PATCH 5: BuildBindMenu rewritten (themed, Body container, rows Key/Mode/Visible/Delete)
+			-- ============================================================================
+			local bindRefs = {}
+
+			local function PaintBindMenu(target)
+				bindRefs.key.Text = target.key and BindKeyName(target.key) or "press key"
+				local mode = CurrentBindMode(target)
+				bindRefs.mode.Text = mode:sub(1, 1):upper() .. mode:sub(2) .. "  ▾"
+				local on = not target.hideInList
+				Tween(bindRefs.sw, { BackgroundColor3 = on and mainColor or Color3.new(0, 0, 0) }, 0.15)
+				Tween(bindRefs.knob, { Position = on and UDim2.fromOffset(16, 2) or UDim2.fromOffset(2, 2) }, 0.15)
+			end
+
 			local function BuildBindMenu()
 				if _bindMenu then return _bindMenu end
 				_bindMenu = New("Frame", {
 					Name = "BindPrompt",
-					Position = UDim2.new(0.5, 0, 0.5, 0),
 					AnchorPoint = Vector2.new(0.5, 0.5),
-					Size = UDim2.fromOffset(270, 74),
-					BackgroundColor3 = Color3.fromRGB(23, 23, 27),
+					Position = UDim2.new(0.5, 0, 0.5, 0),
+					Size = UDim2.fromOffset(212, 134),
+					BackgroundColor3 = THEME.plate,
 					BackgroundTransparency = 0.02,
 					BorderSizePixel = 0,
 					Visible = false,
 					ZIndex = Z_BASE + 950,
 					ClipsDescendants = false,
 				}, MainFrame)
-				New("UICorner", { CornerRadius = UDim.new(0, 6) }, _bindMenu)
-				New("UIStroke", { Color = Color3.fromRGB(44, 44, 52), Transparency = 0.2, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual }, _bindMenu)
+				New("UICorner", { CornerRadius = UDim.new(0, THEME.radius) }, _bindMenu)
+				New("UIStroke", { Color = THEME.stroke, Transparency = THEME.strokeAlpha, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual }, _bindMenu)
+				AttachShadow(_bindMenu, { radius = THEME.radius, layers = 4, step = 1.5, bias = 3 })
 
-				New("TextLabel", {
-					Name = "BindLabel",
-					Position = UDim2.new(0, 12, 0, 7),
-					Size = UDim2.new(1, -24, 0, 14),
-					BackgroundTransparency = 1,
-					Text = "Press a key to bind",
-					TextColor3 = Color3.fromRGB(122, 124, 136),
-					TextScaled = false,
-					TextSize = 11,
-					Font = Enum.Font.GothamBold,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					TextTruncate = Enum.TextTruncate.AtEnd,
-					ZIndex = Z_BASE + 951,
-				}, _bindMenu)
+				local body = New("Frame", { Name = "Body", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = Z_BASE + 951 }, _bindMenu)
+				New("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, body)
+				New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, body)
 
-				-- keycap chip: shows the key being captured / current bind
-				local keycap = New("TextButton", {
-					Name = "Keycap",
-					Position = UDim2.new(0, 12, 0, 32),
-					Size = UDim2.fromOffset(96, 30),
-					BackgroundColor3 = Color3.fromRGB(44, 44, 52),
-					BackgroundTransparency = 0.1,
-					AutoButtonColor = false,
-					Text = "[ ? ]",
-					TextColor3 = Color3.fromRGB(255, 255, 255),
-					TextScaled = false,
-					TextSize = 14,
-					Font = Enum.Font.GothamBold,
-					ZIndex = Z_BASE + 951,
-				}, _bindMenu)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, keycap)
+				local function makeRow(order, icon, text, color)
+					local row = New("TextButton", {
+						Name = "Row" .. order, LayoutOrder = order, Size = UDim2.new(1, 0, 0, 30),
+						BackgroundColor3 = THEME.row, BackgroundTransparency = 1, AutoButtonColor = false, Text = "", ZIndex = Z_BASE + 952,
+					}, body)
+					New("UICorner", { CornerRadius = UDim.new(0, 8) }, row)
+					New("ImageLabel", {
+						Name = "Icon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(15, 15),
+						BackgroundTransparency = 1, Image = icon, ImageColor3 = color, ScaleType = Enum.ScaleType.Fit, ZIndex = Z_BASE + 953,
+					}, row)
+					New("TextLabel", {
+						Name = "Label", Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(0.5, -32, 1, 0), BackgroundTransparency = 1,
+						Text = text, TextColor3 = color, TextSize = 13, Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 953,
+					}, row)
+					row.MouseEnter:Connect(function() Tween(row, { BackgroundTransparency = 0.35 }, 0.08) end)
+					row.MouseLeave:Connect(function() Tween(row, { BackgroundTransparency = 1 }, 0.12) end)
+					return row
+				end
 
-				-- mode selector: cycles Hold -> Toggle -> Always (NL bind menu)
-				local modeBtn = New("TextButton", {
-					Name = "Mode",
-					AnchorPoint = Vector2.new(1, 0),
-					Position = UDim2.new(1, -12, 0, 32),
-					Size = UDim2.fromOffset(110, 30),
-					BackgroundColor3 = Color3.fromRGB(30, 30, 36),
-					BackgroundTransparency = 0.1,
-					AutoButtonColor = false,
-					Text = "Toggle  ▾",
-					TextColor3 = Color3.fromRGB(210, 212, 222),
-					TextScaled = false,
-					TextSize = 13,
-					Font = Enum.Font.Gotham,
-					ZIndex = Z_BASE + 951,
-				}, _bindMenu)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, modeBtn)
-				modeBtn.MouseButton1Click:Connect(function()
+				local function makeChip(row, width, text)
+					local chip = New("TextLabel", {
+						Name = "Value", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(width, 20),
+						BackgroundColor3 = THEME.row, BackgroundTransparency = 0.1, Text = text, TextColor3 = THEME.text,
+						TextSize = 12, Font = Enum.Font.GothamBold, ZIndex = Z_BASE + 953,
+					}, row)
+					New("UICorner", { CornerRadius = UDim.new(0, 5) }, chip)
+					return chip
+				end
+
+				local keyRow = makeRow(1, "rbxassetid://121978468376124", "Key", THEME.text)
+				bindRefs.key = makeChip(keyRow, 84, "press key")
+
+				local modeRow = makeRow(2, "rbxassetid://109485777305919", "Mode", THEME.text)
+				bindRefs.mode = makeChip(modeRow, 84, "Toggle  ▾")
+				modeRow.MouseButton1Click:Connect(function()
 					if not _bindTarget then return end
-					local current = CurrentBindMode(_bindTarget)
-					local index = 1
-					for i, m in ipairs(BIND_MODES) do
-						if m == current then index = i break end
-					end
+					local current, index = CurrentBindMode(_bindTarget), 1
+					for i, m in ipairs(BIND_MODES) do if m == current then index = i break end end
 					_bindTarget.bindMode = BIND_MODES[(index % #BIND_MODES) + 1]
-					modeBtn.Text = (_bindTarget.bindMode:sub(1, 1):upper() .. _bindTarget.bindMode:sub(2)) .. "  ▾"
+					PaintBindMenu(_bindTarget)
 				end)
 
-				AttachShadow(_bindMenu, { radius = 6, layers = 3, step = 1.4, bias = 2 })
+				local visRow = makeRow(3, "rbxassetid://127234874352422", "Visible", THEME.text)
+				bindRefs.sw = New("Frame", {
+					Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(30, 16),
+					BackgroundColor3 = mainColor, ZIndex = Z_BASE + 953,
+				}, visRow)
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, bindRefs.sw)
+				bindRefs.knob = New("Frame", {
+					Name = "Knob", Position = UDim2.fromOffset(16, 2), Size = UDim2.fromOffset(12, 12),
+					BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = Z_BASE + 954,
+				}, bindRefs.sw)
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, bindRefs.knob)
+				visRow.MouseButton1Click:Connect(function()
+					if not _bindTarget then return end
+					_bindTarget.hideInList = not _bindTarget.hideInList
+					PaintBindMenu(_bindTarget)
+					if RefreshKeybindOverlay then task.defer(RefreshKeybindOverlay) end
+				end)
+
+				local delRow = makeRow(4, "rbxassetid://116396312853810", "Delete", THEME.danger)
+				delRow.MouseButton1Click:Connect(function()
+					local t = _bindTarget
+					if t then SetTargetBind(t, nil) end
+					CloseBindMenu()
+				end)
 				return _bindMenu
 			end
 
@@ -6966,24 +6797,20 @@ if maxY <= 0 then return end
 				CloseAllPopupsExcept(nil)
 				_bindTarget = target
 				BuildBindMenu()
-				local label = _bindMenu:FindFirstChild("BindLabel")
-				if label then label.Text = "Bind: " .. tostring(target.label or "Function") end
-				local keycap = _bindMenu:FindFirstChild("Keycap")
-				if keycap then keycap.Text = target.key and ("[ " .. BindKeyName(target.key) .. " ]") or "[ ? ]" end
-				local modeBtn = _bindMenu:FindFirstChild("Mode")
-				if modeBtn then
-					local mode = CurrentBindMode(target)
-					modeBtn.Text = (mode:sub(1, 1):upper() .. mode:sub(2)) .. "  ▾"
-				end
+				PaintBindMenu(target)
 				_bindMenu.Visible = true
 				_bindMenu.BackgroundTransparency = 1
 				Tween(_bindMenu, { BackgroundTransparency = 0.02 }, 0.15)
 				TweenShadowLayers(_bindMenu, true, 0.15)
-				local bindScale = GetPopupScale(_bindMenu)
-				if bindScale then
-					bindScale.Scale = 0.9
-					Tween(bindScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				local pop = GetPopupScale(_bindMenu)
+				if pop then
+					pop.Scale = 0.96
+					Tween(pop, { Scale = 1 }, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 				end
+				local row = target.row
+				MovePopupToAbsolute(_bindMenu,
+					row.AbsolutePosition.X + row.AbsoluteSize.X - _bindMenu.AbsoluteSize.X,
+					row.AbsolutePosition.Y + row.AbsoluteSize.Y + 4)
 				ConstrainPopupToMainFrame(_bindMenu, 8)
 				RegisterPopup(_bindMenu, CloseBindMenu, nil)
 			end
@@ -7017,8 +6844,6 @@ if maxY <= 0 then return end
 				return _contextMenu
 			end
 
-			-- NL-style entry: small icon on the left, label next to it, full
-			-- row highlight on hover
 			local function AddContextItem(labelText, iconAsset, callback)
 				local item = New("TextButton", {
 					Name = "MenuItem",
@@ -7088,8 +6913,6 @@ if maxY <= 0 then return end
 				_contextMenu.Size = UDim2.fromOffset(150, 89)
 				ApplyZIndexLadder(_contextMenu, NextPopupZ())
 				SmoothOpen(_contextMenu, 0.02, 0.15)
-				-- anchor under the "..." button, top-left of the plate at the
-				-- button's right edge (NL drops it below-right of the dots)
 				local anchorX, anchorY = point.X, point.Y
 				if target.dots and target.dots.Parent and target.dots.AbsoluteSize.X > 0 then
 					anchorX = target.dots.AbsolutePosition.X + target.dots.AbsoluteSize.X - 150
@@ -7097,11 +6920,9 @@ if maxY <= 0 then return end
 				end
 				MovePopupToAbsolute(_contextMenu, anchorX, anchorY)
 				ConstrainPopupToMainFrame(_contextMenu, 8)
-				-- slide out from just above the click point
 				local settled = _contextMenu.Position
 				_contextMenu.Position = UDim2.new(settled.X.Scale, settled.X.Offset, settled.Y.Scale, settled.Y.Offset - 8)
 				Tween(_contextMenu, { Position = settled }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				-- entries cascade in one after another, calltaro style
 				local entryIndex = 0
 				for _, child in ipairs(_contextMenu:GetChildren()) do
 					if child:IsA("TextButton") then
@@ -7123,7 +6944,6 @@ if maxY <= 0 then return end
 				if not target or not target.obj then return end
 				local value = target.obj.Get and target.obj:Get()
 				if phase == "up" then
-					-- hold release: only boolean elements spring back
 					if target.bindMode == "hold" and type(value) == "boolean" then
 						target.obj:Set(false)
 					end
@@ -7189,7 +7009,6 @@ if maxY <= 0 then return end
 						CloseBindMenu()
 						return
 					end
-					-- M3 re-targets the prompt like RMB does; MB4/MB5 assign
 					if input.UserInputType == Enum.UserInputType.MouseButton4
 						or input.UserInputType == Enum.UserInputType.MouseButton5 then
 						SetTargetBind(_bindTarget, input.UserInputType)
@@ -7228,8 +7047,6 @@ if maxY <= 0 then return end
 				end
 			end)
 
-			-- bound keys fire regardless of which branch the click took:
-			-- keyboard and side buttons here, wheel in InputChanged below
 			UserInputService.InputBegan:Connect(function(input, gameProcessed)
 				if _bindTarget then return end
 				local key = input.KeyCode
@@ -7245,8 +7062,6 @@ if maxY <= 0 then return end
 				end
 			end)
 
-			-- the wheel counts as a bindable key: capture while the prompt is
-			-- open, fire the bound element otherwise
 			UserInputService.InputChanged:Connect(function(input, gameProcessed)
 				local wheelType = input.UserInputType
 				if wheelType ~= Enum.UserInputType.MouseWheelUp and wheelType ~= Enum.UserInputType.MouseWheelDown then return end
@@ -7260,7 +7075,6 @@ if maxY <= 0 then return end
 				if target then RunBoundFunction(target, "down") end
 			end)
 
-			-- hold-mode binds release with the key (any bound input type)
 			UserInputService.InputEnded:Connect(function(input)
 				if not IsEditableTarget() then return end
 				local key = input.KeyCode
@@ -7497,7 +7311,6 @@ if maxY <= 0 then return end
 					TextXAlignment = Enum.TextXAlignment.Left,
 				}, Toggle)
 
-				-- Toggle switch (shifted slightly left to make room for colorpicker button)
 				local Effect = New("Frame", {
 					Name = "Effect",
 					Position = UDim2.new(1, -8, 0.5, 0),
@@ -7518,7 +7331,6 @@ if maxY <= 0 then return end
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
 				New("UIAspectRatioConstraint", {}, Icon)
 
-				-- Colorpicker open button (small colored square)
 				local cpBtn = New("ImageButton", {
 					Name = "ColorpickerOpenButton",
 					AnchorPoint = Vector2.new(0.5, 0.5),
@@ -7531,7 +7343,6 @@ if maxY <= 0 then return end
 				}, Toggle)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, cpBtn)
 
-				-- Colorpicker panel
 				local cpFrame = New("Frame", {
 					Name = "Frame",
 					Position = UDim2.new(0.02,0,1,2),
@@ -7547,7 +7358,6 @@ if maxY <= 0 then return end
 				New("UIAspectRatioConstraint", { AspectRatio = 1.100000023841858 }, cpFrame)
 				FitColorPickerPopup(cpFrame)
 
-				-- SV square: hue base, white fade left→right, black fade top→bottom
 				local RGB = New("ImageButton", {
 					Name = "ImageButton",
 					BackgroundColor3 = Color3.fromHSV(color[1], 1, 1),
@@ -7600,7 +7410,6 @@ if maxY <= 0 then return end
 					ZIndex = 363,
 				}, RGB)
 
-				-- vertical rainbow hue bar
 				local Darkness = New("ImageButton", {
 					Name = "ImageButton",
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -7636,7 +7445,6 @@ if maxY <= 0 then return end
 				}, Darkness)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, DarknessCircle)
 
-				-- live preview swatch next to the hex readout
 				local Preview = New("Frame", {
 					Name = "Preview",
 					Position = UDim2.new(0.067, 0, 0.71, 0),
@@ -7675,7 +7483,6 @@ if maxY <= 0 then return end
 				}, cpFrame)
 				New("UICorner", { CornerRadius = UDim.new(0, 4) }, Copy)
 
-				-- Toggle button (transparent overlay for toggle clicks, excluding colorpicker area)
 				local Btn = New("TextButton", {
 					Size = UDim2.new(1, 0, 1, 0),
 					BackgroundTransparency = 1,
@@ -7683,7 +7490,6 @@ if maxY <= 0 then return end
 					ZIndex = 5,
 				}, Toggle)
 
-				-- Helper functions
 				local function to_hex(c)
 					return ColorToHex(c)
 				end
@@ -7717,7 +7523,6 @@ if maxY <= 0 then return end
 					NotifyColor(c)
 				end
 
-				-- hue bar: vertical rainbow, top = 0, bottom = 1
 				local function UpdateSlide(input)
 					local ml = GetInputPosition(input)
 					local y = ml.Y - Darkness.AbsolutePosition.Y
@@ -7732,7 +7537,6 @@ if maxY <= 0 then return end
 					updateColor()
 				end
 
-				-- SV square: x = saturation, y = 1 - value
 				local function UpdateRing(input)
 					local ml = GetInputPosition(input)
 					local x = ml.X - RGB.AbsolutePosition.X
@@ -7754,7 +7558,6 @@ if maxY <= 0 then return end
 					updateColor()
 				end
 
-				-- Toggle logic
 				local function SetEnabled(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(0, 0, 0) }, 0.25, Enum.EasingStyle.Quad)
@@ -7763,7 +7566,6 @@ if maxY <= 0 then return end
 				end
 
 				Btn.MouseButton1Click:Connect(function()
-					-- Only toggle if not clicking on colorpicker button area
 					SetEnabled(not enabled)
 				end)
 
@@ -7793,7 +7595,6 @@ if maxY <= 0 then return end
 					if setclipboard then setclipboard(colorHex.Text) end
 				end)
 
-				-- Initialize color display
 				local function setcolor(tbl, fireCallback, exactColor)
 					local rc = exactColor or Color3.fromHSV(tbl[1], tbl[2], tbl[3])
 					colorHex.Text = to_hex(rc)
@@ -7947,8 +7748,6 @@ if maxY <= 0 then return end
 						InvokeCallback(callback, value)
 					end
 
-				-- generous grab zone: the whole value strip is clickable, not
-				-- just the hair-thin track
 				local Hitbox = New("TextButton", {
 					Name = "SliderHitbox",
 					Position = UDim2.new(0.03999999910553033, 0, 0, -10),
@@ -7972,7 +7771,6 @@ if maxY <= 0 then return end
 					end
 				end)
 
-				-- Bug 3 fix: use global InputEnded so releasing mouse outside the Line still stops dragging
 				UserInputService.InputEnded:Connect(function(input)
 					if IsPrimaryInput(input) then
 						dragging = false
@@ -8095,7 +7893,7 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
-					Color = Color3.fromRGB(52, 58, 82),
+					Color = THEME.stroke,
 					Transparency = 0.6,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
@@ -8217,7 +8015,6 @@ if maxY <= 0 then return end
 				local hue, sat, val = Color3.toHSV(NormalizeColor(defaultColor))
 				local color = { hue, sat, val }
 
-				-- Root row frame (matches design exactly)
 				local Dropdown = New("Frame", {
 					Name = "Dropdown",
 					Size = UDim2.new(1, 0, 0, 0),
@@ -8255,7 +8052,6 @@ if maxY <= 0 then return end
 					TextXAlignment = Enum.TextXAlignment.Left,
 				}, Dropdown)
 
-				-- Colorpicker open button (small colored square, always visible)
 				local cpBtn = New("ImageButton", {
 					Name = "ColorpickerOpenButton",
 					AnchorPoint = Vector2.new(0.5, 0.5),
@@ -8268,7 +8064,6 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, cpBtn)
 
-				-- Dropdown TopBar (shifted right to leave room for cpBtn)
 				local TopBar = New("TextButton", {
 					Name = "TopBar",
 					Position = UDim2.new(0.498, 0, 0.25, 0),
@@ -8299,7 +8094,6 @@ if maxY <= 0 then return end
 					ZIndex = 7,
 				}, TopBar)
 
-				-- Dropdown list frame
 				local DownBar = New("Frame", {
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 4),
@@ -8312,7 +8106,7 @@ if maxY <= 0 then return end
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				New("UIStroke", {
-					Color = Color3.fromRGB(52, 58, 82),
+					Color = THEME.stroke,
 					Transparency = 0.6,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
@@ -8419,7 +8213,6 @@ if maxY <= 0 then return end
 					end
 				end)
 
-				-- Colorpicker panel
 				local cpFrame = New("Frame", {
 					Name = "colorpickerFrame",
 					Position = UDim2.new(0.02,0,1,2),
@@ -8435,7 +8228,6 @@ if maxY <= 0 then return end
 				New("UIAspectRatioConstraint", { AspectRatio = 1.1 }, cpFrame)
 				FitColorPickerPopup(cpFrame)
 
-				-- SV square: hue base, white fade left→right, black fade top→bottom
 				local RGB = New("ImageButton", {
 					Name = "ImageButton",
 					BackgroundColor3 = Color3.fromHSV(color[1], 1, 1),
@@ -8488,7 +8280,6 @@ if maxY <= 0 then return end
 					ZIndex = 363,
 				}, RGB)
 
-				-- vertical rainbow hue bar
 				local Darkness = New("ImageButton", {
 					Name = "ImageButton",
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -8524,7 +8315,6 @@ if maxY <= 0 then return end
 				}, Darkness)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, DarknessCircle)
 
-				-- live preview swatch next to the hex readout
 				local Preview = New("Frame", {
 					Name = "Preview",
 					Position = UDim2.new(0.067, 0, 0.71, 0),
@@ -8576,7 +8366,6 @@ if maxY <= 0 then return end
 					if fireCallback then NotifyColor(c) end
 				end
 
-				-- hue bar: vertical rainbow, top = 0, bottom = 1
 				local function UpdateSlide(input)
 					local ml = GetInputPosition(input)
 					local y = ml.Y - Darkness.AbsolutePosition.Y
@@ -8591,7 +8380,6 @@ if maxY <= 0 then return end
 					updateColor(true)
 				end
 
-				-- SV square: x = saturation, y = 1 - value
 				local function UpdateRing(input)
 					local ml = GetInputPosition(input)
 					local x = ml.X - RGB.AbsolutePosition.X
@@ -8758,7 +8546,6 @@ if maxY <= 0 then return end
 				New("UIAspectRatioConstraint", { AspectRatio = 1.1 }, colorpickerFrame)
 				FitColorPickerPopup(colorpickerFrame)
 
-				-- SV square: hue base, white fade left→right, black fade top→bottom
 				local RGB = New("ImageButton", {
 					Name = "RGB",
 					BackgroundColor3 = Color3.fromHSV(hue, 1, 1),
@@ -8813,7 +8600,6 @@ if maxY <= 0 then return end
 					ZIndex = 363,
 				}, RGB)
 
-				-- vertical rainbow hue bar
 				local Darkness = New("ImageButton", {
 					Name = "Darkness",
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -8850,7 +8636,6 @@ if maxY <= 0 then return end
 				}, Darkness)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, DarknessCircle)
 
-				-- live preview swatch next to the hex readout
 				local Preview = New("Frame", {
 					Name = "Preview",
 					Position = UDim2.new(0.067, 0, 0.71, 0),
@@ -8889,8 +8674,6 @@ if maxY <= 0 then return end
 				}, colorpickerFrame)
 				New("UICorner", { CornerRadius = UDim.new(0, 4) }, Copy)
 
-				-- ORIGINAL LOGIC (unchanged) --
-
 				local function to_hex(c)
 					return ColorToHex(c)
 				end
@@ -8904,7 +8687,6 @@ if maxY <= 0 then return end
 					InvokeCallback(options.callback, c)
 				end
 
-				-- hue bar: vertical rainbow, top = 0, bottom = 1
 				local function UpdateSlide(input)
 					local ml = GetInputPosition(input)
 					local y = ml.Y - Darkness.AbsolutePosition.Y
@@ -8919,7 +8701,6 @@ if maxY <= 0 then return end
 					update()
 				end
 
-				-- SV square: x = saturation, y = 1 - value
 				local function UpdateRing(input)
 					local ml = GetInputPosition(input)
 					local x = ml.X - RGB.AbsolutePosition.X
@@ -8977,7 +8758,6 @@ if maxY <= 0 then return end
 					Preview.BackgroundColor3 = realcolor
 					RGB.BackgroundColor3 = Color3.fromHSV(tbl[1], 1, 1)
 					color = {tbl[1], tbl[2], tbl[3]}
-					-- reposition both cursors to match the loaded color
 					task.defer(function()
 						local cx = RGBCircle.AbsoluteSize.X / 2
 						local cy2 = RGBCircle.AbsoluteSize.Y / 2
@@ -9080,7 +8860,7 @@ if maxY <= 0 then return end
 
 				local UIStroke = Instance.new('UIStroke')
 				UIStroke.Name = "UIStroke"
-				UIStroke.Color = Color3.fromRGB(52, 58, 82)
+				UIStroke.Color = THEME.stroke
 				UIStroke.Transparency = 0.3
 				UIStroke.Thickness = 1
 				UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
@@ -9111,8 +8891,6 @@ if maxY <= 0 then return end
 				UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				UIListLayout.Parent = Container
 				WatchRowDividers(Container)
-
-				-- single panel: the inner container is layout-only, no second card
 
 				local function GetAccordionContentHeight()
 					local measured = MeasureRowsHeight(Container)
@@ -9402,7 +9180,6 @@ UIAspectRatioConstraint.Parent = Toggle
 					return obj
 				end
 
-				-- New Selection style (popup with checkmark buttons) for accordion dropdowns
 				function AccordionObj:AddDropdown(text2, options, default, callback)
 					if type(default) == "function" then
 						callback = default
@@ -9412,9 +9189,8 @@ UIAspectRatioConstraint.Parent = Toggle
 					accordionElemCount = accordionElemCount + 1
 					local selected = GetValidOption(options, default)
 					local dropOpen = false
-					local selectedBtns = {} -- track Selected checkmark buttons per option
+					local selectedBtns = {}
 
-					-- Selection row frame (matches new design: AspectRatio=10)
 					local Selection = New("Frame", {
 						Name = "Selection",
 						Size = UDim2.new(1, 0, 0, 28),
@@ -9454,7 +9230,6 @@ UIAspectRatioConstraint.Parent = Toggle
 						ZIndex = 101,
 					}, Selection)
 
-					-- Arrow indicator
 					local SelArrow = New("ImageLabel", {
 						Name = "TextArrow",
 						Position = UDim2.new(0.8700000047683716,0,0.15000000596046448,0),
@@ -9469,7 +9244,6 @@ UIAspectRatioConstraint.Parent = Toggle
 						ZIndex = 1000,
 					}, Selection)
 
-					-- TextDefault shows the currently selected value
 					local TextDefault = New("TextLabel", {
 						Name = "TextDefault",
 						Position = UDim2.new(0.6400001645088196,0,0.2499999850988388,0),
@@ -9485,21 +9259,19 @@ UIAspectRatioConstraint.Parent = Toggle
 						TextXAlignment = Enum.TextXAlignment.Right,
 					}, Selection)
 
-					-- Popup dropdown frame (new style: slides from right, position=(1,0,0,0))
 					local DropPopup = New("Frame", {
 						Name = "Dropdown",
 						Position = UDim2.new(0.02,0,1,2),
 						Size = UDim2.new(0.6899999737739563, 0, 0, 100),
-						BackgroundColor3 = Color3.fromRGB(23, 23, 27),
+						BackgroundColor3 = THEME.plate,
 						BackgroundTransparency = 0,
 						BorderSizePixel = 0,
 						Visible = false,
 						ZIndex = 5000,
 					}, Selection)
 					New("UICorner", { CornerRadius = UDim.new(0, 6) }, DropPopup)
-					do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(44, 44, 52); s.Transparency = 0.2; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
+					do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = THEME.strokeAlpha; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = DropPopup end
 
-					-- NL-style plate header: the setting name above the options
 					New("TextLabel", {
 						Name = "HeaderLabel",
 						Position = UDim2.new(0, 10, 0, 5),
@@ -9514,7 +9286,6 @@ UIAspectRatioConstraint.Parent = Toggle
 						ZIndex = 5000,
 					}, DropPopup)
 
-					-- Inner container for buttons
 					local DropContainer = New("ScrollingFrame", {
 						Name = "Container",
 						Position = UDim2.new(0, 4, 0, 22),
@@ -9597,7 +9368,6 @@ UIAspectRatioConstraint.Parent = Toggle
 
 							selectedBtns[opt] = SelBtn
 
-							-- Full-row click
 							local RowBtn = New("TextButton", {
 								Size = UDim2.new(1, 0, 1, 0),
 								BackgroundTransparency = 1,
@@ -9626,7 +9396,6 @@ UIAspectRatioConstraint.Parent = Toggle
 						end)
 					end
 
-					-- Open button (invisible overlay on the row)
 					local OpenBtn = New("TextButton", {
 						Name = "OpenBtn",
 						Size = UDim2.new(1, 0, 1, 0),
@@ -9907,7 +9676,6 @@ UIAspectRatioConstraint.Parent = Colorpicker
 					New("UIAspectRatioConstraint", { AspectRatio = 1.1 }, colorpickerFrame)
 					FitColorPickerPopup(colorpickerFrame)
 
-					-- SV square: hue base, white fade left→right, black fade top→bottom
 					local RGB = New("ImageButton", {
 						Name = "RGB",
 						BackgroundColor3 = Color3.fromHSV(hue, 1, 1),
@@ -9960,7 +9728,6 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						ZIndex = 363,
 					}, RGB)
 
-					-- vertical rainbow hue bar
 					local Darkness = New("ImageButton", {
 						Name = "Darkness",
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -9996,7 +9763,6 @@ UIAspectRatioConstraint.Parent = Colorpicker
 					}, Darkness)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, DarknessCircle)
 
-					-- live preview swatch next to the hex readout
 					local Preview = New("Frame", {
 						Name = "Preview",
 						Position = UDim2.new(0.067, 0, 0.71, 0),
@@ -10046,7 +9812,6 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						InvokeCallback(callback, c)
 					end
 
-					-- hue bar: vertical rainbow, top = 0, bottom = 1
 						local function UpdateSlide(input)
 						local ml = GetInputPosition(input)
 						local y = ml.Y - Darkness.AbsolutePosition.Y
@@ -10061,7 +9826,6 @@ if maxY <= 0 then return end
 						update()
 					end
 
-					-- SV square: x = saturation, y = 1 - value
 					local function UpdateRing(input)
 						local ml = GetInputPosition(input)
 						local x = ml.X - RGB.AbsolutePosition.X
@@ -10117,7 +9881,6 @@ if maxY <= 0 then return end
 						Preview.BackgroundColor3 = realcolor
 						RGB.BackgroundColor3 = Color3.fromHSV(tbl[1], 1, 1)
 						color = {tbl[1], tbl[2], tbl[3]}
-						-- reposition both cursors to match the loaded color
 						task.defer(function()
 							local cx = RGBCircle.AbsoluteSize.X / 2
 							local cy2 = RGBCircle.AbsoluteSize.Y / 2
@@ -10140,7 +9903,6 @@ if maxY <= 0 then return end
 					return Color3.fromHSV(color[1], color[2], color[3])
 				end
 				function obj:AddSettings() return MakeSettings(Colorpicker, nil, text2) end
-				-- FIX: register so LoadSavedConfig can find and restore this colorpicker
 					RegisterConfigElement("accordion_colorpicker_", text2, obj)
 					CenterElement(Colorpicker)
 				BindElementContext(Colorpicker, "accordion_colorpicker", text2, obj, NormalizeColor(defaultColor))
@@ -10155,7 +9917,6 @@ if maxY <= 0 then return end
 			return SectionObj
 		end
 
-		-- SubTab system: indented entries in the left sidebar under the parent tab
 		local subTabs = {}
 		local activeSubTabIndex = nil
 		local subTabContainer = nil
@@ -10192,11 +9953,9 @@ if maxY <= 0 then return end
 			end
 
 			ShowContent = function()
-				-- Parent tab's own Left/Right stay hidden; sub-tabs own the content
 				Left.Visible = false
 				Right.Visible = false
 				subTabContainer.Visible = true
-				-- only one row may look selected: the active sub-tab
 				TabButtonFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 				TabButtonFrame.BackgroundTransparency = 1
 				TabIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
@@ -10238,7 +9997,6 @@ if maxY <= 0 then return end
 			local stIndex = #subTabs + 1
 			local isFirstST = stIndex == 1
 
-			-- Content columns in TabHose
 			local stLeft = New("ScrollingFrame", {
 				Name = "STLeft_" .. name,
 				Size = UDim2.new(0.47999998927116394, 0, 1, 0),
@@ -10274,7 +10032,6 @@ if maxY <= 0 then return end
 			stRight:SetAttribute("SubTabIndex", stIndex)
 			New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder }, stRight)
 
-			-- Sidebar row — same size/shape as a normal tab button, just indented via padding
 			local STRow = New("Frame", {
 				Name = "STRow_" .. name,
 				Size = UDim2.new(0.92, 0, 1, 0),
@@ -10291,7 +10048,6 @@ if maxY <= 0 then return end
 
 
 
-			-- Optional icon
 			local iconRef = nil
 			if icon and icon ~= "" then
 				iconRef = New("ImageLabel", {
@@ -10350,8 +10106,6 @@ if maxY <= 0 then return end
 				STScale.Scale = 0.86
 				Tween(STScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-				-- own the first two layout slots: the hidden pairs are still counted
-				-- by UIListLayout, so anything else would sit outside the window
 				for otherIndex, other in ipairs(subTabs) do
 					local rank = otherIndex == stIndex and 0 or 100 + otherIndex
 					other.left.LayoutOrder  = rank
@@ -10372,7 +10126,6 @@ if maxY <= 0 then return end
 										for _, d in ipairs(item:GetDescendants()) do
 											if d:IsA("TextLabel") or d:IsA("TextButton") then table.insert(texts, d) end
 										end
-										-- no tween here: ShowContent and HideContent fought over the same property
 										for _, t in ipairs(texts) do
 										if t.Parent then
 										t.TextTransparency = t.Name == "TextDefault" and 0.5 or 0
@@ -10421,7 +10174,6 @@ if maxY <= 0 then return end
 				end)
 			end
 
-			-- SubTabObj: AddSection pipes into this sub-tab's stLeft/stRight
 			local SubTabObj = {}
 			local stSectionOrder = { left = 0, right = 0 }
 
@@ -10633,10 +10385,6 @@ if maxY <= 0 then return end
 	MakeReadableText(NeverloseCS2, 9, 16)
 	CleanBorders(MainFrame)
 
-	-- preload the icon textures so the first open of a plate isn't blank:
-	-- offscreen 1px images force the engine to fetch every decal up front.
-	-- runs inside a closure: its locals live in the closure's own register
-	-- frame and never count against AddWindow's 200-local limit
 	task.defer(function()
 		local preloadAssets = {
 			"rbxassetid://97828544806816", "rbxassetid://122894934359450",
