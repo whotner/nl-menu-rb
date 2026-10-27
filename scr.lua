@@ -1,4 +1,4 @@
--- Neverlose Roblox UI v29: Reloaded palette, balanced columns and precise control spacing
+-- Neverlose Roblox UI v30: compact function rows and corrected right-column bounds
 -- Preserves register-limit/search fixes and restores full-size control rows.
 local LoadAcrylic = function()
 	local GuiSystem = {};
@@ -5361,7 +5361,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		FillDirection = Enum.FillDirection.Horizontal,
 		-- Responsive gutter: more breathing room on wide menus without overflowing
 		-- the columns when the menu is scaled down.
-		Padding = UDim.new(0.055, 0),
+		Padding = UDim.new(0.025, 0),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, TabHose)
 
@@ -5375,7 +5375,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	}, Frame2)
 	New("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
-		Padding = UDim.new(0.055, 0),
+		Padding = UDim.new(0.025, 0),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, SubTabHose)
 
@@ -5911,8 +5911,8 @@ New("UIAspectRatioConstraint", {
 		Right:SetAttribute("SearchName", name)
 		Left:SetAttribute("TabIndex", tabIndex)
 		Right:SetAttribute("TabIndex", tabIndex)
-		New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
-New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
+		New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
+New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
 
 		if not isFirst then
 			Left.Visible = false
@@ -7745,7 +7745,7 @@ if maxY <= 0 then return end
 					LayoutOrder = elemCount,
 				}, Elements)
 				New("UIAspectRatioConstraint", {
-					AspectRatio = 7.7,
+					AspectRatio = 9,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Toggle)
 
@@ -7831,7 +7831,7 @@ if maxY <= 0 then return end
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
 				}, Elements)
-				New("UIAspectRatioConstraint", {AspectRatio = 7.7, AspectType = Enum.AspectType.ScaleWithParentSize}, CheckBoxToggle)
+				New("UIAspectRatioConstraint", {AspectRatio = 9, AspectType = Enum.AspectType.ScaleWithParentSize}, CheckBoxToggle)
 				New("Frame", {
 					Name = "Lines",
 					Position = UDim2.new(0.06, 0, 1, -1),
@@ -7934,7 +7934,7 @@ if maxY <= 0 then return end
 					LayoutOrder = elemCount,
 				}, Elements)
 				New("UIAspectRatioConstraint", {
-					AspectRatio = 7.7,
+					AspectRatio = 9,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Toggle)
 
@@ -8303,7 +8303,7 @@ if maxY <= 0 then return end
 				}, Elements)
 				AttachRowHover(Slider)
 				New("UIAspectRatioConstraint", {
-					AspectRatio = 7.7,
+					AspectRatio = 9,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Slider)
 
@@ -8501,7 +8501,7 @@ if maxY <= 0 then return end
 					ClipsDescendants = false,
 				}, Elements)
 				New("UIAspectRatioConstraint", {
-					AspectRatio = 7.7,
+					AspectRatio = 9,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Dropdown)
 				AttachRowHover(Dropdown)
@@ -8726,7 +8726,7 @@ if maxY <= 0 then return end
 					ClipsDescendants = false,
 				}, Elements)
 				New("UIAspectRatioConstraint", {
-					AspectRatio = 7.7,
+					AspectRatio = 9,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Dropdown)
 
@@ -9192,7 +9192,7 @@ if maxY <= 0 then return end
 					ClipsDescendants = false,
 					ZIndex = 2,
 				}, Elements)
-				New("UIAspectRatioConstraint", { AspectRatio = 7.7, AspectType = Enum.AspectType.ScaleWithParentSize }, Colorpicker)
+				New("UIAspectRatioConstraint", { AspectRatio = 9, AspectType = Enum.AspectType.ScaleWithParentSize }, Colorpicker)
 
 				New("Frame", {
 					Name = "Lines",
