@@ -1,5 +1,5 @@
--- Neverlose Roblox UI v25: fix Luau local-register overflow in AddWindow
--- Moves customization callback onto WindowObj instead of allocating another local.
+-- Neverlose Roblox UI v26: register-limit and customization lifecycle fixes
+-- Keeps customization off AddWindow's local register table and guards destroyed windows.
 local LoadAcrylic = function()
 	local GuiSystem = {};
 	local acrylicId = 0
@@ -10963,6 +10963,8 @@ if maxY <= 0 then return end
 
 
 	WindowObj._applyCustomization = function()
+		-- A delayed customization call must not traverse a destroyed GUI tree.
+		if not MainFrame or not MainFrame.Parent then return end
 		local function eachText(root, fn)
 			for _, d in ipairs(root:GetDescendants()) do
 				if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then fn(d) end
