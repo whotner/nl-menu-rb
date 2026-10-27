@@ -1,5 +1,5 @@
--- Neverlose Roblox UI v24: tab selection animation conflict fix
--- Preserves v23 search, watermark and text-transition fixes.
+-- Neverlose Roblox UI v25: fix Luau local-register overflow in AddWindow
+-- Moves customization callback onto WindowObj instead of allocating another local.
 local LoadAcrylic = function()
 	local GuiSystem = {};
 	local acrylicId = 0
@@ -10962,7 +10962,7 @@ if maxY <= 0 then return end
 
 
 
-	local function applyCustomization()
+	WindowObj._applyCustomization = function()
 		local function eachText(root, fn)
 			for _, d in ipairs(root:GetDescendants()) do
 				if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then fn(d) end
@@ -11018,7 +11018,7 @@ if maxY <= 0 then return end
 			customization.cornerRadius = math.clamp(options.cornerRadius, 0, 30)
 		end
 		if options.showContextDots ~= nil then customization.showContextDots = options.showContextDots == true end
-		applyCustomization()
+		WindowObj._applyCustomization()
 		return customization
 	end
 
