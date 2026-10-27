@@ -584,7 +584,10 @@ CenterElement = function(el)
 		rowLabel.Size = UDim2.new(width, 0, 0.5, 0)
 		rowLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	end
-	place(el:FindFirstChild("DropdownArrow") or el:FindFirstChild("TextboxArrow"), 0.5, 0.5)local ELLIPSIS = "..."
+	place(el:FindFirstChild("DropdownArrow") or el:FindFirstChild("TextboxArrow"), 0.5, 0.5)
+end
+
+local ELLIPSIS = "..."
 local TextService = game:GetService("TextService")
 local MEASURE_SIZE = Vector2.new(10000, 10000)
 
@@ -2441,7 +2444,7 @@ Aspect.AspectRatio = 1.31
 	New("TextLabel", {
 		Name = "Title",
 		Position = UDim2.fromOffset(59, 17),
-		Size = UDim2.fromOffset(110, 20)
+		Size = UDim2.fromOffset(110, 20),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BackgroundTransparency = 1,
 		Text = hubTitle,
@@ -8627,7 +8630,7 @@ if maxY <= 0 then return end
 					Font = FONT,
 					TextTransparency = 0.20000000298023224,
 					TextXAlignment = Enum.TextXAlignment.Left,
-$1TextTruncate = Enum.TextTruncate.AtEnd,
+TextTruncate = Enum.TextTruncate.AtEnd,
 $1ZIndex = 6,
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar
@@ -8862,7 +8865,7 @@ $1ZIndex = 6,
 					Font = FONT,
 					TextTransparency = 0.20000000298023224,
 					TextXAlignment = Enum.TextXAlignment.Left,
-$1TextTruncate = Enum.TextTruncate.AtEnd,
+TextTruncate = Enum.TextTruncate.AtEnd,
 $1ZIndex = 6,
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar
