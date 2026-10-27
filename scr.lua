@@ -1349,6 +1349,9 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	hubTitle = tostring(hubTitle or "Neverlose")
 	hubImage = tostring(hubImage or "")
 	gameTitle = tostring(gameTitle or "Counter Strike 2")
+	if string.lower(hubTitle) == "neverlose" and string.lower(gameTitle) == "blockstrike" then
+		hubTitle, gameTitle = gameTitle, hubTitle
+	end
 	local daysLeft = "Lifetime"
 
 	_windowConfigCounter = _windowConfigCounter + 1
@@ -5869,16 +5872,6 @@ Line9.BackgroundTransparency = 0.93
 Line9.BorderSizePixel = 0
 Line9.Parent = MainFrame
 
-	local Line4 = Instance.new('Frame')
-	Line4.Name = "Line4"
-	Line4.Position = UDim2.new(0.00800000037997961,0,0.8999999761581421,0)
-	Line4.Size = UDim2.new(0.20900000631809235,0,0,1)
-	Line4.BackgroundColor3 = Color3.fromRGB(162,162,162)
-	Line4.BackgroundTransparency = 0.93
-	Line4.BorderSizePixel = 0
-	Line4.Parent = MainFrame
-
-	
 	MakeDraggable(MainFrame, DragHandle)
 
 	
@@ -6172,7 +6165,7 @@ New("UIAspectRatioConstraint", {
 			activeTabIndex = tabIndex
 			ShowContent()
 			local tabState = tabs[tabIndex]
-			GlobalPreset.Visible = ShouldShowGlobalPreset(tabState and tabState.activeSubTabName or name)
+			GlobalPreset.Visible = ShouldShowGlobalPreset(name)
 			if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
 		end
 
@@ -11018,7 +11011,7 @@ if maxY <= 0 then return end
 					tabs[tabIndex].activeSubTabIndex = stIndex
 					tabs[tabIndex].activeSubTabName = name
 				end
-				GlobalPreset.Visible = ShouldShowGlobalPreset(name)
+				GlobalPreset.Visible = ShouldShowGlobalPreset(tabs[tabIndex] and tabs[tabIndex].name or "")
 				if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
 			end
 
