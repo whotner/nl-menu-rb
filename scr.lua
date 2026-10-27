@@ -2552,18 +2552,18 @@ Aspect.AspectRatio = 1.31
 	WindowSettings.TextXAlignment = Enum.TextXAlignment.Right
 	WindowSettings.Parent = Info
 
-local ImageLabel = Instance.new('ImageLabel')
-ImageLabel.Name = "UserSettingsArrow"
-ImageLabel.Position = UDim2.new(1, -10, 0.5, 0)
-ImageLabel.Size = UDim2.fromOffset(10, 10)
-ImageLabel.AnchorPoint = Vector2.new(1, 0.5)
-ImageLabel.BackgroundTransparency = 1
-ImageLabel.Image = "rbxassetid://10709790948"
-ImageLabel.ImageTransparency = 0.2
-ImageLabel.ScaleType = Enum.ScaleType.Fit
-ImageLabel.Rotation = 270
-ImageLabel.ZIndex = 102
-local SettingsArrow = ImageLabel
+local SettingsArrow = New("ImageLabel", {
+	Name = "UserSettingsArrow",
+	Position = UDim2.new(1, -10, 0.5, 0),
+	Size = UDim2.fromOffset(10, 10),
+	AnchorPoint = Vector2.new(1, 0.5),
+	BackgroundTransparency = 1,
+	Image = "rbxassetid://10709790948",
+	ImageTransparency = 0.2,
+	ScaleType = Enum.ScaleType.Fit,
+	Rotation = 270,
+	ZIndex = 102,
+}, WindowSettings)
 
 	Info.MouseEnter:Connect(function()
 		Tween(Info, {BackgroundTransparency = 0.93}, 0.15)
@@ -2577,7 +2577,6 @@ local SettingsArrow = ImageLabel
 		Tween(UserImageStroke, {Transparency = 0.35}, 0.15)
 		Tween(SettingsArrow, {ImageTransparency = 0.2}, 0.15)
 	end)
-	ImageLabel.Parent = WindowSettings
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
