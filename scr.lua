@@ -814,7 +814,7 @@ local function ContentAlphaTargets(object)
     if (object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")) and object.Text ~= "" then
         state.TextTransparency = object.TextTransparency
     end
-    if object:IsA("UIStroke") then
+    if object:IsA("UIStroke") and object.Name ~= "GroupOutline" then
         state.Transparency = object.Transparency
     end
     _contentAlphaState[object] = state
@@ -2363,7 +2363,7 @@ Aspect.AspectRatio = 1.30
 		Text = hubTitle,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
 		TextScaled = true,
-		Font = Enum.Font.SourceSansSemibold,
+		Font = Enum.Font.GothamMedium,
       TextXAlignment = Enum.TextXAlignment.Left,
 	}, MainFrame)
 
@@ -2377,7 +2377,7 @@ Aspect.AspectRatio = 1.30
 		TextColor3 = Color3.fromRGB(255,255,255),
 		TextScaled = true,
       TextTransparency = 0.6,
-		Font = Enum.Font.SourceSansSemibold,
+		Font = Enum.Font.GothamMedium,
       TextXAlignment = Enum.TextXAlignment.Left,
 	}, MainFrame)
 
@@ -2440,7 +2440,7 @@ Aspect.AspectRatio = 1.30
 	DaysLeft.Text = daysLeft
 	DaysLeft.TextColor3 = Color3.fromRGB(255,255,255)
 	DaysLeft.TextScaled = true
-	DaysLeft.Font = Enum.Font.SourceSansSemibold
+	DaysLeft.Font = Enum.Font.GothamMedium
 	DaysLeft.TextTransparency = 0.45
 	DaysLeft.Font = Enum.Font.Gotham
 	DaysLeft.TextXAlignment = Enum.TextXAlignment.Left
@@ -2468,7 +2468,7 @@ ImageLabel.BackgroundTransparency = 1
 ImageLabel.Image = "rbxassetid://10709790948"
 ImageLabel.ImageTransparency = 0.2
 ImageLabel.ScaleType = Enum.ScaleType.Fit
-ImageLabel.Rotation = 270
+ImageLabel.Rotation = 0
 ImageLabel.ZIndex = 102
 local SettingsArrow = ImageLabel
 
@@ -2686,7 +2686,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		BLabel.Text = "Menu Bind"
 		BLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 		BLabel.TextScaled = true
-		BLabel.Font = Enum.Font.SourceSansSemibold
+		BLabel.Font = Enum.Font.GothamMedium
 		BLabel.TextTransparency = 0.1
 		BLabel.ZIndex = 130
 		BLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -2702,7 +2702,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		BValue.Text = ""
 		BValue.TextColor3 = Color3.fromRGB(255, 255, 255)
 		BValue.TextScaled = true
-		BValue.Font = Enum.Font.SourceSansSemibold
+		BValue.Font = Enum.Font.GothamMedium
 		BValue.TextTransparency = 0.1
 		BValue.ZIndex = 130
 		BValue.TextXAlignment = Enum.TextXAlignment.Center
@@ -2799,7 +2799,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		lbl.Text = "Style"
 		lbl.TextColor3 = Color3.fromRGB(255,255,255)
 		lbl.TextScaled = true
-		lbl.Font = Enum.Font.SourceSansSemibold
+		lbl.Font = Enum.Font.GothamMedium
 		lbl.TextTransparency = 0.5
 		lbl.ZIndex = 130
 		lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -2974,7 +2974,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		lbl.AnchorPoint = Vector2.new(0,0.5)
 		lbl.BackgroundTransparency = 1
 		lbl.Text = "Menu Scale"; lbl.TextColor3 = Color3.fromRGB(255,255,255)
-		lbl.TextScaled = true; lbl.Font = Enum.Font.SourceSansSemibold
+		lbl.TextScaled = true; lbl.Font = Enum.Font.GothamMedium
 		lbl.TextTransparency = 0.5; lbl.ZIndex = 130
 		lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = WSScaleRow
 	end
@@ -2988,7 +2988,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ScaleArrow.ImageTransparency = 0.4000000059604645
 	ScaleArrow.ImageColor3 = Color3.fromRGB(255,255,255)
 	ScaleArrow.ScaleType = Enum.ScaleType.Fit
-	ScaleArrow.Rotation = 270
+	ScaleArrow.Rotation = 0
 	ScaleArrow.ZIndex = 1000
 	ScaleArrow.Parent = WSScaleRow
 
@@ -3000,7 +3000,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ScaleDefault.Text = "Auto"
 	ScaleDefault.TextColor3 = Color3.fromRGB(255,255,255)
 	ScaleDefault.TextScaled = true
-	ScaleDefault.Font = Enum.Font.SourceSansSemibold
+	ScaleDefault.Font = Enum.Font.GothamMedium
 	ScaleDefault.TextTransparency = 0.699999988079071
 	ScaleDefault.ZIndex = 150
 	ScaleDefault.TextXAlignment = Enum.TextXAlignment.Right
@@ -3066,7 +3066,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Text = "Logo",
 		TextColor3 = Color3.fromRGB(255,255,255),
 		TextScaled = true,
-		Font = Enum.Font.SourceSansSemibold,
+		Font = Enum.Font.GothamMedium,
 		TextTransparency = 0.5,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 130,
@@ -3087,7 +3087,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Text = "Visible",
 		TextColor3 = Color3.fromRGB(255,255,255),
 		TextScaled = true,
-		Font = Enum.Font.SourceSansSemibold,
+		Font = Enum.Font.GothamMedium,
 		ZIndex = 160,
 	}, WSLogoRow)
 	New("UICorner", {CornerRadius = UDim.new(0, 5)}, LogoButton)
@@ -3117,7 +3117,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		lbl.AnchorPoint = Vector2.new(0,0.5)
 		lbl.BackgroundTransparency = 1
 		lbl.Text = "Language"; lbl.TextColor3 = Color3.fromRGB(255,255,255)
-		lbl.TextScaled = true; lbl.Font = Enum.Font.SourceSansSemibold
+		lbl.TextScaled = true; lbl.Font = Enum.Font.GothamMedium
 		lbl.TextTransparency = 0.5; lbl.ZIndex = 130
 		lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = WSLangRow
 	end
@@ -3131,7 +3131,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangArrow.ImageTransparency = 0.4000000059604645
 	LangArrow.ImageColor3 = Color3.fromRGB(255,255,255)
 	LangArrow.ScaleType = Enum.ScaleType.Fit
-	LangArrow.Rotation = 270
+	LangArrow.Rotation = 0
 	LangArrow.ZIndex = 1000
 	LangArrow.Parent = WSLangRow
 
@@ -3143,7 +3143,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangDefault.Text = "English"
 	LangDefault.TextColor3 = Color3.fromRGB(255,255,255)
 	LangDefault.TextScaled = true
-	LangDefault.Font = Enum.Font.SourceSansSemibold
+	LangDefault.Font = Enum.Font.GothamMedium
 	LangDefault.TextTransparency = 0.699999988079071
 	LangDefault.ZIndex = 150
 	LangDefault.TextXAlignment = Enum.TextXAlignment.Right
@@ -3336,7 +3336,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 		local function closeScaleDropdown()
 			scaleOpen = false
-			Tween(ScaleArrow, {ImageTransparency = 0.4, Rotation = 270}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(ScaleArrow, {ImageTransparency = 0.4, Rotation = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			UnregisterPopup(ScaleDownBar)
 			SmoothClose(ScaleDownBar, 0.18)
 		end
@@ -3358,7 +3358,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			lbl.Text = scaleLabel
 			lbl.TextColor3 = Color3.fromRGB(255,255,255)
 			lbl.TextScaled = true
-			lbl.Font = Enum.Font.SourceSansSemibold
+			lbl.Font = Enum.Font.GothamMedium
 			lbl.TextTransparency = 0.1
 			lbl.ZIndex = 1002
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -3410,7 +3410,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 				SmoothOpen(ScaleDownBar, 0.5, 0.2)
 				ApplyZIndexLadder(ScaleDownBar, NextPopupZ())
 PositionPopupWithinMain(ScaleDownBar, true)
-				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				RegisterPopup(ScaleDownBar, closeScaleDropdown, ScaleOpenBtn)
 			end
 		end)
@@ -3421,7 +3421,7 @@ PositionPopupWithinMain(ScaleDownBar, true)
 
 		local function closeLangDropdown()
 			langOpen = false
-			Tween(LangArrow, {ImageTransparency = 0.4, Rotation = 270}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(LangArrow, {ImageTransparency = 0.4, Rotation = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			UnregisterPopup(LangDownBar)
 			SmoothClose(LangDownBar, 0.18)
 		end
@@ -3441,7 +3441,7 @@ PositionPopupWithinMain(ScaleDownBar, true)
 			lbl.Text = lang
 			lbl.TextColor3 = Color3.fromRGB(255,255,255)
 			lbl.TextScaled = true
-			lbl.Font = Enum.Font.SourceSansSemibold
+			lbl.Font = Enum.Font.GothamMedium
 			lbl.TextTransparency = 0.1
 			lbl.ZIndex = 1002
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -3485,7 +3485,7 @@ PositionPopupWithinMain(ScaleDownBar, true)
 				CloseAllPopupsExcept(LangDownBar)
 				langOpen = true
 				SmoothOpen(LangDownBar, 0.5, 0.2)
-			Tween(LangArrow, {Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(LangArrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				ApplyZIndexLadder(LangDownBar, NextPopupZ())
 PositionPopupWithinMain(LangDownBar, true)
 				Tween(LangArrow, {ImageTransparency = 0}, 0.2)
@@ -3507,7 +3507,7 @@ PositionPopupWithinMain(LangDownBar, true)
 			}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			Tween(WSScale, { Scale = 0.975 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			SmoothClose(WindowSettingsFrame, 0.14)
-			Tween(ImageLabel, { Rotation = 270 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(ImageLabel, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		end
 		WindowSettings.MouseButton1Click:Connect(function()
 			wsOpen = not wsOpen
@@ -3572,7 +3572,7 @@ PositionPopupWithinMain(LangDownBar, true)
 					Tween(WSScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(WindowSettingsFrame, { Position = settled }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
-					Tween(ImageLabel, { Rotation = 360 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(ImageLabel, { Rotation = 180 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end)
 			else
 				closeWS()
@@ -3739,7 +3739,7 @@ PositionPopupWithinMain(LangDownBar, true)
 			lbl.AnchorPoint = Vector2.new(0,0.5)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = text; lbl.TextColor3 = Color3.fromRGB(255,255,255)
-			lbl.TextScaled = true; lbl.Font = Enum.Font.SourceSansSemibold
+			lbl.TextScaled = true; lbl.Font = Enum.Font.GothamMedium
 			lbl.TextTransparency = 0.5; lbl.ZIndex = 130
 			lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = Row
 		end
@@ -3753,7 +3753,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		Arrow.ImageTransparency = 0.4
 		Arrow.ImageColor3 = Color3.fromRGB(255,255,255)
 		Arrow.ScaleType = Enum.ScaleType.Fit
-		Arrow.Rotation = 270
+		Arrow.Rotation = 0
 		Arrow.ZIndex = 1000
 		Arrow.Parent = Row
 
@@ -3765,7 +3765,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		TextDefault.Text = selected
 		TextDefault.TextColor3 = Color3.fromRGB(255,255,255)
 		TextDefault.TextScaled = true
-		TextDefault.Font = Enum.Font.SourceSansSemibold
+		TextDefault.Font = Enum.Font.GothamMedium
 		TextDefault.TextTransparency = 0.7
 		TextDefault.ZIndex = 150
 		TextDefault.TextXAlignment = Enum.TextXAlignment.Right
@@ -3818,7 +3818,7 @@ PositionPopupWithinMain(LangDownBar, true)
 
 		local function closeDropdown()
 			dropOpen = false
-			Tween(Arrow, {ImageTransparency = 0.4, Rotation = 270}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(Arrow, {ImageTransparency = 0.4, Rotation = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			UnregisterPopup(DropPopup)
 			SmoothClose(DropPopup, 0.18)
 		end
@@ -3913,7 +3913,7 @@ PositionPopupWithinMain(LangDownBar, true)
 				DropPopup.Size = UDim2.new(0.96, 0, 0, math.clamp(26 * #options + 28, 46, 460))
 				DropPopup.BackgroundTransparency = 0
 						DropPopup.Visible = true
-		Tween(Arrow, {Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Tween(Arrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				Tween(Arrow, {ImageTransparency = 0}, 0.2)
 				PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 			end
@@ -3961,7 +3961,7 @@ PositionPopupWithinMain(LangDownBar, true)
 			lbl.AnchorPoint = Vector2.new(0,0.5)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = text; lbl.TextColor3 = Color3.fromRGB(255,255,255)
-			lbl.TextScaled = true; lbl.Font = Enum.Font.SourceSansSemibold
+			lbl.TextScaled = true; lbl.Font = Enum.Font.GothamMedium
 			lbl.TextTransparency = 0.5; lbl.ZIndex = 130
 			lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = Row
 		end
@@ -4303,7 +4303,7 @@ UIAspectRatioConstraint.Parent = SaveIcon
 	SaveText.Text = "Default"
 SaveText.TextColor3 = Color3.fromRGB(255,255,255)
 SaveText.TextScaled = true
-SaveText.Font = Enum.Font.SourceSansSemibold
+SaveText.Font = Enum.Font.GothamMedium
 SaveText.TextTransparency = 0.20000000298023224
 SaveText.TextXAlignment = Enum.TextXAlignment.Left
 SaveText.Parent = Save
@@ -4346,7 +4346,7 @@ SaveArrow.BackgroundTransparency = 1
 SaveArrow.Image = "rbxassetid://10709790948"
 SaveArrow.ImageColor3 = Color3.fromRGB(255,255,255)
 SaveArrow.ScaleType = Enum.ScaleType.Fit
-SaveArrow.Rotation = 270
+SaveArrow.Rotation = 0
 SaveArrow.ZIndex = 15
 SaveArrow.Parent = Save
 
@@ -5244,7 +5244,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		Tween(RecentlyDeletedPanel, { BackgroundTransparency = 1 }, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 		local rdScale = RecentlyDeletedPanel:FindFirstChild("_PopScale")
 		if rdScale and rdScale:IsA("UIScale") then Tween(rdScale, { Scale = 0.975 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In) end
-		Tween(SaveArrow, { Rotation = 270 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+		Tween(SaveArrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		task.delay(0.22, function()
 			if configOpen then return end
 			ConfigMainFrame.Visible = false
@@ -5278,7 +5278,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			local cfgSettled = ConfigMainFrame.Position
 			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 5)
 			Tween(ConfigMainFrame, { Position = cfgSettled }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		Tween(SaveArrow, { Rotation = 360 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+		Tween(SaveArrow, { Rotation = 180 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		else
 			closeConfigPanel()
 		end
@@ -5683,7 +5683,7 @@ Line9.Parent = MainFrame
 	ToggleBtn.Text = "Close  [RShift]"
 	ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	ToggleBtn.TextScaled = true
-	ToggleBtn.Font = Enum.Font.SourceSansSemibold
+	ToggleBtn.Font = Enum.Font.GothamMedium
 	ToggleBtn.ZIndex = 999
 	ToggleBtn.Parent = NeverloseCS2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = ToggleBtn end
@@ -5763,7 +5763,7 @@ end
 
 
 	function WindowObj:AddTabLabel(text)
-		text = tostring(text or "")
+		text = tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", "")
 		local hasPreviousCategory = false
 		for _, child in ipairs(Tab:GetChildren()) do
 			if child:IsA("TextLabel") and child.Name == "TabLabel" then
@@ -5805,6 +5805,15 @@ end
 		New("UIPadding", {
 			PaddingLeft = UDim.new(0, 10),
 		}, lbl)
+
+		tabOrder = tabOrder + 1
+		New("Frame", {
+			Name = "TabCategoryTrailingSpace",
+			Size = UDim2.new(1, 0, 0, 4),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			LayoutOrder = tabOrder,
+		}, Tab)
 		return lbl
 	end
 
@@ -5869,7 +5878,7 @@ New("UIAspectRatioConstraint", {
 			Text = name,
 			TextColor3 = Color3.fromRGB(255, 255, 255),
 			TextScaled = true,
-			Font = Enum.Font.SourceSansSemibold,
+			Font = Enum.Font.GothamMedium,
 			TextTransparency = isFirst and 0 or 0.6000000238418579,
 			TextXAlignment = Enum.TextXAlignment.Left,
 		}, TabButtonFrame)
@@ -6009,11 +6018,11 @@ New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.Layou
 				AutomaticSize = Enum.AutomaticSize.Y,
 				LayoutOrder = sectionOrder[side],
 			}, col)
-			New("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, Section)
+			New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, Section)
 
 local SectionTitle = Instance.new('Frame')
 SectionTitle.Name = "SectionTitle"
-SectionTitle.Size = UDim2.new(1, 0, 0, 24)
+SectionTitle.Size = UDim2.new(1, 0, 0, 22)
 SectionTitle.BackgroundTransparency = 1
 SectionTitle.ClipsDescendants = false
 SectionTitle.Visible = true
@@ -6039,10 +6048,8 @@ SectionLabel.TextYAlignment = Enum.TextYAlignment.Center
 SectionLabel.Parent = SectionTitle
 do
 	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 8)
+	pad.PaddingLeft = UDim.new(0, 7)
 	pad.PaddingRight = UDim.new(0, 4)
-	pad.PaddingTop = UDim.new(0, 5)
-	pad.PaddingBottom = UDim.new(0, 2)
 	pad.Parent = SectionLabel
 end
 AddTextConstraint(SectionLabel, 10, 14, true)
@@ -6074,19 +6081,20 @@ end
 			do
 				local s = Instance.new("UIStroke")
 				s.Name = "GroupOutline"
-				s.Color = Color3.fromRGB(32, 35, 46)
-				s.Transparency = 0.08
+				s.Color = Color3.fromRGB(47, 53, 69)
+				s.Transparency = 0.18
 				s.Thickness = 1
+				s:SetAttribute("NLBaseTransparency", 0.18)
 				s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				s.Parent = Elements
 			end
 			-- Inset rows slightly from the card edges. This keeps each side of the
 			-- rounded outline visible even when a row uses an opaque background.
 			New("UIPadding", {
-				PaddingLeft = UDim.new(0, 2),
-				PaddingRight = UDim.new(0, 2),
-				PaddingTop = UDim.new(0, 1),
-				PaddingBottom = UDim.new(0, 1),
+				PaddingLeft = UDim.new(0, 3),
+				PaddingRight = UDim.new(0, 3),
+				PaddingTop = UDim.new(0, 2),
+				PaddingBottom = UDim.new(0, 2),
 			}, Elements)
 			New("UIListLayout", {
 				Padding = UDim.new(0, 1),
@@ -6389,7 +6397,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Text = text,
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 1001,
@@ -6488,7 +6496,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Text = text,
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 1001,
@@ -6562,7 +6570,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Text = text,
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 1001,
@@ -6585,7 +6593,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Text = FormatSliderValue(value, suffix),
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.20000000298023224,
 						ZIndex = 1002,
 					}, Effect)
@@ -6739,7 +6747,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Text = text,
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 1001,
@@ -6755,7 +6763,7 @@ UIAspectRatioConstraint.Parent = Slider
 						ImageColor3 = Color3.fromRGB(255, 255, 255),
 						ImageTransparency = 0.10000000149011612,
 						ScaleType = Enum.ScaleType.Fit,
-						Rotation = 270,
+						Rotation = 0,
 						ZIndex = 1000,
 					}, Selection)
 
@@ -6768,7 +6776,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Text = options[1] or "Auto",
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.5,
 						ZIndex = 1001,
 						TextXAlignment = Enum.TextXAlignment.Right,
@@ -6823,7 +6831,7 @@ UIAspectRatioConstraint.Parent = Slider
 
 					local function closeDropdown()
 						dropOpen = false
-						Tween(SelArrow, {Rotation = 270}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Tween(SelArrow, {Rotation = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 					end
@@ -6928,7 +6936,7 @@ UIAspectRatioConstraint.Parent = Slider
 							PositionPopupWithinMain(DropPopup, true, nil, Selection, Vector2.new(popupW, popupH))
 							ForceLiftClipping(DropPopup)
 							DropPopup.Visible = true
-							Tween(SelArrow, {Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+							Tween(SelArrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 						end
 					end)
@@ -6985,7 +6993,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Text = text,
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansBold,
+						Font = Enum.Font.GothamBold,
 						TextTransparency = 0.1,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 1001,
@@ -7866,7 +7874,7 @@ if maxY <= 0 then return end
 					Text = text,
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = true,
-					Font = Enum.Font.SourceSansSemibold,
+					Font = Enum.Font.GothamMedium,
 					TextTransparency = 0.1,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					ZIndex = 1001,
@@ -8347,7 +8355,7 @@ if maxY <= 0 then return end
 					Text = FormatSliderValue(value, suffix),
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = true,
-					Font = Enum.Font.SourceSansSemibold,
+					Font = Enum.Font.GothamMedium,
 					TextTransparency = 0.20000000298023224,
 				}, Effect)
 				New("UICorner", { CornerRadius = UDim.new(0, 5) }, SliderValue)
@@ -8539,12 +8547,13 @@ if maxY <= 0 then return end
 					Text = selected or "Select",
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = true,
-					Font = Enum.Font.SourceSansSemibold,
+					Font = Enum.Font.GothamMedium,
 					TextTransparency = 0.20000000298023224,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					ZIndex = 6,
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 5) }, TopBar)
+				New("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 25) }, TopBar)
 
 				local Arrow = New("ImageLabel", {
 					Name = "Arrow",
@@ -8556,7 +8565,7 @@ if maxY <= 0 then return end
 					Image = "rbxassetid://10709790948",
 					ImageColor3 = Color3.fromRGB(255, 255, 255),
 					ScaleType = Enum.ScaleType.Fit,
-					Rotation = 270,
+					Rotation = 0,
 					ZIndex = 7,
 				}, TopBar)
 
@@ -8602,7 +8611,7 @@ if maxY <= 0 then return end
 				local function closeDropdown()
 					if not dropOpen and not DownBar.Visible then return end
 					dropOpen = false
-					Tween(Arrow, { Rotation = 270 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(Arrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					Tween(PopupStroke, { Transparency = 1 }, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
 					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					UnregisterPopup(DownBar)
@@ -8627,7 +8636,7 @@ if maxY <= 0 then return end
 						TextColor3 = Color3.fromRGB(226, 232, 244),
 						TextScaled = false,
 						TextSize = 13,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						TextTruncate = Enum.TextTruncate.AtEnd,
@@ -8635,6 +8644,7 @@ if maxY <= 0 then return end
 						ZIndex = 5002,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 6) }, Buttons)
+					New("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 6) }, Buttons)
 					optionRows[opt] = Buttons
 
 					Buttons.MouseEnter:Connect(function()
@@ -8675,7 +8685,7 @@ if maxY <= 0 then return end
 						PopupStroke.Transparency = 1
 						Tween(DownBar, { Size = finalSize }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						Tween(PopupStroke, { Transparency = 0.5 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-						Tween(Arrow, { Rotation = 360 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Arrow, { Rotation = 180 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
@@ -8749,7 +8759,7 @@ if maxY <= 0 then return end
 					Text = text,
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = true,
-					Font = Enum.Font.SourceSansSemibold,
+					Font = Enum.Font.GothamMedium,
 					TextTransparency = 0.10000000149011612,
 					TextXAlignment = Enum.TextXAlignment.Left,
 				}, Dropdown)
@@ -8775,12 +8785,13 @@ if maxY <= 0 then return end
 					Text = selected or "Select",
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = true,
-					Font = Enum.Font.SourceSansSemibold,
+					Font = Enum.Font.GothamMedium,
 					TextTransparency = 0.20000000298023224,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					ZIndex = 6,
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 5) }, TopBar)
+				New("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 25) }, TopBar)
 
 				local Arrow = New("ImageLabel", {
 					Name = "Arrow",
@@ -8792,7 +8803,7 @@ if maxY <= 0 then return end
 					Image = "rbxassetid://10709790948",
 					ImageColor3 = Color3.fromRGB(255, 255, 255),
 					ScaleType = Enum.ScaleType.Fit,
-					Rotation = 270,
+					Rotation = 0,
 					ZIndex = 7,
 				}, TopBar)
 
@@ -8834,7 +8845,7 @@ if maxY <= 0 then return end
 
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, {Rotation = 270}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					Tween(Arrow, {Rotation = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
@@ -8870,7 +8881,7 @@ if maxY <= 0 then return end
 						Text = opt,
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.20000000298023224,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 5002,
@@ -8909,7 +8920,7 @@ if maxY <= 0 then return end
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
 						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
 						Tween(DownBar, { Size = finalSize }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-						Tween(Arrow, {Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Tween(Arrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
@@ -9515,7 +9526,7 @@ if maxY <= 0 then return end
 				TextArrow.ImageColor3 = Color3.fromRGB(255, 255, 255)
 				TextArrow.ImageTransparency = 0.10000000149011612
 				TextArrow.ScaleType = Enum.ScaleType.Fit
-				TextArrow.Rotation = 270
+				TextArrow.Rotation = 0
 				TextArrow.Parent = DropdownSection
 
 				local Text = Instance.new('TextLabel')
@@ -9527,7 +9538,7 @@ if maxY <= 0 then return end
 				Text.Text = text
 				Text.TextColor3 = Color3.fromRGB(255, 255, 255)
 				Text.TextScaled = true
-				Text.Font = Enum.Font.SourceSansSemibold
+				Text.Font = Enum.Font.GothamMedium
 				Text.TextTransparency = 0.10000000149011612
 				Text.TextXAlignment = Enum.TextXAlignment.Left
 				Text.Parent = DropdownSection
@@ -9647,7 +9658,7 @@ if maxY <= 0 then return end
 					ClosePopupsUnder(Section2Frame)
 					UnregisterPopup(Section2Frame)
 					Tween(Section2Frame, {Size = UDim2.new(0.96, 0, 0, 0), BackgroundTransparency = 1}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-					Tween(TextArrow, {Rotation = 270}, 0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					Tween(TextArrow, {Rotation = 0}, 0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					task.delay(0.21, function() if not accordionOpen then Section2Frame.Visible = false end end)
 					if _openAccordion == closeAccordion then _openAccordion = nil end
 				end
@@ -9670,7 +9681,7 @@ if maxY <= 0 then return end
 							math.min(accordionHeight * GetMainFrameScale(), math.max(MainFrame.AbsoluteSize.Y, 1)))
 						Section2Frame.Size = UDim2.new(0.96, 0, 0, accordionHeight)
 						PositionPopupWithinMain(Section2Frame, true, nil, nil, accordionKnown)
-						Tween(TextArrow, {Rotation = 360}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Tween(TextArrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						RegisterPopup(Section2Frame, closeAccordion, Open)
 						local function settle()
 							if not accordionOpen or not Section2Frame.Parent then return end
@@ -9853,7 +9864,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Text = text2,
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 101,
@@ -9946,7 +9957,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						ImageColor3 = Color3.fromRGB(255, 255, 255),
 						ImageTransparency = 0.10000000149011612,
 						ScaleType = Enum.ScaleType.Fit,
-						Rotation = 270,
+						Rotation = 0,
 						ZIndex = 1000,
 					}, Selection)
 
@@ -9959,7 +9970,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Text = options[1] or "Auto",
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.5,
 						ZIndex = 101,
 						TextXAlignment = Enum.TextXAlignment.Right,
@@ -10010,7 +10021,7 @@ UIAspectRatioConstraint.Parent = Toggle
 
 					local function closeDropdown2()
 						dropOpen = false
-						Tween(SelArrow, { Rotation = 270 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(SelArrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 						if _openAccordionDropdown == closeDropdown2 then _openAccordionDropdown = nil end
@@ -10127,7 +10138,7 @@ UIAspectRatioConstraint.Parent = Toggle
 							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
 							ForceLiftClipping(DropPopup)
 							DropPopup.Visible = true
-							Tween(SelArrow, { Rotation = 360 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+							Tween(SelArrow, { Rotation = 180 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 							RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
 						end
 					end)
@@ -10216,7 +10227,7 @@ UIAspectRatioConstraint.Parent = Slider
 						Text = FormatSliderValue(value, suffix),
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.20000000298023224,
 						ZIndex = 102,
 					}, Effect)
@@ -10374,7 +10385,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Text = text2,
 						TextColor3 = Color3.fromRGB(217, 219, 226),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansBold,
+						Font = Enum.Font.GothamBold,
 						TextTransparency = 0.1,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 101,
@@ -10822,7 +10833,7 @@ if maxY <= 0 then return end
 				Text = name,
 				TextColor3 = Color3.fromRGB(255, 255, 255),
 				TextScaled = true,
-				Font = Enum.Font.SourceSansSemibold,
+				Font = Enum.Font.GothamMedium,
 				TextTransparency = isFirstST and 0 or 0.55,
 				TextXAlignment = Enum.TextXAlignment.Left,
 			}, STRow)
