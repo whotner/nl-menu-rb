@@ -1,4 +1,4 @@
--- Neverlose Roblox UI v28: fitted cards, refined popups and safe mouse-bind enum handling
+-- Neverlose Roblox UI v29: Reloaded palette, balanced columns and precise control spacing
 -- Preserves register-limit/search fixes and restores full-size control rows.
 local LoadAcrylic = function()
 	local GuiSystem = {};
@@ -660,12 +660,12 @@ local Z_BASE = 10000
 -- PATCH 1: THEME tokens (from [G].txt §1)
 -- ============================================================================
 local THEME = {
-	plate = Color3.fromRGB(17, 19, 28),
-	row = Color3.fromRGB(32, 35, 50),
-	stroke = Color3.fromRGB(52, 58, 82),
-	strokeAlpha = 0.55,
-	text = Color3.fromRGB(232, 234, 242),
-	dim = Color3.fromRGB(122, 126, 146),
+	plate = Color3.fromRGB(17, 19, 27),
+	row = Color3.fromRGB(24, 27, 37),
+	stroke = Color3.fromRGB(32, 35, 46),
+	strokeAlpha = 0.18,
+	text = Color3.fromRGB(217, 219, 226),
+	dim = Color3.fromRGB(146, 150, 162),
 	danger = Color3.fromRGB(233, 90, 110),
 	radius = 12,
 }
@@ -1217,7 +1217,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		table.insert(_registeredElements, {key = base .. "#" .. count, obj = object})
 	end
 
-	local mainColor = Color3.fromRGB(26, 123, 255)
+	local mainColor = Color3.fromRGB(78, 131, 255)
 	local tabs = {}
 	local activeTabIndex = nil
 	local tabOrder = 0
@@ -1265,8 +1265,8 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		AnchorPoint = Vector2.new(0.5, 0.43),
 		Size = UDim2.new(0.78, 0, 0.78, 0),
 		Position = UDim2.new(0.5, 0, 0.43, 0),
-	BackgroundColor3 = Color3.fromRGB(13,15,22),
-	BackgroundTransparency = 0.1,
+	BackgroundColor3 = Color3.fromRGB(13, 15, 22),
+	BackgroundTransparency = 0.03,
 	BorderSizePixel = 0,
 	ClipsDescendants = false,
 	}, NeverloseCS2)
@@ -1303,7 +1303,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		watermarkConstraint.MaxTextSize = 11
 	end
 	customization.watermark = Watermark
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 20); c.Parent = MainFrame end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = MainFrame end
 	local DragHandle = New("Frame", {
 		Name = "DragHandle",
 		Size = UDim2.new(0.3, 0, 0.08, 0),
@@ -1313,7 +1313,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	}, MainFrame)
 	New("UISizeConstraint", {
 		MinSize = Vector2.new(220, 180),
-		MaxSize = Vector2.new(820, 560),
+		MaxSize = Vector2.new(780, 600),
 	}, MainFrame)
 
 	local AcrylicLib = LoadAcrylic()
@@ -1543,7 +1543,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 local Stats = game:GetService('Stats')
 
 local FPSText, MSText, TimeText, RamText, SignalImage
-local ACCENT = mainColor or Color3.fromRGB(26, 123, 255)
+local ACCENT = mainColor or Color3.fromRGB(78, 131, 255)
 local GOOD = Color3.fromRGB(120, 220, 140)
 local WARN = Color3.fromRGB(240, 180, 80)
 local BAD = Color3.fromRGB(233, 90, 130)
@@ -2341,7 +2341,7 @@ end
 
 local Aspect = Instance.new("UIAspectRatioConstraint")
 Aspect.Parent = MainFrame
-Aspect.AspectRatio = 1.4
+Aspect.AspectRatio = 1.30
 
 	local HubIcon = New("ImageLabel", {
 		Name = "HubIcon",
@@ -2402,7 +2402,7 @@ Aspect.AspectRatio = 1.4
 	local UserImageEl = Instance.new('ImageLabel')
 	UserImageEl.Name = "UserImage"
 	UserImageEl.Size = UDim2.new(0.235,0,1,0)
-	UserImageEl.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+	UserImageEl.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	UserImageEl.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
 	UserImageEl.Parent = Info
 	New("UICorner", { CornerRadius = UDim.new(1,0) }, UserImageEl)
@@ -2498,7 +2498,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.Size = UDim2.new(0.278, 0, 0, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
-	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	WindowSettingsFrame.BackgroundTransparency = 0.045
 	WindowSettingsFrame.ZIndex = 101
 	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(48, 54, 70); s.Transparency = 0.43; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
@@ -2696,7 +2696,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		BValue.Name = "BindValue"
 		BValue.Position = UDim2.new(0.56, 0, 0.17, 0)
 		BValue.Size = UDim2.new(0.38, 0, 0.66, 0)
-		BValue.BackgroundColor3 = Color3.fromRGB(32, 35, 50)
+		BValue.BackgroundColor3 = Color3.fromRGB(24, 27, 37)
 		BValue.BackgroundTransparency = 0
 		BValue.BorderSizePixel = 0
 		BValue.Text = ""
@@ -3011,7 +3011,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	ScaleDownBar.Position = UDim2.new(0.02,0,1,2)
 	ScaleDownBar.Size = UDim2.new(0.5899999737739563,0,0,0)
 	ScaleDownBar.AutomaticSize = Enum.AutomaticSize.Y
-	ScaleDownBar.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+	ScaleDownBar.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	ScaleDownBar.BackgroundTransparency = 0
 	ScaleDownBar.BorderSizePixel = 0
 	ScaleDownBar.Visible = false
@@ -3154,7 +3154,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	LangDownBar.Position = UDim2.new(0.02,0,1,2)
 	LangDownBar.Size = UDim2.new(0.5899999737739563,0,0,0)
 	LangDownBar.AutomaticSize = Enum.AutomaticSize.Y
-	LangDownBar.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+	LangDownBar.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	LangDownBar.BackgroundTransparency = 0
 	LangDownBar.BorderSizePixel = 0
 	LangDownBar.Visible = false
@@ -3371,7 +3371,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			SelBtn.BackgroundTransparency = 1
 			SelBtn.BorderSizePixel = 0
 			SelBtn.Text = ""
-			SelBtn.TextColor3 = Color3.fromRGB(26,123,255)
+			SelBtn.TextColor3 = Color3.fromRGB(78, 131, 255)
 			SelBtn.TextScaled = true
 			SelBtn.ZIndex = 1004
 			SelBtn.Parent = BtnRow
@@ -3454,7 +3454,7 @@ PositionPopupWithinMain(ScaleDownBar, true)
 			SelBtn.BackgroundTransparency = 1
 			SelBtn.BorderSizePixel = 0
 			SelBtn.Text = ""
-			SelBtn.TextColor3 = Color3.fromRGB(26,123,255)
+			SelBtn.TextColor3 = Color3.fromRGB(78, 131, 255)
 			SelBtn.TextScaled = true
 			SelBtn.ZIndex = 1004
 			SelBtn.Parent = BtnRow
@@ -3864,7 +3864,7 @@ PositionPopupWithinMain(LangDownBar, true)
 			SelBtn.BackgroundTransparency = 1
 			SelBtn.BorderSizePixel = 0
 			SelBtn.Text = ""
-			SelBtn.TextColor3 = Color3.fromRGB(26,123,255)
+			SelBtn.TextColor3 = Color3.fromRGB(78, 131, 255)
 			SelBtn.TextScaled = false
 			SelBtn.TextSize = 15
 			SelBtn.Font = Enum.Font.GothamBold
@@ -4275,7 +4275,7 @@ asss.Parent = SearchBtn
 	Save.Name = "Save"
 	Save.Position = UDim2.new(0.009999999776482582, 0, 0.2, 0)
 	Save.Size = UDim2.new(0.28, 0, 0.62, 0)
-	Save.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+	Save.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	Save.BackgroundTransparency = 0
 	Save.BorderSizePixel = 0
 	Save.Parent = Header
@@ -4312,7 +4312,7 @@ SaveText.Parent = Save
 		if not Save then return end
 		Tween(Save, { BackgroundColor3 = mainColor }, 0.09)
 		task.delay(0.1, function()
-			if Save then Tween(Save, { BackgroundColor3 = Color3.fromRGB(21, 24, 36) }, 0.22) end
+			if Save then Tween(Save, { BackgroundColor3 = Color3.fromRGB(17, 19, 27) }, 0.22) end
 		end)
 	end
 	local function ShowSavedName()
@@ -4369,7 +4369,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Name = "ConfigMainFrame"
 	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.075, 0)
 	ConfigMainFrame.Size = UDim2.new(0.4, 0, 0.42, 0)
-	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	ConfigMainFrame.BackgroundTransparency = 0.045
 	ConfigMainFrame.BorderSizePixel = 0
 	ConfigMainFrame.ZIndex = 110
@@ -4388,7 +4388,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
 	CMHeader.Size = UDim2.new(1, 0, 0, 46)
-	CMHeader.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+	CMHeader.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	CMHeader.BackgroundTransparency = 0
 	CMHeader.BorderSizePixel = 0
 	CMHeader.ClipsDescendants = true
@@ -4632,7 +4632,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Name = "RecentlyDeletedPanel"
 	RecentlyDeletedPanel.Position = UDim2.new(0.012, 0, 0.075, 0)
 	RecentlyDeletedPanel.Size = UDim2.new(0.4, 0, 0.42, 0)
-	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	RecentlyDeletedPanel.BackgroundTransparency = 0.045
 	RecentlyDeletedPanel.BorderSizePixel = 0
 	RecentlyDeletedPanel.ZIndex = 120
@@ -4648,7 +4648,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local RDHeader = Instance.new("Frame")
 	RDHeader.Name = "RDHeader"
 	RDHeader.Size = UDim2.new(1, 0, 0, 46)
-	RDHeader.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+	RDHeader.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	RDHeader.BorderSizePixel = 0
 	RDHeader.ClipsDescendants = true
 	RDHeader.ZIndex = 121
@@ -4898,7 +4898,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Name = "SettingsFrame"
 		SettingsFrame.Position = UDim2.new(0.02, 0, 1, 2)
 		SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
-		SettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+		SettingsFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 		SettingsFrame.BackgroundTransparency = 0.045
 		SettingsFrame.BorderSizePixel = 0
 		SettingsFrame.ZIndex = 6000
@@ -5678,7 +5678,7 @@ Line9.Parent = MainFrame
    ToggleBtn.Active = true
    ToggleBtn.Draggable = false
 	ToggleBtn.Size = UDim2.new(0, 100, 0, 28)
-	ToggleBtn.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+	ToggleBtn.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	ToggleBtn.BorderSizePixel = 1
 	ToggleBtn.Text = "Close  [RShift]"
 	ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -5730,7 +5730,7 @@ Line9.Parent = MainFrame
     guiOpen = not guiOpen
     ToggleBtn.Text = guiOpen and "Close [RShift]" or "Open  [RShift]"
     Tween(ToggleBtn, {
-        BackgroundColor3 = guiOpen and Color3.fromRGB(21, 24, 36) or Color3.fromRGB(33,37,53)
+        BackgroundColor3 = guiOpen and Color3.fromRGB(17, 19, 27) or Color3.fromRGB(33,37,53)
     }, 0.1)
     	if guiOpen then
         if Save then Save.Visible = true end
@@ -5883,7 +5883,7 @@ New("UIAspectRatioConstraint", {
 
 		local Left = New("ScrollingFrame", {
 			Name = "Left",
-			Size = UDim2.new(0.49, 0, 1, 0),
+			Size = UDim2.new(0.48, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			ClipsDescendants = true,
@@ -5896,7 +5896,7 @@ New("UIAspectRatioConstraint", {
 		
 		local Right = New("ScrollingFrame", {
 			Name = "Right",
-			Size = UDim2.new(0.44, 0, 1, 0),
+			Size = UDim2.new(0.48, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			LayoutOrder = 1,
@@ -5911,8 +5911,8 @@ New("UIAspectRatioConstraint", {
 		Right:SetAttribute("SearchName", name)
 		Left:SetAttribute("TabIndex", tabIndex)
 		Right:SetAttribute("TabIndex", tabIndex)
-		New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
-New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
+		New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
+New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
 
 		if not isFirst then
 			Left.Visible = false
@@ -6062,7 +6062,7 @@ end
 				Name = "Elements",
 				Size = UDim2.new(1, -4, 0, 30),
 				Position = UDim2.new(0, 2, 0, 0),
-				BackgroundColor3 = Color3.fromRGB(21,24,36),
+				BackgroundColor3 = Color3.fromRGB(17, 19, 27),
 				BackgroundTransparency = 0,
 				BorderSizePixel = 0,
 				AutomaticSize = Enum.AutomaticSize.Y,
@@ -6074,8 +6074,8 @@ end
 			do
 				local s = Instance.new("UIStroke")
 				s.Name = "GroupOutline"
-				s.Color = Color3.fromRGB(48, 54, 70)
-				s.Transparency = 0.43
+				s.Color = Color3.fromRGB(32, 35, 46)
+				s.Transparency = 0.08
 				s.Thickness = 1
 				s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				s.Parent = Elements
@@ -6872,11 +6872,11 @@ UIAspectRatioConstraint.Parent = Slider
 							AnchorPoint = Vector2.new(1, 0),
 							Position = UDim2.new(1, -6, 0, 0),
 							Size = UDim2.new(0, 18, 1, 0),
-							BackgroundColor3 = Color3.fromRGB(21, 24, 36),
+							BackgroundColor3 = Color3.fromRGB(17, 19, 27),
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
 							Text = "",
-							TextColor3 = Color3.fromRGB(26, 123, 255),
+							TextColor3 = Color3.fromRGB(78, 131, 255),
 							TextScaled = false,
 							TextSize = 15,
 							Font = Enum.Font.GothamBold,
@@ -7745,7 +7745,7 @@ if maxY <= 0 then return end
 					LayoutOrder = elemCount,
 				}, Elements)
 				New("UIAspectRatioConstraint", {
-					AspectRatio = 9,
+					AspectRatio = 7.7,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Toggle)
 
@@ -7766,9 +7766,9 @@ if maxY <= 0 then return end
 					BackgroundColor3 = Color3.fromRGB(28,32,48),
 					BackgroundTransparency = 1,
 					Text = text,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
+					TextColor3 = Color3.fromRGB(217, 219, 226),
 					TextScaled = true,
-					Font = Enum.Font.SourceSansSemibold,
+					Font = Enum.Font.GothamMedium,
 					TextTransparency = 0.10000000149011612,
 					TextXAlignment = Enum.TextXAlignment.Left,
 				}, Toggle)
@@ -7831,7 +7831,7 @@ if maxY <= 0 then return end
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
 				}, Elements)
-				New("UIAspectRatioConstraint", {AspectRatio = 9, AspectType = Enum.AspectType.ScaleWithParentSize}, CheckBoxToggle)
+				New("UIAspectRatioConstraint", {AspectRatio = 7.7, AspectType = Enum.AspectType.ScaleWithParentSize}, CheckBoxToggle)
 				New("Frame", {
 					Name = "Lines",
 					Position = UDim2.new(0.06, 0, 1, -1),
@@ -7934,7 +7934,7 @@ if maxY <= 0 then return end
 					LayoutOrder = elemCount,
 				}, Elements)
 				New("UIAspectRatioConstraint", {
-					AspectRatio = 9,
+					AspectRatio = 7.7,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Toggle)
 
@@ -7955,9 +7955,9 @@ if maxY <= 0 then return end
 					BackgroundColor3 = Color3.fromRGB(28,32,48),
 					BackgroundTransparency = 1,
 					Text = text,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
+					TextColor3 = Color3.fromRGB(217, 219, 226),
 					TextScaled = true,
-					Font = Enum.Font.SourceSansSemibold,
+					Font = Enum.Font.GothamMedium,
 				   TextTransparency = 0.10000000149011612,
 					TextXAlignment = Enum.TextXAlignment.Left,
 				}, Toggle)
@@ -8303,7 +8303,7 @@ if maxY <= 0 then return end
 				}, Elements)
 				AttachRowHover(Slider)
 				New("UIAspectRatioConstraint", {
-					AspectRatio = 9,
+					AspectRatio = 7.7,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Slider)
 
@@ -8324,9 +8324,9 @@ if maxY <= 0 then return end
 					BackgroundColor3 = Color3.fromRGB(28,32,48),
 					BackgroundTransparency = 1,
 					Text = text,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
+					TextColor3 = Color3.fromRGB(217, 219, 226),
 					TextScaled = true,
-					Font = Enum.Font.SourceSansSemibold,
+					Font = Enum.Font.GothamMedium,
 					TextTransparency = 0.10000000149011612,
 					TextXAlignment = Enum.TextXAlignment.Left,
 				}, Slider)
@@ -8343,7 +8343,7 @@ if maxY <= 0 then return end
 					Name = "SliderValue",
 					Position = UDim2.new(0.6990000009536743, 0, 0.10000000149011612, 0),
 					Size = UDim2.new(0.25, 0, 0.8080000281333923, 0),
-					BackgroundColor3 = Color3.fromRGB(32, 35, 50),
+					BackgroundColor3 = Color3.fromRGB(24, 27, 37),
 					Text = FormatSliderValue(value, suffix),
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = true,
@@ -8501,7 +8501,7 @@ if maxY <= 0 then return end
 					ClipsDescendants = false,
 				}, Elements)
 				New("UIAspectRatioConstraint", {
-					AspectRatio = 9,
+					AspectRatio = 7.7,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Dropdown)
 				AttachRowHover(Dropdown)
@@ -8523,9 +8523,9 @@ if maxY <= 0 then return end
 					BackgroundColor3 = Color3.fromRGB(28,32,48),
 					BackgroundTransparency = 1,
 					Text = text,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
+					TextColor3 = Color3.fromRGB(217, 219, 226),
 					TextScaled = true,
-					Font = Enum.Font.SourceSansSemibold,
+					Font = Enum.Font.GothamMedium,
 					TextTransparency = 0.10000000149011612,
 					TextXAlignment = Enum.TextXAlignment.Left,
 				}, Dropdown)
@@ -8534,7 +8534,7 @@ if maxY <= 0 then return end
 					Name = "TopBar",
 					Position = UDim2.new(0.498, 0, 0.25, 0),
 			      Size = UDim2.new(0.46, 0, 0.600000024, 0),
-				   BackgroundColor3 = Color3.fromRGB(32, 35, 50),
+				   BackgroundColor3 = Color3.fromRGB(24, 27, 37),
                BackgroundTransparency = 0,
 					Text = selected or "Select",
 					TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -8564,7 +8564,7 @@ if maxY <= 0 then return end
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 4),
 					Size = UDim2.new(0.72, 0, 0, 0),
-					BackgroundColor3 = Color3.fromRGB(21, 24, 36),
+					BackgroundColor3 = Color3.fromRGB(17, 19, 27),
 					BackgroundTransparency = 0,
 					Visible = false,
 					ZIndex = 5000,
@@ -8726,7 +8726,7 @@ if maxY <= 0 then return end
 					ClipsDescendants = false,
 				}, Elements)
 				New("UIAspectRatioConstraint", {
-					AspectRatio = 9,
+					AspectRatio = 7.7,
 					AspectType = Enum.AspectType.ScaleWithParentSize,
 				}, Dropdown)
 
@@ -8770,7 +8770,7 @@ if maxY <= 0 then return end
 					Name = "TopBar",
 					Position = UDim2.new(0.498, 0, 0.25, 0),
 					Size = UDim2.new(0.46, 0, 0.6000000238418579, 0),
-					BackgroundColor3 = Color3.fromRGB(32, 35, 50),
+					BackgroundColor3 = Color3.fromRGB(24, 27, 37),
 					BackgroundTransparency = 0,
 					Text = selected or "Select",
 					TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -8800,7 +8800,7 @@ if maxY <= 0 then return end
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 4),
 					Size = UDim2.new(0.72, 0, 0, 0),
-					BackgroundColor3 = Color3.fromRGB(21, 24, 36),
+					BackgroundColor3 = Color3.fromRGB(17, 19, 27),
 					BackgroundTransparency = 0,
 					ClipsDescendants = true,
 					Visible = false,
@@ -8865,7 +8865,7 @@ if maxY <= 0 then return end
 					local Btn = New("TextButton", {
 						Name = "Buttons",
 						Size = UDim2.new(1, 0, 0, 20),
-						BackgroundColor3 = Color3.fromRGB(32, 35, 50),
+						BackgroundColor3 = Color3.fromRGB(24, 27, 37),
 						BackgroundTransparency = 1,
 						Text = opt,
 						TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -9192,7 +9192,7 @@ if maxY <= 0 then return end
 					ClipsDescendants = false,
 					ZIndex = 2,
 				}, Elements)
-				New("UIAspectRatioConstraint", { AspectRatio = 9, AspectType = Enum.AspectType.ScaleWithParentSize }, Colorpicker)
+				New("UIAspectRatioConstraint", { AspectRatio = 7.7, AspectType = Enum.AspectType.ScaleWithParentSize }, Colorpicker)
 
 				New("Frame", {
 					Name = "Lines",
@@ -9213,9 +9213,9 @@ if maxY <= 0 then return end
 						Size = UDim2.new(0.6000000238418579, 0, 0.5000000238418579, 0),
 						BackgroundTransparency = 1,
 						Text = options.text,
-						TextColor3 = Color3.fromRGB(255, 255, 255),
+						TextColor3 = Color3.fromRGB(217, 219, 226),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 10,
@@ -9494,7 +9494,7 @@ if maxY <= 0 then return end
 				local DropdownSection = Instance.new('Frame')
 				DropdownSection.Name = "Accordion"
 				DropdownSection.Size = UDim2.new(1, 0, 0, 0)
-				DropdownSection.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+				DropdownSection.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 				DropdownSection.BackgroundTransparency = 1
 				DropdownSection.LayoutOrder = elemCount
 				DropdownSection.Parent = Elements
@@ -9545,7 +9545,7 @@ if maxY <= 0 then return end
 				Section2Frame.Name = "AccordionFrame"
 				Section2Frame.Position = UDim2.new(0.02, 0, 1, 2 / GetMainFrameScale())
 				Section2Frame.Size = UDim2.new(0.96, 0, 0, 0)
-				Section2Frame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
+				Section2Frame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 				Section2Frame.BackgroundTransparency = 0
 				Section2Frame.BorderSizePixel = 0
 				Section2Frame.Visible = false
@@ -9749,9 +9749,9 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = text2,
-						TextColor3 = Color3.fromRGB(255, 255, 255),
+						TextColor3 = Color3.fromRGB(217, 219, 226),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 101,
@@ -9928,9 +9928,9 @@ UIAspectRatioConstraint.Parent = Toggle
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = text2,
-						TextColor3 = Color3.fromRGB(255, 255, 255),
+						TextColor3 = Color3.fromRGB(217, 219, 226),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 101,
@@ -10060,11 +10060,11 @@ UIAspectRatioConstraint.Parent = Toggle
 								AnchorPoint = Vector2.new(1, 0),
 								Position = UDim2.new(1, -6, 0, 0),
 								Size = UDim2.new(0, 18, 1, 0),
-								BackgroundColor3 = Color3.fromRGB(21, 24, 36),
+								BackgroundColor3 = Color3.fromRGB(17, 19, 27),
 								BackgroundTransparency = 1,
 								BorderSizePixel = 0,
 								Text = "",
-								TextColor3 = Color3.fromRGB(26, 123, 255),
+								TextColor3 = Color3.fromRGB(78, 131, 255),
 								TextScaled = false,
 								TextSize = 15,
 								Font = Enum.Font.GothamBold,
@@ -10191,9 +10191,9 @@ UIAspectRatioConstraint.Parent = Slider
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = text2,
-						TextColor3 = Color3.fromRGB(255, 255, 255),
+						TextColor3 = Color3.fromRGB(217, 219, 226),
 						TextScaled = true,
-						Font = Enum.Font.SourceSansSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 101,
@@ -10372,7 +10372,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 						Size = UDim2.new(0.66, 0, 0.6, 0),
 						BackgroundTransparency = 1,
 						Text = text2,
-						TextColor3 = Color3.fromRGB(255, 255, 255),
+						TextColor3 = Color3.fromRGB(217, 219, 226),
 						TextScaled = true,
 						Font = Enum.Font.SourceSansBold,
 						TextTransparency = 0.1,
