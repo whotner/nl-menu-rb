@@ -750,12 +750,21 @@ local function FitTextBeforeArrow(label, arrow)
 				gradient.Rotation = 0
 				gradient.Parent = label
 			end
-			gradient.Transparency = needsFade and NumberSequence.new({
-				NumberSequenceKeypoint.new(0, 0),
-				NumberSequenceKeypoint.new(0.68, 0),
-				NumberSequenceKeypoint.new(0.86, 0.24),
-				NumberSequenceKeypoint.new(1, 1),
-			}) or NumberSequence.new(0)
+			if label.TextXAlignment == Enum.TextXAlignment.Right then
+				gradient.Transparency = needsFade and NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 1),
+					NumberSequenceKeypoint.new(0.14, 0.24),
+					NumberSequenceKeypoint.new(0.32, 0),
+					NumberSequenceKeypoint.new(1, 0),
+				}) or NumberSequence.new(0)
+			else
+				gradient.Transparency = needsFade and NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0),
+					NumberSequenceKeypoint.new(0.68, 0),
+					NumberSequenceKeypoint.new(0.86, 0.24),
+					NumberSequenceKeypoint.new(1, 1),
+				}) or NumberSequence.new(0)
+			end
 		end
 	end)
 end
@@ -5865,9 +5874,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 local Line9 = Instance.new('Frame')
 Line9.Name = "Line9"
-Line9.Position = UDim2.new(0.010000000707268715,0,0.09000000357627869,0)
-Line9.Size = UDim2.new(0.9789999723434448,0,0,1)
-Line9.BackgroundColor3 = Color3.fromRGB(162,162,162)
+Line9.Position = UDim2.new(0.008, 0, 0, 53)
+Line9.Size = UDim2.new(0.222, 0, 0, 1)
+Line9.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Line9.BackgroundTransparency = 0.93
 Line9.BorderSizePixel = 0
 Line9.Parent = MainFrame
