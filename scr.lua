@@ -1,3 +1,5 @@
+-- Neverlose Roblox UI v24: tab selection animation conflict fix
+-- Preserves v23 search, watermark and text-transition fixes.
 local LoadAcrylic = function()
 	local GuiSystem = {};
 	local acrylicId = 0
@@ -886,15 +888,9 @@ local function AnimateSectionColumn(column)
             if not section.Parent or not section.Visible then return end
             -- Keep text at its authored opacity. The former fade-to-transparent pass
             -- was responsible for one-frame label flashes on tab changes.
+            -- Keep typography at native scale: fractional UIScale transitions can soften glyphs.
             local motionScale = section:FindFirstChild("SectionMotionScale")
-            if not motionScale then
-                motionScale = Instance.new("UIScale")
-                motionScale.Name = "SectionMotionScale"
-                motionScale.Scale = 1
-                motionScale.Parent = section
-            end
-            motionScale.Scale = 0.965
-            Tween(motionScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            if motionScale and motionScale:IsA("UIScale") then motionScale.Scale = 1 end
 
             local list = section:FindFirstChild("Elements") or section:FindFirstChild("Container")
             if list and list:IsA("GuiObject") then
@@ -905,9 +901,19 @@ local function AnimateSectionColumn(column)
                         target = outline.Transparency
                         outline:SetAttribute("NLBaseTransparency", target)
                     end
-                    outline.Transparency = math.min(0.82, target + 0.13)
-                    Tween(outline, { Transparency = target }, 0.17, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+                    outline.Transparency = math.min(0.84, target + 0.16)
+                    Tween(outline, { Transparency = target }, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
+            end
+            local heading = section:FindFirstChild("SectionLabel", true)
+            if heading and heading:IsA("TextLabel") then
+                local baseColor = heading:GetAttribute("NLBaseTextColor")
+                if typeof(baseColor) ~= "Color3" then
+                    baseColor = heading.TextColor3
+                    heading:SetAttribute("NLBaseTextColor", baseColor)
+                end
+                heading.TextColor3 = Color3.fromRGB(190, 199, 224)
+                Tween(heading, { TextColor3 = baseColor }, 0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
             end
         end)
     end
@@ -1137,10 +1143,12 @@ end
 
 local function GetPopupScale(frame)
 	if not frame or not frame.Parent then return nil end
-	local existing = frame:FindFirstChildOfClass("UIScale")
-	if existing then return nil end
+	-- Reuse the animation scale on every opening. Checking for any UIScale first
+	-- made _PopScale work once, then silently disabled future open/close motion.
 	local pop = frame:FindFirstChild("_PopScale")
 	if pop and pop:IsA("UIScale") then return pop end
+	local existing = frame:FindFirstChildOfClass("UIScale")
+	if existing then return nil end
 	return New("UIScale", { Name = "_PopScale", Scale = 1 }, frame)
 end
 
@@ -1162,10 +1170,10 @@ local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	end
 	local scale = GetPopupScale(frame)
 	if scale then
-		scale.Scale = 0.98
-		Tween(scale, { Scale = 1 }, (dur or 0.2) + 0.04, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		scale.Scale = 0.965
+		Tween(scale, { Scale = 1 }, dur or 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end
-	PlayPopupTween(frame, TweenInfo.new(dur or 0.2, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out), {BackgroundTransparency = targetAlpha})
+	PlayPopupTween(frame, TweenInfo.new(dur or 0.17, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), {BackgroundTransparency = targetAlpha})
 end
 
 local function SmoothClose(frame, dur, cb)
@@ -1180,10 +1188,10 @@ local function SmoothClose(frame, dur, cb)
 	end
 	local scale = GetPopupScale(frame)
 	if scale then
-		Tween(scale, { Scale = 0.99 }, dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		Tween(scale, { Scale = 0.985 }, dur or 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 	end
-	PlayPopupTween(frame, TweenInfo.new(dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
-	task.delay((dur or 0.18) + 0.01, function()
+	PlayPopupTween(frame, TweenInfo.new(dur or 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
+	task.delay((dur or 0.14) + 0.01, function()
 		if frame.Parent and frame:GetAttribute("PopupToken") == token then
 			frame.Visible = false
 			if scale then scale.Scale = 1 end
@@ -1759,6 +1767,9 @@ do
 
 	WMShadowSync = function()
 		local w, h = GameInfo.AbsoluteSize.X, GameInfo.AbsoluteSize.Y
+		-- Keep the sibling shadow attached to the watermark for every position preset.
+		WMShadowHost.AnchorPoint = GameInfo.AnchorPoint
+		WMShadowHost.Position = GameInfo.Position
 		WMShadowHost.Visible = GameInfo.Visible and w > 0 and h > 0
 		if not WMShadowHost.Visible then return end
 		WMShadowHost.Size = UDim2.fromOffset(w, h)
@@ -1771,6 +1782,8 @@ do
 	end
 	GameInfo:GetPropertyChangedSignal("AbsoluteSize"):Connect(WMShadowSync)
 	GameInfo:GetPropertyChangedSignal("Visible"):Connect(WMShadowSync)
+	GameInfo:GetPropertyChangedSignal("Position"):Connect(WMShadowSync)
+	GameInfo:GetPropertyChangedSignal("AnchorPoint"):Connect(WMShadowSync)
 	task.defer(WMShadowSync)
 end
 
@@ -1801,7 +1814,11 @@ function WindowObj:SetWatermark(options)
 	local wm = WindowObj.Watermark
 	if type(options) ~= "table" then return wm end
 	if options.position then
-		wm.frame.AnchorPoint = options.anchorPoint or Vector2.new(0, 0)
+		-- Preserve the current anchor when callers only change Position.
+		-- Resetting it to (0, 0) here made top/right presets jump unexpectedly.
+		if options.anchorPoint then
+			wm.frame.AnchorPoint = options.anchorPoint
+		end
 		wm.frame.Position = options.position
 	end
 	if options.background then wm.frame.BackgroundColor3 = options.background end
@@ -1835,16 +1852,43 @@ function WindowObj:SetWatermark(options)
 	return wm
 end
 
+local _smoothTextBaseTransparency = setmetatable({}, { __mode = "k" })
+
 local function setTextSmooth(label, newText)
-if label:GetAttribute("shownText") == newText then return end
-label:SetAttribute("shownText", newText)
-local fadeOut = TweenService:Create(label, TweenInfo.new(0.1, Enum.EasingStyle.Sine), {TextTransparency = 1})
-fadeOut:Play()
-fadeOut.Completed:Once(function()
-if not label or not label.Parent then return end
-label.Text = newText
-TweenService:Create(label, TweenInfo.new(0.16, Enum.EasingStyle.Sine), {TextTransparency = 0.15}):Play()
-end)
+    if not label or not label.Parent then return end
+    newText = tostring(newText or "")
+    if label:GetAttribute("shownText") == newText then return end
+
+    -- Keep each label's authored opacity. A hard-coded 0.15 made watermark
+    -- values gradually settle to a different opacity than their initial style.
+    if _smoothTextBaseTransparency[label] == nil then
+        _smoothTextBaseTransparency[label] = label.TextTransparency
+    end
+    local targetTransparency = _smoothTextBaseTransparency[label]
+
+    label:SetAttribute("shownText", newText)
+    local token = (label:GetAttribute("SmoothTextToken") or 0) + 1
+    label:SetAttribute("SmoothTextToken", token)
+
+    -- The shared tween manager cancels overlapping fades on the same property.
+    local fadeOut = Tween(label, {
+        TextTransparency = math.max(targetTransparency, 0.82),
+    }, 0.085, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+
+    if not fadeOut then
+        label.Text = newText
+        label.TextTransparency = targetTransparency
+        return
+    end
+
+    fadeOut.Completed:Connect(function(playbackState)
+        if playbackState ~= Enum.PlaybackState.Completed then return end
+        if not label.Parent or label:GetAttribute("SmoothTextToken") ~= token then return end
+        label.Text = newText
+        Tween(label, {
+            TextTransparency = targetTransparency,
+        }, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+    end)
 end
 
 -- (duplicate setTextSmooth removed)
@@ -5107,12 +5151,15 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	end)
 
 	ConfigSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-		local query = ConfigSearchBox.Text:lower()
+		-- Use the same whitespace normalization as row creation so a row does
+		-- not flicker out when the query contains leading/trailing spaces.
+		local query = string.lower(tostring(ConfigSearchBox.Text or "")):gsub("^%s+", ""):gsub("%s+$", "")
 		for _, c in ipairs(ListContainer:GetChildren()) do
 			if c:IsA("Frame") and c.Name ~= "Space" then
 				local rename = c:FindFirstChild("Rename")
 				if rename then
-					c.Visible = rename.Text:lower():find(query, 1, true) ~= nil
+					local name = string.lower(tostring(rename.Text or ""))
+					c.Visible = query == "" or name:find(query, 1, true) ~= nil
 				end
 			end
 		end
@@ -5303,9 +5350,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	}, Frame2)
 	New("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
-		-- A little extra gutter keeps the right-hand group cards from feeling glued
-		-- to the left column, while the narrower right column preserves the outer edge.
-		Padding = UDim.new(0, 22),
+		-- Responsive gutter: more breathing room on wide menus without overflowing
+		-- the columns when the menu is scaled down.
+		Padding = UDim.new(0.055, 0),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, TabHose)
 
@@ -5319,9 +5366,28 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	}, Frame2)
 	New("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
-		Padding = UDim.new(0, 22),
+		Padding = UDim.new(0.055, 0),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, SubTabHose)
+
+	New("TextLabel", {
+		Name = "SearchEmptyState",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.54, 0),
+		Size = UDim2.new(0.72, 0, 0, 44),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Text = "NO MATCHING SETTINGS",
+		TextColor3 = Color3.fromRGB(126, 133, 154),
+		TextSize = 12,
+		Font = Enum.Font.GothamMedium,
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		Visible = false,
+		Active = false,
+		ZIndex = 5,
+	}, Frame2)
 
 	local function GetSearchText(object)
 		local pieces = {}
@@ -5372,7 +5438,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				if sectionLabel and SearchMatches(GetSearchText(sectionLabel), query) then return true end
 				if elementsFrame then
 					for _, element in ipairs(elementsFrame:GetChildren()) do
-						if element:IsA("GuiObject") and SearchMatches(GetSearchText(element), query) then return true end
+						if element:IsA("GuiObject") then
+							local baseVisible = element:GetAttribute("NLSearchBaseVisible")
+							if baseVisible == nil then baseVisible = element.Visible end
+							if baseVisible and SearchMatches(GetSearchText(element), query) then return true end
+						end
 					end
 				end
 			end
@@ -5382,11 +5452,14 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local function FindSearchTarget(query)
 		if query == "" then return nil, nil, false end
-		-- Prefer content in the current tab/subtab to prevent the search from jumping unnecessarily.
+		-- Prefer content in the actually active tab/subtab. Base-tab columns can
+		-- remain in the tree while a subtab is selected; considering them first
+		-- produced incorrect search hints for hidden content.
 		for _, holder in ipairs({ TabHose, SubTabHose }) do
 			for _, column in ipairs(holder:GetChildren()) do
-				if column:IsA("ScrollingFrame") and column:GetAttribute("TabIndex") == activeTabIndex
-					and (holder == TabHose or column:GetAttribute("SubTabIndex") == (tabs[activeTabIndex] and tabs[activeTabIndex].activeSubTabIndex))
+				if column:IsA("ScrollingFrame")
+					and column:GetAttribute("TabIndex") == activeTabIndex
+					and IsSearchColumnActive(column)
 					and ColumnHasSearchMatch(column, query) then
 					return activeTabIndex, holder == SubTabHose and column:GetAttribute("SubTabIndex") or nil, false
 				end
@@ -5412,16 +5485,12 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local function _applySearchImpl(query)
 		query = string.lower(tostring(query or "")):gsub("^%s+", ""):gsub("%s+$", "")
+		local targetTab, targetSubTab, navOnly
 		if query ~= "" then
-			local targetTab, targetSubTab, navOnly = FindSearchTarget(query)
-			if targetTab and targetTab ~= activeTabIndex and tabs[targetTab] and tabs[targetTab].activate then
-				tabs[targetTab].activate()
-			end
-			if targetTab and targetSubTab and tabs[targetTab] and tabs[targetTab].subTabs then
-				local target = tabs[targetTab].subTabs[targetSubTab]
-				if target and target.activate and targetSubTab ~= tabs[targetTab].activeSubTabIndex then target.activate() end
-			end
-			if navOnly then query = "" end
+			targetTab, targetSubTab, navOnly = FindSearchTarget(query)
+			-- Don't switch pages while the user is still typing. Matching pages and
+			-- subtabs are exposed in navigation; the user chooses when to jump.
+			if navOnly and targetTab == activeTabIndex then query = "" end
 		end
 		local columnHasMatch = false
 		for _, holder in ipairs({ TabHose, SubTabHose }) do
@@ -5437,21 +5506,43 @@ UIAspectRatioConstraint.Parent = SaveArrow
 							local elementsFrame = section:FindFirstChild("Elements")
 							local sectionLabel = section:FindFirstChild("SectionLabel", true) or section:FindFirstChild("SectionTitle", true)
 							local sectionText = sectionLabel and GetSearchText(sectionLabel) or ""
+							local sectionBaseVisible = section:GetAttribute("NLSearchBaseVisible")
+							if sectionBaseVisible == nil then
+								sectionBaseVisible = section.Visible
+								section:SetAttribute("NLSearchBaseVisible", sectionBaseVisible)
+							end
 							local sectionMatch = query == "" or SearchMatches(sectionText, query)
 							local anyVisible = false
 							if elementsFrame then
+								local elementsBaseVisible = elementsFrame:GetAttribute("NLSearchBaseVisible")
+								if elementsBaseVisible == nil then
+									elementsBaseVisible = elementsFrame.Visible
+									elementsFrame:SetAttribute("NLSearchBaseVisible", elementsBaseVisible)
+								end
 								for _, element in ipairs(elementsFrame:GetChildren()) do
 									if element:IsA("GuiObject") then
+										local baseVisible = element:GetAttribute("NLSearchBaseVisible")
+										if baseVisible == nil then
+											baseVisible = element.Visible
+											element:SetAttribute("NLSearchBaseVisible", baseVisible)
+										end
 										local elementText = GetSearchText(element)
-										local matches = query == "" or sectionMatch or SearchMatches(elementText, query)
+										local matches = baseVisible and (query == "" or sectionMatch or SearchMatches(elementText, query))
 										element.Visible = matches
 										if matches then anyVisible = true end
 									end
 								end
-								elementsFrame.Visible = anyVisible
+								elementsFrame.Visible = elementsBaseVisible and anyVisible
 							end
-							if sectionLabel then sectionLabel.Visible = anyVisible end
-							section.Visible = anyVisible
+							if sectionLabel then
+								local labelBaseVisible = sectionLabel:GetAttribute("NLSearchBaseVisible")
+								if labelBaseVisible == nil then
+									labelBaseVisible = sectionLabel.Visible
+									sectionLabel:SetAttribute("NLSearchBaseVisible", labelBaseVisible)
+								end
+								sectionLabel.Visible = labelBaseVisible and anyVisible
+							end
+							section.Visible = sectionBaseVisible and anyVisible
 							if anyVisible then columnMatch = true end
 						end
 					end
@@ -5477,6 +5568,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 					end
 				end
 				row.Visible = matches
+				local searchIndicator = row:FindFirstChild("SelectedIndicator")
+				if searchIndicator and row:GetAttribute("TabIndex") ~= activeTabIndex then
+					local matchedRail = query ~= "" and matches
+					Tween(searchIndicator, { BackgroundTransparency = matchedRail and 0.42 or 1 }, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+				end
 			elseif row.Name == "SubTabContainer" then
 				if row:GetAttribute("TabIndex") ~= activeTabIndex then
 					row.Visible = false
@@ -5496,6 +5592,13 @@ UIAspectRatioConstraint.Parent = SaveArrow
 								end
 							end
 							child.Visible = matches
+							local subtabIndex = child:GetAttribute("SubTabIndex")
+							local selectedSubtab = row:GetAttribute("TabIndex") == activeTabIndex and tabs[activeTabIndex] and tabs[activeTabIndex].activeSubTabIndex == subtabIndex
+							local searchIndicator = child:FindFirstChild("SelectedIndicator")
+							if searchIndicator and not selectedSubtab then
+								local matchedRail = query ~= "" and matches
+								Tween(searchIndicator, { BackgroundTransparency = matchedRail and 0.42 or 1 }, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+							end
 							if matches then anyVisible = true end
 						end
 					end
@@ -5504,12 +5607,37 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			end
 		end
 
+		local emptyState = Frame2:FindFirstChild("SearchEmptyState")
+		if emptyState and emptyState:IsA("TextLabel") then
+			if query == "" or columnHasMatch then
+				emptyState.Visible = false
+			else
+				if targetTab and tabs[targetTab] then
+					if targetSubTab and tabs[targetTab].subTabs and tabs[targetTab].subTabs[targetSubTab] then
+						emptyState.Text = "MATCH IN " .. string.upper(tostring(tabs[targetTab].name)) .. " / " .. string.upper(tostring(tabs[targetTab].subTabs[targetSubTab].name)) .. "\nSELECT THE HIGHLIGHTED TAB"
+					else
+						emptyState.Text = "MATCH IN " .. string.upper(tostring(tabs[targetTab].name)) .. "\nSELECT THE HIGHLIGHTED TAB"
+					end
+				else
+					emptyState.Text = "NO MATCHING SETTINGS"
+				end
+				emptyState.Visible = true
+			end
+		end
+
 		return columnHasMatch
 	end
 
 	ApplySearch = _applySearchImpl
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-		ApplySearch(SearchBox.Text)
+		-- Re-filter after a short pause so a whole word is searched, not every key.
+		SearchBox:SetAttribute("SearchApplyToken", (SearchBox:GetAttribute("SearchApplyToken") or 0) + 1)
+		local token = SearchBox:GetAttribute("SearchApplyToken")
+		task.delay(0.075, function()
+			if SearchBox.Parent and SearchBox:GetAttribute("SearchApplyToken") == token and ApplySearch then
+				ApplySearch(SearchBox.Text)
+			end
+		end)
 	end)
 
 local Line9 = Instance.new('Frame')
@@ -5727,7 +5855,7 @@ New("UIAspectRatioConstraint", {
 
 		local Left = New("ScrollingFrame", {
 			Name = "Left",
-			Size = UDim2.new(0.47999998927116394, 0, 1, 0),
+			Size = UDim2.new(0.49, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			ClipsDescendants = true,
@@ -5740,7 +5868,7 @@ New("UIAspectRatioConstraint", {
 		
 		local Right = New("ScrollingFrame", {
 			Name = "Right",
-			Size = UDim2.new(0.4699999988079071, 0, 1, 0),
+			Size = UDim2.new(0.44, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			LayoutOrder = 1,
@@ -5780,24 +5908,28 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 		local function ActivateTab()
 			CloseAllPopupsExcept(nil)
 			for _, t in ipairs(tabs) do
-				t.btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				t.btn.BackgroundTransparency = 1
-				if t.indicator then Tween(t.indicator, { BackgroundTransparency = 1 }, 0.10, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
+				Tween(t.btn, {
+					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+					BackgroundTransparency = 1,
+				}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				if t.indicator then Tween(t.indicator, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
 				t.hide()
 				if t.btn ~= TabButtonFrame then
 					Tween(t.icon, { ImageColor3 = Color3.fromRGB(255, 255, 255), ImageTransparency = 0.6 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					Tween(t.txt, { TextTransparency = 0.6 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end
 			end
-			TabButtonFrame.BackgroundColor3 = Color3.fromRGB(35, 48, 74)
-			TabButtonFrame.BackgroundTransparency = 0.22
-			Tween(TabIndicator, { BackgroundTransparency = 0 }, 0.10, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(TabButtonFrame, {
+				BackgroundColor3 = Color3.fromRGB(35, 48, 74),
+				BackgroundTransparency = 0.22,
+			}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(TabIndicator, { BackgroundTransparency = 0 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(TabText, { TextTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-			TabScale.Scale = 0.955
-			Tween(TabScale, { Scale = 1 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			ShowContent()
+			TabScale.Scale = 0.985
+			Tween(TabScale, { Scale = 1 }, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			activeTabIndex = tabIndex
+			ShowContent()
 			if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
 		end
 
@@ -5913,8 +6045,8 @@ end
 			do
 				local s = Instance.new("UIStroke")
 				s.Name = "GroupOutline"
-				s.Color = Color3.fromRGB(53, 60, 81)
-				s.Transparency = 0.27
+				s.Color = Color3.fromRGB(59, 68, 91)
+				s.Transparency = 0.18
 				s.Thickness = 1
 				s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				s.Parent = Elements
@@ -10522,18 +10654,24 @@ if maxY <= 0 then return end
 				Left.Visible = false
 				Right.Visible = false
 				subTabContainer.Visible = true
-				TabButtonFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				TabButtonFrame.BackgroundTransparency = 1
-				TabIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-				TabIcon.ImageTransparency = 0.6
-				TabText.TextTransparency = 0.6
+				-- Do not fade the parent tab back to its inactive state here.
+				-- ActivateTab() has just selected it; running the opposite tweens
+				-- in the same frame caused a visible flash on every tab switch.
+				if activeTabIndex == tabIndex then
+					Tween(TabButtonFrame, {
+						BackgroundColor3 = Color3.fromRGB(35, 48, 74),
+						BackgroundTransparency = 0.22,
+					}, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(TabText, { TextTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+				end
 				for i, st in ipairs(subTabs) do
 					if st.scale then
 						local delay = math.min((i - 1) * 0.04, 0.3)
 						task.delay(delay, function()
 							if not subTabContainer.Visible then return end
-							st.scale.Scale = 0.97
-							Tween(st.scale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+							st.scale.Scale = 0.985
+							Tween(st.scale, { Scale = 1 }, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						end)
 					end
 				end
@@ -10567,7 +10705,7 @@ if maxY <= 0 then return end
 
 			local stLeft = New("ScrollingFrame", {
 				Name = "STLeft_" .. name,
-				Size = UDim2.new(0.47999998927116394, 0, 1, 0),
+				Size = UDim2.new(0.49, 0, 1, 0),
 				BackgroundTransparency = 1,
 				Visible = false,
 				ClipsDescendants = true,
@@ -10581,7 +10719,7 @@ if maxY <= 0 then return end
 
 			local stRight = New("ScrollingFrame", {
 				Name = "STRight_" .. name,
-				Size = UDim2.new(0.4699999988079071, 0, 1, 0),
+				Size = UDim2.new(0.44, 0, 1, 0),
 				BackgroundTransparency = 1,
 				LayoutOrder = 1,
 				Visible = false,
@@ -10665,9 +10803,11 @@ if maxY <= 0 then return end
 			local function ActivateSubTab()
 				CloseAllPopupsExcept(nil)
 				for _, st in ipairs(subTabs) do
-					st.row.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					st.row.BackgroundTransparency = 1
-					if st.indicator then Tween(st.indicator, { BackgroundTransparency = 1 }, 0.10, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
+					Tween(st.row, {
+						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+						BackgroundTransparency = 1,
+					}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					if st.indicator then Tween(st.indicator, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
 					if st.row ~= STRow then
 						Tween(st.lbl, { TextTransparency = 0.55 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end
@@ -10677,15 +10817,17 @@ if maxY <= 0 then return end
 					st.left.Visible  = false
 					st.right.Visible = false
 				end
-				STRow.BackgroundColor3 = Color3.fromRGB(35, 48, 74)
-				STRow.BackgroundTransparency = 0.22
-				Tween(STIndicator, { BackgroundTransparency = 0 }, 0.10, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				Tween(STRow, {
+					BackgroundColor3 = Color3.fromRGB(35, 48, 74),
+					BackgroundTransparency = 0.22,
+				}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				Tween(STIndicator, { BackgroundTransparency = 0 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				Tween(STLabel, { TextTransparency = 0 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				if iconRef then
 					Tween(iconRef, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end
-				STScale.Scale = 0.955
-				Tween(STScale, { Scale = 1 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				STScale.Scale = 0.985
+				Tween(STScale, { Scale = 1 }, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
 				for otherIndex, other in ipairs(subTabs) do
 					local rank = otherIndex == stIndex and 0 or 100 + otherIndex
