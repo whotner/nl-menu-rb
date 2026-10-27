@@ -2457,7 +2457,7 @@ Aspect.AspectRatio = 1.31
 	New("TextLabel", {
 		Name = "GameTitle",
 		Position = UDim2.fromOffset(59, 5),
-		Size = UDim2.fromOffset(110, 12)
+		Size = UDim2.fromOffset(110, 12),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BackgroundTransparency = 1,
 		Text = gameTitle,
