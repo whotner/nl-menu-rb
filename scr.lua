@@ -2554,7 +2554,7 @@ Aspect.AspectRatio = 1.31
 
 local ImageLabel = Instance.new('ImageLabel')
 ImageLabel.Name = "UserSettingsArrow"
-ImageLabel.Position = UDim2.new(1, -10, 0.5, 0)
+ImageLabel.Position = UDim2.new(1, -10, 0.5, 0),
 ImageLabel.Size = UDim2.fromOffset(10, 10)
 ImageLabel.AnchorPoint = Vector2.new(1, 0.5)
 ImageLabel.BackgroundTransparency = 1
@@ -2768,7 +2768,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		Row.ZIndex = 120
 		Row.LayoutOrder = 60
 		Row.Parent = SettingsContainer
-		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = Row end
+		
 
 		local BLabel = Instance.new("TextLabel")
 		BLabel.Name = "Text"
@@ -3051,7 +3051,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WSScaleRow.ZIndex = 120
 	WSScaleRow.LayoutOrder = 20
 	WSScaleRow.Parent = SettingsContainer
-	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = WSScaleRow end
+	
 	do
 		local ln = Instance.new("Frame"); ln.Name = "Lines"
 		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
@@ -3194,7 +3194,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WSLangRow.ZIndex = 120
 	WSLangRow.LayoutOrder = 10
 	WSLangRow.Parent = SettingsContainer
-	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = WSLangRow end
+	
 	do
 		local ln = Instance.new("Frame"); ln.Name = "Lines"
 		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
@@ -3816,7 +3816,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		Row.ZIndex = 120
 		Row.LayoutOrder = usageElemCount
 		Row.Parent = UsageContainer
-		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = Row end
+		
 		do
 			local ln = Instance.new("Frame"); ln.Name = "Lines"
 			ln.Position = UDim2.new(0.06,0,1,-1)
@@ -4037,7 +4037,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		Row.LayoutOrder = usageElemCount
 		Row.ClipsDescendants = false
 		Row.Parent = UsageContainer
-		do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 7.5; a.AspectType = Enum.AspectType.ScaleWithParentSize; a.Parent = Row end
+		
 		do
 			local ln = Instance.new("Frame"); ln.Name = "Lines"
 			ln.Position = UDim2.new(0.06,0,1,-1)
@@ -4440,7 +4440,7 @@ Lines_2.Parent = SaveText
 local SaveArrow = Instance.new('ImageLabel')
 SaveArrow.Name = "Arrow"
 SaveArrow.AnchorPoint = Vector2.new(1, 0.5)
-SaveArrow.Position = UDim2.new(1, -10, 0.5, 0)
+SaveArrow.Position = UDim2.new(1, -10, 0.5, 0),
 SaveArrow.Size = UDim2.fromOffset(10, 10)
 SaveArrow.BackgroundTransparency = 1
 SaveArrow.Image = "rbxassetid://10709790948"
@@ -8631,14 +8631,14 @@ if maxY <= 0 then return end
 					TextTransparency = 0.20000000298023224,
 					TextXAlignment = Enum.TextXAlignment.Left,
 TextTruncate = Enum.TextTruncate.AtEnd,
-$1ZIndex = 6,
+ZIndex = 6,
 				}, Dropdown)
-				New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar
-				New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 24) }, TopBar
+				New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar)
+				New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 24) }, TopBar)
 
 				local Arrow = New("ImageLabel", {
 					Name = "Arrow",
-					Position = UDim2.new(1, -10, 0.5, 0)
+					Position = UDim2.new(1, -10, 0.5, 0),
 					Size = UDim2.fromOffset(10, 10),
 					AnchorPoint = Vector2.new(1, 0.5),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
@@ -8866,14 +8866,14 @@ $1ZIndex = 6,
 					TextTransparency = 0.20000000298023224,
 					TextXAlignment = Enum.TextXAlignment.Left,
 TextTruncate = Enum.TextTruncate.AtEnd,
-$1ZIndex = 6,
+ZIndex = 6,
 				}, Dropdown)
-				New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar
-				New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 24) }, TopBar
+				New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar)
+				New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 24) }, TopBar)
 
 				local Arrow = New("ImageLabel", {
 					Name = "Arrow",
-					Position = UDim2.new(1, -10, 0.5, 0)
+					Position = UDim2.new(1, -10, 0.5, 0),
 					Size = UDim2.fromOffset(10, 10),
 					AnchorPoint = Vector2.new(1, 0.5),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
