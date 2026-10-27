@@ -504,21 +504,36 @@ local function New(class, props, parent)
 	return obj
 end
 
--- Restrained hover feedback for actual control rows. This is intentionally
--- opt-in; transparent hitbox overlays are not decorated.
+-- Rounded hover styling for function rows.
 local function AttachRowHover(row)
 	if not row or not row:IsA("GuiObject") or row:GetAttribute("NLRowHoverAttached") then return end
 	local ok, baseTransparency = pcall(function() return row.BackgroundTransparency end)
 	if not ok or type(baseTransparency) ~= "number" or baseTransparency < 0.98 then return end
 	local baseColor = row.BackgroundColor3
 	row:SetAttribute("NLRowHoverAttached", true)
+	if not row:FindFirstChildOfClass("UICorner") then
+		New("UICorner", { CornerRadius = UDim.new(0, 6) }, row)
+	end
+	local hoverStroke = row:FindFirstChild("NLRowHoverStroke")
+	if not hoverStroke then
+		hoverStroke = Instance.new("UIStroke")
+		hoverStroke.Name = "NLRowHoverStroke"
+		hoverStroke.Color = Color3.fromRGB(255, 255, 255)
+		hoverStroke.Transparency = 1
+		hoverStroke.Thickness = 1
+		hoverStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		hoverStroke.Parent = row
+		ApplyStrokeScale(hoverStroke, strokeScale)
+	end
 	row.MouseEnter:Connect(function()
 		if not row.Parent then return end
 		Tween(row, { BackgroundColor3 = Color3.fromRGB(245, 247, 255), BackgroundTransparency = 0.955 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+		Tween(hoverStroke, { Transparency = 0.82 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 	end)
 	row.MouseLeave:Connect(function()
 		if not row.Parent then return end
 		Tween(row, { BackgroundColor3 = baseColor, BackgroundTransparency = baseTransparency }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+		Tween(hoverStroke, { Transparency = 1 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 	end)
 end
 
@@ -690,13 +705,57 @@ local function FitTextBeforeArrow(label, arrow)
 	if not label or not arrow then return end
 	task.defer(function()
 		if not label.Parent or not arrow.Parent then return end
-		local arrowX = arrow.AbsolutePosition.X
-		local labelX = label.AbsolutePosition.X
-		local width = label.AbsoluteSize.X
-		if label.TextXAlignment == Enum.TextXAlignment.Right then
-			EllipsizeTo(label, arrowX - labelX - 6)
+		local full = label:GetAttribute("FullText")
+		if type(full) ~= "string" then full = tostring(label.Text or "") end
+		label.Text = full
+		pcall(function() label.TextTruncate = Enum.TextTruncate.None end)
+		local maxWidth = math.max(0, math.min(label.AbsoluteSize.X, arrow.AbsolutePosition.X - label.AbsolutePosition.X - 6))
+		local measured = MeasureText(full, label.TextSize or 14, label.Font or FONT)
+		local needsFade = maxWidth > 0 and measured > maxWidth + 1
+		if label:IsA("TextButton") then
+			local overlay = label:FindFirstChild("NLTextFadeOverlay")
+			if not needsFade then
+				if overlay then overlay:Destroy() end
+				return
+			end
+			if not overlay then
+				overlay = Instance.new("Frame")
+				overlay.Name = "NLTextFadeOverlay"
+				overlay.Active = false
+				overlay.BorderSizePixel = 0
+				overlay.BackgroundTransparency = 0
+				overlay.ZIndex = label.ZIndex + 1
+				overlay.Parent = label
+				local gradient = Instance.new("UIGradient")
+				gradient.Name = "FadeGradient"
+				gradient.Rotation = 0
+				gradient.Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 1),
+					NumberSequenceKeypoint.new(0.45, 0.78),
+					NumberSequenceKeypoint.new(1, 0),
+				})
+				gradient.Parent = overlay
+			end
+			local fadeWidth = math.min(26, maxWidth)
+			overlay.Position = UDim2.new(0, math.max(0, maxWidth - fadeWidth), 0, 0)
+			overlay.Size = UDim2.new(0, fadeWidth, 1, 0)
+			overlay.BackgroundColor3 = label.BackgroundColor3
+			overlay.BackgroundTransparency = label.BackgroundTransparency
+			overlay.ZIndex = label.ZIndex + 1
 		else
-			EllipsizeTo(label, math.min(width, arrowX - labelX - 6))
+			local gradient = label:FindFirstChild("NLTextFade")
+			if not gradient then
+				gradient = Instance.new("UIGradient")
+				gradient.Name = "NLTextFade"
+				gradient.Rotation = 0
+				gradient.Parent = label
+			end
+			gradient.Transparency = needsFade and NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0),
+				NumberSequenceKeypoint.new(0.68, 0),
+				NumberSequenceKeypoint.new(0.86, 0.24),
+				NumberSequenceKeypoint.new(1, 1),
+			}) or NumberSequence.new(0)
 		end
 	end)
 end
@@ -1393,10 +1452,11 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	New("UIStroke", { Name = "WindowOutline", Color = Color3.fromRGB(255, 255, 255), Transparency = 0.92, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, MainFrame)
 	local DragHandle = New("Frame", {
 		Name = "DragHandle",
-		Size = UDim2.new(0.3, 0, 0.08, 0),
+		Position = UDim2.new(0.2, 0, 0, 0),
+		Size = UDim2.new(0.6, 0, 0, 54),
 		BackgroundTransparency = 1,
 		Active = true,
-		ZIndex = 100,
+		ZIndex = 1,
 	}, MainFrame)
 	New("UISizeConstraint", {
 		MinSize = Vector2.new(220, 180),
@@ -2432,8 +2492,8 @@ Aspect.AspectRatio = 1.31
 
 	local HubIcon = New("ImageLabel", {
 		Name = "HubIcon",
-		Position = UDim2.fromOffset(19, 7),
-		Size = UDim2.fromOffset(26, 26),
+		Position = UDim2.fromOffset(16, 5),
+		Size = UDim2.fromOffset(32, 32),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
@@ -2443,12 +2503,13 @@ Aspect.AspectRatio = 1.31
 
 	New("TextLabel", {
 		Name = "Title",
-		Position = UDim2.fromOffset(59, 17),
+		Position = UDim2.fromOffset(59, 7),
 		Size = UDim2.fromOffset(110, 20),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BackgroundTransparency = 1,
 		Text = hubTitle,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextTruncate = Enum.TextTruncate.AtEnd,
 		TextScaled = false,
 		Font = FONT,
       TextXAlignment = Enum.TextXAlignment.Left,
@@ -2456,22 +2517,19 @@ Aspect.AspectRatio = 1.31
 
 	New("TextLabel", {
 		Name = "GameTitle",
-		Position = UDim2.fromOffset(59, 5),
+		Position = UDim2.fromOffset(59, 28),
 		Size = UDim2.fromOffset(110, 12),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BackgroundTransparency = 1,
 		Text = gameTitle,
 		TextColor3 = Color3.fromRGB(112, 116, 138),
+		TextTruncate = Enum.TextTruncate.AtEnd,
 		TextScaled = false,
 		TextSize = 11,
       TextTransparency = 0,
 		Font = FONT,
       TextXAlignment = Enum.TextXAlignment.Left,
 	}, MainFrame)
-
-
-	New("Frame", { Name = "InfoDivider", Position = UDim2.new(0, 15, 1, -53), Size = UDim2.new(0, 140, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.93, BorderSizePixel = 0 }, MainFrame)
-
 	local Info = Instance.new('Frame')
 	Info.Name = "Info"
 	Info.Position = UDim2.new(0, 15, 1, -44)
@@ -2515,7 +2573,7 @@ Aspect.AspectRatio = 1.31
 	User.Text = LocalPlayer.Name
 	User.TextColor3 = Color3.fromRGB(255,255,255)
 	User.TextScaled = false
-	User.TextSize = 13
+	User.TextSize = 14
 	User.Font = Enum.Font.SourceSansBold
 	User.TextTransparency = 0
 	User.TextXAlignment = Enum.TextXAlignment.Left
@@ -2532,7 +2590,7 @@ Aspect.AspectRatio = 1.31
 	DaysLeft.Text = daysLeft
 	DaysLeft.TextColor3 = Color3.fromRGB(255,255,255)
 	DaysLeft.TextScaled = false
-	DaysLeft.TextSize = 11
+	DaysLeft.TextSize = 12
 	DaysLeft.Font = FONT
 	DaysLeft.TextTransparency = 0
 	DaysLeft.TextColor3 = Color3.fromRGB(112, 116, 138)
@@ -2582,7 +2640,7 @@ local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
 UIAspectRatioConstraint.AspectRatio = 1
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UIAspectRatioConstraint.Parent = ImageLabel
+UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local WindowSettingsFrame = Instance.new('Frame')
 	WindowSettingsFrame.Name = "WindowSettingsFrame"
@@ -2704,7 +2762,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			name.BorderSizePixel = 0
 			name.Text = tostring(LocalPlayer.Name or "Player")
 			name.TextColor3 = Color3.fromRGB(232, 234, 242)
-			name.TextSize = 13
+			name.TextSize = 14
 			name.Font = FONT
 			name.TextXAlignment = Enum.TextXAlignment.Left
 			name.TextYAlignment = Enum.TextYAlignment.Center
@@ -2720,7 +2778,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			plan.BorderSizePixel = 0
 			plan.Text = daysLeft == "Lifetime" and "Lifetime access" or ("Till: " .. tostring(daysLeft))
 			plan.TextColor3 = Color3.fromRGB(151, 157, 175)
-			plan.TextSize = 11
+			plan.TextSize = 12
 			plan.Font = FONT
 			plan.TextXAlignment = Enum.TextXAlignment.Left
 			plan.TextYAlignment = Enum.TextYAlignment.Center
@@ -2736,7 +2794,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 			renew.BorderSizePixel = 0
 			renew.Text = "Renew"
 			renew.TextColor3 = mainColor
-			renew.TextSize = 11
+			renew.TextSize = 12
 			renew.Font = FONT
 			renew.TextXAlignment = Enum.TextXAlignment.Left
 			renew.TextYAlignment = Enum.TextYAlignment.Center
@@ -3073,8 +3131,9 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 	local ScaleArrow = Instance.new("ImageLabel")
 	ScaleArrow.Name = "TextArrow"
-	ScaleArrow.Position = UDim2.new(0.8700000047683716,0,0.10000000149011612,0)
-	ScaleArrow.Size = UDim2.new(0.10000000149011612,0,0.800000011920929,0)
+	ScaleArrow.AnchorPoint = Vector2.new(1, 0.5)
+	ScaleArrow.Position = UDim2.new(1, -12, 0.5, 0)
+	ScaleArrow.Size = UDim2.fromOffset(10, 10)
 	ScaleArrow.BackgroundTransparency = 1
 	ScaleArrow.Image = "rbxassetid://10709790948"
 	ScaleArrow.ImageTransparency = 0.4000000059604645
@@ -3086,10 +3145,13 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 	local ScaleDefault = Instance.new("TextLabel")
 	ScaleDefault.Name = "TextDefault"
-	ScaleDefault.Position = UDim2.new(0.6539999842643738,0,0.17000000178813934,0)
-	ScaleDefault.Size = UDim2.new(0.23000000417232513,0,0.6000000238418579,0)
+	ScaleDefault.Position = UDim2.new(0.60, 0, 0.17, 0)
+	ScaleDefault.Size = UDim2.new(0.25, 0, 0.6, 0)
+	ScaleDefault.TextTruncate = Enum.TextTruncate.None
 	ScaleDefault.BackgroundTransparency = 1
 	ScaleDefault.Text = "Auto"
+	ScaleDefault:SetAttribute("FullText", ScaleDefault.Text)
+	FitTextBeforeArrow(ScaleDefault, ScaleArrow)
 	ScaleDefault.TextColor3 = Color3.fromRGB(255,255,255)
 	ScaleDefault.TextScaled = false
 	ScaleDefault.Font = FONT
@@ -3216,8 +3278,9 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 	local LangArrow = Instance.new("ImageLabel")
 	LangArrow.Name = "TextArrow"
-	LangArrow.Position = UDim2.new(0.8700000047683716,0,0.10000000149011612,0)
-	LangArrow.Size = UDim2.new(0.10000000149011612,0,0.800000011920929,0)
+	LangArrow.AnchorPoint = Vector2.new(1, 0.5)
+	LangArrow.Position = UDim2.new(1, -12, 0.5, 0)
+	LangArrow.Size = UDim2.fromOffset(10, 10)
 	LangArrow.BackgroundTransparency = 1
 	LangArrow.Image = "rbxassetid://10709790948"
 	LangArrow.ImageTransparency = 0.4000000059604645
@@ -3229,10 +3292,13 @@ UIAspectRatioConstraint.Parent = ImageLabel
 
 	local LangDefault = Instance.new("TextLabel")
 	LangDefault.Name = "TextDefault"
-	LangDefault.Position = UDim2.new(0.6539999842643738,0,0.17000000178813934,0)
-	LangDefault.Size = UDim2.new(0.23000000417232513,0,0.6000000238418579,0)
+	LangDefault.Position = UDim2.new(0.60, 0, 0.17, 0)
+	LangDefault.Size = UDim2.new(0.25, 0, 0.6, 0)
+	LangDefault.TextTruncate = Enum.TextTruncate.None
 	LangDefault.BackgroundTransparency = 1
 	LangDefault.Text = "English"
+	LangDefault:SetAttribute("FullText", LangDefault.Text)
+	FitTextBeforeArrow(LangDefault, LangArrow)
 	LangDefault.TextColor3 = Color3.fromRGB(255,255,255)
 	LangDefault.TextScaled = false
 	LangDefault.Font = FONT
@@ -3419,7 +3485,8 @@ UIAspectRatioConstraint.Parent = ImageLabel
 		local scaleOpen = false
 		local scaleSelectedBtns = {}
 		syncScaleSelection = function(selectedLabel)
-			ScaleDefault.Text = tostring(selectedLabel or "Auto")
+			SetTrimmedText(ScaleDefault, tostring(selectedLabel or "Auto"))
+			FitTextBeforeArrow(ScaleDefault, ScaleArrow)
 			for label, button in pairs(scaleSelectedBtns) do
 				button.Text = label == selectedLabel and "✓" or ""
 				if label == selectedLabel then button.TextColor3 = mainColor end
@@ -3564,7 +3631,8 @@ PositionPopupWithinMain(ScaleDownBar, true)
 				for k, sb in pairs(langSelectedBtns) do sb.Text = "" end
 				SelBtn.Text = "✓"
 				SelBtn.TextColor3 = mainColor
-				LangDefault.Text = lang
+				SetTrimmedText(LangDefault, lang)
+				FitTextBeforeArrow(LangDefault, LangArrow)
 				closeLangDropdown()
 			end
 			RowBtn.MouseButton1Click:Connect(selectLang)
@@ -3838,8 +3906,9 @@ PositionPopupWithinMain(LangDownBar, true)
 
 		local Arrow = Instance.new("ImageLabel")
 		Arrow.Name = "TextArrow"
-		Arrow.Position = UDim2.new(0.87,0,0.1,0)
-		Arrow.Size = UDim2.new(0.1,0,0.8,0)
+		Arrow.AnchorPoint = Vector2.new(1, 0.5)
+		Arrow.Position = UDim2.new(1, -12, 0.5, 0)
+		Arrow.Size = UDim2.fromOffset(10, 10)
 		Arrow.BackgroundTransparency = 1
 		Arrow.Image = "rbxassetid://10709790948"
 		Arrow.ImageTransparency = 0.4
@@ -3851,10 +3920,12 @@ PositionPopupWithinMain(LangDownBar, true)
 
 		local TextDefault = Instance.new("TextLabel")
 		TextDefault.Name = "TextDefault"
-		TextDefault.Position = UDim2.new(0.654,0,0.17,0)
-		TextDefault.Size = UDim2.new(0.23,0,0.6,0)
+		TextDefault.Position = UDim2.new(0.60, 0, 0.17, 0)
+		TextDefault.Size = UDim2.new(0.25, 0, 0.6, 0)
+		TextDefault.TextTruncate = Enum.TextTruncate.None
 		TextDefault.BackgroundTransparency = 1
-		TextDefault.Text = selected
+		SetTrimmedText(TextDefault, selected)
+		FitTextBeforeArrow(TextDefault, Arrow)
 		TextDefault.TextColor3 = Color3.fromRGB(255,255,255)
 		TextDefault.TextScaled = false
 		TextDefault.Font = FONT
@@ -3980,7 +4051,7 @@ PositionPopupWithinMain(LangDownBar, true)
 
 			local function selectOpt()
 				selected = opt
-				TextDefault.Text = opt
+				SetTrimmedText(TextDefault, opt); FitTextBeforeArrow(TextDefault, Arrow)
 				updateCheckmarks()
 				closeDropdown()
 				InvokeCallback(callback, opt)
@@ -4014,7 +4085,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		updateCheckmarks()
 
 		local obj = {}
-		function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TextDefault.Text = val; updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
+		function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; SetTrimmedText(TextDefault, val); FitTextBeforeArrow(TextDefault, Arrow); updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
 		function obj:Get() return selected end
 		MakeReadableText(Row, 10, 18)
 		return obj
@@ -4482,6 +4553,12 @@ New("ImageLabel", {
 	ScaleType = Enum.ScaleType.Fit,
 	Rotation = 0,
 }, GlobalPreset)
+GlobalPreset.Visible = false
+local function ShouldShowGlobalPreset(tabName)
+	local normalized = string.lower(tostring(tabName or ""))
+	return string.find(normalized, "legit", 1, true) ~= nil
+		or string.find(normalized, "rage", 1, true) ~= nil
+end
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
@@ -4501,7 +4578,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local ConfigMainFrame = Instance.new("Frame")
 	ConfigMainFrame.Name = "ConfigMainFrame"
 	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.075, 0)
-	ConfigMainFrame.Size = UDim2.new(0.4, 0, 0.42, 0)
+	ConfigMainFrame.Size = UDim2.new(0.34, 0, 0.42, 0)
 	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	ConfigMainFrame.BackgroundTransparency = 0.045
 	ConfigMainFrame.BorderSizePixel = 0
@@ -4717,7 +4794,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	do
 		local ll = Instance.new("UIListLayout")
 		ll.Name = "UIListLayout"
-		ll.Padding = UDim.new(0, 6)
+		ll.Padding = UDim.new(0, 4)
 		ll.Parent = ListContainer
 	end
 
@@ -4764,7 +4841,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local RecentlyDeletedPanel = Instance.new("Frame")
 	RecentlyDeletedPanel.Name = "RecentlyDeletedPanel"
 	RecentlyDeletedPanel.Position = UDim2.new(0.012, 0, 0.075, 0)
-	RecentlyDeletedPanel.Size = UDim2.new(0.4, 0, 0.42, 0)
+	RecentlyDeletedPanel.Size = UDim2.new(0.34, 0, 0.42, 0)
 	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	RecentlyDeletedPanel.BackgroundTransparency = 0.045
 	RecentlyDeletedPanel.BorderSizePixel = 0
@@ -4858,7 +4935,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			drow.ZIndex = 122
 			drow.Parent = RDList
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = drow end
-			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(180,60,60); s.Transparency = 0.7; s.Thickness = 1.2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = drow end
+			do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(180,60,60); s.Transparency = 0.7; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = drow end
 
 			local dlbl = Instance.new("TextLabel")
 			dlbl.Position = UDim2.new(0.04, 0, 0, 0)
@@ -4951,7 +5028,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local function MakeConfigButton(name)
 		local row = Instance.new("Frame")
 		row.Name = "ConfigRow_" .. name
-		row.Size = UDim2.new(1, 0, 0, 36)
+		row.Size = UDim2.new(1, 0, 0, 32)
 		row.BackgroundColor3 = Color3.fromRGB(16, 18, 27)
 		row.BackgroundTransparency = 0.25
 		row.BorderSizePixel = 0
@@ -5207,7 +5284,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local function UpdateConfigPanelHeight()
 		local frame2H = Frame2.AbsoluteSize.Y
-		local maxH = math.max(240, (frame2H > 0 and frame2H or 480) - 48)
+		local maxH = math.min(360, math.max(210, (frame2H > 0 and frame2H or 480) - 64))
 		local function countRows(container)
 			local count = 0
 			for _, c in ipairs(container:GetChildren()) do
@@ -5215,10 +5292,10 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			end
 			return count
 		end
-		local cfgH = 98 + countRows(ListContainer) * 42 + 46
-		local rdH = 60 + countRows(RDList) * 42 + 14
-		ConfigMainFrame.Size = UDim2.new(0.4, 0, 0, math.clamp(cfgH, 200, maxH))
-		RecentlyDeletedPanel.Size = UDim2.new(0.4, 0, 0, math.clamp(rdH, 180, maxH))
+		local cfgH = 126 + countRows(ListContainer) * 36
+		local rdH = 88 + countRows(RDList) * 34
+		ConfigMainFrame.Size = UDim2.new(0.34, 0, 0, math.clamp(cfgH, 190, maxH))
+		RecentlyDeletedPanel.Size = UDim2.new(0.34, 0, 0, math.clamp(rdH, 180, maxH))
 	end
 	ListContainer.ChildAdded:Connect(function() task.defer(UpdateConfigPanelHeight) end)
 	ListContainer.ChildRemoved:Connect(function() task.defer(UpdateConfigPanelHeight) end)
@@ -5433,6 +5510,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		Visible = false,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ClipsDescendants = true,
+		ZIndex = 4,
 	}, Header)
 	New("UICorner", { CornerRadius = UDim.new(0, 8) }, SearchBox)
 	New("UIStroke", {
@@ -5443,7 +5521,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	New("ImageLabel", {
 		Name = "SearchGlyph",
 		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 8, 0.5, 0),
+		Position = UDim2.new(0, 10, 0.5, 0),
 		Size = UDim2.fromOffset(14, 14),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://6031154871",
@@ -5451,7 +5529,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		ScaleType = Enum.ScaleType.Fit,
 		ZIndex = 5,
 	}, SearchBox)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 30) }, SearchBox)
+	New("UIPadding", { PaddingLeft = UDim.new(0, 40) }, SearchBox)
 
 	local ApplySearch
 
@@ -6092,6 +6170,7 @@ New("UIAspectRatioConstraint", {
 			TabScale.Scale = 0.985
 			Tween(TabScale, { Scale = 1 }, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			activeTabIndex = tabIndex
+			GlobalPreset.Visible = ShouldShowGlobalPreset(name)
 			ShowContent()
 			if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
 		end
@@ -6125,7 +6204,10 @@ New("UIAspectRatioConstraint", {
 			activate = ActivateTab,
 		})
 
-		if isFirst then activeTabIndex = 1 end
+		if isFirst then
+			activeTabIndex = 1
+			GlobalPreset.Visible = ShouldShowGlobalPreset(name)
+		end
 
 		local TabObj = {}
 		local sectionOrder = { left = 0, right = 0 }
@@ -6742,7 +6824,7 @@ New("Frame", {
 						Name = "Thumb",
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(initRatio, 0, 0.5, 0),
-						Size = UDim2.fromOffset(8, 8),
+						Size = UDim2.fromOffset(10, 10),
 						BackgroundColor3 = Color3.fromRGB(248, 250, 255),
 						BorderSizePixel = 0,
 						ZIndex = Line.ZIndex + 3,
@@ -6750,10 +6832,10 @@ New("Frame", {
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 					New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 					Line.MouseEnter:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					Line.MouseLeave:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(8, 8) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					local initialValue = value
 					task.defer(function()
@@ -6858,8 +6940,9 @@ New("Frame", {
 
 					local SelArrow = New("ImageLabel", {
 						Name = "TextArrow",
-						Position = UDim2.new(0.8700000047683716, 0, 0.15000000596046448, 0),
-						Size = UDim2.new(0.10000000149011612, 0, 0.800000011920929, 0),
+						AnchorPoint = Vector2.new(1, 0.5),
+						Position = UDim2.new(1, -12, 0.5, 0),
+						Size = UDim2.fromOffset(10, 10),
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Image = "rbxassetid://10709790948",
@@ -6872,8 +6955,9 @@ New("Frame", {
 
 					local TextDefault = New("TextLabel", {
 						Name = "TextDefault",
-						Position = UDim2.new(0.6400001645088196, 0, 0.2499999850988388, 0),
-						Size = UDim2.new(0.23000000417232513, 0, 0.6000000238418579, 0),
+						Position = UDim2.new(0.60, 0, 0.25, 0),
+						Size = UDim2.new(0.29, 0, 0.6, 0),
+						TextTruncate = Enum.TextTruncate.None,
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = options[1] or "Auto",
@@ -8476,7 +8560,7 @@ if maxY <= 0 then return end
 					Name = "Thumb",
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					Position = UDim2.new(initRatio, 0, 0.5, 0),
-					Size = UDim2.fromOffset(8, 8),
+					Size = UDim2.fromOffset(10, 10),
 					BackgroundColor3 = Color3.fromRGB(248, 250, 255),
 					BorderSizePixel = 0,
 					ZIndex = Line.ZIndex + 3,
@@ -8484,10 +8568,10 @@ if maxY <= 0 then return end
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 				New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 				Line.MouseEnter:Connect(function()
-					Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end)
 				Line.MouseLeave:Connect(function()
-					Tween(Thumb, { Size = UDim2.fromOffset(8, 8) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end)
 				local initialValue = value
 				task.defer(function()
@@ -9587,9 +9671,9 @@ if maxY <= 0 then return end
 
 				local TextArrow = Instance.new('ImageLabel')
 				TextArrow.Name = "TextArrow"
-				TextArrow.Position = UDim2.new(0.8699999737739563, 0, 0.1, 0)
-				TextArrow.AnchorPoint = Vector2.new(0, 0)
-				TextArrow.Size = UDim2.new(0.06, 0, 0.8, 0)
+				TextArrow.Position = UDim2.new(1, -12, 0.5, 0)
+				TextArrow.AnchorPoint = Vector2.new(1, 0.5)
+				TextArrow.Size = UDim2.fromOffset(10, 10)
 				TextArrow.BackgroundTransparency = 1
 				TextArrow.Image = "rbxassetid://10709790948"
 				TextArrow.ImageColor3 = Color3.fromRGB(255, 255, 255)
@@ -10000,8 +10084,9 @@ New("Frame", {
 
 					local SelArrow = New("ImageLabel", {
 						Name = "TextArrow",
-						Position = UDim2.new(0.8700000047683716,0,0.15000000596046448,0),
-						Size = UDim2.new(0.10000000149011612, 0, 0.800000011920929, 0),
+						AnchorPoint = Vector2.new(1, 0.5),
+						Position = UDim2.new(1, -12, 0.5, 0),
+						Size = UDim2.fromOffset(10, 10),
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Image = "rbxassetid://10709790948",
@@ -10014,8 +10099,9 @@ New("Frame", {
 
 					local TextDefault = New("TextLabel", {
 						Name = "TextDefault",
-						Position = UDim2.new(0.6400001645088196,0,0.2499999850988388,0),
-						Size = UDim2.new(0.23000000417232513, 0, 0.6000000238418579, 0),
+						Position = UDim2.new(0.60, 0, 0.25, 0),
+						Size = UDim2.new(0.29, 0, 0.6, 0),
+						TextTruncate = Enum.TextTruncate.None,
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = options[1] or "Auto",
@@ -10314,7 +10400,7 @@ New("Frame", {
 						Name = "Thumb",
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(initRatio, 0, 0.5, 0),
-						Size = UDim2.fromOffset(8, 8),
+						Size = UDim2.fromOffset(10, 10),
 						BackgroundColor3 = Color3.fromRGB(248, 250, 255),
 						BorderSizePixel = 0,
 						ZIndex = Line.ZIndex + 3,
@@ -10322,10 +10408,10 @@ New("Frame", {
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 					New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 					Line.MouseEnter:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					Line.MouseLeave:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(8, 8) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					local initialValue = value
 					task.defer(function()
@@ -10927,6 +11013,7 @@ if maxY <= 0 then return end
 				AnimateSectionColumn(stRight)
 
 				activeSubTabIndex = stIndex
+				GlobalPreset.Visible = ShouldShowGlobalPreset(name)
 				if tabs[tabIndex] then tabs[tabIndex].activeSubTabIndex = stIndex end
 				if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
 			end
