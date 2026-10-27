@@ -452,12 +452,7 @@ local function ApplyStrokeScale(stroke, scale)
 	if not stroke or not stroke:IsA("UIStroke") then return end
 	local base = strokeAuthored[stroke]
 	if not base then base = stroke.Thickness; strokeAuthored[stroke] = base end
-	-- Keep authored weights consistent when the whole menu is resized. The old
-	-- implementation always forced a one-pixel line, which made outlines look
-	-- too heavy at small scales and too thin at large scales.
-	scale = type(scale) == "number" and scale or 1
-	if scale ~= scale or scale <= 0 then scale = 1 end
-	stroke.Thickness = math.clamp(base * scale, 0.5, 3)
+	stroke.Thickness = 1
 end
 local function RescaleStrokes(root, scale)
 	strokeScale = scale
@@ -815,23 +810,14 @@ local Z_BASE = 10000
 -- PATCH 1: THEME tokens (from [G].txt §1)
 -- ============================================================================
 local THEME = {
-	canvas = Color3.fromRGB(9, 11, 18),
-	shell = Color3.fromRGB(13, 15, 22),
-	sidebar = Color3.fromRGB(18, 21, 30),
-	toolbar = Color3.fromRGB(11, 13, 20),
-	plate = Color3.fromRGB(17, 19, 27),
-	control = Color3.fromRGB(24, 27, 37),
-	selected = Color3.fromRGB(39, 43, 54),
+	plate = Color3.fromRGB(20, 23, 34),
 	row = Color3.fromRGB(28, 31, 45),
-	border = Color3.fromRGB(32, 35, 46),
 	stroke = Color3.fromRGB(255, 255, 255),
 	strokeAlpha = 0.92,
-	text = Color3.fromRGB(217, 219, 226),
-	dim = Color3.fromRGB(146, 150, 162),
-	faint = Color3.fromRGB(94, 99, 112),
-	accentBright = Color3.fromRGB(102, 164, 255),
+	text = Color3.fromRGB(226, 228, 236),
+	dim = Color3.fromRGB(112, 116, 138),
 	danger = Color3.fromRGB(233, 90, 110),
-	radius = 13,
+	radius = 12,
 }
 
 local _popupZStep = 0
@@ -1401,6 +1387,10 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		sectionTitleSize = 11,
 		sectionTitleColor = Color3.fromRGB(112, 116, 138),
 		sectionTitleTransparency = 0,
+		watermarkText = "NEVERLOSE  •  UI",
+		watermarkVisible = false,
+		cornerRadius = 12,
+		showContextDots = false,
 	}
 
 	local screenGuiParent
@@ -3693,7 +3683,7 @@ PositionPopupWithinMain(LangDownBar, true)
 			}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			Tween(WSScale, { Scale = 0.975 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			SmoothClose(WindowSettingsFrame, 0.14)
-			Tween(ImageLabel, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(SettingsArrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		end
 		WindowSettings.MouseButton1Click:Connect(function()
 			wsOpen = not wsOpen
@@ -3758,7 +3748,7 @@ PositionPopupWithinMain(LangDownBar, true)
 					Tween(WSScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(WindowSettingsFrame, { Position = settled }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
-					Tween(ImageLabel, { Rotation = 180 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(SettingsArrow, { Rotation = 180 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end)
 			else
 				closeWS()
@@ -4336,12 +4326,10 @@ PositionPopupWithinMain(LangDownBar, true)
 	local Tab = New("ScrollingFrame", {
 		Name = "Tab",
 		Position = UDim2.fromOffset(0, 62),
-		-- The reference uses a fixed 158px navigation rail. Keeping the rail
-		-- fixed also prevents long tab names from shifting the content columns.
-		Size = UDim2.new(0, 158, 1, -115),
-		BackgroundColor3 = THEME.sidebar,
+		Size = UDim2.new(0, 170, 1, -115),
+		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BorderSizePixel = 0,
-		BackgroundTransparency = 0.02,
+		BackgroundTransparency = 1,
 		ScrollBarThickness = 0,
 		ScrollBarImageTransparency = 0.35,
 		Active = true,
@@ -4359,22 +4347,22 @@ PositionPopupWithinMain(LangDownBar, true)
 
 	local Frame2 = New("Frame", {
 		Name = "Frame2",
-		Position = UDim2.new(0, 158, 0, 0),
-		Size = UDim2.new(1, -158, 1, 0),
-		BackgroundColor3 = THEME.toolbar,
-		BackgroundTransparency = 0.04,
+		Position = UDim2.new(0.23000000417232513, 0, 0, 0),
+		Size = UDim2.new(0.7699999809265137, 0, 1, 0),
+		BackgroundColor3 = Color3.fromRGB(15, 17, 24),
+		BackgroundTransparency = 0.1,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	}, MainFrame)
 
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 13); c.Parent = Frame2 end
-	New("Frame", { Name = "HeaderDivider", Position = UDim2.new(0, 0, 0, 55), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.93, BorderSizePixel = 0 }, Frame2)
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 20); c.Parent = Frame2 end
+	New("Frame", { Name = "HeaderDivider", Position = UDim2.new(0, 0, 0, 53), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.93, BorderSizePixel = 0 }, Frame2)
 
 	local Header = New("Frame", {
 		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 56),
-		BackgroundColor3 = THEME.toolbar,
-		BackgroundTransparency = 0.12,
+		Size = UDim2.new(1, 0, 0, 54),
+		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+		BackgroundTransparency = 1,
 		ClipsDescendants = false,
 	}, Frame2)
 
@@ -5590,31 +5578,31 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local TabHose = New("Frame", {
 		Name = "TabHose",
-		Position = UDim2.new(0, 10, 0, 56),
-		Size = UDim2.new(1, -23, 1, -56),
+		Position = UDim2.new(0, 10, 0, 54),
+		Size = UDim2.new(1, -23, 1, -54),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 161),
 		BackgroundTransparency = 1,
 		ClipsDescendants = false,
 	}, Frame2)
 	New("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
-		-- The columns use fractional widths, so the gutter must be included in
-		-- their available width instead of being added on top of a full row.
-		Padding = UDim.new(0, 10),
+		-- Responsive gutter: more breathing room on wide menus without overflowing
+		-- the columns when the menu is scaled down.
+		Padding = UDim.new(0, 12),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, TabHose)
 
 	local SubTabHose = New("Frame", {
 		Name = "SubTabHose",
-		Position = UDim2.new(0, 10, 0, 56),
-		Size = UDim2.new(1, -23, 1, -56),
+		Position = UDim2.new(0, 10, 0, 54),
+		Size = UDim2.new(1, -23, 1, -54),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 161),
 		BackgroundTransparency = 1,
 		ClipsDescendants = false,
 	}, Frame2)
 	New("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
-		Padding = UDim.new(0, 10),
+		Padding = UDim.new(0, 12),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, SubTabHose)
 
@@ -6110,7 +6098,7 @@ New("UIAspectRatioConstraint", {
 
 		local Left = New("ScrollingFrame", {
 			Name = "Left",
-			Size = UDim2.new(0.5, -5, 1, 0),
+			Size = UDim2.new(0.485, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			ClipsDescendants = true,
@@ -6123,7 +6111,7 @@ New("UIAspectRatioConstraint", {
 		
 		local Right = New("ScrollingFrame", {
 			Name = "Right",
-			Size = UDim2.new(0.5, -5, 1, 0),
+			Size = UDim2.new(0.485, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			LayoutOrder = 1,
@@ -6296,7 +6284,7 @@ end
 				Name = "Elements",
 				Size = UDim2.new(1, 0, 0, 0),
 				Position = UDim2.new(0, 0, 0, 0),
-				BackgroundColor3 = THEME.plate,
+				BackgroundColor3 = Color3.fromRGB(20, 23, 34),
 				BackgroundTransparency = 0,
 				BorderSizePixel = 0,
 				AutomaticSize = Enum.AutomaticSize.Y,
@@ -10895,7 +10883,7 @@ if maxY <= 0 then return end
 
 			local stLeft = New("ScrollingFrame", {
 				Name = "STLeft_" .. name,
-				Size = UDim2.new(0.5, -5, 1, 0),
+				Size = UDim2.new(0.49, 0, 1, 0),
 				BackgroundTransparency = 1,
 				Visible = false,
 				ClipsDescendants = true,
@@ -10909,7 +10897,7 @@ if maxY <= 0 then return end
 
 			local stRight = New("ScrollingFrame", {
 				Name = "STRight_" .. name,
-				Size = UDim2.new(0.5, -5, 1, 0),
+				Size = UDim2.new(0.44, 0, 1, 0),
 				BackgroundTransparency = 1,
 				LayoutOrder = 1,
 				Visible = false,
