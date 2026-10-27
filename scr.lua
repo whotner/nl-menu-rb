@@ -6170,8 +6170,9 @@ New("UIAspectRatioConstraint", {
 			TabScale.Scale = 0.985
 			Tween(TabScale, { Scale = 1 }, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			activeTabIndex = tabIndex
-			GlobalPreset.Visible = ShouldShowGlobalPreset(name)
 			ShowContent()
+			local tabState = tabs[tabIndex]
+			GlobalPreset.Visible = ShouldShowGlobalPreset(tabState and tabState.activeSubTabName or name)
 			if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
 		end
 
@@ -11013,8 +11014,11 @@ if maxY <= 0 then return end
 				AnimateSectionColumn(stRight)
 
 				activeSubTabIndex = stIndex
+				if tabs[tabIndex] then
+					tabs[tabIndex].activeSubTabIndex = stIndex
+					tabs[tabIndex].activeSubTabName = name
+				end
 				GlobalPreset.Visible = ShouldShowGlobalPreset(name)
-				if tabs[tabIndex] then tabs[tabIndex].activeSubTabIndex = stIndex end
 				if ApplySearch then task.defer(function() ApplySearch(SearchBox.Text) end) end
 			end
 
