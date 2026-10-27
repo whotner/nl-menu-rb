@@ -1,5 +1,5 @@
--- Neverlose Roblox UI v26: register-limit and customization lifecycle fixes
--- Keeps customization off AddWindow's local register table and guards destroyed windows.
+-- Neverlose Roblox UI v27: quieter cards, compact navigation and fitted profile popup
+-- Preserves register-limit/search fixes while tightening spacing and fixing directional motion.
 local LoadAcrylic = function()
 	local GuiSystem = {};
 	local acrylicId = 0
@@ -2463,8 +2463,8 @@ Aspect.AspectRatio = 1.4
 
 local ImageLabel = Instance.new('ImageLabel')
 ImageLabel.Name = "UserSettingsArrow"
-ImageLabel.Position = UDim2.new(0.99, 0, 0.5, 0)
-ImageLabel.Size = UDim2.new(0.40, 0, 0.40, 0)
+ImageLabel.Position = UDim2.new(1, -11, 0.5, 0)
+ImageLabel.Size = UDim2.fromOffset(10, 10)
 ImageLabel.AnchorPoint = Vector2.new(1, 0.5)
 ImageLabel.BackgroundTransparency = 1
 ImageLabel.Image = "rbxassetid://10709790948"
@@ -2503,7 +2503,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
 	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(55, 62, 82); s.Transparency = 0.34; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(48, 54, 70); s.Transparency = 0.43; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = WindowSettingsFrame end
@@ -3499,6 +3499,13 @@ PositionPopupWithinMain(LangDownBar, true)
 			wsOpen = false
 			ClosePopupsUnder(WindowSettingsFrame)
 			UnregisterPopup(WindowSettingsFrame)
+			local anchorCenterX = Info.AbsolutePosition.X + Info.AbsoluteSize.X * 0.5
+			local popupCenterX = WindowSettingsFrame.AbsolutePosition.X + WindowSettingsFrame.AbsoluteSize.X * 0.5
+			local closeOffsetX = popupCenterX >= anchorCenterX and -6 or 6
+			local closingPosition = WindowSettingsFrame.Position
+			Tween(WindowSettingsFrame, {
+				Position = UDim2.new(closingPosition.X.Scale, closingPosition.X.Offset + closeOffsetX, closingPosition.Y.Scale, closingPosition.Y.Offset + 2),
+			}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			Tween(WSScale, { Scale = 0.975 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			SmoothClose(WindowSettingsFrame, 0.14)
 			Tween(ImageLabel, { Rotation = 270 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
@@ -3536,6 +3543,7 @@ PositionPopupWithinMain(LangDownBar, true)
 
 					local anchorPos = Info.AbsolutePosition
 					local anchorSize = Info.AbsoluteSize
+					local popupAppearsOnRight = true
 					local gui = NeverloseCS2
 					if gui and gui.AbsoluteSize.X > 0 and gui.AbsoluteSize.Y > 0 then
 						local edge = 8
@@ -3548,6 +3556,7 @@ PositionPopupWithinMain(LangDownBar, true)
 						local maxX = math.max(safeLeft, safeRight - popupSize.X)
 						local maxY = math.max(safeTop, safeBottom - popupSize.Y)
 						x = math.clamp(x, safeLeft, maxX)
+						popupAppearsOnRight = x >= (anchorPos.X + anchorSize.X * 0.5)
 						local y = math.clamp(anchorPos.Y + anchorSize.Y - popupSize.Y, safeTop, maxY)
 						MovePopupToAbsolute(WindowSettingsFrame, x, y)
 					else
@@ -3555,7 +3564,8 @@ PositionPopupWithinMain(LangDownBar, true)
 					end
 
 					local settled = WindowSettingsFrame.Position
-					WindowSettingsFrame.Position = UDim2.new(settled.X.Scale, settled.X.Offset - 8, settled.Y.Scale, settled.Y.Offset + 4)
+					local entranceOffsetX = popupAppearsOnRight and -7 or 7
+					WindowSettingsFrame.Position = UDim2.new(settled.X.Scale, settled.X.Offset + entranceOffsetX, settled.Y.Scale, settled.Y.Offset + 3)
 					WSScale.Scale = 0.955
 					WindowSettingsFrame.Visible = true
 					ApplyZIndexLadder(WindowSettingsFrame, NextPopupZ())
@@ -5755,27 +5765,46 @@ end
 
 	function WindowObj:AddTabLabel(text)
 		text = tostring(text or "")
+		local hasPreviousCategory = false
+		for _, child in ipairs(Tab:GetChildren()) do
+			if child:IsA("TextLabel") and child.Name == "TabLabel" then
+				hasPreviousCategory = true
+				break
+			end
+		end
+
+		-- Use a real spacer instead of vertical UIPadding inside a 22px label.
+		-- The old padding consumed almost the whole label height, making
+		-- "Aimbot" and "Common" headers appear cramped and visually merge.
+		if hasPreviousCategory then
+			tabOrder = tabOrder + 1
+			New("Frame", {
+				Name = "TabCategorySpacer",
+				Size = UDim2.new(1, 0, 0, 10),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				LayoutOrder = tabOrder,
+			}, Tab)
+		end
+
 		tabOrder = tabOrder + 1
 		local lbl = New("TextLabel", {
 			Name = "TabLabel",
-			Size = UDim2.new(0.800000011920929, 0, 0, 22),
-			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+			Size = UDim2.new(0.8, 0, 0, 20),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			Text = text,
-			TextColor3 = Color3.fromRGB(112, 118, 145),
+			TextColor3 = Color3.fromRGB(104, 111, 129),
 			TextScaled = false,
-			TextSize = 12,
+			TextSize = 11,
 			Font = Enum.Font.GothamBold,
-         TextTransparency = 0.35,
+			TextTransparency = 0.1,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Center,
 			LayoutOrder = tabOrder,
 		}, Tab)
 		New("UIPadding", {
-			PaddingLeft = UDim.new(0, 4),
-			PaddingTop = UDim.new(0, 14),
-			PaddingBottom = UDim.new(0, 6),
+			PaddingLeft = UDim.new(0, 10),
 		}, lbl)
 		return lbl
 	end
@@ -5883,8 +5912,8 @@ New("UIAspectRatioConstraint", {
 		Right:SetAttribute("SearchName", name)
 		Left:SetAttribute("TabIndex", tabIndex)
 		Right:SetAttribute("TabIndex", tabIndex)
-		New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
-New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
+		New("UIListLayout", { Padding = UDim.new(0, 9), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
+New("UIListLayout", { Padding = UDim.new(0, 9), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
 
 		if not isFirst then
 			Left.Visible = false
@@ -5920,7 +5949,7 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 				end
 			end
 			Tween(TabButtonFrame, {
-				BackgroundColor3 = Color3.fromRGB(35, 48, 74),
+				BackgroundColor3 = Color3.fromRGB(39, 43, 54),
 				BackgroundTransparency = 0.22,
 			}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			Tween(TabIndicator, { BackgroundTransparency = 0 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -5981,11 +6010,11 @@ New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.Layo
 				AutomaticSize = Enum.AutomaticSize.Y,
 				LayoutOrder = sectionOrder[side],
 			}, col)
-			New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, Section)
+			New("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, Section)
 
 local SectionTitle = Instance.new('Frame')
 SectionTitle.Name = "SectionTitle"
-SectionTitle.Size = UDim2.new(1, 0, 0, 26)
+SectionTitle.Size = UDim2.new(1, 0, 0, 24)
 SectionTitle.BackgroundTransparency = 1
 SectionTitle.ClipsDescendants = false
 SectionTitle.Visible = true
@@ -6013,8 +6042,8 @@ do
 	local pad = Instance.new("UIPadding")
 	pad.PaddingLeft = UDim.new(0, 8)
 	pad.PaddingRight = UDim.new(0, 4)
-	pad.PaddingTop = UDim.new(0, 8)
-	pad.PaddingBottom = UDim.new(0, 4)
+	pad.PaddingTop = UDim.new(0, 5)
+	pad.PaddingBottom = UDim.new(0, 2)
 	pad.Parent = SectionLabel
 end
 AddTextConstraint(SectionLabel, 10, 14, true)
@@ -6045,8 +6074,8 @@ end
 			do
 				local s = Instance.new("UIStroke")
 				s.Name = "GroupOutline"
-				s.Color = Color3.fromRGB(59, 68, 91)
-				s.Transparency = 0.18
+				s.Color = Color3.fromRGB(48, 54, 70)
+				s.Transparency = 0.43
 				s.Thickness = 1
 				s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 				s.Parent = Elements
@@ -10659,7 +10688,7 @@ if maxY <= 0 then return end
 				-- in the same frame caused a visible flash on every tab switch.
 				if activeTabIndex == tabIndex then
 					Tween(TabButtonFrame, {
-						BackgroundColor3 = Color3.fromRGB(35, 48, 74),
+						BackgroundColor3 = Color3.fromRGB(39, 43, 54),
 						BackgroundTransparency = 0.22,
 					}, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
@@ -10715,7 +10744,7 @@ if maxY <= 0 then return end
 				ScrollingDirection = Enum.ScrollingDirection.Y,
 				ScrollBarThickness = 0,
 			}, SubTabHose)
-			New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder }, stLeft)
+			New("UIListLayout", { Padding = UDim.new(0, 9), SortOrder = Enum.SortOrder.LayoutOrder }, stLeft)
 
 			local stRight = New("ScrollingFrame", {
 				Name = "STRight_" .. name,
@@ -10736,7 +10765,7 @@ if maxY <= 0 then return end
 			stRight:SetAttribute("TabIndex", tabIndex)
 			stLeft:SetAttribute("SubTabIndex", stIndex)
 			stRight:SetAttribute("SubTabIndex", stIndex)
-			New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder }, stRight)
+			New("UIListLayout", { Padding = UDim.new(0, 9), SortOrder = Enum.SortOrder.LayoutOrder }, stRight)
 
 			local STRow = New("Frame", {
 				Name = "STRow_" .. name,
@@ -10818,7 +10847,7 @@ if maxY <= 0 then return end
 					st.right.Visible = false
 				end
 				Tween(STRow, {
-					BackgroundColor3 = Color3.fromRGB(35, 48, 74),
+					BackgroundColor3 = Color3.fromRGB(39, 43, 54),
 					BackgroundTransparency = 0.22,
 				}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				Tween(STIndicator, { BackgroundTransparency = 0 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
