@@ -1,5 +1,5 @@
--- Neverlose Roblox UI v27: quieter cards, compact navigation and fitted profile popup
--- Preserves register-limit/search fixes while tightening spacing and fixing directional motion.
+-- Neverlose Roblox UI v28: fitted cards, refined popups and safe mouse-bind enum handling
+-- Preserves register-limit/search fixes and restores full-size control rows.
 local LoadAcrylic = function()
 	local GuiSystem = {};
 	local acrylicId = 0
@@ -761,10 +761,8 @@ local function RefreshRowDividers(listFrame)
 	for _, child in ipairs(listFrame:GetChildren()) do
 		if child:IsA("GuiObject") then
 			if listFrame:GetAttribute("NLGroupOutlineInset") and not child:GetAttribute("NLGroupInsetApplied") then
-				local rowSize = child.Size
-				-- UIPadding sets the 2px left/right inset; shrink the row to the
-				-- same width so UIListLayout cannot cover the outline at either edge.
-				child.Size = UDim2.new(rowSize.X.Scale, rowSize.X.Offset - 4, rowSize.Y.Scale, rowSize.Y.Offset)
+				-- UIPadding already insets the row. An extra -4 offset squeezed
+				-- controls and left uneven spacing along the card outline.
 				child:SetAttribute("NLGroupInsetApplied", true)
 			end
 			local divider = child:FindFirstChild("Lines")
@@ -2501,7 +2499,7 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
-	WindowSettingsFrame.BackgroundTransparency = 0
+	WindowSettingsFrame.BackgroundTransparency = 0.045
 	WindowSettingsFrame.ZIndex = 101
 	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(48, 54, 70); s.Transparency = 0.43; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = WindowSettingsFrame end
 	WindowSettingsFrame.Visible = false
@@ -2825,13 +2823,14 @@ UIAspectRatioConstraint.Parent = ImageLabel
 	wsColorFrame.Position = UDim2.new(0.02,0,1,2)
 	wsColorFrame.Size = UDim2.new(0.96,0,7,0)
 	wsColorFrame.BackgroundColor3 = Color3.fromRGB(15,17,26)
+	wsColorFrame.BackgroundTransparency = 0.035
 	wsColorFrame.BorderSizePixel = 0
 	wsColorFrame.Visible = false
 	wsColorFrame.ZIndex = 150
 	wsColorFrame.ClipsDescendants = false
 	wsColorFrame.Parent = WSColorpicker
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,6); c.Parent = wsColorFrame end
-	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(255,255,255); s.Transparency = 0.9200000166893005; s.Parent = wsColorFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(53,61,78); s.Transparency = 0.48; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = wsColorFrame end
 	do local a = Instance.new("UIAspectRatioConstraint"); a.AspectRatio = 1.100000023841858; a.Parent = wsColorFrame end
 
 	local wsRGB = Instance.new("ImageButton")
@@ -4371,7 +4370,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.075, 0)
 	ConfigMainFrame.Size = UDim2.new(0.4, 0, 0.42, 0)
 	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
-	ConfigMainFrame.BackgroundTransparency = 0
+	ConfigMainFrame.BackgroundTransparency = 0.045
 	ConfigMainFrame.BorderSizePixel = 0
 	ConfigMainFrame.ZIndex = 110
 	ConfigMainFrame.AutomaticSize = Enum.AutomaticSize.None
@@ -4383,7 +4382,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigScale.Scale = 1
 	ConfigScale.Parent = ConfigMainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = ConfigMainFrame end
-	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = ConfigMainFrame end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(53, 61, 78); s.Transparency = 0.48; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = ConfigMainFrame end
 	AttachShadow(ConfigMainFrame, { radius = 10, layers = 4, step = 1.25, bias = 2 })
 
 	local CMHeader = Instance.new("Frame")
@@ -4634,7 +4633,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Position = UDim2.new(0.012, 0, 0.075, 0)
 	RecentlyDeletedPanel.Size = UDim2.new(0.4, 0, 0.42, 0)
 	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
-	RecentlyDeletedPanel.BackgroundTransparency = 0
+	RecentlyDeletedPanel.BackgroundTransparency = 0.045
 	RecentlyDeletedPanel.BorderSizePixel = 0
 	RecentlyDeletedPanel.ZIndex = 120
 	RecentlyDeletedPanel.AutomaticSize = Enum.AutomaticSize.None
@@ -4643,7 +4642,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RecentlyDeletedPanel.Visible = false
 	RecentlyDeletedPanel.Parent = Frame2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = RecentlyDeletedPanel end
-	do local s = Instance.new("UIStroke"); s.Color = THEME.stroke; s.Transparency = 0.6; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual; s.Parent = RecentlyDeletedPanel end
+	do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(53, 61, 78); s.Transparency = 0.48; s.Thickness = 1; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = RecentlyDeletedPanel end
 	AttachShadow(RecentlyDeletedPanel, { radius = 10, layers = 4, step = 1.25, bias = 2 })
 
 	local RDHeader = Instance.new("Frame")
@@ -4785,7 +4784,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
 			ConfigScale.Scale = 0.975
 			Tween(ConfigScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Tween(ConfigMainFrame, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(ConfigMainFrame, { BackgroundTransparency = 0.045 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		end)
 	end)
 
@@ -4900,7 +4899,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SettingsFrame.Position = UDim2.new(0.02, 0, 1, 2)
 		SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
 		SettingsFrame.BackgroundColor3 = Color3.fromRGB(21, 24, 36)
-		SettingsFrame.BackgroundTransparency = 0
+		SettingsFrame.BackgroundTransparency = 0.045
 		SettingsFrame.BorderSizePixel = 0
 		SettingsFrame.ZIndex = 6000
 		SettingsFrame.AutomaticSize = Enum.AutomaticSize.None
@@ -4911,7 +4910,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = SettingsFrame end
 		local SettingsFrameStroke = Instance.new("UIStroke")
 		SettingsFrameStroke.Color = THEME.stroke
-		SettingsFrameStroke.Transparency = 0.6
+		SettingsFrameStroke.Transparency = 0.5
 		SettingsFrameStroke.Thickness = 1
 		SettingsFrameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 		SettingsFrameStroke.Parent = SettingsFrame
@@ -5024,8 +5023,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				SettingsFrame.Position = targetPosition
 				RegisterPopup(SettingsFrame, closeSfRow, SettingsBtn)
 				SettingsFrameStroke.Transparency = 1
-				Tween(SettingsFrame, { Size = targetSize, BackgroundTransparency = 0 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				Tween(SettingsFrameStroke, { Transparency = 0.6 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+				Tween(SettingsFrame, { Size = targetSize, BackgroundTransparency = 0.045 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				Tween(SettingsFrameStroke, { Transparency = 0.5 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			else
 				closeSfRow()
 			end
@@ -5224,7 +5223,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ApplyZIndexLadder(RecentlyDeletedPanel, NextPopupZ())
 			RecentlyDeletedPanel.Visible = true
 			ConstrainPopupToMainFrame(RecentlyDeletedPanel); task.defer(function() ConstrainPopupToMainFrame(RecentlyDeletedPanel) end); RegisterPopup(RecentlyDeletedPanel, closeConfigPanel, RecentlyDeletedBtn)
-			Tween(RecentlyDeletedPanel, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(RecentlyDeletedPanel, { BackgroundTransparency = 0.045 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			local rdScale = GetPopupScale(RecentlyDeletedPanel)
 			if rdScale then
 				rdScale.Scale = 0.975
@@ -5275,7 +5274,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConfigMainFrame.Visible = true
 			ConfigScale.Scale = 0.975
 			Tween(ConfigScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Tween(ConfigMainFrame, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(ConfigMainFrame, { BackgroundTransparency = 0.045 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			local cfgSettled = ConfigMainFrame.Position
 			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 5)
 			Tween(ConfigMainFrame, { Position = cfgSettled }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -5912,8 +5911,8 @@ New("UIAspectRatioConstraint", {
 		Right:SetAttribute("SearchName", name)
 		Left:SetAttribute("TabIndex", tabIndex)
 		Right:SetAttribute("TabIndex", tabIndex)
-		New("UIListLayout", { Padding = UDim.new(0, 9), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
-New("UIListLayout", { Padding = UDim.new(0, 9), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
+		New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
+New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
 
 		if not isFirst then
 			Left.Visible = false
@@ -6061,13 +6060,14 @@ end
 
 			local Elements = New("Frame", {
 				Name = "Elements",
-				Size = UDim2.new(1, -2, 0, 30),
-				Position = UDim2.new(0, 1, 0, 0),
+				Size = UDim2.new(1, -4, 0, 30),
+				Position = UDim2.new(0, 2, 0, 0),
 				BackgroundColor3 = Color3.fromRGB(21,24,36),
 				BackgroundTransparency = 0,
 				BorderSizePixel = 0,
 				AutomaticSize = Enum.AutomaticSize.Y,
 				LayoutOrder = 1,
+				ClipsDescendants = false,
 			}, Section)
 			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 11); c.Parent = Elements end
 			Elements:SetAttribute("NLGroupOutlineInset", true)
@@ -6089,7 +6089,7 @@ end
 				PaddingBottom = UDim.new(0, 1),
 			}, Elements)
 			New("UIListLayout", {
-				Padding = UDim.new(0, 4),
+				Padding = UDim.new(0, 1),
 				SortOrder = Enum.SortOrder.LayoutOrder,
 			}, Elements)
 			WatchRowDividers(Elements)
@@ -6159,7 +6159,7 @@ end
 				SettingsFrame.Position = UDim2.new(0.02, 0, 1, 4)
 				SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
 				SettingsFrame.BackgroundColor3 = THEME.plate
-				SettingsFrame.BackgroundTransparency = 0
+				SettingsFrame.BackgroundTransparency = 0.045
 				SettingsFrame.BorderSizePixel = 0
 				SettingsFrame.Visible = false
 				SettingsFrame.ZIndex = 5000
@@ -6320,7 +6320,7 @@ end
 					CloseAllPopupsExcept(SettingsFrame)
 					RememberPopupClipping(SettingsFrame)
 					ForceLiftClipping(SettingsFrame)
-					SettingsFrame.BackgroundTransparency = 0
+					SettingsFrame.BackgroundTransparency = 0.045
 					SettingsFrame.Visible = false
 					SFScale.Scale = 0.94
 					ApplyZIndexLadder(SettingsFrame, NextPopupZ())
@@ -7634,9 +7634,15 @@ if maxY <= 0 then return end
 			end
 
 			local function IsExtraMouseType(t)
-				return t == Enum.UserInputType.MouseButton3
-					or t == Enum.UserInputType.MouseButton4
-					or t == Enum.UserInputType.MouseButton5
+				-- Roblox's standard enum only exposes MouseButton1/2/3.
+				-- Read optional executor-provided side-button types by name instead
+				-- of indexing unsupported Enum.UserInputType members.
+				local name
+				local ok = pcall(function() name = t and t.Name end)
+				if not ok or type(name) ~= "string" then
+					name = tostring(t):match("([^%.]+)$")
+				end
+				return name == "MouseButton4" or name == "MouseButton5"
 			end
 
 			UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -7647,8 +7653,7 @@ if maxY <= 0 then return end
 						CloseBindMenu()
 						return
 					end
-					if input.UserInputType == Enum.UserInputType.MouseButton4
-						or input.UserInputType == Enum.UserInputType.MouseButton5 then
+					if IsExtraMouseType(input.UserInputType) then
 						SetTargetBind(_bindTarget, input.UserInputType)
 						CloseBindMenu()
 						return
@@ -7690,7 +7695,7 @@ if maxY <= 0 then return end
 				local key = input.KeyCode
 				if key == nil or key == Enum.KeyCode.Unknown then
 					local t = input.UserInputType
-					if t ~= Enum.UserInputType.MouseButton4 and t ~= Enum.UserInputType.MouseButton5 then return end
+					if not IsExtraMouseType(t) then return end
 					key = t
 				end
 				if not IsEditableTarget() then return end
@@ -8568,7 +8573,7 @@ if maxY <= 0 then return end
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, DownBar)
 				local PopupStroke = New("UIStroke", {
 					Color = THEME.stroke,
-					Transparency = 0.58,
+					Transparency = 0.5,
 					Thickness = 1,
 					ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
 				}, DownBar)
@@ -8669,7 +8674,7 @@ if maxY <= 0 then return end
 						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
 						PopupStroke.Transparency = 1
 						Tween(DownBar, { Size = finalSize }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-						Tween(PopupStroke, { Transparency = 0.58 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(PopupStroke, { Transparency = 0.5 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						Tween(Arrow, { Rotation = 360 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
@@ -10744,7 +10749,7 @@ if maxY <= 0 then return end
 				ScrollingDirection = Enum.ScrollingDirection.Y,
 				ScrollBarThickness = 0,
 			}, SubTabHose)
-			New("UIListLayout", { Padding = UDim.new(0, 9), SortOrder = Enum.SortOrder.LayoutOrder }, stLeft)
+			New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, stLeft)
 
 			local stRight = New("ScrollingFrame", {
 				Name = "STRight_" .. name,
@@ -10765,7 +10770,7 @@ if maxY <= 0 then return end
 			stRight:SetAttribute("TabIndex", tabIndex)
 			stLeft:SetAttribute("SubTabIndex", stIndex)
 			stRight:SetAttribute("SubTabIndex", stIndex)
-			New("UIListLayout", { Padding = UDim.new(0, 9), SortOrder = Enum.SortOrder.LayoutOrder }, stRight)
+			New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, stRight)
 
 			local STRow = New("Frame", {
 				Name = "STRow_" .. name,
