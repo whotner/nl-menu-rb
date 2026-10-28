@@ -4453,10 +4453,11 @@ asss.Parent = SearchBtn
 
 	
 
+	local GlobalPreset
 	local Save = Instance.new("Frame")
 	Save.Name = "Save"
-	Save.Position = UDim2.fromOffset(10, 12)
-	Save.Size = UDim2.fromOffset(265, 30)
+	Save.Position = UDim2.fromOffset(11, 13)
+	Save.Size = UDim2.fromOffset(150, 28)
 	Save.BackgroundColor3 = Color3.fromRGB(20, 23, 34)
 	Save.BackgroundTransparency = 0
 	Save.BorderSizePixel = 0
@@ -4480,16 +4481,27 @@ UIAspectRatioConstraint.Parent = SaveIcon
 	local SaveText = Instance.new('TextLabel')
 	SaveText.Name = "SaveText"
 	SaveText.Position = UDim2.fromOffset(42, 0)
-	SaveText.Size = UDim2.new(1, -68, 1, 0)
+	SaveText.Size = UDim2.new(1, -82, 1, 0)
 	SaveText.BackgroundTransparency = 1
 	SaveText.Text = "Default"
 SaveText.TextColor3 = Color3.fromRGB(226, 228, 236)
 SaveText.TextScaled = false
-SaveText.TextSize = 14
+SaveText.TextSize = 15
 SaveText.Font = FONT
 SaveText.TextTransparency = 0.20000000298023224
 SaveText.TextXAlignment = Enum.TextXAlignment.Left
+SaveText.TextTruncate = Enum.TextTruncate.AtEnd
 SaveText.Parent = Save
+
+	local function UpdateSavePillWidth(textValue)
+		local textWidth = MeasureText(tostring(textValue or SaveText.Text or "Default"), 15, FONT)
+		local width = math.clamp(math.ceil(textWidth) + 42 + 40, 150, 265)
+		Save.Size = UDim2.fromOffset(width, 28)
+		Save.Position = UDim2.fromOffset(11, 13)
+		SaveText.Size = UDim2.new(1, -82, 1, 0)
+		if GlobalPreset then GlobalPreset.Position = UDim2.fromOffset(11 + width + 17, 13) end
+	end
+	UpdateSavePillWidth(SaveText.Text)
 
 	local function FlashSaved()
 		if not Save then return end
@@ -4501,6 +4513,7 @@ SaveText.Parent = Save
 	local function ShowSavedName()
 		if not SaveText then return end
 		SaveText.Text = activeConfigName or "Default"
+		UpdateSavePillWidth(SaveText.Text)
 	end
 
 local Lines = Instance.new('Frame')
@@ -4535,10 +4548,10 @@ SaveArrow.Rotation = 0
 SaveArrow.ZIndex = 15
 SaveArrow.Parent = Save
 
-local GlobalPreset = New("Frame", {
+GlobalPreset = New("Frame", {
 	Name = "GlobalPreset",
-	Position = UDim2.fromOffset(292, 12),
-	Size = UDim2.fromOffset(85, 30),
+	Position = UDim2.fromOffset(178, 13),
+	Size = UDim2.fromOffset(83, 28),
 	BackgroundColor3 = Color3.fromRGB(20, 23, 34),
 	BackgroundTransparency = 0,
 	BorderSizePixel = 0,
@@ -4547,12 +4560,12 @@ New("UICorner", { CornerRadius = UDim.new(0, 8) }, GlobalPreset)
 New("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.92, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, GlobalPreset)
 New("TextLabel", {
 	Name = "GlobalPresetLabel",
-	Position = UDim2.fromOffset(10, 0),
-	Size = UDim2.new(1, -30, 1, 0),
+	Position = UDim2.fromOffset(11, 0),
+	Size = UDim2.new(1, -34, 1, 0),
 	BackgroundTransparency = 1,
 	Text = "Global",
 	TextColor3 = Color3.fromRGB(226, 228, 236),
-	TextSize = 14,
+	TextSize = 15,
 	Font = FONT,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	TextTruncate = Enum.TextTruncate.AtEnd,
@@ -4560,7 +4573,7 @@ New("TextLabel", {
 New("ImageLabel", {
 	Name = "GlobalPresetArrow",
 	AnchorPoint = Vector2.new(1, 0.5),
-	Position = UDim2.new(1, -10, 0.5, 0),
+	Position = UDim2.new(1, -12, 0.5, 0),
 	Size = UDim2.fromOffset(10, 10),
 	BackgroundTransparency = 1,
 	Image = "rbxassetid://10709790948",
@@ -4569,6 +4582,7 @@ New("ImageLabel", {
 	Rotation = 0,
 }, GlobalPreset)
 GlobalPreset.Visible = false
+UpdateSavePillWidth(SaveText.Text)
 local function ShouldShowGlobalPreset(tabName)
 	local normalized = string.lower(tostring(tabName or ""))
 	return string.find(normalized, "legit", 1, true) ~= nil
@@ -4592,8 +4606,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local ConfigMainFrame = Instance.new("Frame")
 	ConfigMainFrame.Name = "ConfigMainFrame"
-	ConfigMainFrame.Position = UDim2.new(0.012, 0, 0.075, 0)
-	ConfigMainFrame.Size = UDim2.new(0.34, 0, 0.42, 0)
+	ConfigMainFrame.Position = UDim2.fromOffset(11, 47)
+	ConfigMainFrame.Size = UDim2.fromOffset(250, 104)
 	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	ConfigMainFrame.BackgroundTransparency = 0.045
 	ConfigMainFrame.BorderSizePixel = 0
@@ -4650,7 +4664,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CMTitle.Position = UDim2.new(0, 44, 0, 0)
 	CMTitle.Size = UDim2.new(0.5, 0, 1, 0)
 	CMTitle.BackgroundTransparency = 1
-	CMTitle.Text = "Config"
+	CMTitle.Text = "Presets"
 	CMTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 	CMTitle.TextSize = 14
 	CMTitle.Font = FONT
@@ -4710,7 +4724,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local SearchContainer = Instance.new("Frame")
 	SearchContainer.Name = "SearchContainer"
-	SearchContainer.Position = UDim2.new(0, 14, 0, 56)
+	SearchContainer.Position = UDim2.new(0, 14, 0, 54)
 	SearchContainer.Size = UDim2.new(1, -28, 0, 34)
 	SearchContainer.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
 	SearchContainer.BorderSizePixel = 0
@@ -4792,8 +4806,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local ListContainer = Instance.new("ScrollingFrame")
 	ListContainer.Name = "ListContainer"
-	ListContainer.Position = UDim2.new(0, 14, 0, 98)
-	ListContainer.Size = UDim2.new(1, -28, 1, -124)
+	ListContainer.Position = UDim2.new(0, 14, 0, 96)
+	ListContainer.Size = UDim2.new(1, -28, 1, -104)
 	ListContainer.BackgroundTransparency = 1
 	ListContainer.BorderSizePixel = 0
 	ListContainer.ZIndex = 100
@@ -4809,13 +4823,13 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	do
 		local ll = Instance.new("UIListLayout")
 		ll.Name = "UIListLayout"
-		ll.Padding = UDim.new(0, 4)
+		ll.Padding = UDim.new(0, 2)
 		ll.Parent = ListContainer
 	end
 
 	local Space = Instance.new("Frame")
 	Space.Name = "Space"
-	Space.Size = UDim2.new(1, 0, 0, 3)
+	Space.Size = UDim2.new(1, 0, 0, 0)
 	Space.BackgroundTransparency = 1
 	Space.ZIndex = 100
 	Space.Parent = ListContainer
@@ -5024,6 +5038,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			activeConfigName = nil
 		end
 		SaveText.Text = activeConfigName or "Default"
+		UpdateSavePillWidth(SaveText.Text)
 	end
 
 	local function ClearActiveConfig()
@@ -5043,7 +5058,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local function MakeConfigButton(name)
 		local row = Instance.new("Frame")
 		row.Name = "ConfigRow_" .. name
-		row.Size = UDim2.new(1, 0, 0, 32)
+		row.Size = UDim2.new(1, 0, 0, 36)
 		row.BackgroundColor3 = Color3.fromRGB(16, 18, 27)
 		row.BackgroundTransparency = 0.25
 		row.BorderSizePixel = 0
@@ -5059,16 +5074,16 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		rowStroke.Parent = row
 		row.MouseEnter:Connect(function()
 			Tween(row, { BackgroundTransparency = 0.12 }, 0.1, Enum.EasingStyle.Sine)
-			Tween(rowStroke, { Transparency = activeRow == row and 0 or 0.78 }, 0.1, Enum.EasingStyle.Sine)
+			Tween(rowStroke, { Transparency = activeRow == row and 0.3 or 0.78 }, 0.1, Enum.EasingStyle.Sine)
 		end)
 		row.MouseLeave:Connect(function()
 			Tween(row, { BackgroundTransparency = activeRow == row and 0.5 or 0.25 }, 0.13, Enum.EasingStyle.Sine)
-			Tween(rowStroke, { Transparency = activeRow == row and 0 or 1 }, 0.13, Enum.EasingStyle.Sine)
+			Tween(rowStroke, { Transparency = activeRow == row and 0.3 or 1 }, 0.13, Enum.EasingStyle.Sine)
 		end)
 
 		local Rename = Instance.new("TextBox")
 		Rename.Name = "Rename"
-		Rename.Position = UDim2.new(0, 10, 0, 0)
+		Rename.Position = UDim2.new(0, 12, 0, 0)
 		Rename.Size = UDim2.new(1, -80, 1, 0)
 		Rename.BackgroundTransparency = 1
 		Rename.Text = name
@@ -5285,7 +5300,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				activeRow = row
 				activeLoadBtn = LoadConfigBtn
 				SetActiveConfigName(name)
-				Tween(rowStroke, {Transparency = 0, Color = mainColor}, 0.2)
+				Tween(rowStroke, {Transparency = 0.3, Color = mainColor}, 0.2)
 				Tween(row, {BackgroundTransparency = 0.5}, 0.2)
 				LoadConfigBtn.Image = SAVE_ICON
 				Tween(LoadConfigBtn, {ImageColor3 = mainColor}, 0.2)
@@ -5299,7 +5314,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local function UpdateConfigPanelHeight()
 		local frame2H = Frame2.AbsoluteSize.Y
-		local maxH = math.min(360, math.max(210, (frame2H > 0 and frame2H or 480) - 64))
+		local maxH = math.min(370, math.max(104, (frame2H > 0 and frame2H or 480) - 53))
 		local function countRows(container)
 			local count = 0
 			for _, c in ipairs(container:GetChildren()) do
@@ -5307,9 +5322,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			end
 			return count
 		end
-		local cfgH = 126 + countRows(ListContainer) * 36
+		local cfgH = 104 + math.min(countRows(ListContainer), 7) * 38
 		local rdH = 88 + countRows(RDList) * 34
-		ConfigMainFrame.Size = UDim2.new(0.34, 0, 0, math.clamp(cfgH, 190, maxH))
+		ConfigMainFrame.Size = UDim2.fromOffset(250, math.clamp(cfgH, 104, maxH))
 		RecentlyDeletedPanel.Size = UDim2.new(0.34, 0, 0, math.clamp(rdH, 180, maxH))
 	end
 	ListContainer.ChildAdded:Connect(function() task.defer(UpdateConfigPanelHeight) end)
@@ -5344,35 +5359,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		end
 	end)
 
-	do
-		local CreateNewBtn = Instance.new("TextButton")
-	CreateNewBtn.Name = "CreateNew"
-	CreateNewBtn.Position = UDim2.new(0, 14, 1, -46)
-	CreateNewBtn.Size = UDim2.new(1, -28, 0, 32)
-	CreateNewBtn.BackgroundColor3 = mainColor
-	CreateNewBtn.BackgroundTransparency = 0.1
-	CreateNewBtn.Text = "Create new"
-	CreateNewBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	CreateNewBtn.TextSize = 13
-	CreateNewBtn.Font = FONT
-	CreateNewBtn.ZIndex = 1000
-	CreateNewBtn.Parent = ConfigMainFrame
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = CreateNewBtn end
-	CreateNewBtn.MouseEnter:Connect(function() Tween(CreateNewBtn, {BackgroundTransparency = 0}, 0.1) end)
-	CreateNewBtn.MouseLeave:Connect(function() Tween(CreateNewBtn, {BackgroundTransparency = 0.1}, 0.15) end)
-	CreateNewBtn.MouseButton1Click:Connect(function()
-		if not insertMode then
-			insertMode = true
-			SearchContainer.Visible = false
-			NameInputContainer.Visible = true
-			InsertConfigBtn:SetAttribute("Pinned", true)
-			Tween(InsertConfigBtn, {ImageColor3 = mainColor}, 0.2)
-			task.spawn(function() NameOfConfig:CaptureFocus() end)
-		end
-	end)
-	end
-
-	ConfirmAddBtn.MouseButton1Click:Connect(function()
+ConfirmAddBtn.MouseButton1Click:Connect(function()
 		local n = NameOfConfig.Text
 		if n == "" then n = "Config " .. tostring(#ListContainer:GetChildren()) end
 		if not SaveNamedConfig(n) then return end
