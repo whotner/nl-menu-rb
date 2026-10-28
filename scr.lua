@@ -2955,8 +2955,8 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 			local avatar = Instance.new("ImageLabel")
 			avatar.Name = "ProfileAvatar"
-			avatar.Position = UDim2.new(0, 2, 0, 11)
-			avatar.Size = UDim2.fromOffset(38, 38)
+			avatar.Position = UDim2.new(0, 2, 0, 12)
+			avatar.Size = UDim2.fromOffset(36, 36)
 			avatar.BackgroundColor3 = Color3.fromRGB(28, 31, 44)
 			avatar.BackgroundTransparency = 0
 			avatar.BorderSizePixel = 0
@@ -3033,7 +3033,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	do
 		local Row = Instance.new("Frame")
 		Row.Name = "MenuBind"
-		Row.Size = UDim2.new(1, 0, 0, 28)
+		Row.Size = UDim2.new(1, 0, 0, 30)
 		Row.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
 		Row.BackgroundTransparency = 1
 		Row.BorderSizePixel = 0
@@ -3189,7 +3189,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local WSScaleRow = Instance.new("Frame")
 	WSScaleRow.Name = "Selection"
-	WSScaleRow.Size = UDim2.new(1,0,0,28)
+	WSScaleRow.Size = UDim2.new(1,0,0,30)
 	WSScaleRow.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	WSScaleRow.BackgroundTransparency = 1
 	WSScaleRow.ZIndex = 120
@@ -3283,7 +3283,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local WSLogoRow = New("Frame", {
 		Name = "LogoToggle",
-		Size = UDim2.new(1, 0, 0, 28),
+		Size = UDim2.new(1, 0, 0, 30),
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
 		BackgroundTransparency = 1,
 		ZIndex = 120,
@@ -3336,7 +3336,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local WSLangRow = Instance.new("Frame")
 	WSLangRow.Name = "Selection"
-	WSLangRow.Size = UDim2.new(1,0,0,28)
+	WSLangRow.Size = UDim2.new(1,0,0,30)
 	WSLangRow.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	WSLangRow.BackgroundTransparency = 1
 	WSLangRow.ZIndex = 120
@@ -8077,7 +8077,7 @@ New("Frame", {
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 4),
 					Size = UDim2.new(0.72, 0, 0, 0),
-					BackgroundColor3 = Color3.fromRGB(17, 19, 27),
+					BackgroundColor3 = Color3.fromRGB(17, 19, 28),
 					BackgroundTransparency = 0,
 					Visible = false,
 					ZIndex = 5000,
@@ -8111,7 +8111,7 @@ New("Frame", {
 					if not dropOpen and not DownBar.Visible then return end
 					dropOpen = false
 					Tween(Arrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-					Tween(PopupStroke, { Transparency = 1 }, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+					-- The dropdown outline stays on the shared Stroke() value (0.92).
 					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					UnregisterPopup(DownBar)
 					local closeToken = (DownBar:GetAttribute("CloseToken") or 0) + 1
@@ -8185,10 +8185,10 @@ New("Frame", {
 						DownBar.Size = finalSize
 						DownBar.Visible = true
 						PositionPopupWithinMain(DownBar, true, 4, TopBar, knownSize)
-						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
-						PopupStroke.Transparency = 1
+						DownBar.Size = UDim2.fromOffset(math.max(TopBar.AbsoluteSize.X, 150), 0)
+						PopupStroke.Transparency = 0.92
 						Tween(DownBar, { Size = finalSize }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-						Tween(PopupStroke, { Transparency = 0.5 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						-- Keep the dropdown outline on Stroke()'s shared opacity.
 						Tween(Arrow, { Rotation = 180 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						task.delay(0.24, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true, 4, TopBar) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
@@ -8202,7 +8202,10 @@ New("Frame", {
 					TopBarText.Text = val
 					
 					for option, row in pairs(optionRows) do
-						Tween(row, { BackgroundTransparency = option == selected and 0.42 or 1 }, 0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(row, { BackgroundTransparency = option == selected and 0.94 or 1 }, 0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						local check = row:FindFirstChild("SelectedCheck")
+						if check then check.Visible = option == selected end
+						row.TextColor3 = option == selected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 204, 218)
 					end
 					if not silent then InvokeCallback(callback, val) end
 				end
@@ -8366,7 +8369,7 @@ New("Frame", {
 				local function closeDropdown()
 					dropOpen = false
 					Tween(Arrow, { Rotation = 0 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-					Tween(DownBar, { Size = UDim2.fromOffset(150, 0) }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					Tween(DownBar, { Size = UDim2.fromOffset(math.max(TopBar.AbsoluteSize.X, 150), 0) }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.15, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
 					if _openDropdown == closeDropdown then _openDropdown = nil end
