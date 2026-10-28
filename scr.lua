@@ -7108,8 +7108,8 @@ New("Frame", {
 					Name = "BindPrompt",
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					Position = UDim2.new(0.5, 0, 0.5, 0),
-					Size = UDim2.fromOffset(212, 134),
-					BackgroundColor3 = THEME.plate,
+					Size = UDim2.fromOffset(212, 138),
+					BackgroundColor3 = Color3.fromRGB(17, 19, 28),
 					BackgroundTransparency = 0.02,
 					BorderSizePixel = 0,
 					Visible = false,
@@ -7228,15 +7228,15 @@ New("Frame", {
 				_contextMenu = New("Frame", {
 					Name = "ElementContextMenu",
 					Position = UDim2.new(0.5, 0, 0.5, 0),
-					Size = UDim2.fromOffset(150, 89),
-					BackgroundColor3 = Color3.fromRGB(30, 30, 36),
+					Size = UDim2.fromOffset(150, 94),
+					BackgroundColor3 = Color3.fromRGB(17, 19, 28),
 					BackgroundTransparency = 0.02,
 					BorderSizePixel = 0,
 					Visible = false,
 					ZIndex = 8000,
 					ClipsDescendants = false,
 				}, MainFrame)
-				New("UICorner", { CornerRadius = UDim.new(0, 6) }, _contextMenu)
+				New("UICorner", { CornerRadius = UDim.new(0, 10) }, _contextMenu)
 				Stroke(_contextMenu)
 				New("UIListLayout", { Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder }, _contextMenu)
 				New("UIPadding", { PaddingTop = UDim.new(0, 3), PaddingBottom = UDim.new(0, 3) }, _contextMenu)
@@ -7244,23 +7244,27 @@ New("Frame", {
 				return _contextMenu
 			end
 
+			local contextItemOrder = 0
 			local function AddContextItem(labelText, iconAsset, callback)
+				contextItemOrder = contextItemOrder + 1
+				if labelText == "Reset" then contextItemOrder = 4 end
 				local item = New("TextButton", {
+					LayoutOrder = contextItemOrder,
 					Name = "MenuItem",
-					Size = UDim2.new(1, -8, 0, 26),
+					Size = UDim2.new(1, -8, 0, 28),
 					Position = UDim2.new(0, 4, 0, 0),
 					BackgroundColor3 = Color3.fromRGB(42, 42, 49),
 					BackgroundTransparency = 1,
 					AutoButtonColor = false,
 					Text = "  " .. labelText,
-					TextColor3 = Color3.fromRGB(232, 234, 240),
+					TextColor3 = labelText == "Reset" and Color3.fromRGB(233, 90, 110) or Color3.fromRGB(232, 234, 240),
 					TextScaled = false,
 					TextSize = 13,
 					Font = FONT,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					ZIndex = 8001,
 				}, _contextMenu)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, item)
+				New("UICorner", { CornerRadius = UDim.new(0, 6) }, item)
 				New("UIPadding", { PaddingLeft = UDim.new(0, 30) }, item)
 				New("ImageLabel", {
 					Name = "MenuIcon",
@@ -7274,7 +7278,7 @@ New("Frame", {
 					ZIndex = 8002,
 				}, item)
 				item.MouseEnter:Connect(function()
-					Tween(item, { BackgroundTransparency = 0 }, 0.08)
+					Tween(item, { BackgroundTransparency = 0.94 }, 0.08)
 				end)
 				item.MouseLeave:Connect(function()
 					Tween(item, { BackgroundTransparency = 1 }, 0.12)
@@ -7294,6 +7298,7 @@ New("Frame", {
 				for _, child in ipairs(_contextMenu:GetChildren()) do
 					if child:IsA("GuiObject") then child:Destroy() end
 				end
+				contextItemOrder = 0
 				local layout = _contextMenu:FindFirstChildOfClass("UIListLayout")
 				if not layout then New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, _contextMenu) end
 				AddContextItem("Settings", "rbxassetid://109485777305919", function(current)
@@ -7302,15 +7307,21 @@ New("Frame", {
 						if settings and settings.Open then settings:Open() end
 					end
 				end)
+				AddContextItem("Unbind", "rbxassetid://116396312853810", function(current)
+					SetTargetBind(current, nil)
+				end)
+				New("Frame", {
+					Name = "ContextDivider", LayoutOrder = 3,
+					Size = UDim2.new(1, -20, 0, 1),
+					BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92,
+					BorderSizePixel = 0, ZIndex = 8001,
+				}, _contextMenu)
 				AddContextItem("Reset", "rbxassetid://106497040962250", function(current)
 					if current.obj and current.obj.Set and current.defaultValue ~= nil then
 						current.obj:Set(current.defaultValue)
 					end
 				end)
-				AddContextItem("Unbind", "rbxassetid://116396312853810", function(current)
-					SetTargetBind(current, nil)
-				end)
-				_contextMenu.Size = UDim2.fromOffset(150, 89)
+				_contextMenu.Size = UDim2.fromOffset(150, 94)
 				ApplyZIndexLadder(_contextMenu, NextPopupZ())
 				SmoothOpen(_contextMenu, 0.02, 0.15)
 				local anchorX, anchorY = point.X, point.Y
