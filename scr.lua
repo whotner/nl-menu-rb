@@ -2461,7 +2461,7 @@ local function SetOverlayPanelShown(panel, shown)
 	end
 end
 
-local KBPanel, KBRows = MakeOverlayPanel("Keybinds", ICON_KEYBOARD, "Keybinds")
+local KBPanel, KBRows = MakeOverlayPanel("Keybinds", ICON_KEYBOARD, "Hotkeys")
 KBPanel.LayoutOrder = 1
 local kbEnabled = true
 local kbRowCache = {}
@@ -2475,9 +2475,20 @@ local function BuildBindRow(entry, order)
 		LayoutOrder = order,
 		ZIndex = Z_BASE + 892,
 	}, KBRows)
+	local miniSwitch = New("Frame", {
+		Name = "MiniSwitch", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.fromOffset(22, 12),
+		BackgroundColor3 = mainColor, BorderSizePixel = 0, ZIndex = Z_BASE + 892,
+	}, row)
+	New("UICorner", { CornerRadius = UDim.new(1, 0) }, miniSwitch)
+	local miniKnob = New("Frame", {
+		Name = "MiniKnob", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -1, 0.5, 0), Size = UDim2.fromOffset(10, 10),
+		BackgroundColor3 = Color3.fromRGB(255, 255, 255), BorderSizePixel = 0, ZIndex = Z_BASE + 893,
+	}, miniSwitch)
+	New("UICorner", { CornerRadius = UDim.new(1, 0) }, miniKnob)
 	local nameLabel = New("TextLabel", {
 		Name = "BindName",
-		Size = UDim2.new(1, -54, 1, 0),
+		Position = UDim2.fromOffset(28, 0),
+		Size = UDim2.new(1, -82, 1, 0),
 		BackgroundTransparency = 1,
 		Text = entry.label,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -2495,7 +2506,7 @@ local function BuildBindRow(entry, order)
 		Size = UDim2.new(0, 48, 1, 0),
 		BackgroundTransparency = 1,
 		Text = entry.key,
-		TextColor3 = mainColor,
+		TextColor3 = Color3.fromRGB(150, 155, 172),
 		TextTransparency = 1,
 		TextSize = 12,
 		Font = FONT,
@@ -2853,7 +2864,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	local WindowSettingsFrame = Instance.new('Frame')
 	WindowSettingsFrame.Name = "WindowSettingsFrame"
 	WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
-	WindowSettingsFrame.Size = UDim2.new(0.278, 0, 0, 0)
+	WindowSettingsFrame.Size = UDim2.fromOffset(215, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
@@ -6201,11 +6212,11 @@ end
 				local UIStroke = Stroke(SettingsFrame, "UIStroke")
 
 				-- PATCH 4: settings plate header + no divider watcher
-				local PLATE_HEADER = 26
+				local PLATE_HEADER = 30
 				New("TextLabel", {
 					Name = "PlateTitle",
-					Position = UDim2.new(0, 14, 0, 6),
-					Size = UDim2.new(1, -28, 0, 18),
+					Position = UDim2.new(0, 14, 0, 14),
+					Size = UDim2.new(1, -28, 0, 16),
 					BackgroundTransparency = 1,
 					Text = label,
 					TextColor3 = THEME.text,
@@ -6237,13 +6248,16 @@ end
 
 				local SFLayout = Instance.new('UIListLayout')
 				SFLayout.Name = "UIListLayout"
-				SFLayout.Padding = UDim.new(0, 3)
+				SFLayout.Padding = UDim.new(0, 0)
 				SFLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				SFLayout.Parent = SFContainer
 
 				SFContainer.DescendantAdded:Connect(function(d)
 					if d.Name == "Lines" and d:IsA("GuiObject") then d.Visible = false end
 				end)
+				for _, d in ipairs(SFContainer:GetDescendants()) do
+					if d.Name == "Lines" and d:IsA("GuiObject") then d.Visible = false end
+				end
 
 				do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = SFContainer end
 
@@ -6261,9 +6275,9 @@ end
 						if child:IsA("GuiObject") then rowCount = rowCount + 1 end
 					end
 					if rowCount <= 0 then return 0 end
-					local estimated = EstimateRowsHeight(SFContainer, rowCount, 7.5)
+					local estimated = EstimateRowsHeight(SFContainer, rowCount, 8.5)
 					if estimated > 0 then return estimated end
-					return rowCount * 28 * GetMainFrameScale()
+					return rowCount * 34 * GetMainFrameScale()
 				end
 
 				local function getSettingsHeight()
@@ -6280,7 +6294,7 @@ end
 					local mainSize = MainFrame.AbsoluteSize
 					local mainPosition = MainFrame.AbsolutePosition
 					local minHeight = 30
-					local width = 0.96
+					local width = 240
 					local edge = 5 * scale
 					height = math.max(minHeight, type(height) == "number" and height == height and height or minHeight)
 					local parentPosition = parentFrame.AbsolutePosition
@@ -6293,8 +6307,8 @@ end
 					local mainTop = mainPosition.Y
 					local mainBottom = mainPosition.Y + mainSize.Y
 
-					local panelWidth = parentSize.X * width
-					local leftX = parentPosition.X + (1 - width) * parentSize.X
+					local panelWidth = width * scale
+					local leftX = SettingsBtn.AbsolutePosition.X + SettingsBtn.AbsoluteSize.X + 8 * scale
 					leftX = math.clamp(leftX, mainLeft + edge, math.max(mainLeft + edge, mainRight - panelWidth - edge))
 
 					local belowY = parentPosition.Y + parentSize.Y + edge
@@ -6308,8 +6322,8 @@ end
 						y = mainTop + edge
 					end
 
-					SettingsFrame.Position = UDim2.new((leftX - parentPosition.X) / parentSize.X, 0, 0, (y - parentPosition.Y) / scale)
-					SettingsFrame.Size = UDim2.new(width, 0, 0, height)
+					SettingsFrame.Position = UDim2.new(0, (leftX - parentPosition.X) / scale, 0, (y - parentPosition.Y) / scale)
+					SettingsFrame.Size = UDim2.fromOffset(width, height)
 					task.defer(function()
 						if SettingsFrame.Parent and SettingsFrame.Visible and visualHeight <= mainSize.Y then
 							ConstrainPopupToMainFrame(SettingsFrame)
@@ -6608,6 +6622,11 @@ New("Frame", {
 					}, Line)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, InLine)
 					SizeSliderChip(Effect, Line, SliderValue)
+					Effect.AnchorPoint = Vector2.new(0, 0.5)
+					Effect.Position = UDim2.new(0.45, 0, 0.5, 0)
+					Effect.Size = UDim2.new(0.55, -14, 0, 22)
+					Line.Size = UDim2.new(1, -(SliderValue.Size.X.Offset + 10), 0, 3)
+					Line.Position = UDim2.new(0, 0, 0.5, 0)
 
 					local Trigger = New("TextButton", {
 						Name = "Trigger",
@@ -7124,10 +7143,10 @@ New("Frame", {
 					return row
 				end
 
-				local function makeChip(row, width, text)
+				local function makeChip(row, width, text, accent)
 					local chip = New("TextLabel", {
-						Name = "Value", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -14, 0.5, 0), Size = UDim2.fromOffset(width, 20),
-						BackgroundColor3 = THEME.row, BackgroundTransparency = 0.1, Text = text, TextColor3 = THEME.text,
+						Name = "Value", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(width, 20),
+						BackgroundColor3 = accent and mainColor or THEME.row, BackgroundTransparency = accent and 0 or 0.1, Text = text, TextColor3 = Color3.fromRGB(255,255,255),
 						TextSize = 12, Font = FONT, ZIndex = Z_BASE + 953,
 					}, row)
 					New("UICorner", { CornerRadius = UDim.new(0, 5) }, chip)
@@ -7138,7 +7157,7 @@ New("Frame", {
 				bindRefs.key = makeChip(keyRow, 84, "press key")
 
 				local modeRow = makeRow(2, "rbxassetid://109485777305919", "Mode", THEME.text)
-				bindRefs.mode = makeChip(modeRow, 84, "Toggle  ▾")
+				bindRefs.mode = makeChip(modeRow, 84, "Toggle  ▾", true)
 				modeRow.MouseButton1Click:Connect(function()
 					if not _bindTarget then return end
 					local current, index = CurrentBindMode(_bindTarget), 1
