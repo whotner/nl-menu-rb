@@ -4336,7 +4336,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		CanvasSize = UDim2.new(),
 		ScrollingDirection = Enum.ScrollingDirection.Y,
 	}, MainFrame)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, Tab)
+	New("UIPadding", { PaddingLeft = UDim.new(0, 9), PaddingRight = UDim.new(0, 11) }, Tab)
 	New("UIListLayout", {
 		Padding = UDim.new(0, 5),
 		SortOrder = Enum.SortOrder.LayoutOrder,
@@ -4346,8 +4346,8 @@ PositionPopupWithinMain(LangDownBar, true)
 
 	local Frame2 = New("Frame", {
 		Name = "Frame2",
-		Position = UDim2.new(0.23000000417232513, 0, 0, 0),
-		Size = UDim2.new(0.7699999809265137, 0, 1, 0),
+		Position = UDim2.fromOffset(170, 0),
+		Size = UDim2.new(1, -170, 1, 0),
 		BackgroundColor3 = Color3.fromRGB(15, 17, 24),
 		BackgroundTransparency = 0.1,
 		BorderSizePixel = 0,
@@ -4355,7 +4355,7 @@ PositionPopupWithinMain(LangDownBar, true)
 	}, MainFrame)
 
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 20); c.Parent = Frame2 end
-	New("Frame", { Name = "HeaderDivider", Position = UDim2.new(0, 0, 0, 53), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.93, BorderSizePixel = 0 }, Frame2)
+	New("Frame", { Name = "HeaderDivider", Position = UDim2.new(0, 11, 0, 53), Size = UDim2.new(1, -22, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.93, BorderSizePixel = 0 }, Frame2)
 
 	local Header = New("Frame", {
 		Name = "Header",
@@ -4368,7 +4368,7 @@ PositionPopupWithinMain(LangDownBar, true)
 	local SearchBtn = New("ImageButton", {
 		Name = "Search",
 		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -30, 0.5, 0),
+		Position = UDim2.new(1, -20, 0.5, 0),
 		Size = UDim2.fromOffset(16, 16),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BackgroundTransparency = 1,
@@ -5577,8 +5577,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local TabHose = New("Frame", {
 		Name = "TabHose",
-		Position = UDim2.new(0, 10, 0, 54),
-		Size = UDim2.new(1, -23, 1, -54),
+		Position = UDim2.new(0, 11, 0, 61),
+		Size = UDim2.new(1, -22, 1, -61),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 161),
 		BackgroundTransparency = 1,
 		ClipsDescendants = false,
@@ -5593,8 +5593,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local SubTabHose = New("Frame", {
 		Name = "SubTabHose",
-		Position = UDim2.new(0, 10, 0, 54),
-		Size = UDim2.new(1, -23, 1, -54),
+		Position = UDim2.new(0, 11, 0, 61),
+		Size = UDim2.new(1, -22, 1, -61),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 161),
 		BackgroundTransparency = 1,
 		ClipsDescendants = false,
@@ -6005,7 +6005,7 @@ end
 		tabOrder = tabOrder + 1
 		local lbl = New("TextLabel", {
 			Name = "TabLabel",
-			Size = UDim2.new(1, 0, 0, 20),
+			Size = UDim2.new(1, 0, 0, 17),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			Text = text:upper(),
@@ -6019,7 +6019,7 @@ end
 			LayoutOrder = tabOrder,
 		}, Tab)
 		New("UIPadding", {
-			PaddingLeft = UDim.new(0, 10),
+			PaddingLeft = UDim.new(0, 11),
 		}, lbl)
 
 		return lbl
@@ -6056,7 +6056,7 @@ end
 
 		local TabIcon = New("ImageLabel", {
 			Name = "TabIcon",
-			Position = UDim2.new(0, 16, 0.5, 0),
+			Position = UDim2.new(0, 17, 0.5, 0),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Size = UDim2.fromOffset(16, 16),
 			BackgroundColor3 = Color3.fromRGB(255, 191, 255),
@@ -6075,8 +6075,8 @@ New("UIAspectRatioConstraint", {
 
 		local TabText = New("TextLabel", {
 			Name = "TabText",
-			Position = UDim2.new(0, 34, 0, 0),
-			Size = UDim2.new(1, -42, 1, 0),
+			Position = UDim2.new(0, 35, 0, 0),
+			Size = UDim2.new(1, -43, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(191, 255, 255),
 			BackgroundTransparency = 1,
 			Text = name,
@@ -6097,7 +6097,7 @@ New("UIAspectRatioConstraint", {
 
 		local Left = New("ScrollingFrame", {
 			Name = "Left",
-			Size = UDim2.new(0.485, 0, 1, 0),
+			Size = UDim2.new(0.49, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			ClipsDescendants = true,
@@ -6110,7 +6110,7 @@ New("UIAspectRatioConstraint", {
 		
 		local Right = New("ScrollingFrame", {
 			Name = "Right",
-			Size = UDim2.new(0.485, 0, 1, 0),
+			Size = UDim2.new(0.49, 0, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 			BackgroundTransparency = 1,
 			LayoutOrder = 1,
@@ -6125,8 +6125,8 @@ New("UIAspectRatioConstraint", {
 		Right:SetAttribute("SearchName", name)
 		Left:SetAttribute("TabIndex", tabIndex)
 		Right:SetAttribute("TabIndex", tabIndex)
-		New("UIPadding", { PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), PaddingTop = UDim.new(0, 2) }, Left)
-		New("UIPadding", { PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), PaddingTop = UDim.new(0, 2) }, Right)
+		New("UIPadding", { PaddingLeft = UDim.new(0, 0), PaddingRight = UDim.new(0, 0), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, Left)
+		New("UIPadding", { PaddingLeft = UDim.new(0, 0), PaddingRight = UDim.new(0, 0), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, Right)
 		New("UIListLayout", { Padding = UDim.new(0, 14), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
 		New("UIListLayout", { Padding = UDim.new(0, 14), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
 
@@ -6193,8 +6193,8 @@ New("UIAspectRatioConstraint", {
 		TabButtonFrame.MouseLeave:Connect(function()
 			if activeTabIndex == tabIndex then return end
 			Tween(TabButtonFrame, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Sine)
-			Tween(TabIcon, { ImageColor3 = Color3.fromRGB(255, 255, 255), ImageTransparency = 0.6 }, 0.14, Enum.EasingStyle.Sine)
-			Tween(TabText, { TextTransparency = 0.6 }, 0.14, Enum.EasingStyle.Sine)
+			Tween(TabIcon, { ImageColor3 = Color3.fromRGB(150, 155, 172), ImageTransparency = 0 }, 0.14, Enum.EasingStyle.Sine)
+			Tween(TabText, { TextTransparency = 0 }, 0.14, Enum.EasingStyle.Sine)
 		end)
 
 		table.insert(tabs, {
@@ -6262,7 +6262,7 @@ SectionLabel.TextYAlignment = Enum.TextYAlignment.Center
 SectionLabel.Parent = SectionTitle
 do
 	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 14)
+	pad.PaddingLeft = UDim.new(0, 13)
 	pad.PaddingRight = UDim.new(0, 4)
 	pad.Parent = SectionLabel
 end
@@ -6283,7 +6283,7 @@ end
 				Name = "Elements",
 				Size = UDim2.new(1, 0, 0, 0),
 				Position = UDim2.new(0, 0, 0, 0),
-				BackgroundColor3 = Color3.fromRGB(20, 23, 34),
+				BackgroundColor3 = Color3.fromRGB(19, 22, 32),
 				BackgroundTransparency = 0,
 				BorderSizePixel = 0,
 				AutomaticSize = Enum.AutomaticSize.Y,
@@ -6330,10 +6330,12 @@ end
 				local settingsOpen = false
 				local settingsLayoutConnection = nil
 
+				local hasLeftControl = elementType == "slider" or elementType == "dropdown" or parentFrame.Name == "Selection"
 				local SettingsBtn = New("Frame", {
 					Name = "SettingsGear",
-					Position = UDim2.new(0.72, 0, 0.18, 0),
-					Size = UDim2.new(0.07, 0, 0.64, 0),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Position = hasLeftControl and UDim2.new(0, 132, 0.5, 0) or UDim2.new(1, -65, 0.5, 0),
+					Size = UDim2.fromOffset(20, 20),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					ZIndex = 2000,
@@ -6345,7 +6347,7 @@ end
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(0.5, (i - 1) * 5, 0.5, 0),
 						Size = UDim2.new(0, 3, 0, 3),
-						BackgroundColor3 = Color3.fromRGB(205, 212, 226),
+						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = 1,
 						BorderSizePixel = 0,
 						ZIndex = 2001,
@@ -6373,8 +6375,8 @@ end
 					end
 				end
 				SettingsHit.MouseEnter:Connect(function() SetDotsTransparency(0) end)
-				SettingsHit.MouseLeave:Connect(function() SetDotsTransparency(0.45) end)
-				SetDotsTransparency(0.45)
+				SettingsHit.MouseLeave:Connect(function() SetDotsTransparency(0.1) end)
+				SetDotsTransparency(0.1)
 
 				local SettingsFrame = Instance.new('Frame')
 				SettingsFrame.Name = "SettingsFrame"
@@ -8710,8 +8712,8 @@ if maxY <= 0 then return end
 					Name = "TopBar",
 					Position = UDim2.new(1, -14, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
-			      Size = UDim2.fromOffset(134, 26),
-				   BackgroundColor3 = Color3.fromRGB(28, 31, 45),
+			      Size = UDim2.fromOffset(135, 26),
+				   BackgroundColor3 = Color3.fromRGB(30, 33, 47),
 					BackgroundTransparency = 0,
 					Text = selected or "Select",
 					TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -8723,7 +8725,7 @@ TextTruncate = Enum.TextTruncate.AtEnd,
 ZIndex = 6,
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar)
-				New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 24) }, TopBar)
+				New("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 28) }, TopBar)
 
 				local Arrow = New("ImageLabel", {
 					Name = "Arrow",
@@ -8825,7 +8827,7 @@ ZIndex = 6,
 					end)
 					Buttons.MouseButton1Click:Connect(function()
 						selected = opt
-						SetTrimmedText(TopBar, opt); FitTextBeforeArrow(TopBar, Arrow)
+						SetTrimmedText(TopBar, opt); 
 						for option, row in pairs(optionRows) do
 							Tween(row, { BackgroundTransparency = option == selected and 0.42 or 1 }, 0.12, Enum.EasingStyle.Sine)
 						end
@@ -8866,7 +8868,7 @@ ZIndex = 6,
 					val = GetValidOption(options, val)
 					selected = val
 					SetTrimmedText(TopBar, val)
-					FitTextBeforeArrow(TopBar, Arrow)
+					
 					for option, row in pairs(optionRows) do
 						Tween(row, { BackgroundTransparency = option == selected and 0.42 or 1 }, 0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end
@@ -8958,7 +8960,7 @@ TextTruncate = Enum.TextTruncate.AtEnd,
 ZIndex = 6,
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar)
-				New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 24) }, TopBar)
+				New("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 28) }, TopBar)
 
 				local Arrow = New("ImageLabel", {
 					Name = "Arrow",
@@ -9063,7 +9065,7 @@ ZIndex = 6,
 					end)
 					Btn.MouseButton1Click:Connect(function()
 						selected = opt
-						SetTrimmedText(TopBar, opt); FitTextBeforeArrow(TopBar, Arrow)
+						SetTrimmedText(TopBar, opt); 
 						closeDropdown()
 						NotifySelection(opt)
 					end)
@@ -9320,7 +9322,7 @@ if maxY <= 0 then return end
 				function obj:Set(val)
 					val = GetValidOption(options, val)
 					selected = val
-					SetTrimmedText(TopBar, val); FitTextBeforeArrow(TopBar, Arrow)
+					SetTrimmedText(TopBar, val); 
 					NotifySelection(val)
 				end
 				function obj:Get() return selected end
