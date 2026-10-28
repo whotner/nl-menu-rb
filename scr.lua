@@ -7785,15 +7785,10 @@ New("Frame", {
 				if type(colorCallback) ~= "function" then colorCallback = nil end
 				elemCount = elemCount + 1
 				local enabled = defaultEnabled == true
-				local color = { Color3.toHSV(NormalizeColor(defaultColor)) }
-				local pickerOpen = false
-				local WheelDown = false
-				local SlideDown = false
-
+				local color = NormalizeColor(defaultColor)
 				local Toggle = New("Frame", {
 					Name = "Toggle",
 					Size = UDim2.new(1, 0, 0, 39),
-					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
 				}, Elements)
@@ -7803,272 +7798,79 @@ New("Frame", {
 					Size = UDim2.new(0.88, 0, 0, 1),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 0.9,
-					ZIndex = 100,
 					BorderSizePixel = 0,
+					ZIndex = 3,
 				}, Toggle)
-
 				New("TextLabel", {
 					Name = "TextToggle",
 					Position = UDim2.fromOffset(15, 0),
-						Size = UDim2.new(0.6000000238418579, 0, 0.5000000238418579, 0),
-					BackgroundColor3 = Color3.fromRGB(28,32,48),
+					Size = UDim2.new(0.6, 0, 1, 0),
 					BackgroundTransparency = 1,
 					Text = text,
 					TextColor3 = Color3.fromRGB(217, 219, 226),
 					TextScaled = false,
+					TextSize = 16,
 					Font = FONT,
-				   TextTransparency = 0.10000000149011612,
+					TextTransparency = 0.1,
 					TextXAlignment = Enum.TextXAlignment.Left,
+					ZIndex = 5,
 				}, Toggle)
-
 				local Effect = New("Frame", {
 					Name = "Effect",
-					Position = UDim2.new(1, -14, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
+					Position = UDim2.new(1, -14, 0.5, 0),
 					Size = UDim2.fromOffset(33, 20),
 					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(30, 32, 44),
+					ZIndex = 6,
 				}, Toggle)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
-				Stroke(Effect)
-
+				Stroke(Effect, "ToggleStroke")
 				local Icon = New("Frame", {
 					Name = "Icon",
 					Position = enabled and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3),
 					Size = UDim2.fromOffset(14, 14),
 					BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142),
-					BackgroundTransparency = 0,
+					BorderSizePixel = 0,
+					ZIndex = 7,
 				}, Effect)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
-				New("UIAspectRatioConstraint", {}, Icon)
-
 				local cpBtn = New("ImageButton", {
-					Name = "ColorpickerOpenButton",
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					Position = UDim2.new(0.752, 0, 0.5, 0),
-               Size = UDim2.new(0.06800000369548798,0,0.5600000023841858,0),
-					BackgroundColor3 = Color3.fromHSV(color[1], color[2], color[3]),
+					Name = "colorpickerButton",
+					AnchorPoint = Vector2.new(1, 0.5),
+					Position = UDim2.new(1, -64, 0.5, 0),
+					Size = UDim2.fromOffset(20, 20),
+					BackgroundColor3 = color,
 					BorderSizePixel = 0,
 					Image = "",
-					ZIndex = 55,
+					ZIndex = 8,
 				}, Toggle)
-				New("UICorner", { CornerRadius = UDim.new(0, 6) }, cpBtn)
-
-				local cpFrame = New("Frame", {
-					Name = "Frame",
-					Position = UDim2.new(0.02,0,1,2),
-					Size = UDim2.new(0.96, 0, 7, 0),
-					BackgroundColor3 = Color3.fromRGB(15,17,26),
-					BorderSizePixel = 0,
-					Visible = false,
-					ZIndex = 350,
-					ClipsDescendants = false,
-				}, Toggle)
-				New("UICorner", { CornerRadius = UDim.new(0, 6) }, cpFrame)
-				Stroke(cpFrame)
-				New("UIAspectRatioConstraint", { AspectRatio = 1.100000023841858 }, cpFrame)
-				FitColorPickerPopup(cpFrame)
-
-				local RGB = New("ImageButton", {
-					Name = "ImageButton",
-					BackgroundColor3 = Color3.fromHSV(color[1], 1, 1),
-					BorderSizePixel = 0,
-					Position = UDim2.new(0.06700000166893005, 0, 0.06800000369548798, 0),
-					Size = UDim2.new(0.60, 0, 0.60, 0),
-					AutoButtonColor = false,
-					Image = "",
-					ZIndex = 360,
-				}, cpFrame)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, RGB)
-				local svWhite = New("Frame", {
-					Name = "SVWhite",
-					Size = UDim2.new(1, 0, 1, 0),
-					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-					BorderSizePixel = 0,
-					ZIndex = 361,
-				}, RGB)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, svWhite)
-				New("UIGradient", {
-					Transparency = NumberSequence.new({
-						NumberSequenceKeypoint.new(0, 0),
-						NumberSequenceKeypoint.new(1, 1),
-					}),
-				}, svWhite)
-				local svBlack = New("Frame", {
-					Name = "SVBlack",
-					Size = UDim2.new(1, 0, 1, 0),
-					BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-					BorderSizePixel = 0,
-					ZIndex = 362,
-				}, RGB)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, svBlack)
-				New("UIGradient", {
-					Rotation = 90,
-					Transparency = NumberSequence.new({
-						NumberSequenceKeypoint.new(0, 1),
-						NumberSequenceKeypoint.new(1, 0),
-					}),
-				}, svBlack)
-
-				local RGBCircle = New("ImageLabel", {
-					Name = "ImageLabel",
-					BackgroundTransparency = 1,
-					BorderSizePixel = 0,
-					Size = UDim2.new(0, 14, 0, 14),
-					Image = "rbxassetid://3926309567",
-					ImageRectOffset = Vector2.new(628, 420),
-					ImageRectSize = Vector2.new(48, 48),
-					ZIndex = 363,
-				}, RGB)
-
-				local Darkness = New("ImageButton", {
-					Name = "ImageButton",
-					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-					BorderSizePixel = 0,
-					Position = UDim2.new(0.70, 0, 0.068, 0),
-					Size = UDim2.new(0.06, 0, 0.60, 0),
-					AutoButtonColor = false,
-					Image = "",
-					ZIndex = 360,
-				}, cpFrame)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, Darkness)
-				New("UIGradient", {
-					Rotation = 90,
-					Color = ColorSequence.new({
-						ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-						ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
-						ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
-						ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
-						ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
-						ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
-						ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0)),
-					}),
-				}, Darkness)
-
-				local DarknessCircle = New("Frame", {
-					Name = "Frame",
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-					BorderSizePixel = 0,
-					Position = UDim2.new(0.5, 0, 0, 0),
-					Size = UDim2.new(1.399999976158142, 0, 0, 4),
-					ZIndex = 361,
-				}, Darkness)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, DarknessCircle)
-
-				local Preview = New("Frame", {
-					Name = "Preview",
-					Position = UDim2.new(0.067, 0, 0.71, 0),
-					Size = UDim2.new(0.09, 0, 0.085, 0),
-					BackgroundColor3 = Color3.fromHSV(color[1], color[2], color[3]),
-					BorderSizePixel = 0,
-					ZIndex = 360,
-				}, cpFrame)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, Preview)
-				Stroke(Preview)
-
-				local colorHex = New("TextLabel", {
-					Name = "Hex",
-					BackgroundColor3 = Color3.fromRGB(15,17,26),
-					Position = UDim2.new(0.175, 0, 0.71, 0),
-					Size = UDim2.new(0.26, 0, 0.085, 0),
-					Font = FONT,
-					Text = "#FFFFFF",
-					TextColor3 = Color3.fromRGB(210, 215, 225),
-					TextScaled = false,
-					ZIndex = 360,
-				}, cpFrame)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, colorHex)
-
-				local Copy = New("TextButton", {
-					Name = "Copy",
-					BackgroundColor3 = Color3.fromRGB(15,17,26),
-					Position = UDim2.new(0.46, 0, 0.71, 0),
-					Size = UDim2.new(0.20, 0, 0.085, 0),
-					AutoButtonColor = false,
-					Font = FONT,
-					Text = "Copy",
-					TextColor3 = Color3.fromRGB(210, 215, 225),
-					TextScaled = false,
-					ZIndex = 360,
-				}, cpFrame)
-				New("UICorner", { CornerRadius = UDim.new(0, 4) }, Copy)
-
+				New("UICorner", { CornerRadius = UDim.new(0, 5) }, cpBtn)
+				Stroke(cpBtn, "ColorpickerButtonStroke")
 				local Btn = New("TextButton", {
+					Name = "ToggleHitArea",
+					Position = UDim2.new(0, 0, 0, 0),
 					Size = UDim2.new(1, 0, 1, 0),
 					BackgroundTransparency = 1,
 					Text = "",
-					ZIndex = 5,
+					ZIndex = 4,
 				}, Toggle)
 
-				local function to_hex(c)
-					return ColorToHex(c)
-				end
-
-				local function CurrentColor()
-					return Color3.fromHSV(color[1], color[2], color[3])
-				end
-
 				local function NotifyColor(c)
+					color = NormalizeColor(c)
 					if colorCallback then
-						InvokeCallback(colorCallback, c)
+						InvokeCallback(colorCallback, color)
 					elseif callback then
-						InvokeCallback(callback, c, enabled)
+						InvokeCallback(callback, color, enabled)
 					end
 				end
-
 				local function NotifyEnabled()
 					if colorCallback then
 						if callback then InvokeCallback(callback, enabled) end
 					elseif callback then
-						InvokeCallback(callback, CurrentColor(), enabled)
+						InvokeCallback(callback, color, enabled)
 					end
 				end
-
-				local function updateColor()
-					local c = CurrentColor()
-					colorHex.Text = to_hex(c)
-					cpBtn.BackgroundColor3 = c
-					Preview.BackgroundColor3 = c
-					RGB.BackgroundColor3 = Color3.fromHSV(color[1], 1, 1)
-					NotifyColor(c)
-				end
-
-				local function UpdateSlide(input)
-					local ml = GetInputPosition(input)
-					local y = ml.Y - Darkness.AbsolutePosition.Y
-					local maxY = Darkness.AbsoluteSize.Y
-if maxY <= 0 then return end
-					if y < 0 then y = 0 end
-					if y > maxY then y = maxY end
-					y = ClampRatio(y, maxY)
-					local cy = DarknessCircle.AbsoluteSize.Y / 2
-					color = {y, color[2], color[3]}
-					DarknessCircle.Position = UDim2.new(0.5, 0, y, -cy)
-					updateColor()
-				end
-
-				local function UpdateRing(input)
-					local ml = GetInputPosition(input)
-					local x = ml.X - RGB.AbsolutePosition.X
-					local y = ml.Y - RGB.AbsolutePosition.Y
-					local maxX = RGB.AbsoluteSize.X
-if maxX <= 0 then return end
-					local maxY = RGB.AbsoluteSize.Y
-if maxY <= 0 then return end
-					if x < 0 then x = 0 end
-					if x > maxX then x = maxX end
-					if y < 0 then y = 0 end
-					if y > maxY then y = maxY end
-					x = ClampRatio(x, maxX)
-					y = ClampRatio(y, maxY)
-					local cx = RGBCircle.AbsoluteSize.X / 2
-					local cy = RGBCircle.AbsoluteSize.Y / 2
-					RGBCircle.Position = UDim2.new(x, -cx, y, -cy)
-					color = {color[1], x, 1 - y}
-					updateColor()
-				end
-
-				AttachRowHover(Toggle)
+				local picker = AcrylicBlur.CreateColorPicker(cpBtn, color, NotifyColor)
 
 				local function SetEnabled(val)
 					enabled = val == true
@@ -8076,69 +7878,24 @@ if maxY <= 0 then return end
 					Tween(Icon, { Position = enabled and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
 					NotifyEnabled()
 				end
-
-				Btn.MouseButton1Click:Connect(function()
-					SetEnabled(not enabled)
-				end)
-
-				cpBtn.MouseButton1Click:Connect(function()
-					pickerOpen = not pickerOpen
-					AnimateColorPickerOpen(cpFrame, cpBtn, pickerOpen, function(v) pickerOpen = v end)
-				end)
-
-				RGB.InputBegan:Connect(function(input) if IsPrimaryInput(input) then WheelDown = true; UpdateRing(input) end end)
-				Darkness.InputBegan:Connect(function(input) if IsPrimaryInput(input) then SlideDown = true; UpdateSlide(input) end end)
-				
-				UserInputService.InputEnded:Connect(function(input)
-					if IsPrimaryInput(input) then
-						WheelDown = false
-						SlideDown = false
-					end
-				end)
-
-				UserInputService.InputChanged:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-						if WheelDown then UpdateRing(input) end
-						if SlideDown then UpdateSlide(input) end
-					end
-				end)
-
-				Copy.MouseButton1Click:Connect(function()
-					if setclipboard then setclipboard(colorHex.Text) end
-				end)
-
-				local function setcolor(tbl, fireCallback, exactColor)
-					local rc = exactColor or Color3.fromHSV(tbl[1], tbl[2], tbl[3])
-					colorHex.Text = to_hex(rc)
-					cpBtn.BackgroundColor3 = rc
-					Preview.BackgroundColor3 = rc
-					RGB.BackgroundColor3 = Color3.fromHSV(tbl[1], 1, 1)
-					color = {tbl[1], tbl[2], tbl[3]}
-					task.defer(function()
-						local cx = RGBCircle.AbsoluteSize.X / 2
-						local cy = RGBCircle.AbsoluteSize.Y / 2
-						RGBCircle.Position = UDim2.new(math.clamp(tbl[2], 0, 1), -cx, math.clamp(1 - tbl[3], 0, 1), -cy)
-						local dcy = DarknessCircle.AbsoluteSize.Y / 2
-						DarknessCircle.Position = UDim2.new(0.5, 0, math.clamp(tbl[1], 0, 1), -dcy)
-					end)
-					if fireCallback then
-						NotifyColor(exactColor or rc)
-					end
-				end
-				setcolor(color)
+				Btn.MouseButton1Click:Connect(function() SetEnabled(not enabled) end)
+				AttachRowHover(Toggle)
 
 				local obj = {}
-				function obj:Set(v) SetEnabled(v) end
+				function obj:Set(val) SetEnabled(val) end
 				function obj:Get() return enabled end
 				function obj:SetColor(c)
 					local normalized = NormalizeColor(c)
-					local h, s, v2 = Color3.toHSV(normalized)
-					setcolor({h, s, v2}, true, normalized)
+					picker.Set(normalized)
+					NotifyColor(normalized)
 				end
-				function obj:GetColor() return Color3.fromHSV(color[1], color[2], color[3]) end
+				function obj:GetColor() return color end
 				function obj:AddSettings() return MakeSettings(Toggle, nil, text) end
 				RegisterConfigElement("togglecolorpicker_", text, obj)
-				RegisterConfigElement("togglecolorpicker_color_", text, {Get = function() return obj:GetColor() end, Set = function(_, c) obj:SetColor(c) end})
+				RegisterConfigElement("togglecolorpicker_color_", text, {
+					Get = function() return obj:GetColor() end,
+					Set = function(_, c) obj:SetColor(c) end,
+				})
 				CenterElement(Toggle)
 				BindElementContext(Toggle, "togglecolorpicker", text, obj, defaultEnabled)
 				return obj
