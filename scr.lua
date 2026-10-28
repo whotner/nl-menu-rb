@@ -522,17 +522,14 @@ local function AttachRowHover(row)
 	local hoverStroke = row:FindFirstChild("NLRowHoverStroke")
 	if not hoverStroke then
 		hoverStroke = Stroke(row, "NLRowHoverStroke")
-		hoverStroke.Transparency = 1
 	end
 	row.MouseEnter:Connect(function()
 		if not row.Parent then return end
 		Tween(row, { BackgroundColor3 = Color3.fromRGB(245, 247, 255), BackgroundTransparency = 0.955 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-		Tween(hoverStroke, { Transparency = 0.82 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 	end)
 	row.MouseLeave:Connect(function()
 		if not row.Parent then return end
 		Tween(row, { BackgroundColor3 = baseColor, BackgroundTransparency = baseTransparency }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-		Tween(hoverStroke, { Transparency = 1 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 	end)
 end
 
@@ -1213,14 +1210,6 @@ local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	frame.BackgroundTransparency = 1
 	frame.Visible = true
 	TweenShadowLayers(frame, true, dur or 0.2)
-	local stroke = frame:FindFirstChildOfClass("UIStroke")
-	if stroke then
-		if frame:GetAttribute("StrokeTarget") == nil then
-			frame:SetAttribute("StrokeTarget", stroke.Transparency)
-		end
-		stroke.Transparency = 1
-		Tween(stroke, { Transparency = frame:GetAttribute("StrokeTarget") }, dur or 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	end
 	local scale = GetPopupScale(frame)
 	if scale then
 		scale.Scale = 0.965
@@ -2442,11 +2431,6 @@ local function SetOverlayPanelShown(panel, shown)
 		panel.Visible = true
 		FadeOverlayContents(panel, true)
 		Tween(panel, { BackgroundTransparency = 0.1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		local stroke = panel:FindFirstChildOfClass("UIStroke")
-		if stroke then
-			stroke.Transparency = 1
-			Tween(stroke, { Transparency = 0.6 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		end
 	else
 		if not panel.Visible then return end
 		Tween(panel, { BackgroundTransparency = 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
@@ -3234,7 +3218,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	ScaleDefault.Name = "TextDefault"
 	ScaleDefault.Position = UDim2.new(0.60, 0, 0.17, 0)
 	ScaleDefault.Size = UDim2.new(0.25, 0, 0.6, 0)
-	ScaleDefault.TextTruncate = Enum.TextTruncate.None
+	ScaleDefault.TextTruncate = Enum.TextTruncate.AtEnd
 	ScaleDefault.BackgroundTransparency = 1
 	ScaleDefault.Text = "Auto"
 	ScaleDefault:SetAttribute("FullText", ScaleDefault.Text)
@@ -3381,7 +3365,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	LangDefault.Name = "TextDefault"
 	LangDefault.Position = UDim2.new(0.60, 0, 0.17, 0)
 	LangDefault.Size = UDim2.new(0.25, 0, 0.6, 0)
-	LangDefault.TextTruncate = Enum.TextTruncate.None
+	LangDefault.TextTruncate = Enum.TextTruncate.AtEnd
 	LangDefault.BackgroundTransparency = 1
 	LangDefault.Text = "English"
 	LangDefault:SetAttribute("FullText", LangDefault.Text)
@@ -4864,14 +4848,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = row end
 
 		local rowStroke = Stroke(row, "ConfigRowStroke")
-		rowStroke.Transparency = 1
 		row.MouseEnter:Connect(function()
 			Tween(row, { BackgroundTransparency = 0.12 }, 0.1, Enum.EasingStyle.Sine)
-			Tween(rowStroke, { Transparency = activeRow == row and 0.3 or 0.78 }, 0.1, Enum.EasingStyle.Sine)
 		end)
 		row.MouseLeave:Connect(function()
 			Tween(row, { BackgroundTransparency = activeRow == row and 0.5 or 0.25 }, 0.13, Enum.EasingStyle.Sine)
-			Tween(rowStroke, { Transparency = activeRow == row and 0.3 or 1 }, 0.13, Enum.EasingStyle.Sine)
 		end)
 
 		local Rename = Instance.new("TextBox")
@@ -5050,9 +5031,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				SettingsFrame.Size = UDim2.new(0.44, 0, 0, 0)
 				SettingsFrame.Position = targetPosition
 				RegisterPopup(SettingsFrame, closeSfRow, SettingsBtn)
-				SettingsFrameStroke.Transparency = 1
 				Tween(SettingsFrame, { Size = targetSize, BackgroundTransparency = 0.045 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				Tween(SettingsFrameStroke, { Transparency = 0.5 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			else
 				closeSfRow()
 			end
@@ -8168,7 +8147,7 @@ New("Frame", {
 						DownBar:SetAttribute("CloseToken", (DownBar:GetAttribute("CloseToken") or 0) + 1)
 						DownBar.Visible = false
 						ApplyZIndexLadder(DownBar, NextPopupZ())
-						local h = math.min(#options, 8) * 30 + 12
+						local h = math.min(#options, 8) * 30 + 10
 						local popupWidth = math.max(TopBar.AbsoluteSize.X, 150)
 						local finalSize = UDim2.fromOffset(popupWidth, h)
 						local knownSize = Vector2.new(popupWidth, math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
@@ -8176,7 +8155,6 @@ New("Frame", {
 						DownBar.Visible = true
 						PositionPopupWithinMain(DownBar, true, 4, TopBar, knownSize)
 						DownBar.Size = UDim2.fromOffset(math.max(TopBar.AbsoluteSize.X, 150), 0)
-						PopupStroke.Transparency = 0.92
 						Tween(DownBar, { Size = finalSize }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						-- Keep the dropdown outline on Stroke()'s shared opacity.
 						Tween(Arrow, { Rotation = 180 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
@@ -8427,7 +8405,7 @@ New("Frame", {
 					dropOpen = true
 					_openDropdown = closeDropdown
 					local popupWidth = math.max(TopBar.AbsoluteSize.X, 150)
-					local h = math.min(#options, 8) * 30 + 12
+					local h = math.min(#options, 8) * 30 + 10
 					local finalSize = UDim2.fromOffset(popupWidth, h)
 					local knownSize = Vector2.new(popupWidth, math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
 					DownBar.Size = finalSize
