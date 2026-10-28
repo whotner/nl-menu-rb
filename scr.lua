@@ -395,7 +395,7 @@ elseif name == "layers" then image.Image = "rbxassetid://99581501168713"
 	elseif name == "gear" then image.Image = "rbxassetid://134488580093972"
 	-- Semantic aliases keep common navigation names mapped to the same icon family.
 	elseif name == "aimbot" or name == "rage" or name == "combat" then image.Image = "rbxassetid://107944169329467"
-	elseif name == "legit" then image.Image = "rbxassetid://94866180901611"
+	elseif name == "legit" then image.Image = ""
 	elseif name == "visuals" then image.Image = "rbxassetid://111273759419615"
 	elseif name == "inventory" or name == "other" then image.Image = "rbxassetid://99581501168713"
 	elseif name == "miscellaneous" or name == "settings" then image.Image = "rbxassetid://134488580093972"
@@ -4524,6 +4524,7 @@ Lines.BackgroundColor3 = Color3.fromRGB(255,255,255)
 Lines.BackgroundTransparency = 0.92
 Lines.BorderSizePixel = 0
 Lines.Parent = SaveText
+Lines.Visible = false
 
 local Lines_2 = Instance.new('Frame')
 Lines_2.Name = "Lines"
@@ -4538,7 +4539,7 @@ Lines_2.Parent = SaveText
 local SaveArrow = Instance.new('ImageLabel')
 SaveArrow.Name = "Arrow"
 SaveArrow.AnchorPoint = Vector2.new(1, 0.5)
-SaveArrow.Position = UDim2.new(1, -10, 0.5, 0)
+SaveArrow.Position = UDim2.new(1, -17, 0.5, 0)
 SaveArrow.Size = UDim2.fromOffset(10, 10)
 SaveArrow.BackgroundTransparency = 1
 SaveArrow.Image = "rbxassetid://10709790948"
@@ -4591,7 +4592,7 @@ end
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
-UIAspectRatioConstraint.AspectRatio = 2
+UIAspectRatioConstraint.AspectRatio = 1
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
 UIAspectRatioConstraint.Parent = SaveArrow
 
@@ -4718,7 +4719,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		end
 
 		AutoSaveBtn = HeaderIconButton("AutomaticSave", "rbxassetid://122894934359450", 1)
-		RecentlyDeletedBtn = HeaderIconButton("RecentlyDeleted", "rbxassetid://126010725826757", 2)
+		RecentlyDeletedBtn = HeaderIconButton("RecentlyDeleted", "rbxassetid://3926305904", 2)
+		RecentlyDeletedBtn.ImageRectOffset = Vector2.new(805, 45)
+		RecentlyDeletedBtn.ImageRectSize = Vector2.new(35, 35)
 		InsertConfigBtn = HeaderIconButton("InsertConfig", "rbxassetid://101123124881873", 3)
 	end
 
@@ -6055,6 +6058,38 @@ end
 		if icon and icon ~= "" then
 			GetImageData(icon, TabIcon)
 		end
+		if type(icon) == "string" and string.lower(icon) == "legit" then
+			local MouseOutline = New("Frame", {
+				Name = "MouseOutline",
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.new(0.5, 0, 0.5, 0),
+				Size = UDim2.fromOffset(9, 13),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+			}, TabIcon)
+			New("UICorner", { CornerRadius = UDim.new(0.5, 0) }, MouseOutline)
+			New("UIStroke", {
+				Name = "MouseOutlineStroke",
+				Color = isFirst and mainColor or Color3.fromRGB(150, 155, 172),
+				Thickness = 1,
+				Transparency = 0,
+			}, MouseOutline)
+			New("Frame", {
+				Name = "MouseSplit",
+				Position = UDim2.new(0, 0, 0, 4),
+				Size = UDim2.new(1, 0, 0, 1),
+				BackgroundColor3 = isFirst and mainColor or Color3.fromRGB(150, 155, 172),
+				BorderSizePixel = 0,
+			}, MouseOutline)
+			New("Frame", {
+				Name = "MouseWheel",
+				AnchorPoint = Vector2.new(0.5, 0),
+				Position = UDim2.new(0.5, 0, 0, 0),
+				Size = UDim2.new(0, 1, 0, 4),
+				BackgroundColor3 = isFirst and mainColor or Color3.fromRGB(150, 155, 172),
+				BorderSizePixel = 0,
+			}, MouseOutline)
+		end
 		table.insert(_coloredElements, { type = "tabicon", ref = TabIcon })
 New("UIAspectRatioConstraint", {
 			AspectRatio = 1,
@@ -6147,6 +6182,8 @@ New("UIAspectRatioConstraint", {
 				t.hide()
 				if t.btn ~= TabButtonFrame then
 					Tween(t.icon, { ImageColor3 = Color3.fromRGB(150, 155, 172), ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					local outlineStroke = t.icon:FindFirstChild("MouseOutlineStroke", true)
+					if outlineStroke then Tween(outlineStroke, { Color = Color3.fromRGB(150, 155, 172), Transparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out) end
 					t.txt.TextColor3 = Color3.fromRGB(150, 155, 172)
 					Tween(t.txt, { TextTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end
@@ -6157,6 +6194,8 @@ New("UIAspectRatioConstraint", {
 			}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			Tween(TabIndicator, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			local activeOutlineStroke = TabIcon:FindFirstChild("MouseOutlineStroke", true)
+			if activeOutlineStroke then Tween(activeOutlineStroke, { Color = mainColor, Transparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out) end
 			TabText.TextColor3 = Color3.fromRGB(255, 255, 255)
 			Tween(TabText, { TextTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			TabScale.Scale = 0.985
@@ -6175,12 +6214,16 @@ New("UIAspectRatioConstraint", {
 			if activeTabIndex == tabIndex then return end
 			Tween(TabButtonFrame, { BackgroundTransparency = 0.94 }, 0.11, Enum.EasingStyle.Sine)
 			Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0.24 }, 0.11, Enum.EasingStyle.Sine)
+			local hoverOutlineStroke = TabIcon:FindFirstChild("MouseOutlineStroke", true)
+			if hoverOutlineStroke then Tween(hoverOutlineStroke, { Color = mainColor, Transparency = 0.24 }, 0.11, Enum.EasingStyle.Sine) end
 			Tween(TabText, { TextTransparency = 0.22 }, 0.11, Enum.EasingStyle.Sine)
 		end)
 		TabButtonFrame.MouseLeave:Connect(function()
 			if activeTabIndex == tabIndex then return end
 			Tween(TabButtonFrame, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Sine)
 			Tween(TabIcon, { ImageColor3 = Color3.fromRGB(150, 155, 172), ImageTransparency = 0 }, 0.14, Enum.EasingStyle.Sine)
+			local leaveOutlineStroke = TabIcon:FindFirstChild("MouseOutlineStroke", true)
+			if leaveOutlineStroke then Tween(leaveOutlineStroke, { Color = Color3.fromRGB(150, 155, 172), Transparency = 0 }, 0.14, Enum.EasingStyle.Sine) end
 			Tween(TabText, { TextTransparency = 0 }, 0.14, Enum.EasingStyle.Sine)
 		end)
 
