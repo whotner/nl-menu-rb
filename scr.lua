@@ -1678,6 +1678,330 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		end
 	end
 
+	AcrylicBlur.CreateColorPicker = function(anchorButton, initialColor, onChange)
+		local currentColor = NormalizeColor(initialColor)
+		local hue, saturation, value = Color3.toHSV(currentColor)
+		local dragPart = nil
+		local isOpen = false
+
+		local frame = New("Frame", {
+			Name = "ColorPickerFrame",
+			Position = UDim2.fromOffset(0, 0),
+			Size = UDim2.fromOffset(212, 214),
+			BackgroundColor3 = Color3.fromRGB(17, 19, 28),
+			BackgroundTransparency = 0.02,
+			BorderSizePixel = 0,
+			Visible = false,
+			ClipsDescendants = false,
+			ZIndex = Z_BASE + 800,
+		}, MainFrame)
+		New("UICorner", { CornerRadius = UDim.new(0, 10) }, frame)
+		Stroke(frame, "ColorPickerOutline")
+		New("UIPadding", {
+			PaddingLeft = UDim.new(0, 10),
+			PaddingRight = UDim.new(0, 10),
+			PaddingTop = UDim.new(0, 10),
+			PaddingBottom = UDim.new(0, 10),
+		}, frame)
+		New("UIListLayout", {
+			FillDirection = Enum.FillDirection.Vertical,
+			Padding = UDim.new(0, 10),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+		}, frame)
+
+		local svSquare = New("ImageButton", {
+			Name = "SVSquare",
+			Size = UDim2.fromOffset(192, 136),
+			BackgroundColor3 = Color3.fromHSV(hue, 1, 1),
+			BorderSizePixel = 0,
+			AutoButtonColor = false,
+			Image = "",
+			ClipsDescendants = true,
+			LayoutOrder = 1,
+			ZIndex = Z_BASE + 801,
+		}, frame)
+		New("UICorner", { CornerRadius = UDim.new(0, 6) }, svSquare)
+		local svWhite = New("Frame", {
+			Name = "SVWhite",
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 802,
+		}, svSquare)
+		New("UICorner", { CornerRadius = UDim.new(0, 6) }, svWhite)
+		New("UIGradient", {
+			Rotation = 0,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0),
+				NumberSequenceKeypoint.new(1, 1),
+			}),
+		}, svWhite)
+		local svBlack = New("Frame", {
+			Name = "SVBlack",
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 803,
+		}, svSquare)
+		New("UICorner", { CornerRadius = UDim.new(0, 6) }, svBlack)
+		New("UIGradient", {
+			Rotation = 90,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 1),
+				NumberSequenceKeypoint.new(1, 0),
+			}),
+		}, svBlack)
+
+		local svShadow = New("Frame", {
+			Name = "SVCursorShadow",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(saturation, 0, 1 - value, 0),
+			Size = UDim2.fromOffset(14, 14),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 804,
+		}, svSquare)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, svShadow)
+		local svShadowStroke = Stroke(svShadow, "SVCursorShadowStroke")
+		svShadowStroke.Color = Color3.fromRGB(10, 12, 18)
+		svShadowStroke.Transparency = 0
+		svShadowStroke.Thickness = 1
+		local svCursor = New("Frame", {
+			Name = "SVCursor",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(saturation, 0, 1 - value, 0),
+			Size = UDim2.fromOffset(12, 12),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 805,
+		}, svSquare)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, svCursor)
+		local svCursorStroke = Stroke(svCursor, "SVCursorStroke")
+		svCursorStroke.Color = Color3.fromRGB(255, 255, 255)
+		svCursorStroke.Transparency = 0
+		svCursorStroke.Thickness = 2
+
+		local hueBar = New("ImageButton", {
+			Name = "HueBar",
+			Size = UDim2.fromOffset(192, 10),
+			BackgroundColor3 = Color3.fromRGB(255, 0, 0),
+			BorderSizePixel = 0,
+			AutoButtonColor = false,
+			Image = "",
+			ClipsDescendants = false,
+			Active = true,
+			LayoutOrder = 2,
+			ZIndex = Z_BASE + 801,
+		}, frame)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, hueBar)
+		New("UIGradient", {
+			Name = "HueSpectrum",
+			Rotation = 0,
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+				ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+				ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+				ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+				ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0)),
+			}),
+		}, hueBar)
+		local hueThumb = New("Frame", {
+			Name = "HueThumb",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(hue, 0, 0.5, 0),
+			Size = UDim2.fromOffset(14, 14),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 805,
+		}, hueBar)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, hueThumb)
+		local hueThumbStroke = Stroke(hueThumb, "HueThumbStroke")
+		hueThumbStroke.Color = Color3.fromRGB(17, 19, 28)
+		hueThumbStroke.Transparency = 0.05
+		hueThumbStroke.Thickness = 1
+
+		local hexRow = New("Frame", {
+			Name = "HexRow",
+			Size = UDim2.fromOffset(192, 28),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			LayoutOrder = 3,
+			ZIndex = Z_BASE + 801,
+		}, frame)
+		local hexField = New("Frame", {
+			Name = "HexField",
+			Position = UDim2.fromOffset(0, 0),
+			Size = UDim2.fromOffset(156, 28),
+			BackgroundColor3 = Color3.fromRGB(28, 31, 45),
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 802,
+		}, hexRow)
+		New("UICorner", { CornerRadius = UDim.new(0, 6) }, hexField)
+		local hexPreview = New("Frame", {
+			Name = "HexPreview",
+			Position = UDim2.fromOffset(8, 7),
+			Size = UDim2.fromOffset(14, 14),
+			BackgroundColor3 = currentColor,
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 803,
+		}, hexField)
+		New("UICorner", { CornerRadius = UDim.new(0, 4) }, hexPreview)
+		local hexLabel = New("TextLabel", {
+			Name = "HexValue",
+			Position = UDim2.fromOffset(30, 0),
+			Size = UDim2.fromOffset(118, 28),
+			BackgroundTransparency = 1,
+			Text = ColorToHex(currentColor),
+			TextColor3 = Color3.fromRGB(226, 228, 236),
+			TextScaled = false,
+			TextSize = 14,
+			Font = FONT,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			ZIndex = Z_BASE + 803,
+		}, hexField)
+		local copyButton = New("ImageButton", {
+			Name = "CopyHex",
+			Position = UDim2.fromOffset(164, 0),
+			Size = UDim2.fromOffset(28, 28),
+			BackgroundColor3 = Color3.fromRGB(28, 31, 45),
+			BorderSizePixel = 0,
+			AutoButtonColor = false,
+			Image = "",
+			ZIndex = Z_BASE + 802,
+		}, hexRow)
+		New("UICorner", { CornerRadius = UDim.new(0, 6) }, copyButton)
+		local copyBack = New("Frame", {
+			Name = "CopyIconBack",
+			Position = UDim2.fromOffset(7, 6),
+			Size = UDim2.fromOffset(9, 11),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 803,
+		}, copyButton)
+		New("UICorner", { CornerRadius = UDim.new(0, 2) }, copyBack)
+		local copyBackStroke = Stroke(copyBack, "CopyIconBackStroke")
+		copyBackStroke.Color = Color3.fromRGB(226, 228, 236)
+		copyBackStroke.Transparency = 0.12
+		local copyFront = New("Frame", {
+			Name = "CopyIconFront",
+			Position = UDim2.fromOffset(11, 10),
+			Size = UDim2.fromOffset(9, 11),
+			BackgroundColor3 = Color3.fromRGB(28, 31, 45),
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 804,
+		}, copyButton)
+		New("UICorner", { CornerRadius = UDim.new(0, 2) }, copyFront)
+		local copyFrontStroke = Stroke(copyFront, "CopyIconFrontStroke")
+		copyFrontStroke.Color = Color3.fromRGB(226, 228, 236)
+		copyFrontStroke.Transparency = 0.12
+
+		local function refreshDisplay(notify)
+			currentColor = Color3.fromHSV(hue, saturation, value)
+			svSquare.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+			svShadow.Position = UDim2.new(saturation, 0, 1 - value, 0)
+			svCursor.Position = UDim2.new(saturation, 0, 1 - value, 0)
+			hueThumb.Position = UDim2.new(hue, 0, 0.5, 0)
+			hexPreview.BackgroundColor3 = currentColor
+			hexLabel.Text = ColorToHex(currentColor)
+			if anchorButton and anchorButton.Parent then anchorButton.BackgroundColor3 = currentColor end
+			if notify then InvokeCallback(onChange, currentColor) end
+		end
+
+		local function setColor(color)
+			currentColor = NormalizeColor(color)
+			hue, saturation, value = Color3.toHSV(currentColor)
+			refreshDisplay(false)
+		end
+
+		local function updateSV(input)
+			local point = GetInputPosition(input)
+			local pos = svSquare.AbsolutePosition
+			local size = svSquare.AbsoluteSize
+			if size.X <= 0 or size.Y <= 0 then return end
+			saturation = math.clamp((point.X - pos.X) / size.X, 0, 1)
+			value = 1 - math.clamp((point.Y - pos.Y) / size.Y, 0, 1)
+			refreshDisplay(true)
+		end
+
+		local function updateHue(input)
+			local point = GetInputPosition(input)
+			local pos = hueBar.AbsolutePosition
+			local size = hueBar.AbsoluteSize
+			if size.X <= 0 then return end
+			hue = math.clamp((point.X - pos.X) / size.X, 0, 1)
+			refreshDisplay(true)
+		end
+
+		local function positionFrame()
+			if not frame.Parent or not anchorButton or not anchorButton.Parent then return end
+			local safePos, safeSize = PopupSafeArea()
+			if safeSize.X <= 0 or safeSize.Y <= 0 then return end
+			local anchorPos, anchorSize = anchorButton.AbsolutePosition, anchorButton.AbsoluteSize
+			local popupW = frame.AbsoluteSize.X > 0 and frame.AbsoluteSize.X or 212
+			local popupH = frame.AbsoluteSize.Y > 0 and frame.AbsoluteSize.Y or 214
+			local x = anchorPos.X + anchorSize.X - popupW
+			local y = anchorPos.Y + anchorSize.Y + 6
+			if y + popupH > safePos.Y + safeSize.Y - 6 then y = anchorPos.Y - popupH - 6 end
+			x = math.clamp(x, safePos.X + 6, math.max(safePos.X + 6, safePos.X + safeSize.X - popupW - 6))
+			y = math.clamp(y, safePos.Y + 6, math.max(safePos.Y + 6, safePos.Y + safeSize.Y - popupH - 6))
+			MovePopupToAbsolute(frame, x, y)
+		end
+
+		local function closePicker()
+			if not isOpen and not frame.Visible then return end
+			isOpen = false
+			UnregisterPopup(frame)
+			SmoothClose(frame, 0.12)
+		end
+
+		local function openPicker()
+			if isOpen then return end
+			CloseAllPopupsExcept(frame)
+			isOpen = true
+			frame.Visible = true
+			ApplyZIndexLadder(frame, NextPopupZ())
+			positionFrame()
+			SmoothOpen(frame, 0.02, 0.16)
+			task.defer(function()
+				if frame.Visible and isOpen then positionFrame() end
+			end)
+			RegisterPopup(frame, closePicker, anchorButton)
+		end
+
+		local picker = { frame = frame }
+		function picker.Set(color) setColor(color) end
+		function picker.Get() return currentColor end
+		function picker.Close() closePicker() end
+		function picker.Toggle()
+			if isOpen then closePicker() else openPicker() end
+		end
+
+		anchorButton.MouseButton1Click:Connect(function() picker.Toggle() end)
+		svSquare.InputBegan:Connect(function(input)
+			if IsPrimaryInput(input) then dragPart = "sv"; updateSV(input) end
+		end)
+		hueBar.InputBegan:Connect(function(input)
+			if IsPrimaryInput(input) then dragPart = "hue"; updateHue(input) end
+		end)
+		UserInputService.InputChanged:Connect(function(input)
+			if not dragPart then return end
+			if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+				if dragPart == "sv" then updateSV(input) else updateHue(input) end
+			end
+		end)
+		UserInputService.InputEnded:Connect(function(input)
+			if dragPart and IsPrimaryInput(input) then dragPart = nil end
+		end)
+		copyButton.MouseButton1Click:Connect(function()
+			if setclipboard then setclipboard(hexLabel.Text) end
+		end)
+		setColor(currentColor)
+		return picker
+	end
+
 	local function AnimateColorPickerOpen(popup, trigger, open, onClose)
 		if not popup or not popup.Parent then return end
 		if open then
