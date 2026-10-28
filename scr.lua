@@ -480,8 +480,6 @@ local function New(class, props, parent)
 			obj.TextColor3 = Color3.fromRGB(112, 116, 138)
 		elseif obj.Name == "TextToggle" or obj.Name == "TextDropdown" or obj.Name == "TextDefault" or obj.Name == "TopBar" or obj.Name == "SaveText" then
 			obj.TextColor3 = Color3.fromRGB(226, 228, 236)
-		elseif obj.Name == "TabText" then
-			obj.TextColor3 = obj.TextTransparency > 0.4 and Color3.fromRGB(150, 155, 172) or Color3.fromRGB(255, 255, 255)
 		end
 		if obj.Name == "TextToggle" or obj.Name == "TextDropdown" or obj.Name == "TextDefault" or obj.Name == "TopBar" or obj.Name == "TabText" or obj.Name == "SaveText" then
 			obj.TextTruncate = Enum.TextTruncate.AtEnd
