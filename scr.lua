@@ -5935,7 +5935,7 @@ Line9.Parent = MainFrame
 		if dof then dof.Enabled = open end
 	end
 
-	local function toggleGui()
+	AcrylicBlur.toggleGui = function()
     guiOpen = not guiOpen
     ToggleBtn.Text = guiOpen and "Close [RShift]" or "Open  [RShift]"
     Tween(ToggleBtn, {
@@ -5957,12 +5957,12 @@ Line9.Parent = MainFrame
     AnimateWindow(guiOpen)
 end
 
-	ToggleBtn.MouseButton1Click:Connect(toggleGui)
+	ToggleBtn.MouseButton1Click:Connect(AcrylicBlur.toggleGui)
 
 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		if gameProcessed then return end
 		if menuBind and input.KeyCode == menuBind then
-			toggleGui()
+			AcrylicBlur.toggleGui()
 		end
 	end)
 
