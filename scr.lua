@@ -612,26 +612,24 @@ end
 
 SizeSliderChip = function(effect, line, value)
 	if not effect or not line or not value or not effect.Parent then return end
-	local popupSlider = value.ZIndex >= 1000
-	local fontSize = popupSlider and 13 or 14
-	local textWidth = MeasureText(tostring(value.Text or ""), fontSize, FONT)
-	local chipWidth = math.max(popupSlider and 24 or 30, math.ceil(textWidth) + 10)
+	local textWidth = MeasureText(tostring(value.Text or ""), 14, FONT)
+	local chipWidth = math.max(30, math.ceil(textWidth) + 10)
 	value.AnchorPoint = Vector2.new(1, 0.5)
 	value.Position = UDim2.new(1, 0, 0.5, 0)
 	value.Size = UDim2.fromOffset(chipWidth, 22)
-	value.BackgroundColor3 = popupSlider and Color3.fromRGB(15, 17, 26) or Color3.fromRGB(14, 16, 24)
+	value.BackgroundColor3 = Color3.fromRGB(14, 16, 24)
 	value.TextScaled = false
-	value.TextSize = fontSize
+	value.TextSize = 14
 	value.Font = FONT
-	value.TextColor3 = popupSlider and Color3.fromRGB(226, 228, 236) or Color3.fromRGB(255, 255, 255)
-	value.TextTransparency = popupSlider and 0.05 or 0
+	value.TextColor3 = Color3.fromRGB(255, 255, 255)
+	value.TextTransparency = 0
 	value.TextXAlignment = Enum.TextXAlignment.Center
-	effect.AnchorPoint = popupSlider and Vector2.new(1, 0.5) or Vector2.new(0, 0.5)
-	effect.Position = popupSlider and UDim2.new(1, -14, 0.5, 0) or UDim2.new(0, 150, 0.5, 0)
-	effect.Size = popupSlider and UDim2.fromOffset(89 + chipWidth, 22) or UDim2.new(1, -164, 0, 22)
+	effect.AnchorPoint = Vector2.new(0, 0.5)
+	effect.Position = UDim2.new(0, 150, 0.5, 0)
+	effect.Size = UDim2.new(1, -164, 0, 22)
 	line.AnchorPoint = Vector2.new(0, 0.5)
-	line.Position = popupSlider and UDim2.fromOffset(0, 0) or UDim2.new(0, 0, 0.5, 0)
-	line.Size = popupSlider and UDim2.fromOffset(81, 3) or UDim2.new(1, -(chipWidth + 10), 0, 3)
+	line.Position = UDim2.new(0, 0, 0.5, 0)
+	line.Size = UDim2.new(1, -(chipWidth + 10), 0, 3)
 	line.BackgroundColor3 = Color3.fromRGB(45, 48, 64)
 	line.BorderSizePixel = 0
 	if not value:GetAttribute("NLSliderChipWatch") then
@@ -1479,7 +1477,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	}, MainFrame)
 	New("UISizeConstraint", {
 		MinSize = Vector2.new(220, 180),
-		MaxSize = Vector2.new(780, 600),
+		MaxSize = Vector2.new(798, 610),
 	}, MainFrame)
 
 	local AcrylicLib = LoadAcrylic()
@@ -1689,7 +1687,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			popup.BackgroundTransparency = 1
 			popup.ZIndex = 8000
 			ApplyZIndexLadder(popup, NextPopupZ())
-			Tween(popup, { BackgroundTransparency = 0.02 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(popup, { BackgroundTransparency = 0.02 }, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			PositionPopupWithinMain(popup, true)
 			task.defer(function() if popup.Visible then PositionPopupWithinMain(popup, true) end end)
 			RegisterPopup(popup, function()
@@ -1699,7 +1697,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			end, trigger)
 		else
 			UnregisterPopup(popup)
-			Tween(popup, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+			Tween(popup, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			task.delay(0.15, function() if not popup.Visible then popup.BackgroundTransparency = 1 end end)
 			popup.Visible = false
 		end
@@ -2507,7 +2505,7 @@ end
 
 local Aspect = Instance.new("UIAspectRatioConstraint")
 Aspect.Parent = MainFrame
-Aspect.AspectRatio = 1.31
+Aspect.AspectRatio = 798 / 610
 
 	local HubIcon = New("ImageLabel", {
 		Name = "HubIcon",
@@ -4665,11 +4663,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local CMTitle = Instance.new("TextLabel")
 	CMTitle.Name = "TitleLabel"
 	CMTitle.Position = UDim2.new(0, 44, 0, 0)
-	CMTitle.Size = UDim2.new(0.5, 0, 1, 0)
+	CMTitle.Size = UDim2.new(1, -154, 1, 0)
 	CMTitle.BackgroundTransparency = 1
 	CMTitle.Text = "Presets"
 	CMTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-	CMTitle.TextSize = 14
+	CMTitle.TextSize = 15
 	CMTitle.Font = FONT
 	CMTitle.TextTransparency = 0.05
 	CMTitle.ZIndex = 1000
@@ -4917,7 +4915,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RDTitle.BackgroundTransparency = 1
 	RDTitle.Text = "Recently Deleted"
 	RDTitle.TextColor3 = Color3.fromRGB(255, 100, 100)
-	RDTitle.TextSize = 14
+	RDTitle.TextSize = 15
 	RDTitle.Font = FONT
 	RDTitle.TextXAlignment = Enum.TextXAlignment.Left
 	RDTitle.ZIndex = 122
@@ -5026,9 +5024,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			ConfigMainFrame.BackgroundTransparency = 1
 			ConfigMainFrame.Visible = true
 			ConstrainPopupToMainFrame(ConfigMainFrame); task.defer(function() ConstrainPopupToMainFrame(ConfigMainFrame) end); RegisterPopup(ConfigMainFrame, closeConfigPanel, TriggerSaveConfig)
-			ConfigScale.Scale = 0.975
-			Tween(ConfigScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Tween(ConfigMainFrame, { BackgroundTransparency = 0.045 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			ConfigScale.Scale = 0.94
+			Tween(ConfigScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(ConfigMainFrame, { BackgroundTransparency = 0.045 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		end)
 	end)
 
@@ -5095,7 +5093,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		Rename.PlaceholderText = "No Name"
 		Rename.PlaceholderColor3 = Color3.fromRGB(130, 134, 152)
 		Rename.TextColor3 = Color3.fromRGB(228, 230, 238)
-		Rename.TextSize = 13
+		Rename.TextSize = 14
 		Rename.Font = FONT
 		Rename.ZIndex = 1000
 		Rename.TextXAlignment = Enum.TextXAlignment.Left
@@ -5457,11 +5455,11 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 		ClosePopupsUnder(RecentlyDeletedPanel)
 		UnregisterPopup(ConfigMainFrame)
 		UnregisterPopup(RecentlyDeletedPanel)
-		Tween(ConfigMainFrame, { BackgroundTransparency = 1 }, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-		Tween(ConfigScale, { Scale = 0.975 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-		Tween(RecentlyDeletedPanel, { BackgroundTransparency = 1 }, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		Tween(ConfigMainFrame, { BackgroundTransparency = 1 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		Tween(ConfigScale, { Scale = 0.94 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		Tween(RecentlyDeletedPanel, { BackgroundTransparency = 1 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 		local rdScale = RecentlyDeletedPanel:FindFirstChild("_PopScale")
-		if rdScale and rdScale:IsA("UIScale") then Tween(rdScale, { Scale = 0.975 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In) end
+		if rdScale and rdScale:IsA("UIScale") then Tween(rdScale, { Scale = 0.94 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In) end
 		Tween(SaveArrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		task.delay(0.22, function()
 			if configOpen then return end
@@ -5490,12 +5488,12 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 				end
 			end)
 			ConfigMainFrame.Visible = true
-			ConfigScale.Scale = 0.975
-			Tween(ConfigScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Tween(ConfigMainFrame, { BackgroundTransparency = 0.045 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			ConfigScale.Scale = 0.94
+			Tween(ConfigScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(ConfigMainFrame, { BackgroundTransparency = 0.045 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			local cfgSettled = ConfigMainFrame.Position
 			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 5)
-			Tween(ConfigMainFrame, { Position = cfgSettled }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(ConfigMainFrame, { Position = cfgSettled }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		Tween(SaveArrow, { Rotation = 180 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		else
 			closeConfigPanel()
@@ -5504,8 +5502,9 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 
 	local SearchBox = New("TextBox", {
 		Name = "SearchBox",
-		Position = UDim2.new(0.44999998807907104, 0, 0.10000000149011612, 0),
-		Size = UDim2.new(0, 0, 0.6000000238418579, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -46, 0.5, 0),
+		Size = UDim2.fromOffset(0, 28),
 		BackgroundColor3 = Color3.fromRGB(15, 17, 26),
 		Text = "",
 		PlaceholderText = "Search",
@@ -5550,16 +5549,16 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 		if searchOpen then
 			SearchBox.Visible = true
 			SearchBox.BackgroundTransparency = 1
-			SearchBox.Size = UDim2.new(0, 0, 0.6000000238418579, 0)
+			SearchBox.Size = UDim2.fromOffset(0, 28)
 			Tween(SearchBox, { BackgroundTransparency = 0 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			Tween(SearchBox, { Size = UDim2.new(0.4000000059604645, 0, 0.6000000238418579, 0) }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			task.delay(0.18, function()
+			Tween(SearchBox, { Size = UDim2.fromOffset(190, 28) }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			task.delay(0.16, function()
 				if searchOpen and searchTransitionToken == token and SearchBox.Visible then pcall(function() SearchBox:CaptureFocus() end) end
 			end)
 		else
 			pcall(function() SearchBox:ReleaseFocus() end)
-			Tween(SearchBox, { Size = UDim2.new(0, 0, 0.6000000238418579, 0), BackgroundTransparency = 1 }, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-			task.delay(0.14, function()
+			Tween(SearchBox, { Size = UDim2.fromOffset(0, 28), BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+			task.delay(0.13, function()
 				if searchOpen or searchTransitionToken ~= token then return end
 				SearchBox.Visible = false
 				SearchBox.Text = ""
@@ -5876,6 +5875,7 @@ Line9.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Line9.BackgroundTransparency = 0.93
 Line9.BorderSizePixel = 0
 Line9.Parent = MainFrame
+	Line9.Visible = false
 
 	MakeDraggable(MainFrame, DragHandle)
 
@@ -6341,8 +6341,8 @@ end
 			-- Inset rows slightly from the card edges. This keeps each side of the
 			-- rounded outline visible even when a row uses an opaque background.
 			New("UIPadding", {
-				PaddingLeft = UDim.new(0, 0),
-				PaddingRight = UDim.new(0, 0),
+				PaddingLeft = UDim.new(0, 1),
+				PaddingRight = UDim.new(0, 1),
 				PaddingTop = UDim.new(0, 0),
 				PaddingBottom = UDim.new(0, 0),
 			}, Elements)
@@ -6563,7 +6563,7 @@ end
 					settingsOpen = false
 					ClosePopupsUnder(SettingsFrame)
 					UnregisterPopup(SettingsFrame)
-					Tween(SettingsFrame, {Size = UDim2.new(0.96, 0, 0, 0), BackgroundTransparency = 1}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					Tween(SettingsFrame, {Size = UDim2.new(0.96, 0, 0, 0), BackgroundTransparency = 1}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not settingsOpen then SettingsFrame.Visible = false end end)
 				end
 				local SettingsObj = {}
@@ -6590,7 +6590,7 @@ end
 					local function settle()
 						if not settingsOpen or not SettingsFrame.Parent then return end
 						placeSettings(getSettingsHeight())
-						Tween(SFScale, {Scale = 1}, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Tween(SFScale, {Scale = 1}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					end
 					task.defer(settle)
 					task.delay(0.05, settle)
@@ -6653,7 +6653,7 @@ New("Frame", {
 						Name = "Effect",
 						Position = UDim2.new(1, -14, 0.5, 0),
 						AnchorPoint = Vector2.new(1, 0.5),
-						Size = UDim2.fromOffset(32, 18),
+						Size = UDim2.fromOffset(33, 20),
 						BackgroundColor3 = enabled and mainColor or Color3.fromRGB(30, 32, 44),
 						ZIndex = 1001,
 					}, Toggle)
@@ -6662,8 +6662,8 @@ New("Frame", {
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.fromOffset(17, 3) or UDim2.fromOffset(3, 3),
-						Size = UDim2.fromOffset(12, 12),
+						Position = enabled and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3),
+						Size = UDim2.fromOffset(14, 14),
 						BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142),
 						BackgroundTransparency = 0,
 						ZIndex = 1002,
@@ -6683,7 +6683,7 @@ New("Frame", {
 					local function Set(val)
 						enabled = val == true
 						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(30, 32, 44) }, 0.16, Enum.EasingStyle.Sine)
-						Tween(Icon, { Position = enabled and UDim2.fromOffset(17, 3) or UDim2.fromOffset(3, 3), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
+						Tween(Icon, { Position = enabled and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -6868,7 +6868,7 @@ New("Frame", {
 						Name = "Thumb",
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(initRatio, 0, 0.5, 0),
-						Size = UDim2.fromOffset(10, 10),
+						Size = UDim2.fromOffset(14, 14),
 						BackgroundColor3 = Color3.fromRGB(248, 250, 255),
 						BorderSizePixel = 0,
 						ZIndex = Line.ZIndex + 3,
@@ -6876,10 +6876,10 @@ New("Frame", {
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 					New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 					Line.MouseEnter:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(16, 16) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					Line.MouseLeave:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					local initialValue = value
 					task.defer(function()
@@ -8005,7 +8005,7 @@ if maxY <= 0 then return end
 					Name = "Effect",
 					Position = UDim2.new(1, -14, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
-					Size = UDim2.fromOffset(32, 18),
+					Size = UDim2.fromOffset(33, 20),
 					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(30, 32, 44),
 				}, Toggle)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
@@ -8013,8 +8013,8 @@ if maxY <= 0 then return end
 
 				local Icon = New("Frame", {
 					Name = "Icon",
-					Position = enabled and UDim2.fromOffset(17, 3) or UDim2.fromOffset(3, 3),
-					Size = UDim2.fromOffset(12, 12),
+					Position = enabled and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3),
+					Size = UDim2.fromOffset(14, 14),
 					BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142),
 					BackgroundTransparency = 0,
 				}, Effect)
@@ -8033,7 +8033,7 @@ if maxY <= 0 then return end
 				local function Set(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(30, 32, 44) }, 0.16, Enum.EasingStyle.Sine)
-					Tween(Icon, { Position = enabled and UDim2.fromOffset(17, 3) or UDim2.fromOffset(3, 3), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
+					Tween(Icon, { Position = enabled and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
 					InvokeCallback(callback, enabled)
 				end
 
@@ -8189,7 +8189,7 @@ if maxY <= 0 then return end
 					Name = "Effect",
 					Position = UDim2.new(1, -14, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
-					Size = UDim2.fromOffset(32, 18),
+					Size = UDim2.fromOffset(33, 20),
 					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(30, 32, 44),
 				}, Toggle)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
@@ -8197,8 +8197,8 @@ if maxY <= 0 then return end
 
 				local Icon = New("Frame", {
 					Name = "Icon",
-					Position = enabled and UDim2.fromOffset(17, 3) or UDim2.fromOffset(3, 3),
-					Size = UDim2.fromOffset(12, 12),
+					Position = enabled and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3),
+					Size = UDim2.fromOffset(14, 14),
 					BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142),
 					BackgroundTransparency = 0,
 				}, Effect)
@@ -8437,7 +8437,7 @@ if maxY <= 0 then return end
 				local function SetEnabled(val)
 					enabled = val == true
 					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(30, 32, 44) }, 0.16, Enum.EasingStyle.Sine)
-					Tween(Icon, { Position = enabled and UDim2.fromOffset(17, 3) or UDim2.fromOffset(3, 3), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
+					Tween(Icon, { Position = enabled and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
 					NotifyEnabled()
 				end
 
@@ -8755,7 +8755,7 @@ if maxY <= 0 then return end
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = false,
 					Font = FONT,
-					TextTransparency = 0.20000000298023224,
+					TextTransparency = 0,
 					TextXAlignment = Enum.TextXAlignment.Left,
 TextTruncate = Enum.TextTruncate.AtEnd,
 ZIndex = 6,
@@ -8821,7 +8821,7 @@ ZIndex = 6,
 					dropOpen = false
 					Tween(Arrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					Tween(PopupStroke, { Transparency = 1 }, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
-					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					UnregisterPopup(DownBar)
 					local closeToken = (DownBar:GetAttribute("CloseToken") or 0) + 1
 					DownBar:SetAttribute("CloseToken", closeToken)
@@ -8843,7 +8843,7 @@ ZIndex = 6,
 						Text = opt,
 						TextColor3 = Color3.fromRGB(226, 232, 244),
 						TextScaled = false,
-						TextSize = 13,
+						TextSize = 15,
 						Font = FONT,
 						TextTransparency = 0.10000000149011612,
 						TextXAlignment = Enum.TextXAlignment.Left,
@@ -8891,10 +8891,10 @@ ZIndex = 6,
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
 						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
 						PopupStroke.Transparency = 1
-						Tween(DownBar, { Size = finalSize }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Tween(DownBar, { Size = finalSize }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						Tween(PopupStroke, { Transparency = 0.5 }, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-						Tween(Arrow, { Rotation = 180 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
+						Tween(Arrow, { Rotation = 180 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						task.delay(0.24, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
@@ -8990,7 +8990,7 @@ ZIndex = 6,
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = false,
 					Font = FONT,
-					TextTransparency = 0.20000000298023224,
+					TextTransparency = 0,
 					TextXAlignment = Enum.TextXAlignment.Left,
 TextTruncate = Enum.TextTruncate.AtEnd,
 ZIndex = 6,
@@ -9051,7 +9051,7 @@ ZIndex = 6,
 				local function closeDropdown()
 					dropOpen = false
 					Tween(Arrow, {Rotation = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					task.delay(0.21, function() if not dropOpen then DownBar.Visible = false end end)
 					UnregisterPopup(DownBar)
 					if _openDropdown == closeDropdown then _openDropdown = nil end
@@ -9086,8 +9086,9 @@ ZIndex = 6,
 						Text = opt,
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = false,
+						TextSize = 15,
 						Font = FONT,
-						TextTransparency = 0.20000000298023224,
+						TextTransparency = 0.05,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 5002,
 					}, Scrolls)
@@ -9124,9 +9125,9 @@ ZIndex = 6,
 						DownBar.Visible = true
 						PositionPopupWithinMain(DownBar, true, nil, nil, knownSize)
 						DownBar.Size = UDim2.new(0.72, 0, 0, 0)
-						Tween(DownBar, { Size = finalSize }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Tween(DownBar, { Size = finalSize }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						Tween(Arrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-						task.delay(0.32, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
+						task.delay(0.24, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
@@ -9963,7 +9964,7 @@ New("Frame", {
 						Name = "Effect",
 						Position = UDim2.new(1, -14, 0.5, 0),
 						AnchorPoint = Vector2.new(1, 0.5),
-						Size = UDim2.fromOffset(32, 18),
+						Size = UDim2.fromOffset(33, 20),
 						BackgroundColor3 = enabled and mainColor or Color3.fromRGB(30, 32, 44),
 						ZIndex = 101,
 					}, Toggle)
@@ -9972,8 +9973,8 @@ New("Frame", {
 
 					local Icon = New("Frame", {
 						Name = "Icon",
-						Position = enabled and UDim2.fromOffset(17, 3) or UDim2.fromOffset(3, 3),
-						Size = UDim2.fromOffset(12, 12),
+						Position = enabled and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3),
+						Size = UDim2.fromOffset(14, 14),
 						BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142),
 						BackgroundTransparency = 0,
 						ZIndex = 102,
@@ -9993,7 +9994,7 @@ New("Frame", {
 					local function Set(val)
 						enabled = val == true
 						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(30, 32, 44) }, 0.16, Enum.EasingStyle.Sine)
-						Tween(Icon, { Position = enabled and UDim2.fromOffset(17, 3) or UDim2.fromOffset(3, 3), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
+						Tween(Icon, { Position = enabled and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -10934,7 +10935,7 @@ if maxY <= 0 then return end
 
 			local stRight = New("ScrollingFrame", {
 				Name = "STRight_" .. name,
-				Size = UDim2.new(0.44, 0, 1, 0),
+				Size = UDim2.new(0.49, 0, 1, 0),
 				BackgroundTransparency = 1,
 				LayoutOrder = 1,
 				Visible = false,
@@ -10951,8 +10952,8 @@ if maxY <= 0 then return end
 			stRight:SetAttribute("TabIndex", tabIndex)
 			stLeft:SetAttribute("SubTabIndex", stIndex)
 			stRight:SetAttribute("SubTabIndex", stIndex)
-			New("UIPadding", { PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), PaddingTop = UDim.new(0, 2) }, stLeft)
-			New("UIPadding", { PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), PaddingTop = UDim.new(0, 2) }, stRight)
+			New("UIPadding", { PaddingLeft = UDim.new(0, 0), PaddingRight = UDim.new(0, 0), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, stLeft)
+			New("UIPadding", { PaddingLeft = UDim.new(0, 0), PaddingRight = UDim.new(0, 0), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, stRight)
 			New("UIListLayout", { Padding = UDim.new(0, 14), SortOrder = Enum.SortOrder.LayoutOrder }, stRight)
 
 			local STRow = New("Frame", {
