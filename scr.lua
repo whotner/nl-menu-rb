@@ -470,11 +470,11 @@ local function New(class, props, parent)
 	if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
 		obj.TextYAlignment = Enum.TextYAlignment.Center
 		obj.TextScaled = false
-		local roleSizes = { Title = 16, GameTitle = 11, TabLabel = 11, TabText = 15, SectionLabel = 11,
-			TextToggle = 15, TextDropdown = 15, TextDefault = 14, TopBar = 14, SliderValue = 13,
-			Username = 13, Daysleft = 11, SaveText = 14, HeaderLabel = 11, SearchBox = 13 }
+		local roleSizes = { Title = 17, GameTitle = 11, TabLabel = 11, TabText = 15, SectionLabel = 11,
+			TextToggle = 16, TextDropdown = 16, TextDefault = 15, TopBar = 15, SliderValue = 14,
+			Username = 14, Daysleft = 12, SaveText = 15, HeaderLabel = 11, SearchBox = 13 }
 		obj.TextSize = roleSizes[obj.Name] or ((props and props.TextSize) or 13)
-		obj.Font = (obj.Name == "Title" or obj.Name == "Username") and Enum.Font.SourceSansBold or FONT
+		obj.Font = FONT
 		if obj.Name == "GameTitle" or obj.Name == "TabLabel" or obj.Name == "SectionLabel"
 			or obj.Name == "Daysleft" or obj.Name == "HeaderLabel" or obj.Name == "SearchEmptyState" then
 			obj.TextColor3 = Color3.fromRGB(112, 116, 138)
@@ -573,7 +573,7 @@ CenterElement = function(el)
 		if effect:FindFirstChild("Icon") then
 			effect.AnchorPoint = Vector2.new(1, 0.5)
 			effect.Position = UDim2.new(1, -14, 0.5, 0)
-			effect.Size = UDim2.fromOffset(32, 18)
+			effect.Size = UDim2.fromOffset(33, 20)
 		elseif sliderEffect then
 			if SizeSliderChip then SizeSliderChip(effect, effect:FindFirstChild("Line"), effect:FindFirstChild("SliderValue")) end
 		else
@@ -614,24 +614,24 @@ end
 
 SizeSliderChip = function(effect, line, value)
 	if not effect or not line or not value or not effect.Parent then return end
-	local textWidth = MeasureText(tostring(value.Text or ""), 13, FONT)
-	local chipWidth = math.max(24, math.ceil(textWidth) + 10)
+	local textWidth = MeasureText(tostring(value.Text or ""), 14, FONT)
+	local chipWidth = math.max(30, math.ceil(textWidth) + 10)
 	value.AnchorPoint = Vector2.new(1, 0.5)
 	value.Position = UDim2.new(1, 0, 0.5, 0)
 	value.Size = UDim2.fromOffset(chipWidth, 22)
-	value.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	value.BackgroundColor3 = Color3.fromRGB(14, 16, 24)
 	value.TextScaled = false
-	value.TextSize = 13
+	value.TextSize = 14
 	value.Font = FONT
-	value.TextColor3 = Color3.fromRGB(226, 228, 236)
-	value.TextTransparency = 0.05
+	value.TextColor3 = Color3.fromRGB(255, 255, 255)
+	value.TextTransparency = 0
 	value.TextXAlignment = Enum.TextXAlignment.Center
-	effect.AnchorPoint = Vector2.new(1, 0.5)
-	effect.Position = UDim2.new(1, -14, 0.5, 0)
-	effect.Size = UDim2.fromOffset(89 + chipWidth, 22)
+	effect.AnchorPoint = Vector2.new(0, 0.5)
+	effect.Position = UDim2.new(0, 150, 0.5, 0)
+	effect.Size = UDim2.new(1, -164, 0, 22)
 	line.AnchorPoint = Vector2.new(0, 0.5)
-	line.Position = UDim2.fromOffset(0, 0)
-	line.Size = UDim2.fromOffset(81, 3)
+	line.Position = UDim2.new(0, 0, 0.5, 0)
+	line.Size = UDim2.new(1, -(chipWidth + 10), 0, 3)
 	line.BackgroundColor3 = Color3.fromRGB(45, 48, 64)
 	line.BorderSizePixel = 0
 	if not value:GetAttribute("NLSliderChipWatch") then
@@ -1087,6 +1087,7 @@ local function Quantize(value, min, max, step)
 end
 
 local function FormatSliderValue(value, suffix)
+	suffix = tostring(suffix or ""):gsub("^%s+", ""):gsub("%s+$", "")
 	local text
 	if math.abs(value - math.round(value)) < 0.0001 then
 		text = tostring(math.round(value))
@@ -2508,18 +2509,17 @@ Aspect.AspectRatio = 1.31
 
 	local HubIcon = New("ImageLabel", {
 		Name = "HubIcon",
-		Position = UDim2.fromOffset(16, 5),
-		Size = UDim2.fromOffset(32, 32),
+		Position = UDim2.fromOffset(18, 13),
+		Size = UDim2.fromOffset(26, 26),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
 		ScaleType = Enum.ScaleType.Fit,
 	}, MainFrame)
-	New("UICorner", { CornerRadius = UDim.new(0, 6) }, HubIcon)
 
 	New("TextLabel", {
 		Name = "Title",
-		Position = UDim2.fromOffset(59, 7),
+		Position = UDim2.fromOffset(59, 10),
 		Size = UDim2.fromOffset(110, 20),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BackgroundTransparency = 1,
@@ -2533,7 +2533,7 @@ Aspect.AspectRatio = 1.31
 
 	New("TextLabel", {
 		Name = "GameTitle",
-		Position = UDim2.fromOffset(59, 28),
+		Position = UDim2.fromOffset(59, 30),
 		Size = UDim2.fromOffset(110, 12),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 		BackgroundTransparency = 1,
@@ -2548,24 +2548,23 @@ Aspect.AspectRatio = 1.31
 	}, MainFrame)
 	local Info = Instance.new('Frame')
 	Info.Name = "Info"
-	Info.Position = UDim2.new(0, 15, 1, -44)
-	Info.Size = UDim2.new(0, 150, 0, 34)
+	Info.Position = UDim2.new(0, 15, 1, -43)
+	Info.Size = UDim2.new(0, 150, 0, 30)
 	Info.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	Info.BackgroundTransparency = 1
 	Info.BorderSizePixel = 0
 	Info.Active = true
 	Info.Parent = MainFrame
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = Info end
 	local InfoStroke = New("UIStroke", {
 		Color = Color3.fromRGB(255, 255, 255),
-		Transparency = 0.92,
+		Transparency = 1,
 		Thickness = 1,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 	}, Info)
 
 	local UserImageEl = Instance.new('ImageLabel')
 	UserImageEl.Name = "UserImage"
-	UserImageEl.Position = UDim2.fromOffset(0, 2)
+	UserImageEl.Position = UDim2.fromOffset(0, 0)
 	UserImageEl.Size = UDim2.fromOffset(30, 30)
 	UserImageEl.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 	UserImageEl.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
@@ -2590,7 +2589,7 @@ Aspect.AspectRatio = 1.31
 	User.TextColor3 = Color3.fromRGB(255,255,255)
 	User.TextScaled = false
 	User.TextSize = 14
-	User.Font = Enum.Font.SourceSansBold
+	User.Font = FONT
 	User.TextTransparency = 0
 	User.TextXAlignment = Enum.TextXAlignment.Left
 	User.TextYAlignment = Enum.TextYAlignment.Center
@@ -2598,8 +2597,8 @@ Aspect.AspectRatio = 1.31
 
 	local DaysLeft = Instance.new('TextLabel')
 	DaysLeft.Name = "Daysleft"
-	DaysLeft.Position = UDim2.fromOffset(44, 18)
-	DaysLeft.Size = UDim2.fromOffset(86, 13)
+	DaysLeft.Position = UDim2.fromOffset(44, 21)
+	DaysLeft.Size = UDim2.fromOffset(86, 12)
 	DaysLeft.TextTruncate = Enum.TextTruncate.AtEnd
 	DaysLeft.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	DaysLeft.BackgroundTransparency = 1
@@ -2628,20 +2627,20 @@ Aspect.AspectRatio = 1.31
 
 local SettingsArrow = New("ImageLabel", {
 	Name = "UserSettingsArrow",
-	Position = UDim2.new(1, -10, 0.5, 0),
-	Size = UDim2.fromOffset(10, 10),
+	Position = UDim2.new(1, -9, 0.5, 0),
+	Size = UDim2.fromOffset(12, 12),
 	AnchorPoint = Vector2.new(1, 0.5),
 	BackgroundTransparency = 1,
 	Image = "rbxassetid://10709790948",
-	ImageTransparency = 0.2,
+	ImageTransparency = 0.3,
 	ScaleType = Enum.ScaleType.Fit,
 	Rotation = 270,
 	ZIndex = 102,
 }, WindowSettings)
 
 	Info.MouseEnter:Connect(function()
-		Tween(Info, {BackgroundTransparency = 0.93}, 0.15)
-		Tween(InfoStroke, {Transparency = 0.55}, 0.15)
+		Tween(Info, {BackgroundTransparency = 1}, 0.15)
+		Tween(InfoStroke, {Transparency = 1}, 0.15)
 		Tween(UserImageStroke, {Transparency = 0.15}, 0.15)
 		Tween(SettingsArrow, {ImageTransparency = 0}, 0.15)
 	end)
@@ -2649,7 +2648,7 @@ local SettingsArrow = New("ImageLabel", {
 		Tween(Info, {BackgroundTransparency = 1}, 0.15)
 		Tween(InfoStroke, {Transparency = 1}, 0.15)
 		Tween(UserImageStroke, {Transparency = 0.35}, 0.15)
-		Tween(SettingsArrow, {ImageTransparency = 0.2}, 0.15)
+		Tween(SettingsArrow, {ImageTransparency = 0.3}, 0.15)
 	end)
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
@@ -6256,7 +6255,7 @@ SectionLabel.Text = tostring(title or "Section"):upper()
 SectionLabel.TextColor3 = customization.sectionTitleColor or Color3.fromRGB(112, 116, 138)
 SectionLabel.TextScaled = false
 SectionLabel.TextSize = customization.sectionTitleSize or 11
-SectionLabel.Font = customization.font or FONT
+SectionLabel.Font = FONT
 SectionLabel.TextTransparency = customization.sectionTitleTransparency or 0.15
 SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
 SectionLabel.TextYAlignment = Enum.TextYAlignment.Center
@@ -6831,18 +6830,18 @@ New("Frame", {
 						Name = "Thumb",
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(initRatio, 0, 0.5, 0),
-						Size = UDim2.fromOffset(10, 10),
-						BackgroundColor3 = Color3.fromRGB(248, 250, 255),
+						Size = UDim2.fromOffset(14, 14),
+						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BorderSizePixel = 0,
 						ZIndex = Line.ZIndex + 3,
 					}, Line)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 					New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 					Line.MouseEnter:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(16, 16) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					Line.MouseLeave:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					local initialValue = value
 					task.defer(function()
@@ -8567,18 +8566,18 @@ if maxY <= 0 then return end
 					Name = "Thumb",
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					Position = UDim2.new(initRatio, 0, 0.5, 0),
-					Size = UDim2.fromOffset(10, 10),
-					BackgroundColor3 = Color3.fromRGB(248, 250, 255),
+					Size = UDim2.fromOffset(14, 14),
+					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 					BorderSizePixel = 0,
 					ZIndex = Line.ZIndex + 3,
 				}, Line)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 				New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 				Line.MouseEnter:Connect(function()
-					Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(Thumb, { Size = UDim2.fromOffset(16, 16) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end)
 				Line.MouseLeave:Connect(function()
-					Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end)
 				local initialValue = value
 				task.defer(function()
@@ -10407,18 +10406,18 @@ New("Frame", {
 						Name = "Thumb",
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(initRatio, 0, 0.5, 0),
-						Size = UDim2.fromOffset(10, 10),
-						BackgroundColor3 = Color3.fromRGB(248, 250, 255),
+						Size = UDim2.fromOffset(14, 14),
+						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BorderSizePixel = 0,
 						ZIndex = Line.ZIndex + 3,
 					}, Line)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 					New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 					Line.MouseEnter:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(16, 16) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					Line.MouseLeave:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					local initialValue = value
 					task.defer(function()
@@ -11155,7 +11154,7 @@ if maxY <= 0 then return end
 			end
 		end
 		eachText(MainFrame, function(t)
-			t.Font = (t.Name == "Title" or t.Name == "Username") and Enum.Font.SourceSansBold or customization.font
+			t.Font = FONT
 			t.TextScaled = false
 			if t.Name ~= "GameTitle" and t.Name ~= "TabLabel" and t.Name ~= "SectionLabel"
 				and t.Name ~= "Daysleft" and t.Name ~= "HeaderLabel" and t.Name ~= "SearchEmptyState"
