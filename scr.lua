@@ -3969,8 +3969,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		for i, opt in ipairs(options) do
 			local BtnRow = Instance.new("Frame")
 			BtnRow.Name = "Buttons"
-			BtnRow.Size = UDim2.new(1, -12, 0, 28)
-			BtnRow.Position = UDim2.fromOffset(6, 0)
+			BtnRow.Size = UDim2.new(1, 0, 0, 28)
 			BtnRow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			BtnRow.BackgroundTransparency = 1
 			BtnRow.ZIndex = 1001
@@ -6841,8 +6840,7 @@ New("Frame", {
 					for i, opt in ipairs(options) do
 						local BtnRow = New("Frame", {
 							Name = "Buttons",
-							Size = UDim2.new(1, -12, 0, 28),
-							Position = UDim2.fromOffset(6, 0),
+							Size = UDim2.new(1, 0, 0, 28),
 							BackgroundColor3 = Color3.fromRGB(38, 38, 45),
 							BackgroundTransparency = 1,
 							ZIndex = 5001,
@@ -8119,8 +8117,7 @@ New("Frame", {
 				for _, opt in ipairs(options) do
 					local Buttons = New("TextButton", {
 						Name = "Buttons",
-						Size = UDim2.new(1, -12, 0, 28),
-						Position = UDim2.new(0, 6, 0, 0),
+						Size = UDim2.new(1, 0, 0, 28),
 						ClipsDescendants = false,
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = selected == opt and 0.94 or 1,
@@ -8387,8 +8384,7 @@ New("Frame", {
 				for _, opt in ipairs(options) do
 					local row = New("TextButton", {
 						Name = "Option",
-						Size = UDim2.new(1, -12, 0, 28),
-						Position = UDim2.new(0, 6, 0, 0),
+						Size = UDim2.new(1, 0, 0, 28),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BackgroundTransparency = opt == selected and 0.94 or 1,
 						Text = opt,
@@ -9041,8 +9037,7 @@ New("Frame", {
 						for i, opt in ipairs(options) do
 							local BtnRow = New("Frame", {
 								Name = "Buttons",
-								Size = UDim2.new(1, -12, 0, 28),
-							Position = UDim2.fromOffset(6, 0),
+								Size = UDim2.new(1, 0, 0, 28),
 								BackgroundColor3 = Color3.fromRGB(38, 38, 45),
 								BackgroundTransparency = 1,
 								ZIndex = 1001,
