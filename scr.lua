@@ -614,24 +614,26 @@ end
 
 SizeSliderChip = function(effect, line, value)
 	if not effect or not line or not value or not effect.Parent then return end
-	local textWidth = MeasureText(tostring(value.Text or ""), 14, FONT)
-	local chipWidth = math.max(30, math.ceil(textWidth) + 10)
+	local popupSlider = value.ZIndex >= 1000
+	local fontSize = popupSlider and 13 or 14
+	local textWidth = MeasureText(tostring(value.Text or ""), fontSize, FONT)
+	local chipWidth = math.max(popupSlider and 24 or 30, math.ceil(textWidth) + 10)
 	value.AnchorPoint = Vector2.new(1, 0.5)
 	value.Position = UDim2.new(1, 0, 0.5, 0)
 	value.Size = UDim2.fromOffset(chipWidth, 22)
-	value.BackgroundColor3 = Color3.fromRGB(14, 16, 24)
+	value.BackgroundColor3 = popupSlider and Color3.fromRGB(15, 17, 26) or Color3.fromRGB(14, 16, 24)
 	value.TextScaled = false
-	value.TextSize = 14
+	value.TextSize = fontSize
 	value.Font = FONT
-	value.TextColor3 = Color3.fromRGB(255, 255, 255)
-	value.TextTransparency = 0
+	value.TextColor3 = popupSlider and Color3.fromRGB(226, 228, 236) or Color3.fromRGB(255, 255, 255)
+	value.TextTransparency = popupSlider and 0.05 or 0
 	value.TextXAlignment = Enum.TextXAlignment.Center
-	effect.AnchorPoint = Vector2.new(0, 0.5)
-	effect.Position = UDim2.new(0, 150, 0.5, 0)
-	effect.Size = UDim2.new(1, -164, 0, 22)
+	effect.AnchorPoint = popupSlider and Vector2.new(1, 0.5) or Vector2.new(0, 0.5)
+	effect.Position = popupSlider and UDim2.new(1, -14, 0.5, 0) or UDim2.new(0, 150, 0.5, 0)
+	effect.Size = popupSlider and UDim2.fromOffset(89 + chipWidth, 22) or UDim2.new(1, -164, 0, 22)
 	line.AnchorPoint = Vector2.new(0, 0.5)
-	line.Position = UDim2.new(0, 0, 0.5, 0)
-	line.Size = UDim2.new(1, -(chipWidth + 10), 0, 3)
+	line.Position = popupSlider and UDim2.fromOffset(0, 0) or UDim2.new(0, 0, 0.5, 0)
+	line.Size = popupSlider and UDim2.fromOffset(81, 3) or UDim2.new(1, -(chipWidth + 10), 0, 3)
 	line.BackgroundColor3 = Color3.fromRGB(45, 48, 64)
 	line.BorderSizePixel = 0
 	if not value:GetAttribute("NLSliderChipWatch") then
@@ -5568,7 +5570,7 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 	local TabHose = New("Frame", {
 		Name = "TabHose",
 		Position = UDim2.new(0, 11, 0, 61),
-		Size = UDim2.new(1, -22, 1, -61),
+		Size = UDim2.new(1, -22, 1, -71),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 161),
 		BackgroundTransparency = 1,
 		ClipsDescendants = false,
@@ -5584,7 +5586,7 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 	local SubTabHose = New("Frame", {
 		Name = "SubTabHose",
 		Position = UDim2.new(0, 11, 0, 61),
-		Size = UDim2.new(1, -22, 1, -61),
+		Size = UDim2.new(1, -22, 1, -71),
 		BackgroundColor3 = Color3.fromRGB(162, 162, 161),
 		BackgroundTransparency = 1,
 		ClipsDescendants = false,
@@ -6016,6 +6018,17 @@ end
 	end
 
 	function WindowObj:AddTab(name, icon)
+		local function TintTabIcon(iconObject, color, transparency, duration, style, direction)
+			Tween(iconObject, { ImageColor3 = color, ImageTransparency = transparency }, duration, style, direction)
+			local outline = iconObject and iconObject:FindFirstChild("MouseOutline")
+			if not outline then return end
+			local stroke = outline:FindFirstChild("MouseOutlineStroke")
+			if stroke then Tween(stroke, { Color = color, Transparency = transparency }, duration, style, direction) end
+			for _, partName in ipairs({ "MouseSplit", "MouseWheel" }) do
+				local part = outline:FindFirstChild(partName)
+				if part then Tween(part, { BackgroundColor3 = color, BackgroundTransparency = transparency }, duration, style, direction) end
+			end
+		end
 		name = tostring(name or "Tab")
 		if icon ~= nil and type(icon) ~= "string" then icon = "" end
 		tabOrder = tabOrder + 1
@@ -6181,9 +6194,7 @@ New("UIAspectRatioConstraint", {
 				if t.indicator then Tween(t.indicator, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
 				t.hide()
 				if t.btn ~= TabButtonFrame then
-					Tween(t.icon, { ImageColor3 = Color3.fromRGB(150, 155, 172), ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-					local outlineStroke = t.icon:FindFirstChild("MouseOutlineStroke", true)
-					if outlineStroke then Tween(outlineStroke, { Color = Color3.fromRGB(150, 155, 172), Transparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out) end
+					TintTabIcon(t.icon, Color3.fromRGB(150, 155, 172), 0, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					t.txt.TextColor3 = Color3.fromRGB(150, 155, 172)
 					Tween(t.txt, { TextTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end
@@ -6193,9 +6204,7 @@ New("UIAspectRatioConstraint", {
 				BackgroundTransparency = 0.92,
 			}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			Tween(TabIndicator, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-			local activeOutlineStroke = TabIcon:FindFirstChild("MouseOutlineStroke", true)
-			if activeOutlineStroke then Tween(activeOutlineStroke, { Color = mainColor, Transparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out) end
+			TintTabIcon(TabIcon, mainColor, 0, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			TabText.TextColor3 = Color3.fromRGB(255, 255, 255)
 			Tween(TabText, { TextTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			TabScale.Scale = 0.985
@@ -6213,17 +6222,13 @@ New("UIAspectRatioConstraint", {
 		TabButtonFrame.MouseEnter:Connect(function()
 			if activeTabIndex == tabIndex then return end
 			Tween(TabButtonFrame, { BackgroundTransparency = 0.94 }, 0.11, Enum.EasingStyle.Sine)
-			Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0.24 }, 0.11, Enum.EasingStyle.Sine)
-			local hoverOutlineStroke = TabIcon:FindFirstChild("MouseOutlineStroke", true)
-			if hoverOutlineStroke then Tween(hoverOutlineStroke, { Color = mainColor, Transparency = 0.24 }, 0.11, Enum.EasingStyle.Sine) end
+			TintTabIcon(TabIcon, mainColor, 0.24, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(TabText, { TextTransparency = 0.22 }, 0.11, Enum.EasingStyle.Sine)
 		end)
 		TabButtonFrame.MouseLeave:Connect(function()
 			if activeTabIndex == tabIndex then return end
 			Tween(TabButtonFrame, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Sine)
-			Tween(TabIcon, { ImageColor3 = Color3.fromRGB(150, 155, 172), ImageTransparency = 0 }, 0.14, Enum.EasingStyle.Sine)
-			local leaveOutlineStroke = TabIcon:FindFirstChild("MouseOutlineStroke", true)
-			if leaveOutlineStroke then Tween(leaveOutlineStroke, { Color = Color3.fromRGB(150, 155, 172), Transparency = 0 }, 0.14, Enum.EasingStyle.Sine) end
+			TintTabIcon(TabIcon, Color3.fromRGB(150, 155, 172), 0, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(TabText, { TextTransparency = 0 }, 0.14, Enum.EasingStyle.Sine)
 		end)
 
@@ -6862,18 +6867,18 @@ New("Frame", {
 						Name = "Thumb",
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(initRatio, 0, 0.5, 0),
-						Size = UDim2.fromOffset(14, 14),
-						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+						Size = UDim2.fromOffset(10, 10),
+						BackgroundColor3 = Color3.fromRGB(248, 250, 255),
 						BorderSizePixel = 0,
 						ZIndex = Line.ZIndex + 3,
 					}, Line)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 					New("UIStroke", { Color = Color3.fromRGB(18, 23, 36), Transparency = 0.05, Thickness = 1 }, Thumb)
 					Line.MouseEnter:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(16, 16) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					Line.MouseLeave:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(10, 10) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					local initialValue = value
 					task.defer(function()
