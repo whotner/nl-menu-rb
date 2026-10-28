@@ -8988,35 +8988,22 @@ New("Frame", {
 
 					local DropPopup = New("Frame", {
 						Name = "Dropdown",
-						Position = UDim2.new(0.02,0,1,2),
-						Size = UDim2.new(0.6899999737739563, 0, 0, 100),
-						BackgroundColor3 = THEME.plate,
+						Position = UDim2.new(0.60, 0, 1, 4),
+						Size = UDim2.fromOffset(150, 0),
+						BackgroundColor3 = Color3.fromRGB(17, 19, 28),
 						BackgroundTransparency = 0,
 						BorderSizePixel = 0,
 						Visible = false,
 						ZIndex = 5000,
 					}, Selection)
-					New("UICorner", { CornerRadius = UDim.new(0, 6) }, DropPopup)
+					New("UICorner", { CornerRadius = UDim.new(0, 10) }, DropPopup)
 					do Stroke(DropPopup) end
 
-					New("TextLabel", {
-						Name = "HeaderLabel",
-						Position = UDim2.new(0, 10, 0, 5),
-						Size = UDim2.new(1, -20, 0, 14),
-						BackgroundTransparency = 1,
-						Text = tostring(text2 or text or ""),
-						TextColor3 = Color3.fromRGB(122, 124, 136),
-						TextSize = 11,
-						Font = FONT,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextTruncate = Enum.TextTruncate.AtEnd,
-						ZIndex = 5000,
-					}, DropPopup)
-
+					
 					local DropContainer = New("ScrollingFrame", {
 						Name = "Container",
-						Position = UDim2.new(0, 4, 0, 22),
-						Size = UDim2.new(1, -8, 1, -26),
+						Position = UDim2.fromOffset(6, 6),
+						Size = UDim2.new(1, -12, 1, -12),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 1,
 						ZIndex = 5000,
@@ -9027,7 +9014,7 @@ New("Frame", {
 						ScrollBarThickness = 2,
 						ScrollBarImageTransparency = 0.5,
 					}, DropPopup)
-					New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 1) }, DropContainer)
+					New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2) }, DropContainer)
 
 					local function closeDropdown2()
 						dropOpen = false
@@ -9039,11 +9026,14 @@ New("Frame", {
 
 					local function updateCheckmarks()
 						for opt, selBtn in pairs(selectedBtns) do
-							if opt == selected then
-								selBtn.Text = "✓"
-								Tween(selBtn, { TextColor3 = mainColor }, 0.15)
-							else
-								selBtn.Text = ""
+							local isSelected = opt == selected
+							selBtn.Visible = isSelected
+							selBtn.ImageColor3 = mainColor
+							local row = selBtn.Parent
+							if row then
+								row.BackgroundTransparency = isSelected and 0.94 or 1
+								local label = row:FindFirstChild("Label") or row:FindFirstChildWhichIsA("TextLabel")
+								if label then label.TextColor3 = isSelected and Color3.fromRGB(255,255,255) or Color3.fromRGB(200,204,218) end
 							end
 						end
 					end
@@ -9051,49 +9041,45 @@ New("Frame", {
 						for i, opt in ipairs(options) do
 							local BtnRow = New("Frame", {
 								Name = "Buttons",
-								Size = UDim2.new(1, 0, 0, 26),
+								Size = UDim2.new(1, -12, 0, 28),
+							Position = UDim2.fromOffset(6, 0),
 								BackgroundColor3 = Color3.fromRGB(38, 38, 45),
 								BackgroundTransparency = 1,
 								ZIndex = 1001,
 								LayoutOrder = i,
 							}, DropContainer)
-							New("UICorner", { CornerRadius = UDim.new(0, 4) }, BtnRow)
+							New("UICorner", { CornerRadius = UDim.new(0, 6) }, BtnRow)
 
 							local Label = New("TextLabel", {
 								Name = "Label",
-								Position = UDim2.new(0, 8, 0, 0),
-								Size = UDim2.new(1, -32, 1, 0),
+								Position = UDim2.new(0, 28, 0, 0),
+								Size = UDim2.new(1, -36, 1, 0),
 								BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 								BackgroundTransparency = 1,
 								Text = opt,
-								TextColor3 = Color3.fromRGB(215, 217, 225),
+								TextColor3 = Color3.fromRGB(200, 204, 218),
 								TextScaled = false,
-								TextSize = 13,
+								TextSize = 15,
 								Font = FONT,
 								TextTruncate = Enum.TextTruncate.AtEnd,
-								TextTransparency = 0.05,
+								TextTransparency = 0
 								ZIndex = 1002,
 								TextXAlignment = Enum.TextXAlignment.Left,
 							}, BtnRow)
 
-							local SelBtn = New("TextButton", {
-								Name = "Selected",
-								AnchorPoint = Vector2.new(1, 0),
-								Position = UDim2.new(1, -6, 0, 0),
-								Size = UDim2.new(0, 18, 1, 0),
-								BackgroundColor3 = Color3.fromRGB(17, 19, 27),
-								BackgroundTransparency = 1,
-								BorderSizePixel = 0,
-								Text = "",
-								TextColor3 = Color3.fromRGB(78, 131, 255),
-								TextScaled = false,
-								TextSize = 15,
-								Font = FONT,
-								ZIndex = 1004,
-							}, BtnRow)
-							New("UICorner", { CornerRadius = UDim.new(0, 5) }, SelBtn)
-
-							selectedBtns[opt] = SelBtn
+							local SelBtn = New("ImageButton", {
+						Name = "Selected",
+						AnchorPoint = Vector2.new(0, 0.5),
+						Position = UDim2.new(0, 4, 0.5, 0),
+						Size = UDim2.fromOffset(14, 14),
+						BackgroundTransparency = 1,
+						BorderSizePixel = 0,
+						Image = "rbxassetid://138494545053627",
+						ImageColor3 = mainColor,
+						Visible = false,
+						ZIndex = 1006,
+					}, BtnRow)
+					selectedBtns[opt] = SelBtn
 
 							local RowBtn = New("TextButton", {
 								Size = UDim2.new(1, 0, 1, 0),
@@ -9102,10 +9088,10 @@ New("Frame", {
 								ZIndex = 1005,
 							}, BtnRow)
 							RowBtn.MouseEnter:Connect(function()
-								Tween(BtnRow, { BackgroundTransparency = 0.35 }, 0.08)
+								Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08)
 							end)
 							RowBtn.MouseLeave:Connect(function()
-								Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12)
+								Tween(BtnRow, { BackgroundTransparency = opt == selected and 0.94 or 1 }, 0.12)
 							end)
 						RowBtn.MouseButton1Click:Connect(function()
 							selected = opt
@@ -9139,13 +9125,15 @@ New("Frame", {
 							if _openAccordionDropdown then _openAccordionDropdown() end
 							dropOpen = true
 							_openAccordionDropdown = closeDropdown2
-							local knownH = math.clamp(26 * #options + 28, 46, 460)
+							local knownH = math.min(#options, 8) * 30 + 10
+							local knownW = math.max(TextDefault.AbsoluteSize.X, 150)
+							DropPopup.Size = UDim2.fromOffset(knownW, knownH)
 							local knownW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
 							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
 							DropPopup.BackgroundTransparency = 0
 							DropPopup.Visible = false
 							ApplyZIndexLadder(DropPopup, NextPopupZ())
-							PositionPopupWithinMain(DropPopup, true, nil, nil, Vector2.new(knownW, knownH))
+							PositionPopupWithinMain(DropPopup, true, 4, TextDefault, Vector2.new(knownW, knownH))
 							ForceLiftClipping(DropPopup)
 							DropPopup.Visible = true
 							Tween(SelArrow, { Rotation = 180 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
