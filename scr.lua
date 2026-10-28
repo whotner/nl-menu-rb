@@ -1089,7 +1089,9 @@ end
 local function FormatSliderValue(value, suffix)
 	suffix = tostring(suffix or ""):gsub("^%s+", ""):gsub("%s+$", "")
 	local text
-	if math.abs(value - math.round(value)) < 0.0001 then
+	if string.find(suffix, "°", 1, true) then
+		text = string.format("%.1f", value)
+	elseif math.abs(value - math.round(value)) < 0.0001 then
 		text = tostring(math.round(value))
 	else
 		text = string.format("%.1f", value)
