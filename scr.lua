@@ -3901,16 +3901,16 @@ PositionPopupWithinMain(LangDownBar, true)
 		TextDefault.Name = "TextDefault"
 		TextDefault.Position = UDim2.new(0.60, 0, 0.17, 0)
 		TextDefault.Size = UDim2.new(0.25, 0, 0.6, 0)
-		TextDefault.TextTruncate = Enum.TextTruncate.None
+		TextDefault.TextTruncate = Enum.TextTruncate.AtEnd
 		TextDefault.BackgroundTransparency = 1
 		TextDefault.Text = selected
 		
 		TextDefault.TextColor3 = Color3.fromRGB(255,255,255)
 		TextDefault.TextScaled = false
 		TextDefault.Font = FONT
-		TextDefault.TextTransparency = 0.7
+		TextDefault.TextTransparency = 0
 		TextDefault.ZIndex = 150
-		TextDefault.TextXAlignment = Enum.TextXAlignment.Right
+		TextDefault.TextXAlignment = Enum.TextXAlignment.Left
 		TextDefault.Parent = Row
 
 		-- ============================================================================
@@ -3918,35 +3918,22 @@ PositionPopupWithinMain(LangDownBar, true)
 		-- ============================================================================
 		local DropPopup = Instance.new("Frame")
 		DropPopup.Name = "Dropdown"
-		DropPopup.Position = UDim2.new(0.02,0,1,2)
-		DropPopup.Size = UDim2.new(0.96,0,0,100)
-		DropPopup.BackgroundColor3 = THEME.plate
+		DropPopup.Position = UDim2.new(0.60, 0, 1, 4)
+		DropPopup.Size = UDim2.fromOffset(150, 0)
+		DropPopup.BackgroundColor3 = Color3.fromRGB(17, 19, 28)
 		DropPopup.BackgroundTransparency = 0
 		DropPopup.BorderSizePixel = 0
 		DropPopup.Visible = false
 		DropPopup.ZIndex = 1000
 		DropPopup.Parent = Row
-		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = DropPopup end
+		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = DropPopup end
 		do Stroke(DropPopup) end
 
-		local DropHeader = Instance.new("TextLabel")
-		DropHeader.Name = "HeaderLabel"
-		DropHeader.Position = UDim2.new(0, 10, 0, 5)
-		DropHeader.Size = UDim2.new(1, -20, 0, 14)
-		DropHeader.BackgroundTransparency = 1
-		DropHeader.Text = tostring(text or "")
-		DropHeader.TextColor3 = Color3.fromRGB(122, 124, 136)
-			DropHeader.TextSize = 11
-		DropHeader.Font = FONT
-		DropHeader.TextXAlignment = Enum.TextXAlignment.Left
-		DropHeader.TextTruncate = Enum.TextTruncate.AtEnd
-		DropHeader.ZIndex = 1000
-		DropHeader.Parent = DropPopup
 
 		local DropContainer = Instance.new("ScrollingFrame")
 		DropContainer.Name = "Container"
-		DropContainer.Position = UDim2.new(0, 4, 0, 22)
-		DropContainer.Size = UDim2.new(1, -8, 1, -26)
+		DropContainer.Position = UDim2.fromOffset(6, 6)
+		DropContainer.Size = UDim2.new(1, -12, 1, -12)
 		DropContainer.BackgroundTransparency = 1
 		DropContainer.ZIndex = 1000
 		DropContainer.Active = true
@@ -3956,7 +3943,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		DropContainer.ScrollBarThickness = 2
 		DropContainer.ScrollBarImageTransparency = 0.5
 		DropContainer.Parent = DropPopup
-		do local ll = Instance.new("UIListLayout"); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0, 1); ll.Parent = DropContainer end
+		do local ll = Instance.new("UIListLayout"); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0, 2); ll.Parent = DropContainer end
 
 		local function closeDropdown()
 			dropOpen = false
@@ -3967,52 +3954,57 @@ PositionPopupWithinMain(LangDownBar, true)
 
 		local function updateCheckmarks()
 			for opt, sb in pairs(selectedBtns) do
-				sb.Text = opt == selected and "✓" or ""
-				if opt == selected then sb.TextColor3 = mainColor end
+				local isSelected = opt == selected
+				sb.Visible = isSelected
+				sb.ImageColor3 = mainColor
+				local row = sb.Parent
+				if row then
+					row.BackgroundTransparency = isSelected and 0.94 or 1
+					local label = row:FindFirstChildWhichIsA("TextLabel")
+					if label then label.TextColor3 = isSelected and Color3.fromRGB(255,255,255) or Color3.fromRGB(200,204,218) end
+				end
 			end
 		end
 
 		for i, opt in ipairs(options) do
 			local BtnRow = Instance.new("Frame")
 			BtnRow.Name = "Buttons"
-			BtnRow.Size = UDim2.new(1, 0, 0, 26)
-			BtnRow.BackgroundColor3 = Color3.fromRGB(38, 38, 45)
+			BtnRow.Size = UDim2.new(1, -12, 0, 28)
+			BtnRow.Position = UDim2.fromOffset(6, 0)
+			BtnRow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			BtnRow.BackgroundTransparency = 1
 			BtnRow.ZIndex = 1001
 			BtnRow.LayoutOrder = i
 			BtnRow.Parent = DropContainer
-			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 4); c.Parent = BtnRow end
+			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = BtnRow end
 
 			local lbl = Instance.new("TextLabel")
-			lbl.Position = UDim2.new(0, 8, 0, 0)
-			lbl.Size = UDim2.new(1, -32, 1, 0)
+			lbl.Position = UDim2.new(0, 28, 0, 0)
+			lbl.Size = UDim2.new(1, -36, 1, 0)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = opt
-			lbl.TextColor3 = Color3.fromRGB(215, 217, 225)
+			lbl.TextColor3 = Color3.fromRGB(200, 204, 218)
 			lbl.TextScaled = false
-			lbl.TextSize = 13
+			lbl.TextSize = 15
 			lbl.Font = FONT
 			lbl.TextTruncate = Enum.TextTruncate.AtEnd
-			lbl.TextTransparency = 0.05
+			lbl.TextTransparency = 0
 			lbl.ZIndex = 1002
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
 			lbl.Parent = BtnRow
 
-			local SelBtn = Instance.new("TextButton")
+			local SelBtn = Instance.new("ImageButton")
 			SelBtn.Name = "Selected"
-			SelBtn.AnchorPoint = Vector2.new(1, 0)
-			SelBtn.Position = UDim2.new(1, -6, 0, 0)
-			SelBtn.Size = UDim2.new(0, 18, 1, 0)
+			SelBtn.AnchorPoint = Vector2.new(0, 0.5)
+			SelBtn.Position = UDim2.new(0, 4, 0.5, 0)
+			SelBtn.Size = UDim2.fromOffset(14, 14)
 			SelBtn.BackgroundTransparency = 1
 			SelBtn.BorderSizePixel = 0
-			SelBtn.Text = ""
-			SelBtn.TextColor3 = Color3.fromRGB(78, 131, 255)
-			SelBtn.TextScaled = false
-			SelBtn.TextSize = 15
-			SelBtn.Font = FONT
-			SelBtn.ZIndex = 1004
+			SelBtn.Image = "rbxassetid://138494545053627"
+			SelBtn.ImageColor3 = mainColor
+			SelBtn.Visible = false
+			SelBtn.ZIndex = 1006
 			SelBtn.Parent = BtnRow
-			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = SelBtn end
 			selectedBtns[opt] = SelBtn
 
 			local RowBtn = Instance.new("TextButton")
@@ -4022,10 +4014,10 @@ PositionPopupWithinMain(LangDownBar, true)
 			RowBtn.ZIndex = 1005
 			RowBtn.Parent = BtnRow
 			RowBtn.MouseEnter:Connect(function()
-				Tween(BtnRow, { BackgroundTransparency = 0.35 }, 0.08)
+				Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08)
 			end)
 			RowBtn.MouseLeave:Connect(function()
-				Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12)
+				Tween(BtnRow, { BackgroundTransparency = opt == selected and 0.94 or 1 }, 0.12)
 			end)
 
 			local function selectOpt()
@@ -4052,12 +4044,13 @@ PositionPopupWithinMain(LangDownBar, true)
 			else
 				CloseAllPopupsExcept(DropPopup)
 				dropOpen = true
-				DropPopup.Size = UDim2.new(0.96, 0, 0, math.clamp(26 * #options + 28, 46, 460))
+				local popupH = math.min(#options, 8) * 30 + 10
+				DropPopup.Size = UDim2.fromOffset(150, popupH)
 				DropPopup.BackgroundTransparency = 0
 						DropPopup.Visible = true
 		Tween(Arrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				Tween(Arrow, {ImageTransparency = 0}, 0.2)
-				PositionPopupWithinMain(DropPopup, true); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
+				PositionPopupWithinMain(DropPopup, true, 4, TextDefault, Vector2.new(150, popupH)); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 			end
 		end)
 
