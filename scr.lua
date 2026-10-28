@@ -700,107 +700,6 @@ local function EllipsizeTo(label, maxWidth)
 	label.Text = best ~= "" and best or ELLIPSIS
 end
 
-local function FitTextBeforeArrow(label, arrow)
-	if not label or not arrow then return end
-	task.defer(function()
-		if not label.Parent or not arrow.Parent then return end
-		local full = label:GetAttribute("FullText")
-		if type(full) ~= "string" then full = tostring(label.Text or "") end
-		label.Text = full
-		pcall(function() label.TextTruncate = Enum.TextTruncate.None end)
-		local maxWidth = math.max(0, math.min(label.AbsoluteSize.X, arrow.AbsolutePosition.X - label.AbsolutePosition.X - 6))
-		local measured = MeasureText(full, label.TextSize or 14, label.Font or FONT)
-		local needsFade = maxWidth > 0 and measured > maxWidth + 1
-		if label:IsA("TextButton") then
-			local overlay = label:FindFirstChild("NLTextFadeOverlay")
-			if not needsFade then
-				if overlay then overlay:Destroy() end
-				return
-			end
-			if not overlay then
-				overlay = Instance.new("Frame")
-				overlay.Name = "NLTextFadeOverlay"
-				overlay.Active = false
-				overlay.BorderSizePixel = 0
-				overlay.BackgroundTransparency = 0
-				overlay.ZIndex = label.ZIndex + 1
-				overlay.Parent = label
-				local gradient = Instance.new("UIGradient")
-				gradient.Name = "FadeGradient"
-				gradient.Rotation = 0
-				gradient.Transparency = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 1),
-					NumberSequenceKeypoint.new(0.45, 0.78),
-					NumberSequenceKeypoint.new(1, 0),
-				})
-				gradient.Parent = overlay
-			end
-			local fadeWidth = math.min(26, maxWidth)
-			overlay.Position = UDim2.new(0, math.max(0, maxWidth - fadeWidth), 0, 0)
-			overlay.Size = UDim2.new(0, fadeWidth, 1, 0)
-			overlay.BackgroundColor3 = label.BackgroundColor3
-			overlay.BackgroundTransparency = label.BackgroundTransparency
-			overlay.ZIndex = label.ZIndex + 1
-		else
-			local gradient = label:FindFirstChild("NLTextFade")
-			if not gradient then
-				gradient = Instance.new("UIGradient")
-				gradient.Name = "NLTextFade"
-				gradient.Rotation = 0
-				gradient.Parent = label
-			end
-			if label.TextXAlignment == Enum.TextXAlignment.Right then
-				gradient.Transparency = needsFade and NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 1),
-					NumberSequenceKeypoint.new(0.14, 0.24),
-					NumberSequenceKeypoint.new(0.32, 0),
-					NumberSequenceKeypoint.new(1, 0),
-				}) or NumberSequence.new(0)
-			else
-				gradient.Transparency = needsFade and NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 0),
-					NumberSequenceKeypoint.new(0.68, 0),
-					NumberSequenceKeypoint.new(0.86, 0.24),
-					NumberSequenceKeypoint.new(1, 1),
-				}) or NumberSequence.new(0)
-			end
-		end
-	end)
-end
-
-local function SetTrimmedText(label, value)
-	if not label then return end
-	label:SetAttribute("FullText", tostring(value or ""))
-	label.Text = tostring(value or "")
-end
-
-	local function RefreshColorPickerPopup(popup)
-		if not popup or not popup:IsA("GuiObject") then return end
-		local parent = popup.Parent
-		if not parent then return end
-		local w = parent.AbsoluteSize.X
-		if w <= 0 then return end
-		local h = (w * popup.Size.X.Scale) / 1.1
-		if h > 0 then popup.Size = UDim2.new(popup.Size.X.Scale, popup.Size.X.Offset, 0, h) end
-	end
-
-	local function FitColorPickerPopup(popup)
-		if not popup or not popup:IsA("GuiObject") then return end
-		local parent = popup.Parent
-		if not parent then
-			task.defer(function() FitColorPickerPopup(popup) end)
-			return
-		end
-		RefreshColorPickerPopup(popup)
-		task.defer(function() RefreshColorPickerPopup(popup) end)
-		if popup:GetAttribute("_nlPickerFitted") then return end
-		popup:SetAttribute("_nlPickerFitted", true)
-		pcall(function()
-			parent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-				RefreshColorPickerPopup(popup)
-			end)
-		end)
-	end
 
 
 local Z_BASE = 10000
@@ -2002,31 +1901,6 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		return picker
 	end
 
-	local function AnimateColorPickerOpen(popup, trigger, open, onClose)
-		if not popup or not popup.Parent then return end
-		if open then
-			CloseAllPopupsExcept(popup)
-			popup.Visible = true
-			FitColorPickerPopup(popup)
-			RefreshColorPickerPopup(popup)
-			popup.BackgroundTransparency = 1
-			popup.ZIndex = 8000
-			ApplyZIndexLadder(popup, NextPopupZ())
-			Tween(popup, { BackgroundTransparency = 0.02 }, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			PositionPopupWithinMain(popup, true)
-			task.defer(function() if popup.Visible then PositionPopupWithinMain(popup, true) end end)
-			RegisterPopup(popup, function()
-				UnregisterPopup(popup)
-				popup.Visible = false
-				if type(onClose) == "function" then onClose(false) end
-			end, trigger)
-		else
-			UnregisterPopup(popup)
-			Tween(popup, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-			task.delay(0.15, function() if not popup.Visible then popup.BackgroundTransparency = 1 end end)
-			popup.Visible = false
-		end
-	end
 
 
 local Stats = game:GetService('Stats')
@@ -3353,7 +3227,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	ScaleDefault.BackgroundTransparency = 1
 	ScaleDefault.Text = "Auto"
 	ScaleDefault:SetAttribute("FullText", ScaleDefault.Text)
-	FitTextBeforeArrow(ScaleDefault, ScaleArrow)
+	
 	ScaleDefault.TextColor3 = Color3.fromRGB(255,255,255)
 	ScaleDefault.TextScaled = false
 	ScaleDefault.Font = FONT
@@ -3500,7 +3374,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	LangDefault.BackgroundTransparency = 1
 	LangDefault.Text = "English"
 	LangDefault:SetAttribute("FullText", LangDefault.Text)
-	FitTextBeforeArrow(LangDefault, LangArrow)
+	
 	LangDefault.TextColor3 = Color3.fromRGB(255,255,255)
 	LangDefault.TextScaled = false
 	LangDefault.Font = FONT
@@ -3579,8 +3453,8 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		local scaleOpen = false
 		local scaleSelectedBtns = {}
 		syncScaleSelection = function(selectedLabel)
-			SetTrimmedText(ScaleDefault, tostring(selectedLabel or "Auto"))
-			FitTextBeforeArrow(ScaleDefault, ScaleArrow)
+			ScaleDefault.Text = tostring(selectedLabel or "Auto")
+			
 			for label, button in pairs(scaleSelectedBtns) do
 				button.Text = label == selectedLabel and "✓" or ""
 				if label == selectedLabel then button.TextColor3 = mainColor end
@@ -3725,8 +3599,8 @@ PositionPopupWithinMain(ScaleDownBar, true)
 				for k, sb in pairs(langSelectedBtns) do sb.Text = "" end
 				SelBtn.Text = "✓"
 				SelBtn.TextColor3 = mainColor
-				SetTrimmedText(LangDefault, lang)
-				FitTextBeforeArrow(LangDefault, LangArrow)
+				LangDefault.Text = lang
+				
 				closeLangDropdown()
 			end
 			RowBtn.MouseButton1Click:Connect(selectLang)
@@ -4018,8 +3892,8 @@ PositionPopupWithinMain(LangDownBar, true)
 		TextDefault.Size = UDim2.new(0.25, 0, 0.6, 0)
 		TextDefault.TextTruncate = Enum.TextTruncate.None
 		TextDefault.BackgroundTransparency = 1
-		SetTrimmedText(TextDefault, selected)
-		FitTextBeforeArrow(TextDefault, Arrow)
+		TextDefault.Text = selected
+		
 		TextDefault.TextColor3 = Color3.fromRGB(255,255,255)
 		TextDefault.TextScaled = false
 		TextDefault.Font = FONT
@@ -4145,7 +4019,7 @@ PositionPopupWithinMain(LangDownBar, true)
 
 			local function selectOpt()
 				selected = opt
-				SetTrimmedText(TextDefault, opt); FitTextBeforeArrow(TextDefault, Arrow)
+				TextDefault.Text = opt; 
 				updateCheckmarks()
 				closeDropdown()
 				InvokeCallback(callback, opt)
@@ -4179,7 +4053,7 @@ PositionPopupWithinMain(LangDownBar, true)
 		updateCheckmarks()
 
 		local obj = {}
-		function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; SetTrimmedText(TextDefault, val); FitTextBeforeArrow(TextDefault, Arrow); updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
+		function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TextDefault.Text = val; ; updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
 		function obj:Get() return selected end
 		MakeReadableText(Row, 10, 18)
 		return obj
@@ -6885,7 +6759,7 @@ New("Frame", {
 						Name = "TextDefault",
 						Position = UDim2.new(0.60, 0, 0.25, 0),
 						Size = UDim2.new(0.29, 0, 0.6, 0),
-						TextTruncate = Enum.TextTruncate.None,
+						TextTruncate = Enum.TextTruncate.AtEnd,
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = options[1] or "Auto",
@@ -7021,11 +6895,11 @@ New("Frame", {
 							Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12)
 						end)
 						RowBtn.MouseButton1Click:Connect(function()
-							selected = opt; SetTrimmedText(TextDefault, opt); FitTextBeforeArrow(TextDefault, SelArrow); updateCheckmarks(); closeDropdown()
+							selected = opt; TextDefault.Text = opt; ; updateCheckmarks(); closeDropdown()
 							InvokeCallback(callback, opt)
 						end)
 						SelBtn.MouseButton1Click:Connect(function()
-							selected = opt; SetTrimmedText(TextDefault, opt); FitTextBeforeArrow(TextDefault, SelArrow); updateCheckmarks(); closeDropdown()
+							selected = opt; TextDefault.Text = opt; ; updateCheckmarks(); closeDropdown()
 							InvokeCallback(callback, opt)
 						end)
 					end
@@ -7056,11 +6930,11 @@ New("Frame", {
 						end
 					end)
 
-					SetTrimmedText(TextDefault, selected); FitTextBeforeArrow(TextDefault, SelArrow)
+					TextDefault.Text = selected; 
 					updateCheckmarks()
 
 					local obj = {}
-					function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; SetTrimmedText(TextDefault, val); FitTextBeforeArrow(TextDefault, SelArrow); updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
+					function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TextDefault.Text = val; ; updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
 					function obj:Get() return selected end
 					RegisterConfigElement("settings_dropdown_", text, obj)
 					return obj
@@ -8141,20 +8015,30 @@ New("Frame", {
 					Name = "TopBar",
 					Position = UDim2.new(1, -14, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
-			      Size = UDim2.fromOffset(135, 26),
-				   BackgroundColor3 = Color3.fromRGB(30, 33, 47),
+					Size = UDim2.fromOffset(135, 26),
+					BackgroundColor3 = Color3.fromRGB(30, 33, 47),
 					BackgroundTransparency = 0,
-					Text = selected or "Select",
+					Text = "",
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = false,
 					Font = FONT,
-					TextTransparency = 0,
-					TextXAlignment = Enum.TextXAlignment.Left,
-TextTruncate = Enum.TextTruncate.AtEnd,
-ZIndex = 6,
+					ZIndex = 6,
 				}, Dropdown)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar)
-				New("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 28) }, TopBar)
+				local TopBarText = New("TextLabel", {
+					Name = "TopBarText",
+					Position = UDim2.new(0, 8, 0, 0),
+					Size = UDim2.new(1, -36, 1, 0),
+					BackgroundTransparency = 1,
+					Text = selected or "Select",
+					TextColor3 = Color3.fromRGB(255, 255, 255),
+					TextScaled = false,
+					TextSize = 15,
+					Font = FONT,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextTruncate = Enum.TextTruncate.AtEnd,
+					ZIndex = 7,
+				}, TopBar)
 
 				local Arrow = New("ImageLabel", {
 					Name = "Arrow",
@@ -8252,7 +8136,7 @@ ZIndex = 6,
 					end)
 					Buttons.MouseButton1Click:Connect(function()
 						selected = opt
-						SetTrimmedText(TopBar, opt); 
+						TopBarText.Text = opt; 
 						for option, row in pairs(optionRows) do
 							Tween(row, { BackgroundTransparency = option == selected and 0.94 or 1 }, 0.12, Enum.EasingStyle.Sine)
 							local check = row:FindFirstChild("SelectedCheck")
@@ -8296,7 +8180,7 @@ ZIndex = 6,
 				function obj:Set(val, silent)
 					val = GetValidOption(options, val)
 					selected = val
-					SetTrimmedText(TopBar, val)
+					TopBarText.Text = val
 					
 					for option, row in pairs(optionRows) do
 						Tween(row, { BackgroundTransparency = option == selected and 0.42 or 1 }, 0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
@@ -9075,7 +8959,7 @@ New("Frame", {
 						Name = "TextDefault",
 						Position = UDim2.new(0.60, 0, 0.25, 0),
 						Size = UDim2.new(0.29, 0, 0.6, 0),
-						TextTruncate = Enum.TextTruncate.None,
+						TextTruncate = Enum.TextTruncate.AtEnd,
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = options[1] or "Auto",
@@ -9210,14 +9094,14 @@ New("Frame", {
 							end)
 						RowBtn.MouseButton1Click:Connect(function()
 							selected = opt
-							SetTrimmedText(TextDefault, opt); FitTextBeforeArrow(TextDefault, SelArrow)
+							TextDefault.Text = opt; 
 							updateCheckmarks()
 							closeDropdown2()
 							InvokeCallback(callback, opt)
 						end)
 						SelBtn.MouseButton1Click:Connect(function()
 							selected = opt
-							SetTrimmedText(TextDefault, opt); FitTextBeforeArrow(TextDefault, SelArrow)
+							TextDefault.Text = opt; 
 							updateCheckmarks()
 							closeDropdown2()
 							InvokeCallback(callback, opt)
@@ -9258,7 +9142,7 @@ New("Frame", {
 					function obj:Set(val, silent)
 						val = GetValidOption(options, val)
 						selected = val
-						SetTrimmedText(TextDefault, val); FitTextBeforeArrow(TextDefault, SelArrow)
+						TextDefault.Text = val; 
 						updateCheckmarks()
 						if not silent then InvokeCallback(callback, val) end
 					end
