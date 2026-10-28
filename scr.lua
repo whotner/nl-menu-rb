@@ -5321,7 +5321,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		local function countRows(container)
 			local count = 0
 			for _, c in ipairs(container:GetChildren()) do
-				if c:IsA("Frame") and c.Name ~= "Space" then count = count + 1 end
+				if c:IsA("Frame") and c.Name ~= "Space" and c.Visible then count = count + 1 end
 			end
 			return count
 		end
@@ -5387,6 +5387,7 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 				end
 			end
 		end
+		task.defer(UpdateConfigPanelHeight)
 	end)
 
 	local function SaveActiveConfig()
