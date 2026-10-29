@@ -5721,7 +5721,7 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 	end)
 
 
-;(function()
+WindowObj._setupWindowToggle = function()
 local Line9 = Instance.new('Frame')
 Line9.Name = "Line9"
 Line9.Position = UDim2.new(0.008, 0, 0, 53)
@@ -5826,7 +5826,10 @@ end
 
 
 
-end)()
+end
+WindowObj._setupWindowToggle()
+WindowObj._setupWindowToggle = nil
+
 
 	function WindowObj:AddTabLabel(text)
 		text = tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", "")
