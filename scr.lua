@@ -447,13 +447,10 @@ local CenterElement
 local SizeSliderChip
 
 local STROKE = { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.92, Thickness = 1 }
-local strokeAuthored = setmetatable({}, { __mode = "k" })
 local strokeScale = 1
 local function ApplyStrokeScale(stroke, scale)
 	if not stroke or not stroke:IsA("UIStroke") then return end
-	local base = strokeAuthored[stroke]
-	if not base then base = stroke.Thickness; strokeAuthored[stroke] = base end
-	stroke.Thickness = stroke:GetAttribute("NLKeepThickness") and base or STROKE.Thickness
+	stroke.Thickness = STROKE.Thickness
 end
 local function Stroke(parent, name)
 	local stroke = Instance.new("UIStroke")
@@ -3000,7 +2997,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			plan.Size = UDim2.new(1, -56, 0, 14)
 			plan.BackgroundTransparency = 1
 			plan.BorderSizePixel = 0
-			plan.Text = daysLeft == "Lifetime" and "Lifetime access" or ("Till: " .. tostring(daysLeft))
+			plan.Text = daysLeft == "Lifetime" and "Lifetime" or ("Till: " .. tostring(daysLeft))
 			plan.TextColor3 = Color3.fromRGB(151, 157, 175)
 			plan.TextSize = 12
 			plan.Font = FONT
