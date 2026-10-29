@@ -5720,6 +5720,8 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 		end)
 	end)
 
+
+(function()
 local Line9 = Instance.new('Frame')
 Line9.Name = "Line9"
 Line9.Position = UDim2.new(0.008, 0, 0, 53)
@@ -5823,6 +5825,8 @@ end
 	Tween(MainFrame, { BackgroundTransparency = 0.1 }, 0.18)
 
 
+
+end)()
 
 	function WindowObj:AddTabLabel(text)
 		text = tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", "")
