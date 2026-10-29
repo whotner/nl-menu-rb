@@ -6759,9 +6759,11 @@ New("Frame", {
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = false,
 						Font = FONT,
-						TextTransparency = 0.5,
+						TextTransparency = 0,
+						TextTruncate = Enum.TextTruncate.AtEnd,
+						TextSize = 15,
 						ZIndex = 1001,
-						TextXAlignment = Enum.TextXAlignment.Right,
+						TextXAlignment = Enum.TextXAlignment.Left,
 					}, Selection)
 
 					-- ============================================================================
@@ -6823,7 +6825,7 @@ New("Frame", {
 						local BtnRow = New("Frame", {
 							Name = "Buttons",
 							Size = UDim2.new(1, 0, 0, 28),
-							BackgroundColor3 = Color3.fromRGB(38, 38, 45),
+							BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 							BackgroundTransparency = 1,
 							ZIndex = 5001,
 							LayoutOrder = i,
@@ -8049,7 +8051,7 @@ New("Frame", {
 				local DownBar = New("Frame", {
 					Name = "DownBar",
 					Position = UDim2.new(0.02, 0, 1, 4),
-					Size = UDim2.new(0.72, 0, 0, 0),
+					Size = UDim2.fromOffset(150, 0),
 					BackgroundColor3 = Color3.fromRGB(17, 19, 28),
 					BackgroundTransparency = 0,
 					Visible = false,
@@ -8085,7 +8087,7 @@ New("Frame", {
 					dropOpen = false
 					Tween(Arrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					-- The dropdown outline stays on the shared Stroke() value (0.92).
-					Tween(DownBar, { Size = UDim2.new(0.72, 0, 0, 0) }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					Tween(DownBar, { Size = UDim2.fromOffset(math.max(TopBar.AbsoluteSize.X, 150), 0) }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					UnregisterPopup(DownBar)
 					local closeToken = (DownBar:GetAttribute("CloseToken") or 0) + 1
 					DownBar:SetAttribute("CloseToken", closeToken)
@@ -8958,9 +8960,11 @@ New("Frame", {
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = false,
 						Font = FONT,
-						TextTransparency = 0.5,
+						TextTransparency = 0,
+						TextTruncate = Enum.TextTruncate.AtEnd,
+						TextSize = 15,
 						ZIndex = 101,
-						TextXAlignment = Enum.TextXAlignment.Right,
+						TextXAlignment = Enum.TextXAlignment.Left,
 					}, Selection)
 
 					local DropPopup = New("Frame", {
@@ -9019,7 +9023,7 @@ New("Frame", {
 							local BtnRow = New("Frame", {
 								Name = "Buttons",
 								Size = UDim2.new(1, 0, 0, 28),
-								BackgroundColor3 = Color3.fromRGB(38, 38, 45),
+								BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 								BackgroundTransparency = 1,
 								ZIndex = 1001,
 								LayoutOrder = i,
