@@ -519,10 +519,6 @@ local function AttachRowHover(row)
 	if not row:FindFirstChildOfClass("UICorner") then
 		New("UICorner", { CornerRadius = UDim.new(0, 6) }, row)
 	end
-	local hoverStroke = row:FindFirstChild("NLRowHoverStroke")
-	if not hoverStroke then
-		hoverStroke = Stroke(row, "NLRowHoverStroke")
-	end
 	row.MouseEnter:Connect(function()
 		if not row.Parent then return end
 		Tween(row, { BackgroundColor3 = Color3.fromRGB(245, 247, 255), BackgroundTransparency = 0.955 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
@@ -4889,7 +4885,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	end
 
 	local function DeactivateRow(rowFrame, loadBtn)
-		local s = rowFrame:FindFirstChildWhichIsA("UIStroke")
 		Tween(rowFrame, {BackgroundTransparency = 0.25}, 0.15)
 		loadBtn.Image = LOAD_ICON
 		Tween(loadBtn, {ImageColor3 = Color3.fromRGB(180, 180, 200)}, 0.15)
