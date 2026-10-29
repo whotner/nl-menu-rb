@@ -7184,7 +7184,7 @@ New("Frame", {
 				AttachShadow(_bindMenu, { radius = THEME.radius, layers = 4, step = 1.5, bias = 3 })
 
 				local body = New("Frame", { Name = "Body", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = Z_BASE + 951 }, _bindMenu)
-				New("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, body)
+				New("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 0), PaddingRight = UDim.new(0, 0) }, body)
 				New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, body)
 
 				local function makeRow(order, icon, text, color)
