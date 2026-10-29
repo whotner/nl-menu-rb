@@ -3047,7 +3047,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		Row.BackgroundTransparency = 1
 		Row.BorderSizePixel = 0
 		Row.ZIndex = 120
-		Row.LayoutOrder = 60
+		Row.LayoutOrder = 120
 		Row.Parent = SettingsContainer
 		
 
@@ -3153,7 +3153,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WSColorpicker.BackgroundTransparency = 1
 	WSColorpicker.BorderSizePixel = 0
 	WSColorpicker.ZIndex = 130
-	WSColorpicker.LayoutOrder = 30
+	WSColorpicker.LayoutOrder = 60
 	WSColorpicker.Parent = SettingsContainer
 	do
 		local ln = Instance.new("Frame"); ln.Name = "Lines"
@@ -3164,17 +3164,19 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		ln.BorderSizePixel = 0; ln.ZIndex = 130; ln.Parent = WSColorpicker
 	end
 	do
+		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = "rbxassetid://109485777305919", ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSColorpicker)
 		local lbl = Instance.new("TextLabel")
 		lbl.Name = "colorpickerLabel"
-		lbl.Position = UDim2.new(0.03999999910593033,0,0.5,0)
-		lbl.Size = UDim2.new(0.6499999761581421,0,0.5,0)
-		lbl.AnchorPoint = Vector2.new(0,0.5)
+		lbl.Position = UDim2.fromOffset(28, 0)
+		lbl.Size = UDim2.new(1, -104, 1, 0)
+		lbl.AnchorPoint = Vector2.new(0,0)
 		lbl.BackgroundTransparency = 1
 		lbl.Text = "Style"
-		lbl.TextColor3 = Color3.fromRGB(255,255,255)
+		lbl.TextColor3 = Color3.fromRGB(200,204,218)
 		lbl.TextScaled = false
+		lbl.TextSize = 14
 		lbl.Font = FONT
-		lbl.TextTransparency = 0.5
+		lbl.TextTransparency = 0
 		lbl.ZIndex = 130
 		lbl.TextXAlignment = Enum.TextXAlignment.Left
 		lbl.Parent = WSColorpicker
@@ -3214,14 +3216,15 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		ln.BorderSizePixel = 0; ln.ZIndex = 150; ln.Parent = WSScaleRow
 	end
 	do
+		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = ICON_LAYERS, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSScaleRow)
 		local lbl = Instance.new("TextLabel"); lbl.Name = "Text"
-		lbl.Position = UDim2.new(0.03999999910593033,0,0.5,0)
-		lbl.Size = UDim2.new(0.6499999761581421,0,0.5,0)
-		lbl.AnchorPoint = Vector2.new(0,0.5)
+		lbl.Position = UDim2.fromOffset(28, 0)
+		lbl.Size = UDim2.new(1, -104, 1, 0)
+		lbl.AnchorPoint = Vector2.new(0,0)
 		lbl.BackgroundTransparency = 1
-		lbl.Text = "Menu Scale"; lbl.TextColor3 = Color3.fromRGB(255,255,255)
-		lbl.TextScaled = false; lbl.Font = FONT
-		lbl.TextTransparency = 0.5; lbl.ZIndex = 130
+		lbl.Text = "Menu Scale"; lbl.TextColor3 = Color3.fromRGB(200,204,218)
+		lbl.TextScaled = false; lbl.TextSize = 14; lbl.Font = FONT
+		lbl.TextTransparency = 0; lbl.ZIndex = 130
 		lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = WSScaleRow
 	end
 
@@ -3248,10 +3251,11 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	ScaleDefault.Text = "Auto"
 	ScaleDefault:SetAttribute("FullText", ScaleDefault.Text)
 	
-	ScaleDefault.TextColor3 = Color3.fromRGB(255,255,255)
+	ScaleDefault.TextColor3 = Color3.fromRGB(150,155,172)
 	ScaleDefault.TextScaled = false
+	ScaleDefault.TextSize = 13
 	ScaleDefault.Font = FONT
-	ScaleDefault.TextTransparency = 0.699999988079071
+	ScaleDefault.TextTransparency = 0
 	ScaleDefault.ZIndex = 150
 	ScaleDefault.TextXAlignment = Enum.TextXAlignment.Right
 	ScaleDefault.Parent = WSScaleRow
@@ -3293,7 +3297,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		BackgroundColor3 = Color3.fromRGB(162,162,162),
 		BackgroundTransparency = 1,
 		ZIndex = 120,
-		LayoutOrder = 40,
+		LayoutOrder = 110,
 	}, SettingsContainer)
 	New("Frame", {
 		Name = "Lines",
@@ -3358,14 +3362,15 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		ln.BorderSizePixel = 0; ln.ZIndex = 150; ln.Parent = WSLangRow
 	end
 	do
+		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = ICON_KEYBOARD, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSLangRow)
 		local lbl = Instance.new("TextLabel"); lbl.Name = "Text"
-		lbl.Position = UDim2.new(0.03999999910593033,0,0.5,0)
-		lbl.Size = UDim2.new(0.6499999761581421,0,0.5,0)
-		lbl.AnchorPoint = Vector2.new(0,0.5)
+		lbl.Position = UDim2.fromOffset(28, 0)
+		lbl.Size = UDim2.new(1, -104, 1, 0)
+		lbl.AnchorPoint = Vector2.new(0,0)
 		lbl.BackgroundTransparency = 1
-		lbl.Text = "Language"; lbl.TextColor3 = Color3.fromRGB(255,255,255)
-		lbl.TextScaled = false; lbl.Font = FONT
-		lbl.TextTransparency = 0.5; lbl.ZIndex = 130
+		lbl.Text = "Language"; lbl.TextColor3 = Color3.fromRGB(200,204,218)
+		lbl.TextScaled = false; lbl.TextSize = 14; lbl.Font = FONT
+		lbl.TextTransparency = 0; lbl.ZIndex = 130
 		lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = WSLangRow
 	end
 
@@ -3392,10 +3397,11 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	LangDefault.Text = "English"
 	LangDefault:SetAttribute("FullText", LangDefault.Text)
 	
-	LangDefault.TextColor3 = Color3.fromRGB(255,255,255)
+	LangDefault.TextColor3 = Color3.fromRGB(150,155,172)
 	LangDefault.TextScaled = false
+	LangDefault.TextSize = 13
 	LangDefault.Font = FONT
-	LangDefault.TextTransparency = 0.699999988079071
+	LangDefault.TextTransparency = 0
 	LangDefault.ZIndex = 150
 	LangDefault.TextXAlignment = Enum.TextXAlignment.Right
 	LangDefault.Parent = WSLangRow
@@ -3654,7 +3660,41 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			end
 			RowBtn.MouseButton1Click:Connect(selectLang)
 		end
+local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
+	local row = New("Frame", { Name = "Profile_" .. name, Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = order, ZIndex = 120 }, SettingsContainer)
+	New("Frame", { Name = "Lines", Position = UDim2.new(0.05, 0, 1, -1), Size = UDim2.new(0.9, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(255,255,255), BackgroundTransparency = 0.92, BorderSizePixel = 0, ZIndex = 129 }, row)
+	New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = iconAsset, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, row)
+	local labelWidth = (kind == "switch-off" or kind == "switch-on") and UDim2.new(1, -72, 1, 0) or UDim2.new(1, -104, 1, 0)
+	New("TextLabel", { Name = "ProfileLabel", Position = UDim2.fromOffset(28, 0), Size = labelWidth, BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(200,204,218), TextScaled = false, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
+	if kind == "switch-off" or kind == "switch-on" then
+		local on = kind == "switch-on"
+		local track = New("Frame", { Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(33, 20), BackgroundColor3 = on and mainColor or Color3.fromRGB(30,32,44), BorderSizePixel = 0, ZIndex = 131 }, row)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
+		Stroke(track, "ProfileSwitchStroke")
+		local knob = New("Frame", { Name = "Knob", Position = on and UDim2.fromOffset(16,3) or UDim2.fromOffset(3,3), Size = UDim2.fromOffset(14,14), BackgroundColor3 = on and Color3.fromRGB(255,255,255) or Color3.fromRGB(125,128,142), BorderSizePixel = 0, ZIndex = 132 }, track)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
+	else
+		if value and value ~= "" then
+			New("TextLabel", { Name = "ProfileValue", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -22, 0.5, 0), Size = UDim2.fromOffset(52, 30), BackgroundTransparency = 1, Text = value, TextColor3 = Color3.fromRGB(150,155,172), TextScaled = false, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
+		end
+		if kind == "arrow" then
+			New("ImageLabel", { Name = "Chevron", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(10, 10), BackgroundTransparency = 1, Image = "rbxassetid://10709790990", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 0.3, Rotation = 0, ScaleType = Enum.ScaleType.Fit, ZIndex = 131 }, row)
+		end
+	end
+	return row
+end
+
+AddProfileDisplayRow(30, "ESPScale", "ESP Scale", "100%", ICON_EYE, "arrow")
+AddProfileDisplayRow(40, "WindowsScale", "Windows Scale", "100%", ICON_LAYERS, "arrow")
+AddProfileDisplayRow(50, "Units", "Units", "Metric", ICON_RAM, "arrow")
+AddProfileDisplayRow(70, "SafeMode", "Safe Mode", nil, ICON_EYE, "switch-off")
+AddProfileDisplayRow(80, "Synchronization", "Synchronization", nil, ICON_WIFI, "switch-on")
+AddProfileDisplayRow(90, "About", "About", nil, ICON_CLOCK, "arrow")
+AddProfileDisplayRow(100, "Chat", "Chat", nil, ICON_KEYBOARD, "arrow")
 		syncLangSelection()
+
+
+		LangOpenBtn.MouseButton1Click:Connect(function()		syncLangSelection()
 
 
 		LangOpenBtn.MouseButton1Click:Connect(function()
