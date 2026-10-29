@@ -2734,7 +2734,7 @@ Aspect.AspectRatio = 798 / 610
 		Name = "HubGlyph",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.fromOffset(40, 40),
+		Size = UDim2.fromOffset(46, 46),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
@@ -2873,7 +2873,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WindowSettingsFrame.Size = UDim2.fromOffset(215, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
-	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
+	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 28)
 	WindowSettingsFrame.BackgroundTransparency = 0.045
 	WindowSettingsFrame.ZIndex = 101
 	do Stroke(WindowSettingsFrame) end
