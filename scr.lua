@@ -3406,21 +3406,20 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local LangDownBar = Instance.new("Frame")
 	LangDownBar.Name = "Dropdown"
-	LangDownBar.Position = UDim2.new(0.02,0,1,2)
-	LangDownBar.Size = UDim2.new(0.5899999737739563,0,0,0)
-	LangDownBar.AutomaticSize = Enum.AutomaticSize.Y
-	LangDownBar.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
+	LangDownBar.Position = UDim2.new(0.60, 0, 1, 4)
+	LangDownBar.Size = UDim2.fromOffset(150, 0)
+	LangDownBar.BackgroundColor3 = Color3.fromRGB(17, 19, 28)
 	LangDownBar.BackgroundTransparency = 0
 	LangDownBar.BorderSizePixel = 0
 	LangDownBar.Visible = false
 	LangDownBar.ZIndex = 1000
 	LangDownBar.Parent = WSLangRow
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = LangDownBar end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,10); c.Parent = LangDownBar end
 	do Stroke(LangDownBar) end
 	local LangContainer = Instance.new("ScrollingFrame")
 	LangContainer.Name = "Container"
-	LangContainer.Position = UDim2.new(0.05,0,0.05,0)
-	LangContainer.Size = UDim2.new(0.9,0,0,96)
+	LangContainer.Position = UDim2.fromOffset(6, 6)
+	LangContainer.Size = UDim2.new(1, -12, 1, -12)
 	LangContainer.BackgroundTransparency = 1
 	LangContainer.ZIndex = 1000
 	LangContainer.Active = true
@@ -3430,9 +3429,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	LangContainer.ScrollBarThickness = 2
 	LangContainer.ScrollBarImageTransparency = 0.5
 	LangContainer.Parent = LangDownBar
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = LangContainer end
-	do Stroke(LangContainer) end
-	do local ll = Instance.new("UIListLayout"); ll.FillDirection = Enum.FillDirection.Vertical; ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0,2); ll.Parent = LangContainer end
+		do local ll = Instance.new("UIListLayout"); ll.FillDirection = Enum.FillDirection.Vertical; ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0,2); ll.Parent = LangContainer end
 
 	local LangOpenBtn = Instance.new("TextButton"); LangOpenBtn.Name = "OpenBtn"
 	LangOpenBtn.Size = UDim2.new(1,0,1,0); LangOpenBtn.BackgroundTransparency = 1
@@ -3585,78 +3582,96 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		local langs = {"English", "Filipino", "Chinese", "Russian", "Italian"}
 		local langOpen = false
 		local langSelectedBtns = {}
-
-		local function closeLangDropdown()
-			langOpen = false
-			Tween(LangArrow, {ImageTransparency = 0.4, Rotation = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			UnregisterPopup(LangDownBar)
-			SmoothClose(LangDownBar, 0.18)
+		local selectedLang = "English"
+		local function syncLangSelection()
+			LangDefault.Text = selectedLang
+			LangDefault:SetAttribute("FullText", selectedLang)
+			for language, check in pairs(langSelectedBtns) do
+				local isSelected = language == selectedLang
+				check.Visible = isSelected
+				local row = check.Parent
+				if row then
+					row.BackgroundTransparency = isSelected and 0.94 or 1
+					local optionLabel = row:FindFirstChild("Label")
+					if optionLabel then optionLabel.TextColor3 = isSelected and Color3.fromRGB(255,255,255) or Color3.fromRGB(200,204,218) end
+				end
+			end
 		end
 
-		for _, lang in ipairs(langs) do
+
+		for i, lang in ipairs(langs) do
 			local BtnRow = Instance.new("Frame")
 			BtnRow.Name = "Buttons"
-			BtnRow.Size = UDim2.new(1,0,0,16)
+			BtnRow.Size = UDim2.new(1, 0, 0, 28)
+			BtnRow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			BtnRow.BackgroundTransparency = 1
+			BtnRow.BorderSizePixel = 0
 			BtnRow.ZIndex = 1001
+			BtnRow.LayoutOrder = i
 			BtnRow.Parent = LangContainer
+			New("UICorner", { CornerRadius = UDim.new(0, 6) }, BtnRow)
 
 			local lbl = Instance.new("TextLabel")
-			lbl.Position = UDim2.new(0.04,0,0,0)
-			lbl.Size = UDim2.new(0.75,0,1,0)
+			lbl.Name = "Label"
+			lbl.Position = UDim2.new(0, 28, 0, 0)
+			lbl.Size = UDim2.new(1, -36, 1, 0)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = lang
-			lbl.TextColor3 = Color3.fromRGB(255,255,255)
+			lbl.TextColor3 = Color3.fromRGB(200, 204, 218)
 			lbl.TextScaled = false
+			lbl.TextSize = 15
 			lbl.Font = FONT
-			lbl.TextTransparency = 0.1
+			lbl.TextTransparency = 0
+			lbl.TextTruncate = Enum.TextTruncate.AtEnd
 			lbl.ZIndex = 1002
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
 			lbl.Parent = BtnRow
 
-			local SelBtn = Instance.new("TextButton")
+			local SelBtn = Instance.new("ImageLabel")
 			SelBtn.Name = "Selected"
-			SelBtn.Position = UDim2.new(0.8,0,0.1,0)
-			SelBtn.Size = UDim2.new(0.18,0,0.8,0)
+			SelBtn.AnchorPoint = Vector2.new(0, 0.5)
+			SelBtn.Position = UDim2.new(0, 4, 0.5, 0)
+			SelBtn.Size = UDim2.fromOffset(14, 14)
 			SelBtn.BackgroundTransparency = 1
 			SelBtn.BorderSizePixel = 0
-			SelBtn.Text = ""
-			SelBtn.TextColor3 = Color3.fromRGB(78, 131, 255)
-			SelBtn.TextScaled = false
+			SelBtn.Image = "rbxassetid://138494545053627"
+			SelBtn.ImageColor3 = mainColor
+			SelBtn.Visible = false
 			SelBtn.ZIndex = 1004
 			SelBtn.Parent = BtnRow
-			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = SelBtn end
 			langSelectedBtns[lang] = SelBtn
 
 			local RowBtn = Instance.new("TextButton")
-			RowBtn.Size = UDim2.new(1,0,1,0)
+			RowBtn.Name = "OptionHit"
+			RowBtn.Size = UDim2.new(1, 0, 1, 0)
 			RowBtn.BackgroundTransparency = 1
 			RowBtn.Text = ""
-			RowBtn.ZIndex = 1005
+			RowBtn.ZIndex = 1003
 			RowBtn.Parent = BtnRow
+			RowBtn.MouseEnter:Connect(function() Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08) end)
+			RowBtn.MouseLeave:Connect(function() Tween(BtnRow, { BackgroundTransparency = lang == selectedLang and 0.94 or 1 }, 0.12) end)
 
 			local function selectLang()
-				for k, sb in pairs(langSelectedBtns) do sb.Text = "" end
-				SelBtn.Text = "✓"
-				SelBtn.TextColor3 = mainColor
-				LangDefault.Text = lang
-				
+				selectedLang = lang
+				syncLangSelection()
 				closeLangDropdown()
 			end
 			RowBtn.MouseButton1Click:Connect(selectLang)
-			SelBtn.MouseButton1Click:Connect(selectLang)
 		end
+		syncLangSelection()
+
 
 		LangOpenBtn.MouseButton1Click:Connect(function()
 			if langOpen then closeLangDropdown()
 			else
 				CloseAllPopupsExcept(LangDownBar)
 				langOpen = true
-				SmoothOpen(LangDownBar, 0.5, 0.2)
-			Tween(LangArrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				local popupH = math.min(#langs, 8) * 30 + 10
+				LangDownBar.Size = UDim2.fromOffset(150, popupH)
 				ApplyZIndexLadder(LangDownBar, NextPopupZ())
-PositionPopupWithinMain(LangDownBar, true)
-				Tween(LangArrow, {ImageTransparency = 0}, 0.2)
+				PositionPopupWithinMain(LangDownBar, true, 4, LangDefault, Vector2.new(150, popupH))
+				SmoothOpen(LangDownBar, 0.02, 0.16)
+				Tween(LangArrow, {Rotation = 180, ImageTransparency = 0}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				RegisterPopup(LangDownBar, closeLangDropdown, LangOpenBtn)
 			end
 		end)
