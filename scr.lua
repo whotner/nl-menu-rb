@@ -3691,7 +3691,6 @@ AddProfileDisplayRow(100, "Chat", "Chat", nil, ICON_KEYBOARD, "arrow")
 		syncLangSelection()
 
 
-		LangOpenBtn.MouseButton1Click:Connect(function()		syncLangSelection()
 
 
 		LangOpenBtn.MouseButton1Click:Connect(function()
