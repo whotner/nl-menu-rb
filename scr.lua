@@ -4131,7 +4131,13 @@ AddProfileDisplayRow(100, "Chat", "Chat", nil, ICON_KEYBOARD, "arrow")
 		updateCheckmarks()
 
 		local obj = {}
-		function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TextDefault.Text = val; updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
+		function obj:Set(val, silent)
+			val = GetValidOption(options, val)
+			selected = val
+			TextDefault.Text = val
+			updateCheckmarks()
+			if not silent then InvokeCallback(callback, val) end
+		end
 		function obj:Get() return selected end
 		MakeReadableText(Row, 10, 18)
 		return obj
@@ -6959,11 +6965,17 @@ New("Frame", {
 							Tween(BtnRow, { BackgroundTransparency = opt == selected and 0.94 or 1 }, 0.12)
 						end)
 						RowBtn.MouseButton1Click:Connect(function()
-							selected = opt; TextDefault.Text = opt; updateCheckmarks(); closeDropdown()
+							selected = opt
+							TextDefault.Text = opt
+							updateCheckmarks()
+							closeDropdown()
 							InvokeCallback(callback, opt)
 						end)
 						SelBtn.MouseButton1Click:Connect(function()
-							selected = opt; TextDefault.Text = opt; updateCheckmarks(); closeDropdown()
+							selected = opt
+							TextDefault.Text = opt
+							updateCheckmarks()
+							closeDropdown()
 							InvokeCallback(callback, opt)
 						end)
 					end
@@ -6998,7 +7010,13 @@ New("Frame", {
 					updateCheckmarks()
 
 					local obj = {}
-					function obj:Set(val, silent) val = GetValidOption(options, val); selected = val; TextDefault.Text = val; updateCheckmarks(); if not silent then InvokeCallback(callback, val) end end
+					function obj:Set(val, silent)
+			val = GetValidOption(options, val)
+			selected = val
+			TextDefault.Text = val
+			updateCheckmarks()
+			if not silent then InvokeCallback(callback, val) end
+		end
 					function obj:Get() return selected end
 					RegisterConfigElement("settings_dropdown_", text, obj)
 					return obj
