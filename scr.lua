@@ -5721,7 +5721,7 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 	end)
 
 
-(function()
+;(function()
 local Line9 = Instance.new('Frame')
 Line9.Name = "Line9"
 Line9.Position = UDim2.new(0.008, 0, 0, 53)
