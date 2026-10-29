@@ -453,7 +453,7 @@ local function ApplyStrokeScale(stroke, scale)
 	if not stroke or not stroke:IsA("UIStroke") then return end
 	local base = strokeAuthored[stroke]
 	if not base then base = stroke.Thickness; strokeAuthored[stroke] = base end
-	stroke.Thickness = 1
+	stroke.Thickness = stroke:GetAttribute("NLKeepThickness") and base or STROKE.Thickness
 end
 local function Stroke(parent, name)
 	local stroke = Instance.new("UIStroke")
@@ -1668,6 +1668,8 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		svCursorStroke.Color = Color3.fromRGB(255, 255, 255)
 		svCursorStroke.Transparency = 0
 		svCursorStroke.Thickness = 2
+		svCursorStroke:SetAttribute("NLKeepThickness", true)
+		strokeAuthored[svCursorStroke] = 2
 
 		local hueBar = New("ImageButton", {
 			Name = "HueBar",
@@ -2847,7 +2849,8 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local WindowSettingsFrame = Instance.new('Frame')
 	WindowSettingsFrame.Name = "WindowSettingsFrame"
-	WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
+	WindowSettingsFrame.AnchorPoint = Vector2.new(0, 1)
+	WindowSettingsFrame.Position = UDim2.new(0, 168, 1, -13)
 	WindowSettingsFrame.Size = UDim2.fromOffset(215, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
@@ -3682,7 +3685,7 @@ PositionPopupWithinMain(LangDownBar, true)
 						local y = math.clamp(anchorPos.Y + anchorSize.Y - popupSize.Y, safeTop, maxY)
 						MovePopupToAbsolute(WindowSettingsFrame, x, y)
 					else
-						WindowSettingsFrame.Position = UDim2.new(0.006, 0, 0.44, 0)
+						WindowSettingsFrame.Position = UDim2.new(0, 168, 1, -13)
 					end
 
 					local settled = WindowSettingsFrame.Position
@@ -6839,7 +6842,7 @@ New("Frame", {
 							TextSize = 15,
 							Font = FONT,
 							TextTruncate = Enum.TextTruncate.AtEnd,
-							TextTransparency = 0
+							TextTransparency = 0,
 							ZIndex = 5002,
 							TextXAlignment = Enum.TextXAlignment.Left,
 						}, BtnRow)
@@ -9035,7 +9038,7 @@ New("Frame", {
 								TextSize = 15,
 								Font = FONT,
 								TextTruncate = Enum.TextTruncate.AtEnd,
-								TextTransparency = 0
+								TextTransparency = 0,
 								ZIndex = 1002,
 								TextXAlignment = Enum.TextXAlignment.Left,
 							}, BtnRow)
