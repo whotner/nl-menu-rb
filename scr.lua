@@ -2378,10 +2378,34 @@ local function MakeOverlayPanel(name, iconAsset, title)
 
 	local header = New("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, LayoutOrder = 1, ZIndex = Z_BASE + 891 }, body)
 	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, header)
-	New("ImageLabel", {
-		Name = "HeaderIcon", Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1,
-		Image = iconAsset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 891,
-	}, header)
+if title == "Hotkeys" then
+		local listIcon = New("Frame", {
+			Name = "HeaderIcon", Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1,
+			LayoutOrder = 1, ZIndex = Z_BASE + 891,
+		}, header)
+		for i = 0, 2 do
+			local y = 1 + i * 5
+			local bullet = New("Frame", {
+				Name = "ListBullet" .. tostring(i + 1), Position = UDim2.fromOffset(0, y),
+				Size = UDim2.fromOffset(2, 2), BackgroundColor3 = mainColor, BackgroundTransparency = 1,
+				BorderSizePixel = 0, ZIndex = Z_BASE + 892,
+			}, listIcon)
+			bullet:SetAttribute("NLOverlayAccentPart", true)
+			New("UICorner", { CornerRadius = UDim.new(1, 0) }, bullet)
+			local line = New("Frame", {
+				Name = "ListLine" .. tostring(i + 1), Position = UDim2.fromOffset(4, y),
+				Size = UDim2.fromOffset(10, 2), BackgroundColor3 = mainColor, BackgroundTransparency = 1,
+				BorderSizePixel = 0, ZIndex = Z_BASE + 892,
+			}, listIcon)
+			line:SetAttribute("NLOverlayAccentPart", true)
+			New("UICorner", { CornerRadius = UDim.new(1, 0) }, line)
+		end
+	else
+		New("ImageLabel", {
+			Name = "HeaderIcon", Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1,
+			Image = iconAsset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 891,
+		}, header)
+	end
 	New("TextLabel", {
 		Name = "HeaderTitle", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(255, 255, 255), TextTransparency = 0.08,
@@ -2417,6 +2441,9 @@ end
 		elseif node:IsA("Frame") and node.Name == "HeaderRule" then
 			node.BackgroundTransparency = 1
 			Tween(node, { BackgroundTransparency = show and 0.9 or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		elseif node:IsA("Frame") and node:GetAttribute("NLOverlayAccentPart") then
+			node.BackgroundTransparency = 1
+			Tween(node, { BackgroundTransparency = show and 0 or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		elseif node:GetAttribute("IsShadowLayer") then
 			local alpha = node:GetAttribute("ShadowAlpha") or 0.8
 			Tween(node, { BackgroundTransparency = show and alpha or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -7057,13 +7084,31 @@ New("Frame", {
 			-- ============================================================================
 			local bindRefs = {}
 
+			local function BindValueText(target)
+				if target and target.obj and type(target.obj.Get) == "function" then
+					local ok, value = pcall(target.obj.Get, target.obj)
+					if ok and value ~= nil then
+						if typeof(value) == "Color3" then return ColorToHex(value) end
+						if type(value) == "boolean" then return value and "On" or "Off" end
+						if type(value) == "number" or type(value) == "string" then
+							local text = tostring(value)
+							return #text > 12 and (string.sub(text, 1, 11) .. "…") or text
+						end
+					end
+				end
+				return "—"
+			end
 			local function PaintBindMenu(target)
 				bindRefs.key.Text = target.key and BindKeyName(target.key) or "press key"
 				local mode = CurrentBindMode(target)
 				bindRefs.mode.Text = mode:sub(1, 1):upper() .. mode:sub(2) .. "  ▾"
+				bindRefs.value.Text = BindValueText(target)
 				local on = not target.hideInList
-				Tween(bindRefs.sw, { BackgroundColor3 = on and mainColor or Color3.new(0, 0, 0) }, 0.15)
-				Tween(bindRefs.knob, { Position = on and UDim2.fromOffset(16, 2) or UDim2.fromOffset(3, 3) }, 0.15)
+				Tween(bindRefs.sw, { BackgroundColor3 = on and mainColor or Color3.fromRGB(30, 32, 44) }, 0.15)
+				Tween(bindRefs.knob, {
+					Position = on and UDim2.fromOffset(16, 3) or UDim2.fromOffset(3, 3),
+					BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(125, 128, 142),
+				}, 0.15)
 			end
 
 			local function BuildBindMenu()
@@ -7072,7 +7117,7 @@ New("Frame", {
 					Name = "BindPrompt",
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					Position = UDim2.new(0.5, 0, 0.5, 0),
-					Size = UDim2.fromOffset(212, 138),
+					Size = UDim2.fromOffset(212, 170),
 					BackgroundColor3 = Color3.fromRGB(17, 19, 28),
 					BackgroundTransparency = 0.02,
 					BorderSizePixel = 0,
@@ -7130,14 +7175,18 @@ New("Frame", {
 					PaintBindMenu(_bindTarget)
 				end)
 
-				local visRow = makeRow(3, "rbxassetid://127234874352422", "Visible", THEME.text)
+				local valueRow = makeRow(3, "rbxassetid://114499998778667", "Value", THEME.text)
+				bindRefs.value = makeChip(valueRow, 84, "—", false)
+
+				local visRow = makeRow(4, "rbxassetid://127234874352422", "Visible", THEME.text)
 				bindRefs.sw = New("Frame", {
-					Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -14, 0.5, 0), Size = UDim2.fromOffset(30, 16),
+					Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(33, 20),
 					BackgroundColor3 = mainColor, ZIndex = Z_BASE + 953,
 				}, visRow)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, bindRefs.sw)
+				Stroke(bindRefs.sw, "BindVisibleStroke")
 				bindRefs.knob = New("Frame", {
-					Name = "Knob", Position = UDim2.fromOffset(16, 2), Size = UDim2.fromOffset(12, 12),
+					Name = "Knob", Position = UDim2.fromOffset(16, 3), Size = UDim2.fromOffset(14, 14),
 					BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = Z_BASE + 954,
 				}, bindRefs.sw)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, bindRefs.knob)
@@ -7148,7 +7197,7 @@ New("Frame", {
 					if RefreshKeybindOverlay then task.defer(RefreshKeybindOverlay) end
 				end)
 
-				local delRow = makeRow(4, "rbxassetid://116396312853810", "Delete", THEME.danger)
+				local delRow = makeRow(5, "rbxassetid://116396312853810", "Delete", THEME.danger)
 				delRow.MouseButton1Click:Connect(function()
 					local t = _bindTarget
 					if t then SetTargetBind(t, nil) end
