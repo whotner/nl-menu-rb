@@ -1224,10 +1224,6 @@ local function SmoothClose(frame, dur, cb)
 	frame:SetAttribute("PopupToken", token)
 	CancelPopupTween(frame)
 	TweenShadowLayers(frame, false, dur or 0.18, Enum.EasingDirection.In)
-	local stroke = frame:FindFirstChildOfClass("UIStroke")
-	if stroke then
-		Tween(stroke, { Transparency = 1 }, dur or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-	end
 	local scale = GetPopupScale(frame)
 	if scale then
 		Tween(scale, { Scale = 0.985 }, dur or 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
@@ -1645,31 +1641,32 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.new(saturation, 0, 1 - value, 0),
 			Size = UDim2.fromOffset(14, 14),
-			BackgroundTransparency = 1,
+			BackgroundColor3 = Color3.fromRGB(10, 12, 18),
+			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
 			ZIndex = Z_BASE + 804,
 		}, svSquare)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, svShadow)
-		local svShadowStroke = Stroke(svShadow, "SVCursorShadowStroke")
-		svShadowStroke.Color = Color3.fromRGB(10, 12, 18)
-		svShadowStroke.Transparency = 0
-		svShadowStroke.Thickness = 1
+		local svRing = New("Frame", {
+			Name = "SVCursorRing",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(saturation, 0, 1 - value, 0),
+			Size = UDim2.fromOffset(12, 12),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 805,
+		}, svSquare)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, svRing)
 		local svCursor = New("Frame", {
 			Name = "SVCursor",
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.new(saturation, 0, 1 - value, 0),
-			Size = UDim2.fromOffset(12, 12),
-			BackgroundTransparency = 1,
+			Size = UDim2.fromOffset(8, 8),
+			BackgroundColor3 = currentColor,
 			BorderSizePixel = 0,
-			ZIndex = Z_BASE + 805,
+			ZIndex = Z_BASE + 806,
 		}, svSquare)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, svCursor)
-		local svCursorStroke = Stroke(svCursor, "SVCursorStroke")
-		svCursorStroke.Color = Color3.fromRGB(255, 255, 255)
-		svCursorStroke.Transparency = 0
-		svCursorStroke.Thickness = 2
-		svCursorStroke:SetAttribute("NLKeepThickness", true)
-		strokeAuthored[svCursorStroke] = 2
 
 		local hueBar = New("ImageButton", {
 			Name = "HueBar",
@@ -1702,15 +1699,21 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.new(hue, 0, 0.5, 0),
 			Size = UDim2.fromOffset(14, 14),
-			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BackgroundColor3 = Color3.fromRGB(17, 19, 28),
 			BorderSizePixel = 0,
 			ZIndex = Z_BASE + 805,
 		}, hueBar)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, hueThumb)
-		local hueThumbStroke = Stroke(hueThumb, "HueThumbStroke")
-		hueThumbStroke.Color = Color3.fromRGB(17, 19, 28)
-		hueThumbStroke.Transparency = 0.05
-		hueThumbStroke.Thickness = 1
+		local hueThumbInner = New("Frame", {
+			Name = "HueThumbInner",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.fromOffset(12, 12),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 806,
+		}, hueThumb)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, hueThumbInner)
 
 		local hexRow = New("Frame", {
 			Name = "HexRow",
@@ -1768,31 +1771,29 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			Position = UDim2.fromOffset(7, 6),
 			Size = UDim2.fromOffset(9, 11),
 			BackgroundTransparency = 1,
-			BorderSizePixel = 0,
+			BorderSizePixel = 1,
+			BorderColor3 = Color3.fromRGB(226, 228, 236),
 			ZIndex = Z_BASE + 803,
 		}, copyButton)
 		New("UICorner", { CornerRadius = UDim.new(0, 2) }, copyBack)
-		local copyBackStroke = Stroke(copyBack, "CopyIconBackStroke")
-		copyBackStroke.Color = Color3.fromRGB(226, 228, 236)
-		copyBackStroke.Transparency = 0.12
 		local copyFront = New("Frame", {
 			Name = "CopyIconFront",
 			Position = UDim2.fromOffset(11, 10),
 			Size = UDim2.fromOffset(9, 11),
 			BackgroundColor3 = Color3.fromRGB(28, 31, 45),
-			BorderSizePixel = 0,
+			BorderSizePixel = 1,
+			BorderColor3 = Color3.fromRGB(226, 228, 236),
 			ZIndex = Z_BASE + 804,
 		}, copyButton)
 		New("UICorner", { CornerRadius = UDim.new(0, 2) }, copyFront)
-		local copyFrontStroke = Stroke(copyFront, "CopyIconFrontStroke")
-		copyFrontStroke.Color = Color3.fromRGB(226, 228, 236)
-		copyFrontStroke.Transparency = 0.12
 
 		local function refreshDisplay(notify)
 			currentColor = Color3.fromHSV(hue, saturation, value)
 			svSquare.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
 			svShadow.Position = UDim2.new(saturation, 0, 1 - value, 0)
+			svRing.Position = UDim2.new(saturation, 0, 1 - value, 0)
 			svCursor.Position = UDim2.new(saturation, 0, 1 - value, 0)
+			svCursor.BackgroundColor3 = currentColor
 			hueThumb.Position = UDim2.new(hue, 0, 0.5, 0)
 			hexPreview.BackgroundColor3 = currentColor
 			hexLabel.Text = ColorToHex(currentColor)
@@ -2464,8 +2465,6 @@ local function SetOverlayPanelShown(panel, shown)
 		if not panel.Visible then return end
 		Tween(panel, { BackgroundTransparency = 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 		FadeOverlayContents(panel, false)
-		local stroke = panel:FindFirstChildOfClass("UIStroke")
-		if stroke then Tween(stroke, { Transparency = 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In) end
 		task.delay(0.19, function()
 			if panel.Parent and panel:GetAttribute("FadeToken") == token then
 				panel.Visible = false
@@ -4860,7 +4859,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local function DeactivateRow(rowFrame, loadBtn)
 		local s = rowFrame:FindFirstChildWhichIsA("UIStroke")
-		if s then Tween(s, {Transparency = 1}, 0.15) end
 		Tween(rowFrame, {BackgroundTransparency = 0.25}, 0.15)
 		loadBtn.Image = LOAD_ICON
 		Tween(loadBtn, {ImageColor3 = Color3.fromRGB(180, 180, 200)}, 0.15)
@@ -4877,7 +4875,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		row.Parent = ListContainer
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = row end
 
-		local rowStroke = Stroke(row, "ConfigRowStroke")
+		Stroke(row, "ConfigRowStroke")
 		row.MouseEnter:Connect(function()
 			Tween(row, { BackgroundTransparency = 0.12 }, 0.1, Enum.EasingStyle.Sine)
 		end)
@@ -5045,7 +5043,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			sfOpen = false
 			UnregisterPopup(SettingsFrame)
 			Tween(SettingsFrame, { Size = UDim2.new(0.44, 0, 0, 0), BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-			Tween(SettingsFrameStroke, { Transparency = 1 }, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
 			task.delay(0.19, function() if not sfOpen then SettingsFrame.Visible = false end end)
 		end
 		SettingsBtn.MouseButton1Click:Connect(function()
@@ -5097,7 +5094,6 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				activeRow = row
 				activeLoadBtn = LoadConfigBtn
 				SetActiveConfigName(name)
-				Tween(rowStroke, {Transparency = 0.3, Color = mainColor}, 0.2)
 				Tween(row, {BackgroundTransparency = 0.5}, 0.2)
 				LoadConfigBtn.Image = SAVE_ICON
 				Tween(LoadConfigBtn, {ImageColor3 = mainColor}, 0.2)
@@ -5813,8 +5809,6 @@ end
 			Tween(iconObject, { ImageColor3 = color, ImageTransparency = transparency }, duration, style, direction)
 			local outline = iconObject and iconObject:FindFirstChild("MouseOutline")
 			if not outline then return end
-			local stroke = outline:FindFirstChild("MouseOutlineStroke")
-			if stroke then Tween(stroke, { Color = color, Transparency = transparency }, duration, style, direction) end
 			for _, partName in ipairs({ "MouseSplit", "MouseWheel" }) do
 				local part = outline:FindFirstChild(partName)
 				if part then Tween(part, { BackgroundColor3 = color, BackgroundTransparency = transparency }, duration, style, direction) end
@@ -6927,8 +6921,6 @@ New("Frame", {
 							local popupW = math.max(TextDefault.AbsoluteSize.X, 150)
 							local popupH = math.min(#options, 8) * 30 + 10
 							DropPopup.Size = UDim2.fromOffset(popupW, popupH)
-							local popupH = math.clamp(26 * #options + 28, 46, 460)
-							DropPopup.Size = UDim2.new(0.96, 0, 0, popupH)
 							DropPopup.BackgroundTransparency = 0
 							DropPopup.Visible = false
 							ApplyZIndexLadder(DropPopup, NextPopupZ())
@@ -9157,8 +9149,6 @@ New("Frame", {
 							local knownH = math.min(#options, 8) * 30 + 10
 							local knownW = math.max(TextDefault.AbsoluteSize.X, 150)
 							DropPopup.Size = UDim2.fromOffset(knownW, knownH)
-							local knownW = math.max(Selection.AbsoluteSize.X * 0.96, 1)
-							DropPopup.Size = UDim2.new(0.96, 0, 0, knownH)
 							DropPopup.BackgroundTransparency = 0
 							DropPopup.Visible = false
 							ApplyZIndexLadder(DropPopup, NextPopupZ())
