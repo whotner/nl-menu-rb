@@ -6626,15 +6626,16 @@ New("Frame", {
 					New("TextLabel", {
 						Name = "TextToggle",
 						Position = UDim2.new(0.04800000086426735, 0, 0.30000001192092896, 0),
-						Size = UDim2.new(0.7600000262260437, 0, 0.6000000238418579, 0),
+						Size = UDim2.new(0.36, 0, 0.6000000238418579, 0),
 						BackgroundColor3 = Color3.fromRGB(28,32,48),
 						BackgroundTransparency = 1,
 						Text = text,
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextScaled = false,
 						Font = FONT,
-						TextTransparency = 0.10000000149011612,
+						TextTransparency = 0,
 						TextXAlignment = Enum.TextXAlignment.Left,
+						TextTruncate = Enum.TextTruncate.AtEnd,
 						ZIndex = 1001,
 					}, Slider)
 
@@ -7251,7 +7252,7 @@ New("Frame", {
 					if RefreshKeybindOverlay then task.defer(RefreshKeybindOverlay) end
 				end)
 
-				local delRow = makeRow(5, "rbxassetid://116396312853810", "Delete", THEME.danger)
+				local delRow = makeRow(5, "rbxassetid://116396312853810", "Delete", Color3.fromRGB(233, 90, 110))
 				delRow.MouseButton1Click:Connect(function()
 					local t = _bindTarget
 					if t then SetTargetBind(t, nil) end
@@ -7323,7 +7324,7 @@ New("Frame", {
 					BackgroundColor3 = Color3.fromRGB(42, 42, 49),
 					BackgroundTransparency = 1,
 					AutoButtonColor = false,
-					Text = "  " .. labelText,
+					Text = labelText,
 					TextColor3 = labelText == "Reset" and Color3.fromRGB(233, 90, 110) or Color3.fromRGB(232, 234, 240),
 					TextScaled = false,
 					TextSize = 13,
