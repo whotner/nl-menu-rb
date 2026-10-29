@@ -3793,7 +3793,6 @@ AddProfileDisplayRow(100, "Chat", "Chat", nil, ICON_KEYBOARD, "arrow")
 				closeWS()
 			end
 		end)
-	end
 
 	RegisterConfigElement("window_", "logo", {
 		Get = function() return logoVisible end,
