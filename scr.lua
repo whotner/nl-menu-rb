@@ -3262,21 +3262,20 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local ScaleDownBar = Instance.new("Frame")
 	ScaleDownBar.Name = "Dropdown"
-	ScaleDownBar.Position = UDim2.new(0.02,0,1,2)
-	ScaleDownBar.Size = UDim2.new(0.5899999737739563,0,0,0)
-	ScaleDownBar.AutomaticSize = Enum.AutomaticSize.Y
-	ScaleDownBar.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
+	ScaleDownBar.Position = UDim2.new(0.60, 0, 1, 4)
+	ScaleDownBar.Size = UDim2.fromOffset(150, 0)
+	ScaleDownBar.BackgroundColor3 = Color3.fromRGB(17, 19, 28)
 	ScaleDownBar.BackgroundTransparency = 0
 	ScaleDownBar.BorderSizePixel = 0
 	ScaleDownBar.Visible = false
 	ScaleDownBar.ZIndex = 1000
 	ScaleDownBar.Parent = WSScaleRow
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = ScaleDownBar end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,10); c.Parent = ScaleDownBar end
 	do Stroke(ScaleDownBar) end
 	local ScaleContainer = Instance.new("ScrollingFrame")
 	ScaleContainer.Name = "Container"
-	ScaleContainer.Position = UDim2.new(0.05,0,0.05,0)
-	ScaleContainer.Size = UDim2.new(0.9,0,0,96)
+	ScaleContainer.Position = UDim2.fromOffset(6, 6)
+	ScaleContainer.Size = UDim2.new(1, -12, 1, -12)
 	ScaleContainer.BackgroundTransparency = 1
 	ScaleContainer.ZIndex = 1000
 	ScaleContainer.Active = true
@@ -3286,9 +3285,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	ScaleContainer.ScrollBarThickness = 2
 	ScaleContainer.ScrollBarImageTransparency = 0.5
 	ScaleContainer.Parent = ScaleDownBar
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = ScaleContainer end
-	do Stroke(ScaleContainer) end
-	do local ll = Instance.new("UIListLayout"); ll.FillDirection = Enum.FillDirection.Vertical; ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0,2); ll.Parent = ScaleContainer end
+		do local ll = Instance.new("UIListLayout"); ll.FillDirection = Enum.FillDirection.Vertical; ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0,2); ll.Parent = ScaleContainer end
 
 	local ScaleOpenBtn = Instance.new("TextButton"); ScaleOpenBtn.Name = "OpenBtn"
 	ScaleOpenBtn.Size = UDim2.new(1,0,1,0); ScaleOpenBtn.BackgroundTransparency = 1
@@ -3477,13 +3474,21 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		local scaleOpen = false
 		local scaleSelectedBtns = {}
 		syncScaleSelection = function(selectedLabel)
-			ScaleDefault.Text = tostring(selectedLabel or "Auto")
-			
-			for label, button in pairs(scaleSelectedBtns) do
-				button.Text = label == selectedLabel and "✓" or ""
-				if label == selectedLabel then button.TextColor3 = mainColor end
+			selectedLabel = tostring(selectedLabel or "Auto")
+			ScaleDefault.Text = selectedLabel
+			ScaleDefault:SetAttribute("FullText", selectedLabel)
+			for label, check in pairs(scaleSelectedBtns) do
+				local isSelected = label == selectedLabel
+				check.Visible = isSelected
+				local row = check.Parent
+				if row then
+					row.BackgroundTransparency = isSelected and 0.94 or 1
+					local optionLabel = row:FindFirstChild("Label")
+					if optionLabel then optionLabel.TextColor3 = isSelected and Color3.fromRGB(255,255,255) or Color3.fromRGB(200,204,218) end
+				end
 			end
 		end
+
 
 		local function closeScaleDropdown()
 			scaleOpen = false
@@ -3496,45 +3501,54 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			local sv = scaleVals[i]
 			local BtnRow = Instance.new("Frame")
 			BtnRow.Name = "Buttons"
-			BtnRow.Size = UDim2.new(1,0,0,16)
+			BtnRow.Size = UDim2.new(1, 0, 0, 28)
+			BtnRow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			BtnRow.BackgroundTransparency = 1
+			BtnRow.BorderSizePixel = 0
 			BtnRow.ZIndex = 1001
 			BtnRow.LayoutOrder = i
 			BtnRow.Parent = ScaleContainer
+			New("UICorner", { CornerRadius = UDim.new(0, 6) }, BtnRow)
 
 			local lbl = Instance.new("TextLabel")
-			lbl.Position = UDim2.new(0,0,0.20000000298023224,0)
-			lbl.Size = UDim2.new(1,0,0.6990000009536743,0)
+			lbl.Name = "Label"
+			lbl.Position = UDim2.new(0, 28, 0, 0)
+			lbl.Size = UDim2.new(1, -36, 1, 0)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = scaleLabel
-			lbl.TextColor3 = Color3.fromRGB(255,255,255)
+			lbl.TextColor3 = Color3.fromRGB(200, 204, 218)
 			lbl.TextScaled = false
+			lbl.TextSize = 15
 			lbl.Font = FONT
-			lbl.TextTransparency = 0.1
+			lbl.TextTransparency = 0
+			lbl.TextTruncate = Enum.TextTruncate.AtEnd
 			lbl.ZIndex = 1002
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
 			lbl.Parent = BtnRow
 
-			local SelBtn = Instance.new("TextButton")
+			local SelBtn = Instance.new("ImageLabel")
 			SelBtn.Name = "Selected"
-			SelBtn.Position = UDim2.new(0.800000011920929,0,0,0)
-			SelBtn.Size = UDim2.new(0.20000000298023224,0,0.800000011920929,0)
+			SelBtn.AnchorPoint = Vector2.new(0, 0.5)
+			SelBtn.Position = UDim2.new(0, 4, 0.5, 0)
+			SelBtn.Size = UDim2.fromOffset(14, 14)
 			SelBtn.BackgroundTransparency = 1
 			SelBtn.BorderSizePixel = 0
-			SelBtn.Text = ""
-			SelBtn.TextColor3 = Color3.fromRGB(78, 131, 255)
-			SelBtn.TextScaled = false
+			SelBtn.Image = "rbxassetid://138494545053627"
+			SelBtn.ImageColor3 = mainColor
+			SelBtn.Visible = false
 			SelBtn.ZIndex = 1004
 			SelBtn.Parent = BtnRow
-			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,5); c.Parent = SelBtn end
 			scaleSelectedBtns[scaleLabel] = SelBtn
 
 			local RowBtn = Instance.new("TextButton")
-			RowBtn.Size = UDim2.new(1,0,1,0)
+			RowBtn.Name = "OptionHit"
+			RowBtn.Size = UDim2.new(1, 0, 1, 0)
 			RowBtn.BackgroundTransparency = 1
 			RowBtn.Text = ""
-			RowBtn.ZIndex = 1005
+			RowBtn.ZIndex = 1003
 			RowBtn.Parent = BtnRow
+			RowBtn.MouseEnter:Connect(function() Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08) end)
+			RowBtn.MouseLeave:Connect(function() Tween(BtnRow, { BackgroundTransparency = scaleLabel == ScaleDefault.Text and 0.94 or 1 }, 0.12) end)
 
 			local function selectScale()
 				syncScaleSelection(scaleLabel)
@@ -3549,8 +3563,8 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 				closeScaleDropdown()
 			end
 			RowBtn.MouseButton1Click:Connect(selectScale)
-			SelBtn.MouseButton1Click:Connect(selectScale)
 		end
+
 
 		syncScaleSelection("Auto")
 		ScaleOpenBtn.MouseButton1Click:Connect(function()
@@ -3558,10 +3572,12 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			else
 				CloseAllPopupsExcept(ScaleDownBar)
 				scaleOpen = true
-				SmoothOpen(ScaleDownBar, 0.5, 0.2)
+				local popupH = math.min(#scales, 8) * 30 + 10
+				ScaleDownBar.Size = UDim2.fromOffset(150, popupH)
 				ApplyZIndexLadder(ScaleDownBar, NextPopupZ())
-PositionPopupWithinMain(ScaleDownBar, true)
-				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				PositionPopupWithinMain(ScaleDownBar, true, 4, ScaleDefault, Vector2.new(150, popupH))
+				SmoothOpen(ScaleDownBar, 0.02, 0.16)
+				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = 180}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				RegisterPopup(ScaleDownBar, closeScaleDropdown, ScaleOpenBtn)
 			end
 		end)
