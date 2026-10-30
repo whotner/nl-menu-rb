@@ -3521,10 +3521,10 @@ local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
 	New("TextLabel", { Name = "ProfileLabel", Position = UDim2.fromOffset(28, 0), Size = labelWidth, BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(200,204,218), TextScaled = false, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
 	if kind == "switch-off" or kind == "switch-on" then
 		local on = kind == "switch-on"
-		local track = New("Frame", { Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(36, 18), BackgroundColor3 = Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = 131 }, row)
+		local track = New("Frame", { Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(36, 18), BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = 131 }, row)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
 		Stroke(track, "ProfileSwitchStroke")
-		local knob = New("Frame", { Name = "Knob", Position = on and UDim2.fromOffset(19,1) or UDim2.fromOffset(1,1), Size = UDim2.fromOffset(16,16), BackgroundColor3 = Color3.fromRGB(139, 145, 157), BorderSizePixel = 0, ZIndex = 132 }, track)
+		local knob = New("Frame", { Name = "Knob", Position = on and UDim2.fromOffset(19,1) or UDim2.fromOffset(1,1), Size = UDim2.fromOffset(16,16), BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157), BorderSizePixel = 0, ZIndex = 132 }, track)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
 	else
 		if value and value ~= "" then
@@ -6351,7 +6351,7 @@ New("Frame", {
 						Position = UDim2.new(1, -14, 0.5, 0),
 						AnchorPoint = Vector2.new(1, 0.5),
 						Size = UDim2.fromOffset(36, 18),
-						BackgroundColor3 = Color3.fromRGB(8, 10, 16),
+						BackgroundColor3 = enabled and mainColor or Color3.fromRGB(8, 10, 16),
 						ZIndex = 1001,
 					}, Toggle)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
@@ -6361,7 +6361,7 @@ New("Frame", {
 						Name = "Icon",
 						Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1),
 						Size = UDim2.fromOffset(16, 16),
-						BackgroundColor3 = Color3.fromRGB(139, 145, 157),
+						BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157),
 						BackgroundTransparency = 0,
 						ZIndex = 1002,
 					}, Effect)
@@ -6379,8 +6379,8 @@ New("Frame", {
 
 					local function Set(val)
 						enabled = val == true
-						Tween(Effect, { BackgroundColor3 = Color3.fromRGB(8, 10, 16) }, 0.16, Enum.EasingStyle.Sine)
-						Tween(Icon, { Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1), BackgroundColor3 = Color3.fromRGB(139, 145, 157), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
+						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(8, 10, 16) }, 0.16, Enum.EasingStyle.Sine)
+						Tween(Icon, { Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
 						InvokeCallback(callback, enabled)
 					end
 
@@ -7039,10 +7039,10 @@ New("Frame", {
 				bindRefs.mode.Text = mode:sub(1, 1):upper() .. mode:sub(2) .. "  ▾"
 				bindRefs.value.Text = BindValueText(target)
 				local on = not target.hideInList
-				Tween(bindRefs.sw, { BackgroundColor3 = Color3.fromRGB(8, 10, 16) }, 0.15)
+				Tween(bindRefs.sw, { BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16) }, 0.15)
 				Tween(bindRefs.knob, {
 					Position = on and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1),
-					BackgroundColor3 = Color3.fromRGB(139, 145, 157),
+					BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157),
 				}, 0.15)
 			end
 
@@ -7116,13 +7116,13 @@ New("Frame", {
 				local visRow = makeRow(4, "rbxassetid://127234874352422", "Visible", THEME.text)
 				bindRefs.sw = New("Frame", {
 					Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(36, 18),
-					BackgroundColor3 = Color3.fromRGB(8, 10, 16), ZIndex = Z_BASE + 953,
+					BackgroundColor3 = mainColor, ZIndex = Z_BASE + 953,
 				}, visRow)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, bindRefs.sw)
 				Stroke(bindRefs.sw, "BindVisibleStroke")
 				bindRefs.knob = New("Frame", {
 					Name = "Knob", Position = UDim2.fromOffset(19, 1), Size = UDim2.fromOffset(16, 16),
-					BackgroundColor3 = Color3.fromRGB(139, 145, 157), ZIndex = Z_BASE + 954,
+					BackgroundColor3 = Color3.fromRGB(255, 255, 255), ZIndex = Z_BASE + 954,
 				}, bindRefs.sw)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, bindRefs.knob)
 				visRow.MouseButton1Click:Connect(function()
@@ -7494,7 +7494,7 @@ New("Frame", {
 					Position = UDim2.new(1, -14, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
 					Size = UDim2.fromOffset(36, 18),
-					BackgroundColor3 = Color3.fromRGB(8, 10, 16),
+					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(8, 10, 16),
 				}, Toggle)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
 				Stroke(Effect)
@@ -7503,7 +7503,7 @@ New("Frame", {
 					Name = "Icon",
 					Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1),
 					Size = UDim2.fromOffset(16, 16),
-					BackgroundColor3 = Color3.fromRGB(139, 145, 157),
+					BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157),
 					BackgroundTransparency = 0,
 				}, Effect)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Icon)
@@ -7520,8 +7520,8 @@ New("Frame", {
 
 				local function Set(val)
 					enabled = val == true
-					Tween(Effect, { BackgroundColor3 = Color3.fromRGB(8, 10, 16) }, 0.16, Enum.EasingStyle.Sine)
-					Tween(Icon, { Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1), BackgroundColor3 = Color3.fromRGB(139, 145, 157), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
+					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(8, 10, 16) }, 0.16, Enum.EasingStyle.Sine)
+					Tween(Icon, { Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
 					InvokeCallback(callback, enabled)
 				end
 
@@ -7672,7 +7672,7 @@ New("Frame", {
 					AnchorPoint = Vector2.new(1, 0.5),
 					Position = UDim2.new(1, -14, 0.5, 0),
 					Size = UDim2.fromOffset(36, 18),
-					BackgroundColor3 = Color3.fromRGB(8, 10, 16),
+					BackgroundColor3 = enabled and mainColor or Color3.fromRGB(8, 10, 16),
 					ZIndex = 6,
 				}, Toggle)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
@@ -7681,7 +7681,7 @@ New("Frame", {
 					Name = "Icon",
 					Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1),
 					Size = UDim2.fromOffset(16, 16),
-					BackgroundColor3 = Color3.fromRGB(139, 145, 157),
+					BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157),
 					BorderSizePixel = 0,
 					ZIndex = 7,
 				}, Effect)
@@ -7726,8 +7726,8 @@ New("Frame", {
 
 				local function SetEnabled(val)
 					enabled = val == true
-					Tween(Effect, { BackgroundColor3 = Color3.fromRGB(8, 10, 16) }, 0.16, Enum.EasingStyle.Sine)
-					Tween(Icon, { Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1), BackgroundColor3 = Color3.fromRGB(139, 145, 157), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
+					Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(8, 10, 16) }, 0.16, Enum.EasingStyle.Sine)
+					Tween(Icon, { Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
 					NotifyEnabled()
 				end
 				Btn.MouseButton1Click:Connect(function() SetEnabled(not enabled) end)
@@ -8756,7 +8756,7 @@ New("Frame", {
 						Position = UDim2.new(1, -14, 0.5, 0),
 						AnchorPoint = Vector2.new(1, 0.5),
 						Size = UDim2.fromOffset(36, 18),
-						BackgroundColor3 = Color3.fromRGB(8, 10, 16),
+						BackgroundColor3 = enabled and mainColor or Color3.fromRGB(8, 10, 16),
 						ZIndex = 101,
 					}, Toggle)
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Effect)
@@ -8766,7 +8766,7 @@ New("Frame", {
 						Name = "Icon",
 						Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1),
 						Size = UDim2.fromOffset(16, 16),
-						BackgroundColor3 = Color3.fromRGB(139, 145, 157),
+						BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157),
 						BackgroundTransparency = 0,
 						ZIndex = 102,
 					}, Effect)
@@ -8784,8 +8784,8 @@ New("Frame", {
 
 					local function Set(val)
 						enabled = val == true
-						Tween(Effect, { BackgroundColor3 = Color3.fromRGB(8, 10, 16) }, 0.16, Enum.EasingStyle.Sine)
-						Tween(Icon, { Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1), BackgroundColor3 = Color3.fromRGB(139, 145, 157), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
+						Tween(Effect, { BackgroundColor3 = enabled and mainColor or Color3.fromRGB(8, 10, 16) }, 0.16, Enum.EasingStyle.Sine)
+						Tween(Icon, { Position = enabled and UDim2.fromOffset(19, 1) or UDim2.fromOffset(1, 1), BackgroundColor3 = enabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157), BackgroundTransparency = 0 }, 0.16, Enum.EasingStyle.Quad)
 						InvokeCallback(callback, enabled)
 					end
 
