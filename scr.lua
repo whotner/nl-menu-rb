@@ -3535,7 +3535,7 @@ local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
 	New("TextLabel", { Name = "ProfileLabel", Position = UDim2.fromOffset(34, 0), Size = labelWidth, BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(200,204,218), TextScaled = false, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
 	if kind == "switch-off" or kind == "switch-on" then
 		local on = kind == "switch-on"
-		local track = New("Frame", { Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0), Size = UDim2.fromOffset(28, 14), BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = 131 }, row)
+		local track = New("Frame", { Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(28, 14), BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = 131 }, row)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
 		Stroke(track, "ProfileSwitchStroke")
 		local knob = New("Frame", { Name = "Knob", Position = on and UDim2.fromOffset(15,1) or UDim2.fromOffset(1,1), Size = UDim2.fromOffset(12,12), BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157), BorderSizePixel = 0, ZIndex = 132 }, track)
@@ -3545,7 +3545,7 @@ local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
 			New("TextLabel", { Name = "ProfileValue", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(52, 27), BackgroundTransparency = 1, Text = value, TextColor3 = Color3.fromRGB(150,155,172), TextScaled = false, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
 		end
 		if kind == "arrow" then
-			New("ImageLabel", { Name = "Chevron", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(10, 10), BackgroundTransparency = 1, Image = "rbxassetid://10709790990", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 0.3, Rotation = 0, ScaleType = Enum.ScaleType.Fit, ZIndex = 131 }, row)
+			New("ImageLabel", { Name = "Chevron", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0), Size = UDim2.fromOffset(10, 10), BackgroundTransparency = 1, Image = "rbxassetid://10709790990", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 0.3, Rotation = 0, ScaleType = Enum.ScaleType.Fit, ZIndex = 131 }, row)
 		end
 	end
 	return row
