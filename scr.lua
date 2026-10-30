@@ -408,6 +408,25 @@ end
 local Library = {}
 Library.__index = Library
 
+-- Profile popover row icons. Several of the old IDs do not render in game, so
+-- they live here and can be swapped before AddWindow:
+--   Library.ProfileIcons.language = "rbxassetid://..."
+-- Kept on Library instead of as locals: AddWindow is close to Luau's register cap.
+Library.ProfileIcons = {
+	language     = "rbxassetid://121978468376124",
+	menuScale    = "rbxassetid://114499998778667",
+	espScale     = "rbxassetid://127234874352422",
+	windowsScale = "rbxassetid://114499998778667",
+	units        = "rbxassetid://82464660673318",
+	style        = "rbxassetid://109485777305919",
+	safeMode     = "rbxassetid://127234874352422",
+	sync         = "rbxassetid://104941258142372",
+	about        = "rbxassetid://136533241128438",
+	chat         = "rbxassetid://121978468376124",
+}
+-- nil = "Lifetime"; a number shows "N days left" and "Till: <date>" in the profile.
+Library.DaysLeft = nil
+
 -- Track running tweens by object/property so repeated hover and popup inputs do
 -- not fight each other. Tweens for unrelated properties can still run in parallel.
 local _liveTweensByObject = setmetatable({}, { __mode = "k" })
@@ -1246,7 +1265,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	if string.lower(hubTitle) == "neverlose" and string.lower(gameTitle) == "blockstrike" then
 		hubTitle, gameTitle = gameTitle, hubTitle
 	end
-	local daysLeft = "Lifetime"
+	local daysLeft = tonumber(Library.DaysLeft) or "Lifetime"
 
 	_windowConfigCounter = _windowConfigCounter + 1
 	local windowConfigId = tostring(_windowConfigCounter)
@@ -2821,7 +2840,7 @@ Aspect.AspectRatio = 798 / 610
 	DaysLeft.TextTruncate = Enum.TextTruncate.AtEnd
 	DaysLeft.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	DaysLeft.BackgroundTransparency = 1
-	DaysLeft.Text = daysLeft
+	DaysLeft.Text = type(daysLeft) == "number" and (tostring(daysLeft) .. " days left") or "Lifetime"
 	DaysLeft.TextColor3 = Color3.fromRGB(255,255,255)
 	DaysLeft.TextScaled = false
 	DaysLeft.TextSize = 12
@@ -2850,10 +2869,11 @@ local SettingsArrow = New("ImageLabel", {
 	Size = UDim2.fromOffset(12, 12),
 	AnchorPoint = Vector2.new(1, 0.5),
 	BackgroundTransparency = 1,
-	Image = "rbxassetid://10709790990",
+	-- 10709790990 does not render in game; the chevron-down turned -90 reads as ">".
+	Image = "rbxassetid://10709790948",
 	ImageTransparency = 0.3,
 	ScaleType = Enum.ScaleType.Fit,
-	Rotation = 0,
+	Rotation = -90,
 	ZIndex = 102,
 }, WindowSettings)
 
@@ -2876,7 +2896,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WindowSettingsFrame.Name = "WindowSettingsFrame"
 	WindowSettingsFrame.AnchorPoint = Vector2.new(0, 1)
 	WindowSettingsFrame.Position = UDim2.new(0, 168, 1, -13)
-	WindowSettingsFrame.Size = UDim2.fromOffset(195, 0)
+	WindowSettingsFrame.Size = UDim2.fromOffset(220, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
 	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 28)
@@ -3003,7 +3023,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			plan.Size = UDim2.new(1, -56, 0, 14)
 			plan.BackgroundTransparency = 1
 			plan.BorderSizePixel = 0
-			plan.Text = daysLeft == "Lifetime" and "Lifetime" or ("Till: " .. tostring(daysLeft))
+			plan.Text = type(daysLeft) == "number" and ("Till: " .. os.date("%B %d %Y", os.time() + daysLeft * 86400)) or "Lifetime"
 			plan.TextColor3 = Color3.fromRGB(151, 157, 175)
 			plan.TextSize = 12
 			plan.Font = FONT
@@ -3028,15 +3048,10 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			renew.ZIndex = 121
 			renew.Parent = header
 
-			local separator = Instance.new("Frame")
-			separator.Name = "ProfileDivider"
-			separator.Position = UDim2.new(0, 0, 1, -1)
-			separator.Size = UDim2.new(1, 0, 0, 1)
-			separator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			separator.BackgroundTransparency = 0.91
-			separator.BorderSizePixel = 0
-			separator.ZIndex = 121
-			separator.Parent = header
+			-- Neverlose separates row groups with spacing, not divider lines.
+			for _, spacerOrder in ipairs({ 5, 55, 65, 85 }) do
+				New("Frame", { Name = "ProfileGroupGap", Size = UDim2.new(1, 0, 0, 6), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = spacerOrder }, SettingsContainer)
+			end
 		end
 
 		local menuBind = Enum.KeyCode.RightShift
@@ -3056,18 +3071,10 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WSColorpicker.LayoutOrder = 60
 	WSColorpicker.Parent = SettingsContainer
 	do
-		local ln = Instance.new("Frame"); ln.Name = "Lines"
-		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
-		ln.Size = UDim2.new(0.8899999856948853,0,0,1)
-		ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		ln.BackgroundTransparency = 0.9
-		ln.BorderSizePixel = 0; ln.ZIndex = 130; ln.Parent = WSColorpicker
-	end
-	do
-		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = "rbxassetid://109485777305919", ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSColorpicker)
+		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = Library.ProfileIcons.style, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSColorpicker)
 		local lbl = Instance.new("TextLabel")
 		lbl.Name = "colorpickerLabel"
-		lbl.Position = UDim2.fromOffset(28, 0)
+		lbl.Position = UDim2.fromOffset(34, 0)
 		lbl.Size = UDim2.new(1, -104, 1, 0)
 		lbl.AnchorPoint = Vector2.new(0,0)
 		lbl.BackgroundTransparency = 1
@@ -3120,19 +3127,11 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WSScaleRow.ZIndex = 120
 	WSScaleRow.LayoutOrder = 20
 	WSScaleRow.Parent = SettingsContainer
-	
+
 	do
-		local ln = Instance.new("Frame"); ln.Name = "Lines"
-		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
-		ln.Size = UDim2.new(0.8999999761581421,0,0,1)
-		ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		ln.BackgroundTransparency = 0.9
-		ln.BorderSizePixel = 0; ln.ZIndex = 150; ln.Parent = WSScaleRow
-	end
-	do
-		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = ICON_LAYERS, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSScaleRow)
+		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = Library.ProfileIcons.menuScale, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSScaleRow)
 		local lbl = Instance.new("TextLabel"); lbl.Name = "Text"
-		lbl.Position = UDim2.fromOffset(28, 0)
+		lbl.Position = UDim2.fromOffset(34, 0)
 		lbl.Size = UDim2.new(1, -104, 1, 0)
 		lbl.AnchorPoint = Vector2.new(0,0)
 		lbl.BackgroundTransparency = 1
@@ -3145,21 +3144,22 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	local ScaleArrow = Instance.new("ImageLabel")
 	ScaleArrow.Name = "TextArrow"
 	ScaleArrow.AnchorPoint = Vector2.new(1, 0.5)
-	ScaleArrow.Position = UDim2.new(1, -12, 0.5, 0)
+	ScaleArrow.Position = UDim2.new(1, -4, 0.5, 0)
 	ScaleArrow.Size = UDim2.fromOffset(10, 10)
 	ScaleArrow.BackgroundTransparency = 1
 	ScaleArrow.Image = "rbxassetid://10709790948"
 	ScaleArrow.ImageTransparency = 0.4000000059604645
 	ScaleArrow.ImageColor3 = Color3.fromRGB(255,255,255)
 	ScaleArrow.ScaleType = Enum.ScaleType.Fit
-	ScaleArrow.Rotation = 0
+	ScaleArrow.Rotation = -90
 	ScaleArrow.ZIndex = 1000
 	ScaleArrow.Parent = WSScaleRow
 
 	local ScaleDefault = Instance.new("TextLabel")
 	ScaleDefault.Name = "TextDefault"
-	ScaleDefault.Position = UDim2.new(0.60, 0, 0.17, 0)
-	ScaleDefault.Size = UDim2.new(0.25, 0, 0.6, 0)
+	ScaleDefault.AnchorPoint = Vector2.new(1, 0.5)
+	ScaleDefault.Position = UDim2.new(1, -18, 0.5, 0)
+	ScaleDefault.Size = UDim2.new(0, 70, 1, 0)
 	ScaleDefault.TextTruncate = Enum.TextTruncate.AtEnd
 	ScaleDefault.BackgroundTransparency = 1
 	ScaleDefault.Text = "Auto"
@@ -3219,19 +3219,11 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WSLangRow.ZIndex = 120
 	WSLangRow.LayoutOrder = 10
 	WSLangRow.Parent = SettingsContainer
-	
+
 	do
-		local ln = Instance.new("Frame"); ln.Name = "Lines"
-		ln.Position = UDim2.new(0.05000000074505806,0,1,0)
-		ln.Size = UDim2.new(0.8999999761581421,0,0,1)
-		ln.BackgroundColor3 = Color3.fromRGB(162,162,162)
-		ln.BackgroundTransparency = 0.9
-		ln.BorderSizePixel = 0; ln.ZIndex = 150; ln.Parent = WSLangRow
-	end
-	do
-		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = ICON_KEYBOARD, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSLangRow)
+		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = Library.ProfileIcons.language, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSLangRow)
 		local lbl = Instance.new("TextLabel"); lbl.Name = "Text"
-		lbl.Position = UDim2.fromOffset(28, 0)
+		lbl.Position = UDim2.fromOffset(34, 0)
 		lbl.Size = UDim2.new(1, -104, 1, 0)
 		lbl.AnchorPoint = Vector2.new(0,0)
 		lbl.BackgroundTransparency = 1
@@ -3244,21 +3236,22 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	local LangArrow = Instance.new("ImageLabel")
 	LangArrow.Name = "TextArrow"
 	LangArrow.AnchorPoint = Vector2.new(1, 0.5)
-	LangArrow.Position = UDim2.new(1, -12, 0.5, 0)
+	LangArrow.Position = UDim2.new(1, -4, 0.5, 0)
 	LangArrow.Size = UDim2.fromOffset(10, 10)
 	LangArrow.BackgroundTransparency = 1
 	LangArrow.Image = "rbxassetid://10709790948"
 	LangArrow.ImageTransparency = 0.4000000059604645
 	LangArrow.ImageColor3 = Color3.fromRGB(255,255,255)
 	LangArrow.ScaleType = Enum.ScaleType.Fit
-	LangArrow.Rotation = 0
+	LangArrow.Rotation = -90
 	LangArrow.ZIndex = 1000
 	LangArrow.Parent = WSLangRow
 
 	local LangDefault = Instance.new("TextLabel")
 	LangDefault.Name = "TextDefault"
-	LangDefault.Position = UDim2.new(0.60, 0, 0.17, 0)
-	LangDefault.Size = UDim2.new(0.25, 0, 0.6, 0)
+	LangDefault.AnchorPoint = Vector2.new(1, 0.5)
+	LangDefault.Position = UDim2.new(1, -18, 0.5, 0)
+	LangDefault.Size = UDim2.new(0, 70, 1, 0)
 	LangDefault.TextTruncate = Enum.TextTruncate.AtEnd
 	LangDefault.BackgroundTransparency = 1
 	LangDefault.Text = "English"
@@ -3358,7 +3351,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 		local function closeScaleDropdown()
 			scaleOpen = false
-			Tween(ScaleArrow, {ImageTransparency = 0.4, Rotation = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(ScaleArrow, {ImageTransparency = 0.4, Rotation = -90}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			UnregisterPopup(ScaleDownBar)
 			SmoothClose(ScaleDownBar, 0.18)
 		end
@@ -3443,7 +3436,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 				ApplyZIndexLadder(ScaleDownBar, NextPopupZ())
 				PositionPopupWithinMain(ScaleDownBar, true, 4, ScaleDefault, Vector2.new(150, popupH))
 				SmoothOpen(ScaleDownBar, 0.02, 0.16)
-				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = 180}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = -90}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				RegisterPopup(ScaleDownBar, closeScaleDropdown, ScaleOpenBtn)
 			end
 		end)
@@ -3452,6 +3445,14 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		local langOpen = false
 		local langSelectedBtns = {}
 		local selectedLang = "English"
+		-- Lost in 7d1b0ae, which left three calls to an undefined global. Stored on
+		-- WindowObj rather than as a local: AddWindow sits near Luau's register cap.
+		WindowObj._closeLangDropdown = function()
+			langOpen = false
+			Tween(LangArrow, {ImageTransparency = 0.4, Rotation = -90}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			UnregisterPopup(LangDownBar)
+			SmoothClose(LangDownBar, 0.18)
+		end
 		local function syncLangSelection()
 			LangDefault.Text = selectedLang
 			LangDefault:SetAttribute("FullText", selectedLang)
@@ -3523,13 +3524,12 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			local function selectLang()
 				selectedLang = lang
 				syncLangSelection()
-				closeLangDropdown()
+				WindowObj._closeLangDropdown()
 			end
 			RowBtn.MouseButton1Click:Connect(selectLang)
 		end
 local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
 	local row = New("Frame", { Name = "Profile_" .. name, Size = UDim2.new(1, 0, 0, 27), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = order, ZIndex = 120 }, SettingsContainer)
-	New("Frame", { Name = "Lines", Position = UDim2.new(0.05, 0, 1, -1), Size = UDim2.new(0.9, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(255,255,255), BackgroundTransparency = 0.92, BorderSizePixel = 0, ZIndex = 129 }, row)
 	New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = iconAsset, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, row)
 	local labelWidth = (kind == "switch-off" or kind == "switch-on") and UDim2.new(1, -72, 1, 0) or UDim2.new(1, -104, 1, 0)
 	New("TextLabel", { Name = "ProfileLabel", Position = UDim2.fromOffset(34, 0), Size = labelWidth, BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(200,204,218), TextScaled = false, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
@@ -3541,29 +3541,30 @@ local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
 	else
 		if value and value ~= "" then
-			New("TextLabel", { Name = "ProfileValue", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(52, 27), BackgroundTransparency = 1, Text = value, TextColor3 = Color3.fromRGB(150,155,172), TextScaled = false, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
+			New("TextLabel", { Name = "ProfileValue", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, kind == "arrow" and -18 or -8, 0.5, 0), Size = UDim2.fromOffset(70, 27), BackgroundTransparency = 1, Text = value, TextColor3 = Color3.fromRGB(150,155,172), TextScaled = false, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
 		end
 		if kind == "arrow" then
-			New("ImageLabel", { Name = "Chevron", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0), Size = UDim2.fromOffset(10, 10), BackgroundTransparency = 1, Image = "rbxassetid://10709790990", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 0.3, Rotation = 0, ScaleType = Enum.ScaleType.Fit, ZIndex = 131 }, row)
+			New("ImageLabel", { Name = "Chevron", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0), Size = UDim2.fromOffset(10, 10), BackgroundTransparency = 1, Image = "rbxassetid://10709790948", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 0.4, Rotation = -90, ScaleType = Enum.ScaleType.Fit, ZIndex = 131 }, row)
 		end
 	end
 	return row
 end
 
-AddProfileDisplayRow(30, "ESPScale", "ESP Scale", "150%", ICON_EYE, "arrow")
-AddProfileDisplayRow(40, "WindowsScale", "Windows Scale", "Auto", ICON_LAYERS, "arrow")
-AddProfileDisplayRow(50, "Units", "Units", "Auto", ICON_RAM, "arrow")
-AddProfileDisplayRow(70, "SafeMode", "Safe Mode", "Automatic", ICON_EYE, "arrow")
-AddProfileDisplayRow(80, "Synchronization", "Synchronization", nil, ICON_WIFI, "switch-on")
-AddProfileDisplayRow(90, "About", "About", nil, ICON_CLOCK, "arrow")
-AddProfileDisplayRow(100, "Chat", "Chat", nil, ICON_KEYBOARD, "arrow")
+AddProfileDisplayRow(30, "ESPScale", "ESP Scale", "150%", Library.ProfileIcons.espScale, "arrow")
+AddProfileDisplayRow(40, "WindowsScale", "Windows Scale", "Auto", Library.ProfileIcons.windowsScale, "arrow")
+AddProfileDisplayRow(50, "Units", "Units", "Auto", Library.ProfileIcons.units, "arrow")
+AddProfileDisplayRow(70, "SafeMode", "Safe Mode", "Automatic", Library.ProfileIcons.safeMode, "arrow")
+AddProfileDisplayRow(80, "Synchronization", "Synchronization", nil, Library.ProfileIcons.sync, "switch-on")
+-- About and Chat have no chevron in the reference.
+AddProfileDisplayRow(90, "About", "About", nil, Library.ProfileIcons.about, "plain")
+AddProfileDisplayRow(100, "Chat", "Chat", nil, Library.ProfileIcons.chat, "plain")
 		syncLangSelection()
 
 
 
 
 		LangOpenBtn.MouseButton1Click:Connect(function()
-			if langOpen then closeLangDropdown()
+			if langOpen then WindowObj._closeLangDropdown()
 			else
 				CloseAllPopupsExcept(LangDownBar)
 				langOpen = true
@@ -3572,8 +3573,8 @@ AddProfileDisplayRow(100, "Chat", "Chat", nil, ICON_KEYBOARD, "arrow")
 				ApplyZIndexLadder(LangDownBar, NextPopupZ())
 				PositionPopupWithinMain(LangDownBar, true, 4, LangDefault, Vector2.new(150, popupH))
 				SmoothOpen(LangDownBar, 0.02, 0.16)
-				Tween(LangArrow, {Rotation = 180, ImageTransparency = 0}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				RegisterPopup(LangDownBar, closeLangDropdown, LangOpenBtn)
+				Tween(LangArrow, {Rotation = -90, ImageTransparency = 0}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				RegisterPopup(LangDownBar, WindowObj._closeLangDropdown, LangOpenBtn)
 			end
 		end)
 
@@ -3591,7 +3592,7 @@ AddProfileDisplayRow(100, "Chat", "Chat", nil, ICON_KEYBOARD, "arrow")
 			}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			Tween(WSScale, { Scale = 0.975 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			SmoothClose(WindowSettingsFrame, 0.14)
-			Tween(SettingsArrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(SettingsArrow, { Rotation = -90 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		end
 		WindowSettings.MouseButton1Click:Connect(function()
 			wsOpen = not wsOpen
@@ -3656,7 +3657,7 @@ AddProfileDisplayRow(100, "Chat", "Chat", nil, ICON_KEYBOARD, "arrow")
 					Tween(WSScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(WindowSettingsFrame, { Position = settled }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
-					Tween(SettingsArrow, { Rotation = 180 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(SettingsArrow, { Rotation = -90 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end)
 			else
 				closeWS()
@@ -3697,6 +3698,8 @@ AddProfileDisplayRow(100, "Chat", "Chat", nil, ICON_KEYBOARD, "arrow")
 		WMRow.BackgroundTransparency = 1
 		WMRow.ZIndex = 120
 		WMRow.LayoutOrder = 50
+		-- Hidden for now: not part of the Neverlose profile popover. Win:SetWatermark still works.
+		WMRow.Visible = false
 		WMRow.Parent = SettingsContainer
 
 		local wmLabel = Instance.new("TextLabel")
