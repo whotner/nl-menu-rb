@@ -2945,7 +2945,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	SettingsContainer.Parent = WindowSettingsFrame
 	do
         local ll = Instance.new("UIListLayout")
-        ll.Padding = UDim.new(0, 3)
+        ll.Padding = UDim.new(0, 1)
         ll.SortOrder = Enum.SortOrder.LayoutOrder
         ll.Parent = SettingsContainer
         local pad = Instance.new("UIPadding")
@@ -2958,7 +2958,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		do
 			local header = Instance.new("Frame")
 			header.Name = "ProfileHeader"
-			header.Size = UDim2.new(1, 0, 0, 68)
+			header.Size = UDim2.new(1, 0, 0, 58)
 			header.BackgroundTransparency = 1
 			header.BorderSizePixel = 0
 			header.LayoutOrder = 0
@@ -3049,7 +3049,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	local WSColorpicker = Instance.new("Frame")
 	WSColorpicker.Name = "Colorpicker"
 	-- Fixed row height prevents a circular AutoSize dependency with the popup.
-	WSColorpicker.Size = UDim2.new(1, 0, 0, 30)
+	WSColorpicker.Size = UDim2.new(1, 0, 0, 27)
 	WSColorpicker.BackgroundTransparency = 1
 	WSColorpicker.BorderSizePixel = 0
 	WSColorpicker.ZIndex = 130
@@ -3100,7 +3100,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local WSScaleRow = Instance.new("Frame")
 	WSScaleRow.Name = "Selection"
-	WSScaleRow.Size = UDim2.new(1,0,0,30)
+	WSScaleRow.Size = UDim2.new(1,0,0,27)
 	WSScaleRow.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	WSScaleRow.BackgroundTransparency = 1
 	WSScaleRow.ZIndex = 120
@@ -3199,7 +3199,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local WSLangRow = Instance.new("Frame")
 	WSLangRow.Name = "Selection"
-	WSLangRow.Size = UDim2.new(1,0,0,30)
+	WSLangRow.Size = UDim2.new(1,0,0,27)
 	WSLangRow.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	WSLangRow.BackgroundTransparency = 1
 	WSLangRow.ZIndex = 120
@@ -3514,7 +3514,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			RowBtn.MouseButton1Click:Connect(selectLang)
 		end
 local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
-	local row = New("Frame", { Name = "Profile_" .. name, Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = order, ZIndex = 120 }, SettingsContainer)
+	local row = New("Frame", { Name = "Profile_" .. name, Size = UDim2.new(1, 0, 0, 27), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = order, ZIndex = 120 }, SettingsContainer)
 	New("Frame", { Name = "Lines", Position = UDim2.new(0.05, 0, 1, -1), Size = UDim2.new(0.9, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(255,255,255), BackgroundTransparency = 0.92, BorderSizePixel = 0, ZIndex = 129 }, row)
 	New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = iconAsset, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, row)
 	local labelWidth = (kind == "switch-off" or kind == "switch-on") and UDim2.new(1, -72, 1, 0) or UDim2.new(1, -104, 1, 0)
@@ -3528,7 +3528,7 @@ local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
 	else
 		if value and value ~= "" then
-			New("TextLabel", { Name = "ProfileValue", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -22, 0.5, 0), Size = UDim2.fromOffset(52, 30), BackgroundTransparency = 1, Text = value, TextColor3 = Color3.fromRGB(150,155,172), TextScaled = false, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
+			New("TextLabel", { Name = "ProfileValue", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -22, 0.5, 0), Size = UDim2.fromOffset(52, 27), BackgroundTransparency = 1, Text = value, TextColor3 = Color3.fromRGB(150,155,172), TextScaled = false, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
 		end
 		if kind == "arrow" then
 			New("ImageLabel", { Name = "Chevron", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(10, 10), BackgroundTransparency = 1, Image = "rbxassetid://10709790990", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 0.3, Rotation = 0, ScaleType = Enum.ScaleType.Fit, ZIndex = 131 }, row)
@@ -3537,10 +3537,10 @@ local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
 	return row
 end
 
-AddProfileDisplayRow(30, "ESPScale", "ESP Scale", "100%", ICON_EYE, "arrow")
-AddProfileDisplayRow(40, "WindowsScale", "Windows Scale", "100%", ICON_LAYERS, "arrow")
-AddProfileDisplayRow(50, "Units", "Units", "Metric", ICON_RAM, "arrow")
-AddProfileDisplayRow(70, "SafeMode", "Safe Mode", nil, ICON_EYE, "switch-off")
+AddProfileDisplayRow(30, "ESPScale", "ESP Scale", "150%", ICON_EYE, "arrow")
+AddProfileDisplayRow(40, "WindowsScale", "Windows Scale", "Auto", ICON_LAYERS, "arrow")
+AddProfileDisplayRow(50, "Units", "Units", "Auto", ICON_RAM, "arrow")
+AddProfileDisplayRow(70, "SafeMode", "Safe Mode", "Automatic", ICON_EYE, "arrow")
 AddProfileDisplayRow(80, "Synchronization", "Synchronization", nil, ICON_WIFI, "switch-on")
 AddProfileDisplayRow(90, "About", "About", nil, ICON_CLOCK, "arrow")
 AddProfileDisplayRow(100, "Chat", "Chat", nil, ICON_KEYBOARD, "arrow")
