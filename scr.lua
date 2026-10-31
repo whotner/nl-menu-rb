@@ -799,6 +799,26 @@ local function GetDragShield(frame)
 	return shield
 end
 
+-- Popups are mostly plain Frames, which let clicks fall through to whatever row
+-- sits underneath (picking a profile setting toggled the function behind it).
+-- An invisible button under the popup's content swallows those clicks.
+local function AddInputSink(frame)
+	if not frame or not frame:IsA("GuiObject") or frame:IsA("ScrollingFrame") then return end
+	if frame:FindFirstChild("InputSink") then return end
+	-- A layout would treat the sink as one more row.
+	if frame:FindFirstChildOfClass("UIListLayout") or frame:FindFirstChildOfClass("UIGridLayout") then return end
+	New("TextButton", {
+		Name = "InputSink",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Text = "",
+		AutoButtonColor = false,
+		Active = true,
+		ZIndex = frame.ZIndex,
+	}, frame)
+end
+
 local function MeasureRowsHeight(container)
 	local count = 0
 	local total = 0
@@ -1090,6 +1110,7 @@ end
 
 	local function RegisterPopup(frame, closeFn, trigger)
 		if not frame or type(closeFn) ~= "function" then return end
+		AddInputSink(frame)
 		for i = #_openPopups, 1, -1 do
 			local entry = _openPopups[i]
 			if not entry.frame or not entry.frame.Parent then
@@ -1936,19 +1957,20 @@ local GameInfo = Instance.new('Frame')
 GameInfo.Name = "GameInfo"
 GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(1, -6, 0, 2)
-GameInfo.Size = UDim2.fromOffset(0, 36)
+-- Neverlose watermark: a thin, dark, see-through strip without outline or
+-- dividers; small caps text, accent icons, avatar at the end.
+GameInfo.Size = UDim2.fromOffset(0, 26)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
-GameInfo.BackgroundColor3 = Color3.fromRGB(15, 17, 25)
-GameInfo.BackgroundTransparency = 0.06
+GameInfo.BackgroundColor3 = Color3.fromRGB(9, 10, 15)
+GameInfo.BackgroundTransparency = 0.25
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
 GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
-do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = GameInfo end
-do Stroke(GameInfo, "Border") end
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 12); pd.PaddingRight = UDim.new(0, 14); pd.PaddingTop = UDim.new(0, 7); pd.PaddingBottom = UDim.new(0, 7); pd.Parent = GameInfo end
+do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 5); c.Parent = GameInfo end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 6); pd.PaddingRight = UDim.new(0, 5); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
 local ICON_LAYERS   = "rbxassetid://114499998778667"
@@ -1962,25 +1984,25 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local cell = Instance.new("Frame")
 	cell.Name = name .. "Cell"
 	cell.LayoutOrder = order
-	cell.Size = UDim2.fromOffset(0, 22)
+	cell.Size = UDim2.fromOffset(0, 26)
 	cell.AutomaticSize = Enum.AutomaticSize.X
 	cell.BackgroundTransparency = 1
 	cell.BorderSizePixel = 0
 	cell.ZIndex = Z_BASE + 901
 	cell.Parent = GameInfo
-	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 6); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
-	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 12); pd.PaddingRight = UDim.new(0, 12); pd.Parent = cell end
+	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 5); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
+	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 7); pd.PaddingRight = UDim.new(0, 7); pd.Parent = cell end
 	local icon
 	if iconAsset then
 		icon = Instance.new("ImageLabel")
 		icon.Name = name .. "Icon"
 		icon.LayoutOrder = 1
-		icon.Size = UDim2.fromOffset(iconSize or 14, iconSize or 14)
+		icon.Size = UDim2.fromOffset(iconSize or 12, iconSize or 12)
 		icon.BackgroundTransparency = 1
 		icon.BorderSizePixel = 0
 		icon.Image = iconAsset
-		icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-		icon.ImageTransparency = 0.05
+		icon.ImageColor3 = ACCENT
+		icon.ImageTransparency = 0
 		icon.ScaleType = Enum.ScaleType.Fit
 		icon.ZIndex = Z_BASE + 901
 		icon.Parent = cell
@@ -1989,15 +2011,15 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local label = Instance.new("TextLabel")
 	label.Name = name
 	label.LayoutOrder = 2
-	label.Size = UDim2.fromOffset(0, 22)
+	label.Size = UDim2.fromOffset(0, 26)
 	label.AutomaticSize = Enum.AutomaticSize.X
 	label.BackgroundTransparency = 1
 	label.BorderSizePixel = 0
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(255, 255, 255)
-	label.TextTransparency = 0.04
+	label.TextColor3 = Color3.fromRGB(214, 218, 228)
+	label.TextTransparency = 0
 	label.TextScaled = false
-	label.TextSize = 13
+	label.TextSize = 11
 	label.Font = FONT
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Center
@@ -2022,19 +2044,19 @@ end
 local BrandCell = Instance.new("Frame")
 BrandCell.Name = "BrandCell"
 BrandCell.LayoutOrder = 2
-BrandCell.Size = UDim2.fromOffset(0, 22)
+BrandCell.Size = UDim2.fromOffset(0, 26)
 BrandCell.AutomaticSize = Enum.AutomaticSize.X
 BrandCell.BackgroundTransparency = 1
 BrandCell.BorderSizePixel = 0
 BrandCell.ZIndex = Z_BASE + 901
 BrandCell.Parent = GameInfo
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = BrandCell end
-do local pd = Instance.new("UIPadding"); pd.PaddingRight = UDim.new(0, 12); pd.Parent = BrandCell end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 4); pd.PaddingRight = UDim.new(0, 5); pd.Parent = BrandCell end
 
 local NeverIcon = Instance.new("ImageLabel")
 NeverIcon.Name = "NeverIcon"
 NeverIcon.LayoutOrder = 1
-NeverIcon.Size = UDim2.fromOffset(18, 18)
+NeverIcon.Size = UDim2.fromOffset(16, 16)
 NeverIcon.BackgroundTransparency = 1
 NeverIcon.BorderSizePixel = 0
 NeverIcon.Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420"
@@ -2048,7 +2070,7 @@ local UserCell = WMCell("Username", 4, nil, LocalPlayer.DisplayName or "Player")
 local UserIcon = Instance.new("ImageLabel")
 UserIcon.Name = "UserIcon"
 UserIcon.LayoutOrder = 1
-UserIcon.Size = UDim2.fromOffset(16, 16)
+UserIcon.Size = UDim2.fromOffset(18, 18)
 UserIcon.BackgroundTransparency = 1
 UserIcon.BorderSizePixel = 0
 UserIcon.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId or 0) .. "&w=150&h=150"
@@ -2056,19 +2078,23 @@ UserIcon.ZIndex = Z_BASE + 901
 UserIcon.Parent = UserCell
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = UserIcon end
 local Username = UserCell:FindFirstChild("Username")
+-- Neverlose shows only the avatar at the end of the strip; the name label stays
+-- available through Watermark.user for scripts that want it back.
+Username.Visible = false
+do local pd = UserCell:FindFirstChildOfClass("UIPadding"); if pd then pd.PaddingRight = UDim.new(0, 0) end end
 
 local FpsCell, FpsCellIcon
-FpsCell, FpsCellIcon, FPSText = WMCell("FPS", 6, ICON_LAYERS, "0")
+FpsCell, FpsCellIcon, FPSText = WMCell("FPS", 6, ICON_LAYERS, "0 FPS")
 local PingCell
-PingCell, SignalImage, MSText = WMCell("Ping", 8, ICON_WIFI, "0ms")
+PingCell, SignalImage, MSText = WMCell("Ping", 8, ICON_WIFI, "0 MS")
 local RamCell, RamCellIcon
-RamCell, RamCellIcon, RamText = WMCell("RAM", 10, ICON_RAM, "0mb")
+RamCell, RamCellIcon, RamText = WMCell("RAM", 10, ICON_RAM, "0 MB")
 local TimeCell, TimeCellIcon
 TimeCell, TimeCellIcon, TimeText = WMCell("Time", 12, ICON_CLOCK, os.date("%H:%M"))
 
 local WMCells = { brand = BrandCell, user = UserCell, fps = FpsCell, ping = PingCell, ram = RamCell, time = TimeCell }
-local WMDefaultOrder = { "brand", "fps", "ping", "user", "time", "ram" }
-local WMShowMap = { logo = true, user = true, fps = false, ping = false, ram = false, time = false }
+local WMDefaultOrder = { "brand", "fps", "ping", "time", "user", "ram" }
+local WMShowMap = { logo = true, user = true, fps = true, ping = true, ram = false, time = true }
 local WMDividers = {}
 for key in pairs(WMCells) do WMDividers[key] = WMDivider() end
 
@@ -2104,14 +2130,8 @@ local function ApplyWatermarkLayout(orderList, showMap)
 		cell.LayoutOrder = i * 2
 		if not hidden then table.insert(shown, { key = key, index = i }) end
 	end
+	-- No dividers: Neverlose separates the stats with spacing only.
 	for _, divider in pairs(WMDividers) do divider.Visible = false end
-	for n = 2, #shown do
-		local divider = WMDividers[shown[n].key]
-		if divider then
-			divider.Visible = true
-			divider.LayoutOrder = shown[n].index * 2 - 1
-		end
-	end
 	GameInfo.Visible = #shown > 0
 	if WMShadowSync then WMShadowSync() end
 end
@@ -2142,7 +2162,7 @@ do
 		layer.BorderSizePixel = 0
 		layer.ZIndex = Z_BASE + 899
 		layer.Parent = WMShadowHost
-		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 12); c.Parent = layer end
+		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = layer end
 		layers[i] = layer
 	end
 
@@ -2297,7 +2317,7 @@ if avg > 0 then
 local fps = math.round(#fpsBuffer / avg)
 if fps ~= lastFps then
 lastFps = fps
-setTextSmooth(FPSText, tostring(fps))
+setTextSmooth(FPSText, tostring(fps) .. " FPS")
 end
 end
 local ping = Stats and Stats.Network and Stats.Network.ServerStatsItem and Stats.Network.ServerStatsItem["Data Ping"]
@@ -2307,16 +2327,14 @@ if ok and type(value) == "number" then
 local ms = math.round(value)
 if ms ~= lastMs then
 lastMs = ms
-setTextSmooth(MSText, tostring(ms) .. "ms")
-local tint = ms >= 150 and BAD or ms >= 80 and WARN or GOOD
-MSText.TextColor3 = tint
-SignalImage.ImageColor3 = tint
+-- Neverlose keeps the ping neutral; no traffic-light tint.
+setTextSmooth(MSText, tostring(ms) .. " MS")
 end
 end
 end
 local okMem, memMb = pcall(function() return game:GetTotalMemoryUsageMb() end)
 if okMem and type(memMb) == "number" then
-setTextSmooth(RamText, tostring(math.floor(memMb)) .. "mb")
+setTextSmooth(RamText, tostring(math.floor(memMb)) .. " MB")
 end
 end)
 
@@ -6225,9 +6243,10 @@ end
 				SFContainer.Name = "Container"
 				SFContainer.AnchorPoint = Vector2.new(0, 0)
 				SFContainer.Position = UDim2.new(0.04, 0, 0, PLATE_HEADER + 3 / GetMainFrameScale())
-				SFContainer.Size = UDim2.new(0.92, 0, 1, -(PLATE_HEADER + 6 / GetMainFrameScale()))
-				SFContainer.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
-				SFContainer.BackgroundTransparency = 1
+				SFContainer.Size = UDim2.new(0.92, 0, 1, -(PLATE_HEADER + 10 / GetMainFrameScale()))
+				-- Neverlose plates group their rows on an inner card, without dividers.
+				SFContainer.BackgroundColor3 = Color3.fromRGB(24, 27, 37)
+				SFContainer.BackgroundTransparency = 0
 				SFContainer.LayoutOrder = 1
 				SFContainer.ZIndex = 5001
 				SFContainer.Active = true
@@ -6254,11 +6273,13 @@ end
 				end
 
 				do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = SFContainer end
+				Stroke(SFContainer, "CardOutline")
+				New("UIPadding", { PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2) }, SFContainer)
 
 				local function UpdateSettingsLayout()
 					local scale = GetMainFrameScale()
 					SFContainer.Position = UDim2.new(0.04, 0, 0, PLATE_HEADER + 3 / scale)
-					SFContainer.Size = UDim2.new(0.92, 0, 1, -(PLATE_HEADER + 6 / scale))
+					SFContainer.Size = UDim2.new(0.92, 0, 1, -(PLATE_HEADER + 10 / scale))
 				end
 
 				local function GetSettingsContentHeight()
@@ -6288,7 +6309,7 @@ end
 					local mainSize = MainFrame.AbsoluteSize
 					local mainPosition = MainFrame.AbsolutePosition
 					local minHeight = 30
-					local width = 240
+					local width = 270
 					local edge = 5 * scale
 					height = math.max(minHeight, type(height) == "number" and height == height and height or minHeight)
 					local parentPosition = parentFrame.AbsolutePosition
@@ -6443,7 +6464,6 @@ New("Frame", {
 						ZIndex = 1010,
 					}, Toggle)
 
-					AttachRowHover(Btn.Parent)
 
 					local function Set(val)
 						enabled = val == true
@@ -6513,7 +6533,6 @@ New("Frame", {
 						ZIndex = 1010,
 					}, CheckBoxToggle)
 
-					AttachRowHover(Btn.Parent)
 
 					local function Set(val)
 						enabled = val == true
@@ -6547,7 +6566,6 @@ New("Frame", {
 						LayoutOrder = settingsElemCount,
 						ZIndex = 1000,
 					}, SettingsFrame_Container)
-					AttachRowHover(Slider)
 
 New("Frame", {
 						Name = "Lines",
@@ -7582,7 +7600,6 @@ New("Frame", {
 					ZIndex = 5,
 				}, Toggle)
 
-				AttachRowHover(Btn.Parent)
 
 				local function Set(val)
 					enabled = val == true
@@ -7659,7 +7676,6 @@ New("Frame", {
 					Text = "",
 					ZIndex = 1010,
 				}, CheckBoxToggle)
-				AttachRowHover(Btn.Parent)
 
 				local function Set(val)
 					enabled = val == true
@@ -7796,7 +7812,6 @@ New("Frame", {
 					NotifyEnabled()
 				end
 				Btn.MouseButton1Click:Connect(function() SetEnabled(not enabled) end)
-				AttachRowHover(Toggle)
 
 				local obj = {}
 				function obj:Set(val) SetEnabled(val) end
@@ -7834,7 +7849,6 @@ New("Frame", {
 					BackgroundTransparency = 1,
 					LayoutOrder = elemCount,
 				}, Elements)
-				AttachRowHover(Slider)
 				New("Frame", {
 					Name = "Lines",
 					Position = UDim2.new(0.06, 0, 1, -1),
@@ -8028,7 +8042,6 @@ New("Frame", {
 					LayoutOrder = elemCount,
 					ClipsDescendants = false,
 				}, Elements)
-				AttachRowHover(Dropdown)
 
 				New("Frame", {
 					Name = "Lines",
@@ -8641,7 +8654,7 @@ New("Frame", {
 
 				-- Plate header like the "..." settings plate: title, then the rows.
 				local ACC_HEADER = 34
-				local ACC_WIDTH = 260
+				local ACC_WIDTH = 270
 				New("TextLabel", {
 					Name = "PlateTitle",
 					Position = UDim2.new(0, 14, 0, 12),
@@ -8658,9 +8671,10 @@ New("Frame", {
 				local Container = Instance.new('ScrollingFrame')
 				Container.Name = "Container"
 				Container.Position = UDim2.new(0.04, 0, 0, ACC_HEADER + 3 / GetMainFrameScale())
-				Container.Size = UDim2.new(0.92, 0, 1, -(ACC_HEADER + 6 / GetMainFrameScale()))
-				Container.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
-				Container.BackgroundTransparency = 1
+				Container.Size = UDim2.new(0.92, 0, 1, -(ACC_HEADER + 10 / GetMainFrameScale()))
+				-- Same inner card as the "..." plate: rows grouped, no dividers.
+				Container.BackgroundColor3 = Color3.fromRGB(24, 27, 37)
+				Container.BackgroundTransparency = 0
 				Container.AnchorPoint = Vector2.new(0, 0)
 				Container.LayoutOrder = 1
 				Container.ZIndex = 5001
@@ -8679,7 +8693,12 @@ New("Frame", {
 				UIListLayout.Padding = UDim.new(0, 3)
 				UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				UIListLayout.Parent = Container
-				WatchRowDividers(Container)
+				do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = Container end
+				Stroke(Container, "CardOutline")
+				New("UIPadding", { PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2) }, Container)
+				Container.DescendantAdded:Connect(function(d)
+					if d.Name == "Lines" and d:IsA("GuiObject") then d.Visible = false end
+				end)
 
 				local function GetAccordionContentHeight()
 					local measured = MeasureRowsHeight(Container)
@@ -8697,7 +8716,7 @@ New("Frame", {
 				local function UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
 					Container.Position = UDim2.new(0.04, 0, 0, ACC_HEADER + 3 / scale)
-					Container.Size = UDim2.new(0.92, 0, 1, -(ACC_HEADER + 6 / scale))
+					Container.Size = UDim2.new(0.92, 0, 1, -(ACC_HEADER + 10 / scale))
 				end
 
 				-- Beside the row, not below it: from the row's middle, top aligned a
@@ -8883,7 +8902,6 @@ New("Frame", {
 						ZIndex = 110,
 					}, Toggle)
 
-					AttachRowHover(Btn.Parent)
 
 					local function Set(val)
 						enabled = val == true
@@ -8956,7 +8974,6 @@ New("Frame", {
 						ZIndex = 110,
 					}, CheckBoxToggle)
 
-					AttachRowHover(Btn.Parent)
 
 					local function Set(val)
 						enabled = val == true
@@ -9240,7 +9257,6 @@ New("Frame", {
 						LayoutOrder = accordionElemCount,
 						ZIndex = 100,
 					}, Container)
-					AttachRowHover(Slider)
 
 New("Frame", {
 						Name = "Lines",
