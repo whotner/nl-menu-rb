@@ -5512,10 +5512,12 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				activeLoadBtn = LoadConfigBtn
 				SetActiveConfigName(name)
 				Tween(row, {BackgroundColor3 = Color3.fromRGB(27, 27, 35)}, 0.2)
+				-- Neverlose marks the loaded preset quietly: a muted lavender outline
+				-- and a light save icon, not a bright accent ring.
 				local outline = row:FindFirstChild("ConfigRowStroke")
-				if outline then Tween(outline, { Color = mainColor, Transparency = 0.55 }, 0.2) end
+				if outline then Tween(outline, { Color = Color3.fromRGB(73, 79, 117), Transparency = 0 }, 0.2) end
 				LoadConfigBtn.Image = SAVE_ICON
-				Tween(LoadConfigBtn, {ImageColor3 = mainColor}, 0.2)
+				Tween(LoadConfigBtn, {ImageColor3 = Color3.fromRGB(205, 208, 218)}, 0.2)
 			end
 		end)
 
@@ -5665,7 +5667,10 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 		UnregisterPopup(ConfigMainFrame)
 		UnregisterPopup(RecentlyDeletedPanel)
 		Tween(ConfigMainFrame, { BackgroundTransparency = 1 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-		Tween(ConfigScale, { Scale = 0.94 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		Tween(ConfigScale, { Scale = 0.96 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		-- Rows, icons and the shadow fade with the panel instead of popping off.
+		FadePopupContent(ConfigMainFrame, false, 0.13)
+		TweenShadowLayers(ConfigMainFrame, false, 0.13, Enum.EasingDirection.In)
 		Tween(RecentlyDeletedPanel, { BackgroundTransparency = 1 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 		local rdScale = RecentlyDeletedPanel:FindFirstChild("_PopScale")
 		if rdScale and rdScale:IsA("UIScale") then Tween(rdScale, { Scale = 0.94 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In) end
@@ -5697,8 +5702,10 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 				end
 			end)
 			ConfigMainFrame.Visible = true
-			ConfigScale.Scale = 0.94
-			Tween(ConfigScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			ConfigScale.Scale = 0.92
+			Tween(ConfigScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			FadePopupContent(ConfigMainFrame, true, 0.2)
+			TweenShadowLayers(ConfigMainFrame, true, 0.2)
 			Tween(ConfigMainFrame, { BackgroundTransparency = 0.045 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			local cfgSettled = ConfigMainFrame.Position
 			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 5)
@@ -6255,10 +6262,15 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		Size = UDim2.fromOffset(40, 40), BackgroundColor3 = Color3.fromRGB(14, 17, 30), BorderSizePixel = 0, ZIndex = Z_BASE + 991,
 	}, toast)
 	New("UICorner", { CornerRadius = UDim.new(0, 10) }, badge)
-	New("TextLabel", {
-		Name = "BadgeText", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "NL",
-		TextColor3 = Color3.fromRGB(226, 230, 255), TextSize = 15, ZIndex = Z_BASE + 992,
+	-- The real NL logo (same image and zoom as the window badge), rounded.
+	local badgeLogo = New("ImageLabel", {
+		Name = "BadgeLogo", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
+		ImageRectOffset = hubImage ~= "" and Vector2.new(0, 0) or Vector2.new(48, 48),
+		ImageRectSize = hubImage ~= "" and Vector2.new(0, 0) or Vector2.new(324, 324),
+		ScaleType = Enum.ScaleType.Stretch, ZIndex = Z_BASE + 992,
 	}, badge)
+	New("UICorner", { CornerRadius = UDim.new(0, 10) }, badgeLogo)
 	New("TextLabel", {
 		Name = "LoaderTitle", Position = UDim2.fromOffset(66, 13), Size = UDim2.new(1, -150, 0, 20), BackgroundTransparency = 1,
 		Text = string.lower(tostring(hubTitle)), TextColor3 = Color3.fromRGB(222, 223, 228), TextSize = 16,
@@ -6884,7 +6896,7 @@ end
 					UnregisterPopup(SettingsFrame)
 					-- Fade out in place; shrinking the height used to cut the plate off.
 					SmoothClose(SettingsFrame, 0.13)
-					Tween(SFScale, {Scale = 0.97}, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					Tween(SFScale, {Scale = 0.94}, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					Tween(SettingsBtn, { BackgroundTransparency = 1 }, 0.12)
 				end
 				local SettingsObj = {}
@@ -6908,11 +6920,12 @@ end
 					RememberPopupClipping(SettingsFrame)
 					ForceLiftClipping(SettingsFrame)
 					SettingsFrame.Visible = false
-					SFScale.Scale = 0.96
+					SFScale.Scale = 0.9
 					ApplyZIndexLadder(SettingsFrame, NextPopupZ())
 					placeSettings(getSettingsHeight())
 					SmoothOpen(SettingsFrame, 0, 0.18)
-					Tween(SFScale, {Scale = 1}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					-- Pops out of the dots (UIScale grows from the plate's top-left).
+					Tween(SFScale, {Scale = 1}, 0.26, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 					-- The dots stay highlighted while their plate is open, as in Neverlose.
 					if not SettingsBtn:FindFirstChildOfClass("UICorner") then New("UICorner", { CornerRadius = UDim.new(0, 5) }, SettingsBtn) end
 					SettingsBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
