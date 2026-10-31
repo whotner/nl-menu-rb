@@ -8315,6 +8315,8 @@ New("UIAspectRatioConstraint", {
 				{ "Knife", "rbxassetid://10734975486" }, { "Gloves", "rbxassetid://10723405649" }, { "Zeus", "rbxassetid://10734951847" },
 			}
 			local TEAM_COLOR = { CT = Color3.fromRGB(110, 150, 255), T = Color3.fromRGB(230, 180, 90) }
+			-- Team icons (Lucide): shield for CT, bomb for T.
+			local TEAM_ICON = { CT = "rbxassetid://10734951367", T = "rbxassetid://10709781460" }
 			local CARD, MUTED, TEXT = Color3.fromRGB(23, 23, 31), Color3.fromRGB(150, 152, 162), Color3.fromRGB(235, 236, 241)
 			local team = options.team == "T" and "T" or "CT"
 
@@ -8348,13 +8350,13 @@ New("UIAspectRatioConstraint", {
 			-- clicking that logo switches.
 			local function teamLogo(parent, which, size)
 				local logo = New("Frame", {
-					Name = "TeamLogo", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(size, size),
-					BackgroundColor3 = TEAM_COLOR[which], BackgroundTransparency = 0.75, BorderSizePixel = 0,
+					Name = "TeamLogo", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 4, 0.5, 0), Size = UDim2.fromOffset(size, size),
+					BackgroundColor3 = TEAM_COLOR[which], BackgroundTransparency = 0.78, BorderSizePixel = 0,
 				}, parent)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, logo)
-				New("TextLabel", {
-					Name = "TeamLogoText", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = which,
-					TextColor3 = TEAM_COLOR[which], TextSize = 9, Font = FONT_BOLD,
+				New("ImageLabel", {
+					Name = "TeamLogoIcon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(12, 12),
+					BackgroundTransparency = 1, Image = TEAM_ICON[which], ImageColor3 = TEAM_COLOR[which], ScaleType = Enum.ScaleType.Fit,
 				}, logo)
 				return logo
 			end
@@ -8363,8 +8365,8 @@ New("UIAspectRatioConstraint", {
 			}, side)
 			New("UICorner", { CornerRadius = UDim.new(1, 0) }, switch)
 			Stroke(switch)
-			local badge = teamLogo(switch, team, 18)
-			local badgeText = badge:FindFirstChild("TeamLogoText")
+			local badge = teamLogo(switch, team, 20)
+			local badgeText = badge:FindFirstChild("TeamLogoIcon")
 			local switchText = New("TextLabel", {
 				Name = "TeamTitle", Position = UDim2.fromOffset(30, 0), Size = UDim2.new(1, -36, 1, 0), BackgroundTransparency = 1,
 				Text = team .. " Loadout", TextColor3 = TEXT, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left,
@@ -8375,10 +8377,10 @@ New("UIAspectRatioConstraint", {
 			}, side)
 			New("UICorner", { CornerRadius = UDim.new(1, 0) }, other)
 			Stroke(other)
-			local otherLogo = teamLogo(other, team == "CT" and "T" or "CT", 18)
+			local otherLogo = teamLogo(other, team == "CT" and "T" or "CT", 20)
 			otherLogo.AnchorPoint = Vector2.new(0.5, 0.5)
 			otherLogo.Position = UDim2.fromScale(0.5, 0.5)
-			local otherText = otherLogo:FindFirstChild("TeamLogoText")
+			local otherText = otherLogo:FindFirstChild("TeamLogoIcon")
 			other.MouseEnter:Connect(function() Tween(other, { BackgroundTransparency = 0 }, 0.1) end)
 			other.MouseLeave:Connect(function() Tween(other, { BackgroundTransparency = 0.2 }, 0.14) end)
 
@@ -8428,6 +8430,19 @@ New("UIAspectRatioConstraint", {
 				if not model then return end
 				model:PivotTo(CFrame.Angles(0, math.pi + yaw, 0))
 			end
+			-- Fit the whole body with room around it: distance for the taller of
+			-- height and (aspect-corrected) width, plus 25%; redone on resize.
+			local function fitCamera()
+				if not model then return end
+				local cf, size = model:GetBoundingBox()
+				local view = viewport.AbsoluteSize
+				local aspect = (view.X > 0 and view.Y > 0) and view.X / view.Y or 0.75
+				local span = math.max(size.Y, math.max(size.X, size.Z) / aspect)
+				local distance = span / 2 / math.tan(math.rad(camera.FieldOfView / 2)) * 1.25
+				camera.CFrame = CFrame.new(cf.Position + Vector3.new(0, 0, distance), cf.Position)
+			end
+			viewport:GetAttributeChangedSignal("Refit"):Connect(fitCamera)
+			viewport:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitCamera)
 			local function loadAgent()
 				world:ClearAllChildren()
 				model = nil
@@ -8451,8 +8466,8 @@ New("UIAspectRatioConstraint", {
 				clone.Parent = world
 				model = clone
 				pose()
-				local cf, size = clone:GetBoundingBox()
-				camera.CFrame = CFrame.new(cf.Position + Vector3.new(0, size.Y * 0.04, size.Y * 2.1), cf.Position)
+				model:SetAttribute("Fit", true)
+				viewport:SetAttribute("Refit", (viewport:GetAttribute("Refit") or 0) + 1)
 			end
 			loadAgent()
 			LocalPlayer.CharacterAdded:Connect(function(char)
@@ -8519,13 +8534,13 @@ New("UIAspectRatioConstraint", {
 			function api:SetTeam(newTeam)
 				team = newTeam == "T" and "T" or "CT"
 				switchText.Text = team .. " Loadout"
-				badgeText.Text = team
+				badgeText.Image = TEAM_ICON[team]
 				Tween(badge, { BackgroundColor3 = TEAM_COLOR[team] }, 0.2)
-				Tween(badgeText, { TextColor3 = TEAM_COLOR[team] }, 0.2)
+				Tween(badgeText, { ImageColor3 = TEAM_COLOR[team] }, 0.2)
 				local otherTeam = team == "CT" and "T" or "CT"
-				otherText.Text = otherTeam
+				otherText.Image = TEAM_ICON[otherTeam]
 				Tween(otherLogo, { BackgroundColor3 = TEAM_COLOR[otherTeam] }, 0.2)
-				Tween(otherText, { TextColor3 = TEAM_COLOR[otherTeam] }, 0.2)
+				Tween(otherText, { ImageColor3 = TEAM_COLOR[otherTeam] }, 0.2)
 				-- Weapon names cross-fade to the other team's set.
 				for _, entry in ipairs(nameLabels) do
 					local label = entry.label
