@@ -2443,10 +2443,10 @@ GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(1, -6, 0, 2)
 -- Neverlose watermark: a thin, dark, see-through strip without outline or
 -- dividers; small caps text, accent icons, avatar at the end.
-GameInfo.Size = UDim2.fromOffset(0, 32)
+GameInfo.Size = UDim2.fromOffset(0, 28)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
-GameInfo.BackgroundColor3 = Color3.fromRGB(9, 10, 15)
-GameInfo.BackgroundTransparency = 0.25
+GameInfo.BackgroundColor3 = Color3.fromRGB(10, 9, 13)
+GameInfo.BackgroundTransparency = 0.2
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
@@ -2454,7 +2454,7 @@ GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 5); c.Parent = GameInfo end
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 8); pd.PaddingRight = UDim.new(0, 6); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 10); pd.PaddingRight = UDim.new(0, 5); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
 local ICON_LAYERS   = "rbxassetid://114499998778667"
@@ -2468,20 +2468,20 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local cell = Instance.new("Frame")
 	cell.Name = name .. "Cell"
 	cell.LayoutOrder = order
-	cell.Size = UDim2.fromOffset(0, 32)
+	cell.Size = UDim2.fromOffset(0, 28)
 	cell.AutomaticSize = Enum.AutomaticSize.X
 	cell.BackgroundTransparency = 1
 	cell.BorderSizePixel = 0
 	cell.ZIndex = Z_BASE + 901
 	cell.Parent = GameInfo
-	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 6); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
-	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 9); pd.PaddingRight = UDim.new(0, 9); pd.Parent = cell end
+	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 5); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
+	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 7); pd.PaddingRight = UDim.new(0, 7); pd.Parent = cell end
 	local icon
 	if iconAsset then
 		icon = Instance.new("ImageLabel")
 		icon.Name = name .. "Icon"
 		icon.LayoutOrder = 1
-		icon.Size = UDim2.fromOffset(iconSize or 15, iconSize or 15)
+		icon.Size = UDim2.fromOffset(iconSize or 14, iconSize or 14)
 		icon.BackgroundTransparency = 1
 		icon.BorderSizePixel = 0
 		icon.Image = iconAsset
@@ -2495,15 +2495,15 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local label = Instance.new("TextLabel")
 	label.Name = name
 	label.LayoutOrder = 2
-	label.Size = UDim2.fromOffset(0, 32)
+	label.Size = UDim2.fromOffset(0, 28)
 	label.AutomaticSize = Enum.AutomaticSize.X
 	label.BackgroundTransparency = 1
 	label.BorderSizePixel = 0
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(214, 218, 228)
+	label.TextColor3 = Color3.fromRGB(206, 208, 216)
 	label.TextTransparency = 0
 	label.TextScaled = false
-	label.TextSize = 13
+	label.TextSize = 12
 	label.Font = FONT
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Center
@@ -2528,14 +2528,14 @@ end
 local BrandCell = Instance.new("Frame")
 BrandCell.Name = "BrandCell"
 BrandCell.LayoutOrder = 2
-BrandCell.Size = UDim2.fromOffset(0, 32)
+BrandCell.Size = UDim2.fromOffset(0, 28)
 BrandCell.AutomaticSize = Enum.AutomaticSize.X
 BrandCell.BackgroundTransparency = 1
 BrandCell.BorderSizePixel = 0
 BrandCell.ZIndex = Z_BASE + 901
 BrandCell.Parent = GameInfo
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = BrandCell end
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 4); pd.PaddingRight = UDim.new(0, 5); pd.Parent = BrandCell end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 0); pd.PaddingRight = UDim.new(0, 4); pd.Parent = BrandCell end
 
 local NeverIcon = Instance.new("ImageLabel")
 NeverIcon.Name = "NeverIcon"
@@ -2556,13 +2556,13 @@ do
 	local brandText = Instance.new("TextLabel")
 	brandText.Name = "BrandText"
 	brandText.LayoutOrder = 2
-	brandText.Size = UDim2.fromOffset(0, 32)
+	brandText.Size = UDim2.fromOffset(0, 28)
 	brandText.AutomaticSize = Enum.AutomaticSize.X
 	brandText.BackgroundTransparency = 1
 	brandText.BorderSizePixel = 0
 	brandText.Text = "NL"
-	brandText.TextColor3 = Color3.fromRGB(226, 232, 255)
-	brandText.TextSize = 15
+	brandText.TextColor3 = Color3.fromRGB(208, 226, 248)
+	brandText.TextSize = 14
 	brandText.Font = FONT_BOLD
 	brandText.ZIndex = Z_BASE + 901
 	brandText.Parent = BrandCell
@@ -2572,7 +2572,7 @@ local UserCell = WMCell("Username", 4, nil, LocalPlayer.DisplayName or "Player")
 local UserIcon = Instance.new("ImageLabel")
 UserIcon.Name = "UserIcon"
 UserIcon.LayoutOrder = 1
-UserIcon.Size = UDim2.fromOffset(22, 22)
+UserIcon.Size = UDim2.fromOffset(18, 18)
 UserIcon.BackgroundTransparency = 1
 UserIcon.BorderSizePixel = 0
 UserIcon.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId or 0) .. "&w=150&h=150"
@@ -2594,9 +2594,71 @@ RamCell, RamCellIcon, RamText = WMCell("RAM", 10, ICON_RAM, "0 MB")
 local TimeCell, TimeCellIcon
 TimeCell, TimeCellIcon, TimeText = WMCell("Time", 12, ICON_CLOCK, os.date("%H:%M"))
 
-local WMCells = { brand = BrandCell, user = UserCell, fps = FpsCell, ping = PingCell, ram = RamCell, time = TimeCell }
-local WMDefaultOrder = { "brand", "fps", "ping", "time", "user", "ram" }
-local WMShowMap = { logo = true, user = true, fps = true, ping = true, ram = false, time = true }
+do
+	local cell, icon, text = WMCell("Speed", 5, ICON_LAYERS, "0 SPEED")
+	WindowObj._wmSpeed = { cell = cell, icon = icon }
+	WindowObj._wmSpeedText = text
+end
+
+-- Neverlose watermark glyphs drawn from frames on a 14px grid: gauge (speed),
+-- rising bars (ping), clock (time). They follow the icon's ImageColor3 and
+-- ImageTransparency, so SetWatermark's accent still recolours them.
+WindowObj._wmGlyph = function(icon, kind)
+	if not icon then return end
+	icon.Image = ""
+	local fills, rings = {}, {}
+	local function part(x, y, w, h, round)
+		local f = Instance.new("Frame")
+		f.Position = UDim2.fromOffset(x, y)
+		f.Size = UDim2.fromOffset(w, h)
+		f.BorderSizePixel = 0
+		f.ZIndex = icon.ZIndex + 1
+		f.Parent = icon
+		if round then local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = f end
+		table.insert(fills, f)
+		return f
+	end
+	local function ring(x, y, size, thickness)
+		local f = Instance.new("Frame")
+		f.Position = UDim2.fromOffset(x, y)
+		f.Size = UDim2.fromOffset(size, size)
+		f.BackgroundTransparency = 1
+		f.ZIndex = icon.ZIndex + 1
+		f.Parent = icon
+		local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = f
+		local st = Instance.new("UIStroke"); st.Thickness = thickness; st.Parent = f
+		table.insert(rings, st)
+	end
+	if kind == "speed" then
+		ring(2, 2, 10, 2)
+		part(5, 5, 4, 4, true)
+	elseif kind == "ping" then
+		part(1, 10, 3, 3); part(4, 7, 3, 6); part(7, 4, 3, 9); part(10, 1, 3, 12)
+	elseif kind == "time" then
+		ring(2, 2, 10, 1.6)
+		part(6, 4, 2, 4); part(6, 6, 4, 2)
+	end
+	local function sync()
+		for _, f in ipairs(fills) do
+			f.BackgroundColor3 = icon.ImageColor3
+			f.BackgroundTransparency = icon.ImageTransparency
+		end
+		for _, r in ipairs(rings) do
+			r.Color = icon.ImageColor3
+			r.Transparency = icon.ImageTransparency
+		end
+	end
+	icon:GetPropertyChangedSignal("ImageColor3"):Connect(sync)
+	icon:GetPropertyChangedSignal("ImageTransparency"):Connect(sync)
+	sync()
+end
+WindowObj._wmGlyph(WindowObj._wmSpeed.icon, "speed")
+WindowObj._wmGlyph(SignalImage, "ping")
+WindowObj._wmGlyph(TimeCellIcon, "time")
+
+local WMCells = { brand = BrandCell, user = UserCell, speed = WindowObj._wmSpeed.cell, fps = FpsCell, ping = PingCell, ram = RamCell, time = TimeCell }
+local WMDefaultOrder = { "brand", "speed", "fps", "ping", "time", "user", "ram" }
+local WMShowMap = { logo = true, user = true, speed = true, fps = false, ping = true, ram = false, time = true }
 local WMDividers = {}
 for key in pairs(WMCells) do WMDividers[key] = WMDivider() end
 
@@ -2702,7 +2764,8 @@ WindowObj.Watermark = {
 	time = TimeText,
 	ping = MSText,
 	ram = RamText,
-	icons = { NeverIcon, UserIcon, FpsCellIcon, SignalImage, RamCellIcon, TimeCellIcon },
+	speed = WindowObj._wmSpeedText,
+	icons = { NeverIcon, UserIcon, WindowObj._wmSpeed.icon, FpsCellIcon, SignalImage, RamCellIcon, TimeCellIcon },
 	cells = WMCells,
 	applyLayout = ApplyWatermarkLayout,
 	isShown = function(key)
@@ -2738,7 +2801,7 @@ function WindowObj:SetWatermark(options)
 	if type(options.title) == "string" and wm.title then
 		wm.title.Text = options.title
 	end
-	local keys = { "user", "fps", "ping", "ram", "time" }
+	local keys = { "user", "speed", "fps", "ping", "ram", "time" }
 	if type(options.textSize) == "number" then
 		for _, key in ipairs(keys) do
 			if wm[key] then wm[key].TextSize = options.textSize end
@@ -2812,6 +2875,19 @@ clockAcc = clockAcc + dt
 if clockAcc >= 1 then
 clockAcc = 0
 setTextSmooth(TimeText, os.date("%H:%M"))
+end
+-- Horizontal speed of the local character (studs/s), a few times a second.
+WindowObj._wmSpeedAcc = (WindowObj._wmSpeedAcc or 0) + dt
+if WindowObj._wmSpeedAcc >= 0.2 and WindowObj._wmSpeedText then
+WindowObj._wmSpeedAcc = 0
+local char = LocalPlayer.Character
+local root = char and char:FindFirstChild("HumanoidRootPart")
+local speed = 0
+if root then
+local v = root.AssemblyLinearVelocity
+speed = math.floor(Vector3.new(v.X, 0, v.Z).Magnitude + 0.5)
+end
+WindowObj._wmSpeedText.Text = tostring(speed) .. " SPEED"
 end
 statAcc = statAcc + dt
 if statAcc < 1 then return end
@@ -2914,105 +2990,128 @@ New("UIListLayout", {
 	SortOrder = Enum.SortOrder.LayoutOrder,
 }, OverlayStack)
 
--- ============================================================================
--- PATCH 3: MakeOverlayPanel rewritten — shadow lives in a panel WITHOUT layout,
--- content goes into a Body child that owns the layout
--- ============================================================================
+-- Neverlose overlay list (Hotkeys / Spectators): no single card, but separate
+-- dark see-through pills: a header pill (accent glyph + bold title) and, per
+-- entry, a square icon pill next to a name pill. Pills carry their resting
+-- alpha in the "PillAlpha" attribute so the fades know where to return.
+-- Kept in one table: AddWindow is close to the Luau register limit.
+local OV = { color = Color3.fromRGB(12, 11, 15), h = 28 }
+function OV.pill(name, parent, alpha, z)
+	local pill = New("Frame", {
+		Name = name, Size = UDim2.fromOffset(OV.h, OV.h), BackgroundColor3 = OV.color,
+		BackgroundTransparency = alpha, BorderSizePixel = 0, ZIndex = z or Z_BASE + 891,
+	}, parent)
+	pill:SetAttribute("PillAlpha", alpha)
+	New("UICorner", { CornerRadius = UDim.new(0, 8) }, pill)
+	return pill
+end
+
 local function MakeOverlayPanel(name, iconAsset, title)
 	local panel = New("Frame", {
 		Name = name,
-		Size = UDim2.fromOffset(156, 46),
-		BackgroundColor3 = Color3.fromRGB(13, 15, 22),
-		BackgroundTransparency = 0.1,
+		Size = UDim2.fromOffset(150, 34),
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		ClipsDescendants = false,
 		Visible = false,
 		ZIndex = Z_BASE + 890,
 	}, OverlayStack)
-	New("UICorner", { CornerRadius = UDim.new(0, 10) }, panel)
-	Stroke(panel)
-	AttachShadow(panel, { radius = 10, layers = 3, step = 1.3, bias = 2 }) -- panel has NO layout now
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Left, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
 
-	local body = New("Frame", {
-		Name = "Body",
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-		ZIndex = Z_BASE + 891,
-	}, panel)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8) }, body)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, body)
-
-	local header = New("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, LayoutOrder = 1, ZIndex = Z_BASE + 891 }, body)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, header)
-if title == "Hotkeys" then
+	local header = OV.pill("Header", panel, 0.45)
+	header.Size = UDim2.fromOffset(150, 34)
+	header.LayoutOrder = 1
+	header:FindFirstChildOfClass("UICorner").CornerRadius = UDim.new(0, 9)
+	New("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 14) }, header)
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, header)
+	if title == "Hotkeys" then
+		-- Tree list: a bracket on the left (top cap, stem, two branches) and
+		-- three lines on the right, on an 18x14 pixel grid.
 		local listIcon = New("Frame", {
-			Name = "HeaderIcon", Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1,
-			LayoutOrder = 1, ZIndex = Z_BASE + 891,
+			Name = "HeaderIcon", Size = UDim2.fromOffset(18, 14), BackgroundTransparency = 1,
+			LayoutOrder = 1, ZIndex = Z_BASE + 892,
 		}, header)
-		for i = 0, 2 do
-			local y = 1 + i * 5
-			local bullet = New("Frame", {
-				Name = "ListBullet" .. tostring(i + 1), Position = UDim2.fromOffset(0, y),
-				Size = UDim2.fromOffset(2, 2), BackgroundColor3 = mainColor, BackgroundTransparency = 1,
-				BorderSizePixel = 0, ZIndex = Z_BASE + 892,
+		for i, r in ipairs({
+			{ 0, 0, 4, 2 }, { 1, 0, 2, 14 }, { 1, 6, 4, 2 }, { 1, 12, 4, 2 },
+			{ 7, 0, 11, 2 }, { 7, 6, 11, 2 }, { 7, 12, 11, 2 },
+		}) do
+			local part = New("Frame", {
+				Name = "ListPart" .. tostring(i), Position = UDim2.fromOffset(r[1], r[2]),
+				Size = UDim2.fromOffset(r[3], r[4]), BackgroundColor3 = mainColor, BackgroundTransparency = 1,
+				BorderSizePixel = 0, ZIndex = Z_BASE + 893,
 			}, listIcon)
-			bullet:SetAttribute("NLOverlayAccentPart", true)
-			New("UICorner", { CornerRadius = UDim.new(1, 0) }, bullet)
-			local line = New("Frame", {
-				Name = "ListLine" .. tostring(i + 1), Position = UDim2.fromOffset(4, y),
-				Size = UDim2.fromOffset(10, 2), BackgroundColor3 = mainColor, BackgroundTransparency = 1,
-				BorderSizePixel = 0, ZIndex = Z_BASE + 892,
-			}, listIcon)
-			line:SetAttribute("NLOverlayAccentPart", true)
-			New("UICorner", { CornerRadius = UDim.new(1, 0) }, line)
+			part:SetAttribute("NLOverlayAccentPart", true)
 		end
 	else
 		New("ImageLabel", {
-			Name = "HeaderIcon", Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1,
-			Image = iconAsset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 891,
+			Name = "HeaderIcon", Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1,
+			Image = iconAsset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 892,
 		}, header)
 	end
 	New("TextLabel", {
 		Name = "HeaderTitle", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
-		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(255, 255, 255), TextTransparency = 0.08,
-		TextSize = 14, Font = FONT_BOLD, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, ZIndex = Z_BASE + 891,
+		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(228, 228, 234), TextTransparency = 0.08,
+		TextSize = 16, Font = FONT_BOLD, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, ZIndex = Z_BASE + 892,
 	}, header)
-
-	New("Frame", {
-		Name = "HeaderRule", Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-		BackgroundTransparency = 0.9, BorderSizePixel = 0, LayoutOrder = 2, ZIndex = Z_BASE + 891,
-	}, body)
+	panel:SetAttribute("HeaderWidth", 12 + 18 + 10 + MeasureText(title, 16, FONT_BOLD) + 16)
 
 	local rows = New("Frame", {
 		Name = "Rows", Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1, LayoutOrder = 3, ZIndex = Z_BASE + 891,
-	}, body)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, rows)
+		BackgroundTransparency = 1, LayoutOrder = 2, ZIndex = Z_BASE + 891,
+	}, panel)
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, rows)
 	return panel, rows
 end
 
-	-- header(8+16) + rule(1) + top gap(6) + n*18 + (n-1)*2 + bottom pad(8)
-	local function OverlayPanelHeight(rowCount)
-		return 8 + 16 + 6 + 1 + 6 + (rowCount * 18 + math.max(0, rowCount - 1) * 2) + 8
-	end
+-- An entry row: square icon pill + name pill. Returns the row, the icon pill
+-- (callers draw into it) and the name pill.
+function OV.row(rows, order, text)
+	local row = New("Frame", {
+		Name = "OverlayRow", Size = UDim2.fromOffset(150, OV.h), BackgroundTransparency = 1,
+		LayoutOrder = order, ZIndex = Z_BASE + 891,
+	}, rows)
+	local iconPill = OV.pill("IconPill", row, 0.55)
+	local namePill = OV.pill("NamePill", row, 0.55)
+	namePill.Position = UDim2.fromOffset(OV.h + 5, 0)
+	namePill.Size = UDim2.new(1, -(OV.h + 5), 0, OV.h)
+	New("TextLabel", {
+		Name = "EntryName", Position = UDim2.fromOffset(11, 0), Size = UDim2.new(1, -20, 1, 0),
+		BackgroundTransparency = 1, Text = text, TextColor3 = Color3.fromRGB(235, 236, 241), TextTransparency = 0.08,
+		TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
+		ZIndex = Z_BASE + 892,
+	}, namePill)
+	return row, iconPill, namePill
+end
 
-	local function FadeOverlayContents(panel, show)
-	for _, node in ipairs(panel:GetDescendants()) do
+function OV.rowWidth(text)
+	return OV.h + 5 + 11 + MeasureText(text, 13, FONT) + 12
+end
+
+-- Sizes the header and rows to one shared width and the panel to fit them.
+function OV.layout(panel, rowList, widest)
+	local w = math.ceil(math.max(150, panel:GetAttribute("HeaderWidth") or 0, widest or 0))
+	local header = panel:FindFirstChild("Header")
+	if header then header.Size = UDim2.fromOffset(w, 34) end
+	for _, row in ipairs(rowList) do row.Size = UDim2.fromOffset(w, OV.h) end
+	local n = #rowList
+	local h = 34 + (n > 0 and (6 + n * OV.h + (n - 1) * 5) or 0)
+	panel.Size = UDim2.fromOffset(w, h)
+end
+
+local function FadeOverlayContents(root, show)
+	for _, node in ipairs(root:GetDescendants()) do
 		if node:IsA("TextLabel") then
 			node.TextTransparency = 1
 			Tween(node, { TextTransparency = show and 0.08 or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		elseif node:IsA("ImageLabel") then
 			node.ImageTransparency = 1
 			Tween(node, { ImageTransparency = show and 0 or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		elseif node:IsA("Frame") and node.Name == "HeaderRule" then
+		elseif node:IsA("Frame") and node:GetAttribute("PillAlpha") then
 			node.BackgroundTransparency = 1
-			Tween(node, { BackgroundTransparency = show and 0.9 or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(node, { BackgroundTransparency = show and node:GetAttribute("PillAlpha") or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		elseif node:IsA("Frame") and node:GetAttribute("NLOverlayAccentPart") then
 			node.BackgroundTransparency = 1
 			Tween(node, { BackgroundTransparency = show and 0 or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		elseif node:GetAttribute("IsShadowLayer") then
-			local alpha = node:GetAttribute("ShadowAlpha") or 0.8
-			Tween(node, { BackgroundTransparency = show and alpha or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		end
 	end
 end
@@ -3021,14 +3120,13 @@ local function SetOverlayPanelShown(panel, shown)
 	local token = (panel:GetAttribute("FadeToken") or 0) + 1
 	panel:SetAttribute("FadeToken", token)
 	if shown then
-		if panel.Visible and panel.BackgroundTransparency <= 0.15 then return end
-		panel.BackgroundTransparency = 1
+		if panel.Visible and panel:GetAttribute("Shown") then return end
+		panel:SetAttribute("Shown", true)
 		panel.Visible = true
 		FadeOverlayContents(panel, true)
-		Tween(panel, { BackgroundTransparency = 0.1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	else
 		if not panel.Visible then return end
-		Tween(panel, { BackgroundTransparency = 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		panel:SetAttribute("Shown", false)
 		FadeOverlayContents(panel, false)
 		task.delay(0.19, function()
 			if panel.Parent and panel:GetAttribute("FadeToken") == token then
@@ -3044,54 +3142,36 @@ local kbEnabled = true
 local kbRowCache = {}
 local lastKbSig = nil
 
+-- Mode glyph in the icon pill: toggle = white switch with a dark knob on the
+-- right (as in Neverlose), hold = key cap, always = solid dot.
+function OV.modeGlyph(pill, mode)
+	local function part(x, y, w, h, color, radius, parent)
+		local f = New("Frame", {
+			Name = "ModePart", Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(w, h),
+			BackgroundColor3 = color, BackgroundTransparency = 1, BorderSizePixel = 0,
+			ZIndex = (parent or pill).ZIndex + 1,
+		}, parent or pill)
+		f:SetAttribute("NLOverlayAccentPart", true)
+		New("UICorner", { CornerRadius = radius or UDim.new(1, 0) }, f)
+		return f
+	end
+	local WHITE = Color3.fromRGB(240, 240, 244)
+	if mode == "hold" then
+		local cap = part(8, 8, 12, 12, WHITE, UDim.new(0, 3))
+		part(3, 3, 6, 6, OV.color, UDim.new(0, 2), cap)
+	elseif mode == "always" then
+		part(9, 9, 10, 10, WHITE)
+	else
+		local sw = part(6, 9, 16, 10, WHITE)
+		part(8, 2, 6, 6, OV.color, nil, sw)
+	end
+end
+
 local function BuildBindRow(entry, order)
-	local row = New("Frame", {
-		Name = "BindRow",
-		Size = UDim2.new(1, 0, 0, 18),
-		BackgroundTransparency = 1,
-		LayoutOrder = order,
-		ZIndex = Z_BASE + 892,
-	}, KBRows)
-	local miniSwitch = New("Frame", {
-		Name = "MiniSwitch", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.fromOffset(22, 12),
-		BackgroundColor3 = mainColor, BorderSizePixel = 0, ZIndex = Z_BASE + 892,
-	}, row)
-	New("UICorner", { CornerRadius = UDim.new(1, 0) }, miniSwitch)
-	local miniKnob = New("Frame", {
-		Name = "MiniKnob", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -1, 0.5, 0), Size = UDim2.fromOffset(10, 10),
-		BackgroundColor3 = Color3.fromRGB(255, 255, 255), BorderSizePixel = 0, ZIndex = Z_BASE + 893,
-	}, miniSwitch)
-	New("UICorner", { CornerRadius = UDim.new(1, 0) }, miniKnob)
-	local nameLabel = New("TextLabel", {
-		Name = "BindName",
-		Position = UDim2.fromOffset(28, 0),
-		Size = UDim2.new(1, -82, 1, 0),
-		BackgroundTransparency = 1,
-		Text = entry.label,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextTransparency = 1,
-		TextSize = 12,
-		Font = FONT,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextTruncate = Enum.TextTruncate.AtEnd,
-		ZIndex = Z_BASE + 892,
-	}, row)
-	local keyLabel = New("TextLabel", {
-		Name = "BindKey",
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 0, 0, 0),
-		Size = UDim2.new(0, 48, 1, 0),
-		BackgroundTransparency = 1,
-		Text = entry.key,
-		TextColor3 = Color3.fromRGB(150, 155, 172),
-		TextTransparency = 1,
-		TextSize = 12,
-		Font = FONT,
-		TextXAlignment = Enum.TextXAlignment.Right,
-		ZIndex = Z_BASE + 892,
-	}, row)
-	Tween(nameLabel, { TextTransparency = 0.08 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	Tween(keyLabel, { TextTransparency = 0.08 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	local row, iconPill = OV.row(KBRows, order, entry.label)
+	row.Name = "BindRow"
+	OV.modeGlyph(iconPill, entry.mode)
+	FadeOverlayContents(row, true)
 	return row
 end
 
@@ -3104,7 +3184,7 @@ RefreshKeybindOverlay = function()
 	end
 	local target = kbEnabled and MainFrame.Visible
 	local sigParts = {}
-	for i, entry in ipairs(snapshot) do sigParts[i] = entry.label .. "=" .. entry.key end
+	for i, entry in ipairs(snapshot) do sigParts[i] = entry.label .. "=" .. tostring(entry.mode) end
 	local sig = table.concat(sigParts, "|")
 	if sig == lastKbSig and KBPanel.Visible == target then return end
 	lastKbSig = sig
@@ -3112,14 +3192,12 @@ RefreshKeybindOverlay = function()
 		if row.Parent then row:Destroy() end
 	end
 	table.clear(kbRowCache)
-	local maxW = 0
+	local widest = 0
 	for i, entry in ipairs(snapshot) do
 		kbRowCache[#kbRowCache + 1] = BuildBindRow(entry, 10 + i)
-		maxW = math.max(maxW,
-			MeasureText(entry.label, 12, FONT)
-			+ MeasureText(entry.key, 12, FONT) + 58)
+		widest = math.max(widest, OV.rowWidth(entry.label))
 	end
-	KBPanel.Size = UDim2.fromOffset(24 + math.max(132, math.ceil(maxW + 0.5)), OverlayPanelHeight(#snapshot))
+	OV.layout(KBPanel, kbRowCache, widest)
 	SetOverlayPanelShown(KBPanel, target)
 end
 
@@ -3141,50 +3219,21 @@ local specRowCache = {}
 local lastSpecSig = nil
 
 local function BuildSpecRow(person, order)
-	local row = New("Frame", {
-		Name = "SpecRow",
-		Size = UDim2.new(1, 0, 0, 18),
-		BackgroundTransparency = 1,
-		LayoutOrder = order,
-		ZIndex = Z_BASE + 892,
-	}, SpecRows)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, row)
+	local row, iconPill = OV.row(SpecRows, order, person.name)
+	row.Name = "SpecRow"
 	if person.id and person.id > 0 then
 		local avatar = New("ImageLabel", {
 			Name = "SpecAvatar",
-			Size = UDim2.fromOffset(16, 16),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(18, 18),
 			BackgroundTransparency = 1,
 			Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(person.id) .. "&w=150&h=150",
-			ImageTransparency = 1,
-			LayoutOrder = 1,
 			ZIndex = Z_BASE + 892,
-		}, row)
+		}, iconPill)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, avatar)
-		Tween(avatar, { ImageTransparency = 0 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	else
-		New("Frame", {
-			Name = "SpecAvatarSpacer",
-			Size = UDim2.fromOffset(16, 16),
-			BackgroundTransparency = 1,
-			LayoutOrder = 1,
-			ZIndex = Z_BASE + 892,
-		}, row)
 	end
-	local nameLabel = New("TextLabel", {
-		Name = "SpecName",
-		Size = UDim2.new(0, 0, 1, 0),
-		AutomaticSize = Enum.AutomaticSize.X,
-		BackgroundTransparency = 1,
-		Text = person.name,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextTransparency = 1,
-		TextSize = 12,
-		Font = FONT,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		LayoutOrder = 2,
-		ZIndex = Z_BASE + 892,
-	}, row)
-	Tween(nameLabel, { TextTransparency = 0.08 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	FadeOverlayContents(row, true)
 	return row
 end
 
@@ -3200,12 +3249,12 @@ local function RefreshSpectatorOverlay()
 		if row.Parent then row:Destroy() end
 	end
 	table.clear(specRowCache)
-	local maxW = 0
+	local widest = 0
 	for i, person in ipairs(specList) do
 		specRowCache[#specRowCache + 1] = BuildSpecRow(person, 10 + i)
-		maxW = math.max(maxW, MeasureText(person.name, 12, FONT) + 64)
+		widest = math.max(widest, OV.rowWidth(person.name))
 	end
-	SpecPanel.Size = UDim2.fromOffset(24 + math.max(132, math.ceil(maxW + 0.5)), OverlayPanelHeight(#specList))
+	OV.layout(SpecPanel, specRowCache, widest)
 	SetOverlayPanelShown(SpecPanel, target)
 end
 
@@ -3494,8 +3543,8 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = WindowSettingsFrame end
-	-- Neverlose's profile popover casts a soft shadow all around it.
-	AttachShadow(WindowSettingsFrame, { radius = 12, layers = 6, step = 1.8, bias = 4, strength = 0.62 })
+	-- Same soft shadow as the other popups (option lists, "..." plates).
+	AttachShadow(WindowSettingsFrame, { radius = 10, layers = 5, step = 1.6, bias = 3 })
 
 
 	local WSScale = New("UIScale", { Scale = 1 }, WindowSettingsFrame)
@@ -6931,11 +6980,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		ZIndex = Z_BASE + 990,
 	}, NeverloseCS2)
 	New("UICorner", { CornerRadius = UDim.new(0, 20) }, toast)
-	-- Dark drop shadow under the glow (pushed below the glow layers).
-	AttachShadow(toast, { radius = 20, layers = 8, step = 2.5, bias = 8, strength = 0.45 })
-	for _, layer in ipairs(toast:GetChildren()) do
-		if layer:GetAttribute("IsShadowLayer") then layer.ZIndex = Z_BASE + 975 end
-	end
+	-- No drop shadow: the accent glow alone frames the loader.
 
 	-- Glow: stacked rounded layers in the accent colour, fading outwards. Each
 	-- carries a gradient so one side is brighter; rotating it moves the light.
@@ -8345,7 +8390,7 @@ New("Frame", {
 				local out = {}
 				for key, target in pairs(_keybinds) do
 					if target and target.label and key and not target.hideInList then
-						table.insert(out, { label = target.label, key = BindKeyName(key) })
+						table.insert(out, { label = target.label, key = BindKeyName(key), mode = target.bindMode or "toggle" })
 					end
 				end
 				table.sort(out, function(a, b) return a.label:lower() < b.label:lower() end)
