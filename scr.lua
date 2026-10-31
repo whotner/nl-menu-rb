@@ -1,6 +1,13 @@
 -- Neverlose Roblox UI v30: compact function rows and corrected right-column bounds
 -- Preserves register-limit/search fixes and restores full-size control rows.
+-- Neverlose uses Inter; BuilderSans is the closest built-in Roblox family.
+-- Older clients without BuilderSans fall back to the previous SourceSans.
 local FONT = Enum.Font.SourceSansSemibold
+local FONT_BOLD = Enum.Font.SourceSansBold
+pcall(function()
+	FONT = Enum.Font.BuilderSansMedium
+	FONT_BOLD = Enum.Font.BuilderSansBold
+end)
 local LoadAcrylic = function()
 	local GuiSystem = {};
 	local acrylicId = 0
@@ -498,11 +505,12 @@ local function New(class, props, parent)
 	if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
 		obj.TextYAlignment = Enum.TextYAlignment.Center
 		obj.TextScaled = false
-		local roleSizes = { Title = 17, GameTitle = 11, TabLabel = 11, TabText = 15, SectionLabel = 11,
-			TextToggle = 16, TextDropdown = 16, TextDefault = 15, TopBar = 15, SliderValue = 14,
-			Username = 14, Daysleft = 12, SaveText = 15, HeaderLabel = 11, SearchBox = 13 }
+		-- Sized for BuilderSans/Inter metrics (SourceSans needed ~2px more for the same look).
+		local roleSizes = { Title = 16, GameTitle = 11, TabLabel = 11, TabText = 14, SectionLabel = 11,
+			TextToggle = 14, TextDropdown = 14, TextDefault = 13, TopBar = 14, SliderValue = 12,
+			Username = 14, Daysleft = 12, SaveText = 14, HeaderLabel = 11, SearchBox = 14 }
 		obj.TextSize = roleSizes[obj.Name] or ((props and props.TextSize) or 13)
-		obj.Font = FONT
+		obj.Font = (obj.Name == "Title" or obj.Name == "PlateTitle") and FONT_BOLD or FONT
 		if obj.Name == "GameTitle" or obj.Name == "TabLabel" or obj.Name == "SectionLabel"
 			or obj.Name == "Daysleft" or obj.Name == "HeaderLabel" or obj.Name == "SearchEmptyState" then
 			obj.TextColor3 = Color3.fromRGB(112, 116, 138)
@@ -1331,7 +1339,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		Size = UDim2.new(0.78, 0, 0.78, 0),
 		Position = UDim2.new(0.5, 0, 0.43, 0),
 	BackgroundColor3 = Color3.fromRGB(13, 15, 22),
-	BackgroundTransparency = 0.1,
+	BackgroundTransparency = 0.25,
 	BorderSizePixel = 0,
 	ClipsDescendants = false,
 	}, NeverloseCS2)
@@ -1368,7 +1376,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		watermarkConstraint.MaxTextSize = 11
 	end
 	customization.watermark = Watermark
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 20); c.Parent = MainFrame end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = MainFrame end
 	do local windowStroke = Stroke(MainFrame, "WindowOutline"); windowStroke.Transparency = 0.95 end
 	local DragHandle = New("Frame", {
 		Name = "DragHandle",
@@ -2886,10 +2894,19 @@ local SettingsArrow = New("ImageLabel", {
 	-- tinting the bare 150x30 frame into a hard rectangle. Kept in a do-block
 	-- so it adds no live local to AddWindow (register cap).
 	do
+		-- Divider across the sidebar above the account block, as in Neverlose.
+		New("Frame", {
+			Name = "ProfileDivider",
+			Position = UDim2.new(0, -3, 0, -14),
+			Size = UDim2.new(1, 6, 0, 1),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BackgroundTransparency = 0.93,
+			BorderSizePixel = 0,
+		}, Info)
 		local hoverPlate = New("Frame", {
 			Name = "HoverPlate",
-			Position = UDim2.new(0, -6, 0, -5),
-			Size = UDim2.new(1, 12, 1, 10),
+			Position = UDim2.new(0, -6, 0, -6),
+			Size = UDim2.new(1, 12, 1, 12),
 			BackgroundColor3 = Color3.fromRGB(245, 247, 255),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
@@ -2897,7 +2914,7 @@ local SettingsArrow = New("ImageLabel", {
 		}, Info)
 		New("UICorner", { CornerRadius = UDim.new(0, 8) }, hoverPlate)
 		Info.MouseEnter:Connect(function()
-			Tween(hoverPlate, {BackgroundTransparency = 0.955}, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(hoverPlate, {BackgroundTransparency = 0.94}, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(SettingsArrow, {ImageTransparency = 0}, 0.15)
 		end)
 		Info.MouseLeave:Connect(function()
@@ -3397,7 +3414,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			lbl.Text = scaleLabel
 			lbl.TextColor3 = Color3.fromRGB(200, 204, 218)
 			lbl.TextScaled = false
-			lbl.TextSize = 15
+			lbl.TextSize = 14
 			lbl.Font = FONT
 			lbl.TextTransparency = 0
 			lbl.TextTruncate = Enum.TextTruncate.AtEnd
@@ -3509,7 +3526,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			lbl.Text = lang
 			lbl.TextColor3 = Color3.fromRGB(200, 204, 218)
 			lbl.TextScaled = false
-			lbl.TextSize = 15
+			lbl.TextSize = 14
 			lbl.Font = FONT
 			lbl.TextTransparency = 0
 			lbl.TextTruncate = Enum.TextTruncate.AtEnd
@@ -3957,7 +3974,7 @@ end
 			lbl.Text = opt
 			lbl.TextColor3 = Color3.fromRGB(200, 204, 218)
 			lbl.TextScaled = false
-			lbl.TextSize = 15
+			lbl.TextSize = 14
 			lbl.Font = FONT
 			lbl.TextTruncate = Enum.TextTruncate.AtEnd
 			lbl.TextTransparency = 0
@@ -4061,7 +4078,7 @@ end
 			Text = text,
 			TextColor3 = Color3.fromRGB(226, 228, 236),
 			TextScaled = false,
-			TextSize = 15,
+			TextSize = 14,
 			Font = FONT,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 130,
@@ -4122,12 +4139,15 @@ end
 		Position = UDim2.fromOffset(170, 0),
 		Size = UDim2.new(1, -170, 1, 0),
 		BackgroundColor3 = Color3.fromRGB(15, 17, 24),
-		BackgroundTransparency = 0.1,
+		BackgroundTransparency = 0.5,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	}, MainFrame)
 
-	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 20); c.Parent = Frame2 end
+	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = Frame2 end
+	-- Glass: the sidebar shows the blurred game through MainFrame (0.25); the
+	-- content panel stacks 0.5 on top so it reads denser, as in Neverlose.
+	do local panelStroke = Stroke(Frame2, "PanelOutline"); panelStroke.Transparency = 0.94 end
 	New("Frame", { Name = "HeaderDivider", Position = UDim2.new(0, 11, 0, 53), Size = UDim2.new(1, -22, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.93, BorderSizePixel = 0 }, Frame2)
 
 	local Header = New("Frame", {
@@ -4259,7 +4279,7 @@ UIAspectRatioConstraint.Parent = SaveIcon
 	SaveText.Text = "Default"
 SaveText.TextColor3 = Color3.fromRGB(226, 228, 236)
 SaveText.TextScaled = false
-SaveText.TextSize = 15
+SaveText.TextSize = 14
 SaveText.Font = FONT
 SaveText.TextTransparency = 0.20000000298023224
 SaveText.TextXAlignment = Enum.TextXAlignment.Left
@@ -4339,7 +4359,7 @@ New("TextLabel", {
 	BackgroundTransparency = 1,
 	Text = "Global",
 	TextColor3 = Color3.fromRGB(226, 228, 236),
-	TextSize = 15,
+	TextSize = 14,
 	Font = FONT,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	TextTruncate = Enum.TextTruncate.AtEnd,
@@ -4440,7 +4460,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CMTitle.BackgroundTransparency = 1
 	CMTitle.Text = "Presets"
 	CMTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-	CMTitle.TextSize = 15
+	CMTitle.TextSize = 14
 	CMTitle.Font = FONT
 	CMTitle.TextTransparency = 0.05
 	CMTitle.ZIndex = 1000
@@ -4688,7 +4708,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RDTitle.BackgroundTransparency = 1
 	RDTitle.Text = "Recently Deleted"
 	RDTitle.TextColor3 = Color3.fromRGB(255, 100, 100)
-	RDTitle.TextSize = 15
+	RDTitle.TextSize = 14
 	RDTitle.Font = FONT
 	RDTitle.TextXAlignment = Enum.TextXAlignment.Left
 	RDTitle.ZIndex = 122
@@ -4748,7 +4768,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			dlbl.BackgroundTransparency = 1
 			dlbl.Text = entry.name
 			dlbl.TextColor3 = Color3.fromRGB(220, 180, 180)
-			dlbl.TextSize = 15
+			dlbl.TextSize = 14
 			dlbl.Font = FONT
 			dlbl.ZIndex = 123
 			dlbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -5257,39 +5277,41 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 
 	local SearchBox = New("TextBox", {
 		Name = "SearchBox",
+		-- Neverlose search takes over the whole header bar (selectors hidden under
+		-- it) and the magnifier turns into a close cross at its right end.
 		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -46, 0.5, 0),
-		Size = UDim2.fromOffset(0, 28),
+		Position = UDim2.new(1, -11, 0.5, 0),
+		Size = UDim2.new(0, 0, 0, 34),
 		BackgroundColor3 = Color3.fromRGB(15, 17, 26),
 		Text = "",
 		PlaceholderText = "Search",
 		PlaceholderColor3 = Color3.fromRGB(130, 134, 152),
 		TextColor3 = Color3.fromRGB(228, 230, 238),
 		TextScaled = false,
-		TextSize = 13,
+		TextSize = 14,
 		Font = FONT,
 		TextTransparency = 0.05,
 		Visible = false,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ClipsDescendants = true,
-		ZIndex = 4,
+		ZIndex = 20,
 	}, Header)
 	New("UICorner", { CornerRadius = UDim.new(0, 8) }, SearchBox)
 	Stroke(SearchBox)
-	New("ImageLabel", {
-		Name = "SearchGlyph",
-		AnchorPoint = Vector2.new(0, 0.5),
-		-- The UIPadding below also shifts children: -30 + 40 puts the glyph 10px
-		-- from the edge instead of on top of the placeholder text.
-		Position = UDim2.new(0, -30, 0.5, 0),
-		Size = UDim2.fromOffset(14, 14),
+	New("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 36) }, SearchBox)
+	SearchBtn.ZIndex = 22
+	New("TextLabel", {
+		Name = "CloseGlyph",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://6031154871",
-		ImageColor3 = Color3.fromRGB(130, 134, 152),
-		ScaleType = Enum.ScaleType.Fit,
-		ZIndex = 5,
-	}, SearchBox)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 40) }, SearchBox)
+		Text = "×",
+		TextColor3 = Color3.fromRGB(200, 204, 218),
+		TextSize = 22,
+		Visible = false,
+		ZIndex = 23,
+	}, SearchBtn)
 
 	local ApplySearch
 
@@ -5299,18 +5321,20 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 		searchOpen = not searchOpen
 		searchTransitionToken = searchTransitionToken + 1
 		local token = searchTransitionToken
+		SearchBtn.ImageTransparency = searchOpen and 1 or 0.2
+		SearchBtn.CloseGlyph.Visible = searchOpen
 		if searchOpen then
 			SearchBox.Visible = true
 			SearchBox.BackgroundTransparency = 1
-			SearchBox.Size = UDim2.fromOffset(0, 28)
+			SearchBox.Size = UDim2.new(0, 0, 0, 34)
 			Tween(SearchBox, { BackgroundTransparency = 0 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			Tween(SearchBox, { Size = UDim2.fromOffset(190, 28) }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(SearchBox, { Size = UDim2.new(1, -22, 0, 34) }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			task.delay(0.16, function()
 				if searchOpen and searchTransitionToken == token and SearchBox.Visible then pcall(function() SearchBox:CaptureFocus() end) end
 			end)
 		else
 			pcall(function() SearchBox:ReleaseFocus() end)
-			Tween(SearchBox, { Size = UDim2.fromOffset(0, 28), BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+			Tween(SearchBox, { Size = UDim2.new(0, 0, 0, 34), BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 			task.delay(0.13, function()
 				if searchOpen or searchTransitionToken ~= token then return end
 				SearchBox.Visible = false
@@ -5665,7 +5689,7 @@ Line9.Parent = MainFrame
 			MainFrame.Visible = true
 			MainFrame.BackgroundTransparency = 1
 			MainFrame.Size = windowAnimSize
-			Tween(MainFrame, { BackgroundTransparency = 0.1 }, dur, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(MainFrame, { BackgroundTransparency = 0.25 }, dur, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(MainFrame, { Size = windowTargetSize }, dur, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		else
 			HideAllPopupsNow(true)
@@ -5722,7 +5746,7 @@ end
 	end)
 
 	MainFrame.BackgroundTransparency = 1
-	Tween(MainFrame, { BackgroundTransparency = 0.1 }, 0.18)
+	Tween(MainFrame, { BackgroundTransparency = 0.25 }, 0.18)
 
 
 
@@ -5871,7 +5895,7 @@ New("UIAspectRatioConstraint", {
 			Text = name,
 			TextColor3 = isFirst and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 155, 172),
 			TextScaled = false,
-			TextSize = 15,
+			TextSize = 14,
 			Font = FONT,
 			TextTransparency = 0,
 			TextXAlignment = Enum.TextXAlignment.Left,
@@ -6191,7 +6215,7 @@ end
 					Text = label,
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextSize = 15,
-					Font = FONT,
+					Font = FONT_BOLD,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTruncate = Enum.TextTruncate.AtEnd,
 					ZIndex = 5001,
@@ -6757,7 +6781,7 @@ New("Frame", {
 						Font = FONT,
 						TextTransparency = 0,
 						TextTruncate = Enum.TextTruncate.AtEnd,
-						TextSize = 15,
+						TextSize = 14,
 						ZIndex = 1001,
 						TextXAlignment = Enum.TextXAlignment.Left,
 					}, Selection)
@@ -6837,7 +6861,7 @@ New("Frame", {
 							Text = opt,
 							TextColor3 = Color3.fromRGB(200, 204, 218),
 							TextScaled = false,
-							TextSize = 15,
+							TextSize = 14,
 							Font = FONT,
 							TextTruncate = Enum.TextTruncate.AtEnd,
 							TextTransparency = 0,
@@ -6949,7 +6973,7 @@ New("Frame", {
 						Text = text,
 						TextColor3 = Color3.fromRGB(226, 228, 236),
 						TextScaled = false,
-						TextSize = 15,
+						TextSize = 14,
 						Font = FONT,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						ZIndex = 1001,
@@ -7703,7 +7727,7 @@ New("Frame", {
 					Text = text,
 					TextColor3 = Color3.fromRGB(217, 219, 226),
 					TextScaled = false,
-					TextSize = 16,
+					TextSize = 14,
 					Font = FONT,
 					TextTransparency = 0.1,
 					TextXAlignment = Enum.TextXAlignment.Left,
@@ -8052,7 +8076,7 @@ New("Frame", {
 					Text = selected or "Select",
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = false,
-					TextSize = 15,
+					TextSize = 14,
 					Font = FONT,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTruncate = Enum.TextTruncate.AtEnd,
@@ -8133,7 +8157,7 @@ New("Frame", {
 						Text = opt,
 						TextColor3 = selected == opt and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 204, 218),
 						TextScaled = false,
-						TextSize = 15,
+						TextSize = 14,
 						Font = FONT,
 						TextTransparency = 0,
 						TextXAlignment = Enum.TextXAlignment.Left,
@@ -8252,7 +8276,7 @@ New("Frame", {
 					Text = text,
 					TextColor3 = Color3.fromRGB(217, 219, 226),
 					TextScaled = false,
-					TextSize = 16,
+					TextSize = 14,
 					Font = FONT,
 					TextTransparency = 0.1,
 					TextXAlignment = Enum.TextXAlignment.Left,
@@ -8294,7 +8318,7 @@ New("Frame", {
 					Text = selected,
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextScaled = false,
-					TextSize = 15,
+					TextSize = 14,
 					Font = FONT,
 					TextTransparency = 0,
 					TextXAlignment = Enum.TextXAlignment.Left,
@@ -8398,7 +8422,7 @@ New("Frame", {
 						Text = opt,
 						TextColor3 = opt == selected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 204, 218),
 						TextScaled = false,
-						TextSize = 15,
+						TextSize = 14,
 						Font = FONT,
 						TextTransparency = 0,
 						TextXAlignment = Enum.TextXAlignment.Left,
@@ -8505,7 +8529,7 @@ New("Frame", {
 					Text = text,
 					TextColor3 = Color3.fromRGB(217, 219, 226),
 					TextScaled = false,
-					TextSize = 16,
+					TextSize = 14,
 					Font = FONT,
 					TextTransparency = 0.1,
 					TextXAlignment = Enum.TextXAlignment.Left,
@@ -8561,9 +8585,10 @@ New("Frame", {
 				TextArrow.BackgroundTransparency = 1
 				TextArrow.Image = "rbxassetid://10709790948"
 				TextArrow.ImageColor3 = Color3.fromRGB(255, 255, 255)
-				TextArrow.ImageTransparency = 0.10000000149011612
+				TextArrow.ImageTransparency = 0.3
 				TextArrow.ScaleType = Enum.ScaleType.Fit
-				TextArrow.Rotation = 0
+				-- Neverlose marks these rows with ">" and opens a plate beside the row.
+				TextArrow.Rotation = -90
 				TextArrow.Parent = DropdownSection
 
 				local Text = Instance.new('TextLabel')
@@ -8576,7 +8601,7 @@ New("Frame", {
 				-- Built without New(), so it missed the row text size (16) and stayed tiny.
 				Text.TextColor3 = Color3.fromRGB(226, 228, 236)
 				Text.TextScaled = false
-				Text.TextSize = 16
+				Text.TextSize = 14
 				Text.TextYAlignment = Enum.TextYAlignment.Center
 				Text.TextTruncate = Enum.TextTruncate.AtEnd
 				Text.Font = FONT
@@ -8614,10 +8639,26 @@ New("Frame", {
 
 				local UIStroke = Stroke(Section2Frame, "UIStroke")
 
+				-- Plate header like the "..." settings plate: title, then the rows.
+				local ACC_HEADER = 34
+				local ACC_WIDTH = 260
+				New("TextLabel", {
+					Name = "PlateTitle",
+					Position = UDim2.new(0, 14, 0, 12),
+					Size = UDim2.new(1, -28, 0, 18),
+					BackgroundTransparency = 1,
+					Text = text,
+					TextColor3 = Color3.fromRGB(255, 255, 255),
+					TextSize = 15,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextTruncate = Enum.TextTruncate.AtEnd,
+					ZIndex = 5001,
+				}, Section2Frame)
+
 				local Container = Instance.new('ScrollingFrame')
 				Container.Name = "Container"
-				Container.Position = UDim2.new(0.04, 0, 0, 3 / GetMainFrameScale())
-				Container.Size = UDim2.new(0.92, 0, 1, -6 / GetMainFrameScale())
+				Container.Position = UDim2.new(0.04, 0, 0, ACC_HEADER + 3 / GetMainFrameScale())
+				Container.Size = UDim2.new(0.92, 0, 1, -(ACC_HEADER + 6 / GetMainFrameScale()))
 				Container.BackgroundColor3 = Color3.fromRGB(162, 162, 162)
 				Container.BackgroundTransparency = 1
 				Container.AnchorPoint = Vector2.new(0, 0)
@@ -8655,9 +8696,27 @@ New("Frame", {
 
 				local function UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
-					Section2Frame.Position = UDim2.new(0.02, 0, 1, 2 / scale)
-					Container.Position = UDim2.new(0.04, 0, 0, 3 / scale)
-					Container.Size = UDim2.new(0.92, 0, 1, -6 / scale)
+					Container.Position = UDim2.new(0.04, 0, 0, ACC_HEADER + 3 / scale)
+					Container.Size = UDim2.new(0.92, 0, 1, -(ACC_HEADER + 6 / scale))
+				end
+
+				-- Beside the row, not below it: from the row's middle, top aligned a
+				-- little above the row, kept inside the window (same rules as placeSettings).
+				local function placeAccordion(height)
+					local scale = GetMainFrameScale()
+					local rowPosition = DropdownSection.AbsolutePosition
+					local rowSize = DropdownSection.AbsoluteSize
+					local mainPosition = MainFrame.AbsolutePosition
+					local mainSize = MainFrame.AbsoluteSize
+					if rowSize.X <= 0 or mainSize.X <= 0 or mainSize.Y <= 0 then return end
+					local edge = 5 * scale
+					local panelWidth = ACC_WIDTH * scale
+					local visualHeight = height * scale
+					local x = rowPosition.X + rowSize.X * 0.48
+					x = math.clamp(x, mainPosition.X + edge, math.max(mainPosition.X + edge, mainPosition.X + mainSize.X - panelWidth - edge))
+					local y = rowPosition.Y - 6 * scale
+					y = math.clamp(y, mainPosition.Y + edge, math.max(mainPosition.Y + edge, mainPosition.Y + mainSize.Y - visualHeight - edge))
+					Section2Frame.Position = UDim2.new(0, (x - rowPosition.X) / scale, 0, (y - rowPosition.Y) / scale)
 				end
 
 				New("Frame", {
@@ -8677,14 +8736,16 @@ New("Frame", {
 					UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
 					local contentVisual = GetAccordionContentHeight()
-					local desiredVisual = math.max(34 * scale, contentVisual + 16 * scale)
+					local desiredVisual = math.max((ACC_HEADER + 34) * scale, contentVisual + (ACC_HEADER + 16) * scale)
 					local maxVisual = math.max(34 * scale, MainFrame.AbsoluteSize.Y * 0.92)
 					return math.min(desiredVisual, maxVisual) / scale
 				end
 
 				local function fitAccordionHeight()
 					if not accordionOpen or not Section2Frame.Parent then return end
-					Section2Frame.Size = UDim2.new(0.96, 0, 0, getAccordionHeight())
+					local height = getAccordionHeight()
+					Section2Frame.Size = UDim2.fromOffset(ACC_WIDTH, height)
+					placeAccordion(height)
 				end
 
 				local function closeAccordion()
@@ -8692,9 +8753,8 @@ New("Frame", {
 					if _openAccordionDropdown then _openAccordionDropdown() end
 					ClosePopupsUnder(Section2Frame)
 					UnregisterPopup(Section2Frame)
-					Tween(Section2Frame, {Size = UDim2.new(0.96, 0, 0, 0), BackgroundTransparency = 1}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-					Tween(TextArrow, {Rotation = 0}, 0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-					task.delay(0.21, function() if not accordionOpen then Section2Frame.Visible = false end end)
+					SmoothClose(Section2Frame, 0.14)
+					Tween(TextArrow, {ImageTransparency = 0.3}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					if _openAccordion == closeAccordion then _openAccordion = nil end
 				end
 
@@ -8706,17 +8766,15 @@ New("Frame", {
 						CloseAllPopupsExcept(Section2Frame)
 						accordionOpen = true
 						_openAccordion = closeAccordion
-						Section2Frame.Visible = true
-						Section2Frame.BackgroundTransparency = 0
-						S2Scale.Scale = 0.94
+						-- The plate sits outside the clipping column, like the settings plate.
+						RememberPopupClipping(Section2Frame)
+						ForceLiftClipping(Section2Frame)
 						ApplyZIndexLadder(Section2Frame, NextPopupZ())
 						local accordionHeight = getAccordionHeight()
-						local accordionKnown = Vector2.new(
-							math.max(DropdownSection.AbsoluteSize.X * 0.96, 1),
-							math.min(accordionHeight * GetMainFrameScale(), math.max(MainFrame.AbsoluteSize.Y, 1)))
-						Section2Frame.Size = UDim2.new(0.96, 0, 0, accordionHeight)
-						PositionPopupWithinMain(Section2Frame, true, nil, nil, accordionKnown)
-						Tween(TextArrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Section2Frame.Size = UDim2.fromOffset(ACC_WIDTH, accordionHeight)
+						placeAccordion(accordionHeight)
+						SmoothOpen(Section2Frame, 0.045, 0.17)
+						Tween(TextArrow, {ImageTransparency = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						RegisterPopup(Section2Frame, closeAccordion, Open)
 						local function settle()
 							if not accordionOpen or not Section2Frame.Parent then return end
@@ -8991,7 +9049,7 @@ New("Frame", {
 						Font = FONT,
 						TextTransparency = 0,
 						TextTruncate = Enum.TextTruncate.AtEnd,
-						TextSize = 15,
+						TextSize = 14,
 						ZIndex = 101,
 						TextXAlignment = Enum.TextXAlignment.Left,
 					}, Selection)
@@ -9068,7 +9126,7 @@ New("Frame", {
 								Text = opt,
 								TextColor3 = Color3.fromRGB(200, 204, 218),
 								TextScaled = false,
-								TextSize = 15,
+								TextSize = 14,
 								Font = FONT,
 								TextTruncate = Enum.TextTruncate.AtEnd,
 								TextTransparency = 0,
@@ -9372,7 +9430,7 @@ New("Frame", {
 						Text = text2,
 						TextColor3 = Color3.fromRGB(217, 219, 226),
 						TextScaled = false,
-						TextSize = 15,
+						TextSize = 14,
 						Font = FONT,
 						TextTransparency = 0.1,
 						TextXAlignment = Enum.TextXAlignment.Left,
