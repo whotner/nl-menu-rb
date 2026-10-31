@@ -8289,6 +8289,240 @@ New("UIAspectRatioConstraint", {
 		local TabObj = {}
 		local sectionOrder = { left = 0, right = 0 }
 
+		-- CS2-style loadout page for this tab (replaces its two columns): the
+		-- team switch (CT / T Loadout) on top, your own character as the agent
+		-- with six gear slots under it, and Pistols / Mid-Tier / Rifles columns
+		-- of five weapon slots. Slots are see-through cards with the weapon
+		-- name (no models). options.onSelect(team, category, index, name).
+		-- Returns { frame, GetTeam(), SetTeam("CT" | "T") }.
+		function TabObj:AddLoadout(options)
+			options = type(options) == "table" and options or {}
+			local WEAPONS = {
+				CT = {
+					Pistols = { "USP-S", "Dual Berettas", "P250", "Five-SeveN", "Desert Eagle" },
+					["Mid-Tier"] = { "Nova", "XM1014", "MP9", "MP7", "P90" },
+					Rifles = { "FAMAS", "M4A4", "SSG 08", "AUG", "AWP" },
+				},
+				T = {
+					Pistols = { "Glock-18", "Dual Berettas", "P250", "Tec-9", "Desert Eagle" },
+					["Mid-Tier"] = { "Nova", "Sawed-Off", "MAC-10", "MP7", "P90" },
+					Rifles = { "Galil AR", "AK-47", "SSG 08", "SG 553", "AWP" },
+				},
+			}
+			local CATEGORIES = { "Pistols", "Mid-Tier", "Rifles" }
+			local GEAR = {
+				{ "Agent", "rbxassetid://10747373176" }, { "Patch", "rbxassetid://10709769406" }, { "Music Kit", "rbxassetid://10734905958" },
+				{ "Knife", "rbxassetid://10734975486" }, { "Gloves", "rbxassetid://10723405649" }, { "Zeus", "rbxassetid://10734951847" },
+			}
+			local TEAM_COLOR = { CT = Color3.fromRGB(110, 150, 255), T = Color3.fromRGB(230, 180, 90) }
+			local CARD, MUTED, TEXT = Color3.fromRGB(23, 23, 31), Color3.fromRGB(150, 152, 162), Color3.fromRGB(235, 236, 241)
+			local team = options.team == "T" and "T" or "CT"
+
+			-- Full-width page: the left column takes the whole tab, the right one
+			-- collapses.
+			Left.Size = UDim2.new(1, -12, 1, 0)
+			Right.Size = UDim2.new(0, 0, 1, 0)
+			local page = New("Frame", { Name = "Loadout", Size = UDim2.new(1, 0, 0, 420), BackgroundTransparency = 1, LayoutOrder = 1 }, Left)
+			local function fitHeight()
+				local h = Left.AbsoluteSize.Y - 14
+				if h > 100 then page.Size = UDim2.new(1, 0, 0, h) end
+			end
+			Left:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitHeight)
+			task.defer(fitHeight)
+
+			local function card(parent, name)
+				local c = New("TextButton", {
+					Name = name, BackgroundColor3 = CARD, BackgroundTransparency = 0.35, AutoButtonColor = false, Text = "", BorderSizePixel = 0,
+				}, parent)
+				New("UICorner", { CornerRadius = UDim.new(0, 8) }, c)
+				Stroke(c)
+				c.MouseEnter:Connect(function() Tween(c, { BackgroundTransparency = 0.15 }, 0.1) end)
+				c.MouseLeave:Connect(function() Tween(c, { BackgroundTransparency = 0.35 }, 0.14) end)
+				return c
+			end
+
+			-- Left side: team switch, agent, gear slots.
+			local side = New("Frame", { Name = "AgentSide", Size = UDim2.new(0.32, 0, 1, 0), BackgroundTransparency = 1 }, page)
+			local switch = New("TextButton", {
+				Name = "TeamSwitch", Size = UDim2.fromOffset(150, 28), BackgroundColor3 = CARD, BackgroundTransparency = 0.2,
+				AutoButtonColor = false, Text = "", BorderSizePixel = 0,
+			}, side)
+			New("UICorner", { CornerRadius = UDim.new(1, 0) }, switch)
+			Stroke(switch)
+			local badge = New("Frame", {
+				Name = "TeamBadge", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 6, 0.5, 0), Size = UDim2.fromOffset(18, 18),
+				BackgroundColor3 = TEAM_COLOR[team], BackgroundTransparency = 0.75, BorderSizePixel = 0,
+			}, switch)
+			New("UICorner", { CornerRadius = UDim.new(1, 0) }, badge)
+			local badgeText = New("TextLabel", {
+				Name = "TeamBadgeText", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = team,
+				TextColor3 = TEAM_COLOR[team], TextSize = 9, Font = FONT_BOLD,
+			}, badge)
+			local switchText = New("TextLabel", {
+				Name = "TeamTitle", Position = UDim2.fromOffset(32, 0), Size = UDim2.new(1, -56, 1, 0), BackgroundTransparency = 1,
+				Text = team .. " Loadout", TextColor3 = TEXT, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left,
+			}, switch)
+			New("ImageLabel", {
+				Name = "SwapIcon", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -9, 0.5, 0), Size = UDim2.fromOffset(13, 13),
+				BackgroundTransparency = 1, Image = "rbxassetid://10709768019", ImageColor3 = MUTED,
+			}, switch)
+
+			local agent = card(side, "Agent")
+			agent.Position = UDim2.fromOffset(0, 36)
+			local viewport = New("ViewportFrame", {
+				Name = "AgentView", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+				Ambient = Color3.fromRGB(150, 150, 165), LightColor = Color3.fromRGB(255, 255, 255), LightDirection = Vector3.new(-0.6, -1, -0.8),
+			}, agent)
+			local world = Instance.new("WorldModel")
+			world.Parent = viewport
+			local camera = Instance.new("Camera")
+			camera.FieldOfView = 30
+			camera.Parent = viewport
+			viewport.CurrentCamera = camera
+
+			local gear = New("Frame", { Name = "Gear", AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, side)
+			New("UIAspectRatioConstraint", { AspectRatio = 1.5, DominantAxis = Enum.DominantAxis.Width }, gear)
+			New("UIGridLayout", { CellSize = UDim2.new(1 / 3, -6, 0.5, -4), CellPadding = UDim2.fromOffset(8, 8), SortOrder = Enum.SortOrder.LayoutOrder }, gear)
+			for i, item in ipairs(GEAR) do
+				local slot = card(gear, "Gear_" .. item[1])
+				slot.LayoutOrder = i
+				New("ImageLabel", {
+					Name = "GearIcon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.42), Size = UDim2.fromOffset(18, 18),
+					BackgroundTransparency = 1, Image = item[2], ImageColor3 = MUTED, ImageTransparency = 0.3,
+				}, slot)
+				New("TextLabel", {
+					Name = "GearName", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -4), Size = UDim2.new(1, -6, 0, 14),
+					BackgroundTransparency = 1, Text = item[1], TextColor3 = MUTED, TextSize = 10, Font = FONT,
+				}, slot)
+				slot.MouseButton1Click:Connect(function()
+					if type(options.onSelect) == "function" then pcall(options.onSelect, team, "Gear", i, item[1]) end
+				end)
+			end
+			-- Agent card fills the space between the switch and the gear slots.
+			local function fitAgent()
+				local gearH = gear.AbsoluteSize.Y
+				if gearH > 0 then agent.Size = UDim2.new(1, 0, 1, -(36 + gearH + 8)) end
+			end
+			gear:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitAgent)
+			task.defer(fitAgent)
+
+			-- Your character in the agent card: a clone of it, anchored, posed
+			-- facing the camera; drag to turn it.
+			local yaw, model = 0, nil
+			local function pose()
+				if not model then return end
+				model:PivotTo(CFrame.Angles(0, math.pi + yaw, 0))
+			end
+			local function loadAgent()
+				world:ClearAllChildren()
+				model = nil
+				local char = LocalPlayer.Character
+				if not char then return end
+				local was = char.Archivable
+				char.Archivable = true
+				local ok, clone = pcall(function() return char:Clone() end)
+				char.Archivable = was
+				if not ok or not clone then return end
+				for _, d in ipairs(clone:GetDescendants()) do
+					if d:IsA("BaseScript") or d:IsA("ModuleScript") or d:IsA("Sound") then
+						d:Destroy()
+					elseif d:IsA("BasePart") then
+						d.Anchored = true
+						d.CanCollide = false
+					end
+				end
+				local humanoid = clone:FindFirstChildOfClass("Humanoid")
+				if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
+				clone.Parent = world
+				model = clone
+				pose()
+				local cf, size = clone:GetBoundingBox()
+				camera.CFrame = CFrame.new(cf.Position + Vector3.new(0, size.Y * 0.04, size.Y * 2.1), cf.Position)
+			end
+			loadAgent()
+			LocalPlayer.CharacterAdded:Connect(function(char)
+				char:WaitForChild("HumanoidRootPart", 10)
+				task.wait(0.5)
+				loadAgent()
+			end)
+			do
+				local turning
+				agent.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+						turning = { x = input.Position.X, yaw = yaw }
+					end
+				end)
+				UserInputService.InputChanged:Connect(function(input)
+					if not turning or input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then return end
+					yaw = turning.yaw + (input.Position.X - turning.x) * 0.012
+					pose()
+				end)
+				UserInputService.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then turning = nil end
+				end)
+			end
+
+			-- Right side: three columns of weapon slots.
+			local grid = New("Frame", { Name = "Weapons", Position = UDim2.new(0.32, 12, 0, 0), Size = UDim2.new(0.68, -12, 1, 0), BackgroundTransparency = 1 }, page)
+			for i, category in ipairs(CATEGORIES) do
+				New("TextLabel", {
+					Name = "Header_" .. category, Position = UDim2.new((i - 1) / 3, 0, 0, 0), Size = UDim2.new(1 / 3, -8, 0, 28),
+					BackgroundTransparency = 1, Text = category, TextColor3 = TEXT, TextSize = 13, Font = FONT,
+				}, grid)
+			end
+			local slots = New("Frame", { Name = "Slots", Position = UDim2.fromOffset(0, 36), Size = UDim2.new(1, 0, 1, -36), BackgroundTransparency = 1 }, grid)
+			New("UIGridLayout", {
+				CellSize = UDim2.new(1 / 3, -8, 0.2, -8), CellPadding = UDim2.fromOffset(8, 8),
+				FillDirection = Enum.FillDirection.Vertical, FillDirectionMaxCells = 5, SortOrder = Enum.SortOrder.LayoutOrder,
+			}, slots)
+			local nameLabels = {}
+			for c, category in ipairs(CATEGORIES) do
+				for i = 1, 5 do
+					local slot = card(slots, category .. "_" .. i)
+					slot.LayoutOrder = (c - 1) * 5 + i
+					-- Light rule under each slot, as on the CS2 loadout.
+					New("Frame", {
+						Name = "Rule", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -5), Size = UDim2.new(1, -16, 0, 2),
+						BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.82, BorderSizePixel = 0,
+					}, slot)
+					local label = New("TextLabel", {
+						Name = "WeaponName", Position = UDim2.fromOffset(9, 0), Size = UDim2.new(1, -18, 1, -10),
+						BackgroundTransparency = 1, Text = WEAPONS[team][category][i], TextColor3 = MUTED, TextSize = 12, Font = FONT,
+						TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Bottom,
+					}, slot)
+					nameLabels[#nameLabels + 1] = { label = label, category = category, index = i }
+					slot.MouseButton1Click:Connect(function()
+						if type(options.onSelect) == "function" then
+							pcall(options.onSelect, team, category, i, WEAPONS[team][category][i])
+						end
+					end)
+				end
+			end
+
+			local api = { frame = page }
+			function api:GetTeam() return team end
+			function api:SetTeam(newTeam)
+				team = newTeam == "T" and "T" or "CT"
+				switchText.Text = team .. " Loadout"
+				badgeText.Text = team
+				Tween(badge, { BackgroundColor3 = TEAM_COLOR[team] }, 0.2)
+				Tween(badgeText, { TextColor3 = TEAM_COLOR[team] }, 0.2)
+				-- Weapon names cross-fade to the other team's set.
+				for _, entry in ipairs(nameLabels) do
+					local label = entry.label
+					Tween(label, { TextTransparency = 1 }, 0.1)
+					task.delay(0.1, function()
+						label.Text = WEAPONS[team][entry.category][entry.index]
+						Tween(label, { TextTransparency = 0 }, 0.16)
+					end)
+				end
+				if type(options.onTeam) == "function" then pcall(options.onTeam, team) end
+				return self
+			end
+			switch.MouseButton1Click:Connect(function() api:SetTeam(team == "CT" and "T" or "CT") end)
+			return api
+		end
+
 		function TabObj:AddSection(title, side)
 			title = tostring(title or "Section")
 			side = side == "right" and "right" or "left"
