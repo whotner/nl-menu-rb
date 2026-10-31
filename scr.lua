@@ -1724,6 +1724,29 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		return img
 	end
 
+	-- Neverlose capsule look: eight faint capsule layers, each 1.5px wider,
+	-- stacked under a nearly clear plate. Inside they add up to the plate's
+	-- darkness; outside they thin out, so the plate's ends melt into the
+	-- shadow instead of having a hard edge. Layers carry IsShadowLayer and
+	-- ShadowAlpha for the fades.
+	WindowObj._edgeShadow = function(host, z)
+		for i = 1, 8 do
+			local spread = i * 1.5
+			local layer = Instance.new("Frame")
+			layer.Name = "ShadowLayer" .. i
+			layer.Position = UDim2.new(0, -spread, 0, 1 - spread)
+			layer.Size = UDim2.new(1, spread * 2, 1, spread * 2)
+			layer.BackgroundColor3 = Color3.fromRGB(4, 5, 7)
+			layer.BackgroundTransparency = 0.93
+			layer.BorderSizePixel = 0
+			layer.ZIndex = z
+			layer:SetAttribute("IsShadowLayer", true)
+			layer:SetAttribute("ShadowAlpha", 0.93)
+			local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = layer
+			layer.Parent = host
+		end
+	end
+
 	-- The glass is rectangular: `inset` pulls it in from the left/right ends so
 	-- it does not show past rounded capsule corners.
 	WindowObj._attachBlur = function(frame, inset)
@@ -2568,7 +2591,7 @@ GameInfo.AutomaticSize = Enum.AutomaticSize.X
 -- Neverlose watermark: a dark see-through capsule over the blur (the game
 -- shows through tinted), no outline.
 GameInfo.BackgroundColor3 = Color3.fromRGB(8, 9, 12)
-GameInfo.BackgroundTransparency = 0.42
+GameInfo.BackgroundTransparency = 0.9
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
@@ -2864,25 +2887,10 @@ do
 	WMShadowHost.ZIndex = Z_BASE + 899
 	WMShadowHost.Parent = NeverloseCS2
 
-	-- Watermark shadow: the menu's layered shadow (AttachShadow, defined
-	-- further down, so built here the same way) on the sibling host; the
-	-- strip itself owns a list layout, which would swallow the layers.
+	-- Watermark shadow on the sibling host (the strip itself owns a list
+	-- layout, which would swallow the layers): the melting capsule edge.
 	local layers = {}
-	-- The window's shadow (6 layers, 2px steps, 2px down), built here
-	-- because AttachShadow is defined further down.
-	for i = 1, 4 do
-		local spread = i * 2
-		local layer = Instance.new("Frame")
-		layer.Name = "ShadowLayer" .. i
-		layer.Position = UDim2.new(0, -spread, 0, 2 - spread)
-		layer.Size = UDim2.new(1, spread * 2, 1, spread * 2)
-		layer.BackgroundColor3 = Color3.new(0, 0, 0)
-		layer.BackgroundTransparency = 0.86 + (i - 1) * 0.04
-		layer.BorderSizePixel = 0
-		layer.ZIndex = Z_BASE + 898
-		layer.Parent = WMShadowHost
-		local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = layer
-	end
+	WindowObj._edgeShadow(WMShadowHost, Z_BASE + 898)
 
 	WMShadowSync = function()
 		local w, h = GameInfo.AbsoluteSize.X, GameInfo.AbsoluteSize.Y
@@ -3157,16 +3165,17 @@ New("UIListLayout", {
 -- OV.entry stays the dark knob colour of the switch glyph.
 -- The menu reads as two glass layers (window 8,10,17 at 0.25 under the
 -- content panel 15,17,24 at 0.5); one plate at their mix looks the same.
-local OV = { h = 22, head = 30, header = 0.13, entryAlpha = 0.2, glass = Color3.fromRGB(12, 14, 21), entry = Color3.fromRGB(23, 23, 31) }
+local OV = { h = 24, head = 32, header = 0.9, entryAlpha = 0.9, glass = Color3.fromRGB(8, 9, 12), entry = Color3.fromRGB(23, 23, 31) }
 function OV.pill(name, parent, alpha, radius, height)
+	-- Same capsule as the watermark: nearly clear plate, melting edge shadow,
+	-- blur behind. (`radius` only sets how far the blur pulls in.)
 	local pill = New("Frame", {
 		Name = name, Size = UDim2.fromOffset(height or OV.h, height or OV.h), BackgroundColor3 = OV.glass,
 		BackgroundTransparency = alpha, BorderSizePixel = 0, ZIndex = Z_BASE + 891,
 	}, parent)
 	pill:SetAttribute("PillAlpha", alpha)
-	New("UICorner", { CornerRadius = UDim.new(0, radius) }, pill)
-	Stroke(pill)
-	AttachShadow(pill, { radius = radius, layers = 4, step = 1.6, bias = 2 })
+	New("UICorner", { CornerRadius = UDim.new(1, 0) }, pill)
+	WindowObj._edgeShadow(pill, Z_BASE + 890)
 	if WindowObj._attachBlur then WindowObj._attachBlur(pill, math.floor(radius * 0.6)) end
 	return pill
 end
@@ -3191,16 +3200,16 @@ local function MakeOverlayPanel(name, iconAsset, title)
 	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Left, Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
 	New("UIScale", { Name = "PopScale", Scale = 1 }, panel)
 
-	local header = OV.pill("Header", panel, OV.header, 8, OV.head)
+	local header = OV.pill("Header", panel, OV.header, 16, OV.head)
 	header.LayoutOrder = 1
 	header.Active = true
 	-- Layout lives in a child so the shadow rings stay free of it.
 	local content = New("Frame", { Name = "Content", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = Z_BASE + 892 }, header)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 11), PaddingRight = UDim.new(0, 12) }, content)
+	New("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }, content)
 	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, content)
 	New("ImageLabel", {
 		Name = "HeaderIcon", Size = UDim2.fromOffset(15, 15), BackgroundTransparency = 1,
-		Image = iconAsset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 892,
+		Image = iconAsset, ImageColor3 = Color3.fromRGB(150, 164, 255), ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 892,
 	}, content)
 	local divider = New("Frame", {
 		Name = "HeaderDivider", Size = UDim2.fromOffset(1, 14), BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -3212,7 +3221,7 @@ local function MakeOverlayPanel(name, iconAsset, title)
 		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(235, 236, 241), TextTransparency = 0,
 		TextSize = 14, Font = FONT_BOLD, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 3, ZIndex = Z_BASE + 892,
 	}, content)
-	local headerW = math.ceil(11 + 15 + 8 + 1 + 8 + MeasureText(title, 14, FONT_BOLD) + 12)
+	local headerW = math.ceil(14 + 15 + 8 + 1 + 8 + MeasureText(title, 14, FONT_BOLD) + 14)
 	header.Size = UDim2.fromOffset(headerW, OV.head)
 	panel:SetAttribute("HeaderWidth", headerW)
 	if WindowObj._makeDraggable then WindowObj._makeDraggable(header, panel, name) end
@@ -3230,12 +3239,12 @@ end
 -- name first and the icon pill after it (hotkeys). Returns row, icon pill.
 function OV.row(rows, order, text, leftText, iconRight)
 	local leftW = leftText and math.max(OV.h, math.ceil(MeasureText(leftText, 12, FONT) + 14)) or OV.h
-	local nameW = math.ceil(MeasureText(text, 12, FONT) + 18)
+	local nameW = math.ceil(MeasureText(text, 12, FONT) + 24)
 	local row = New("Frame", {
 		Name = "OverlayRow", Size = UDim2.fromOffset(leftW + 4 + nameW, OV.h), BackgroundTransparency = 1,
 		LayoutOrder = order, ZIndex = Z_BASE + 891,
 	}, rows)
-	local leftPill = OV.pill("IconPill", row, OV.entryAlpha, 6)
+	local leftPill = OV.pill("IconPill", row, OV.entryAlpha, 12)
 	leftPill.Size = UDim2.fromOffset(leftW, OV.h)
 	local iconX, nameX = 0, leftW + 4
 	if iconRight then iconX, nameX = nameW + 4, 0 end
@@ -3247,12 +3256,12 @@ function OV.row(rows, order, text, leftText, iconRight)
 			ZIndex = Z_BASE + 892,
 		}, leftPill)
 	end
-	local namePill = OV.pill("NamePill", row, OV.entryAlpha, 6)
+	local namePill = OV.pill("NamePill", row, OV.entryAlpha, 12)
 	namePill.Position = UDim2.fromOffset(nameX, 0)
 	namePill.Size = UDim2.fromOffset(nameW, OV.h)
 	New("TextLabel", {
-		Name = "EntryName", Position = UDim2.fromOffset(9, 0), Size = UDim2.new(1, -18, 1, 0),
-		BackgroundTransparency = 1, Text = text, TextColor3 = Color3.fromRGB(235, 236, 241), TextTransparency = 0,
+		Name = "EntryName", Position = UDim2.fromOffset(12, 0), Size = UDim2.new(1, -24, 1, 0),
+		BackgroundTransparency = 1, Text = text, TextColor3 = Color3.fromRGB(180, 182, 188), TextTransparency = 0,
 		TextSize = 12, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = Z_BASE + 892,
 	}, namePill)
