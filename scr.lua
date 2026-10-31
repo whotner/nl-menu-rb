@@ -1788,6 +1788,48 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	-- Neverlose option lists open instantly, centred on the field that opened
 	-- them (overlapping it), not dropped below with a grow animation. Kept on
 	-- WindowObj instead of a local: AddWindow is near Luau's register cap.
+	-- Small line icons drawn from frames (no image assets needed).
+	WindowObj._drawGlyph = function(kind, host, color)
+		local function bar(x, y, w, h, rot)
+			local f = Instance.new("Frame")
+			f.AnchorPoint = Vector2.new(0.5, 0.5)
+			f.Position = UDim2.fromOffset(x, y)
+			f.Size = UDim2.fromOffset(w, h)
+			f.Rotation = rot or 0
+			f.BackgroundColor3 = color
+			f.BorderSizePixel = 0
+			f.ZIndex = host.ZIndex + 1
+			f.Parent = host
+			return f
+		end
+		local function box(x, y, w, h)
+			local f = Instance.new("Frame")
+			f.Position = UDim2.fromOffset(x, y)
+			f.Size = UDim2.fromOffset(w, h)
+			f.BackgroundTransparency = 1
+			f.ZIndex = host.ZIndex + 1
+			f.Parent = host
+			local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 2); c.Parent = f
+			local o = Instance.new("UIStroke"); o.Color = color; o.Thickness = 1.4; o.Parent = f
+			return f
+		end
+		if kind == "share" then
+			-- arrow out of a corner: shaft + head, over an open tray
+			bar(8, 6, 1.6, 9, 45)
+			bar(10.2, 2.6, 5, 1.6, 0)
+			bar(12, 4.4, 1.6, 5, 0)
+			bar(4, 12.2, 7, 1.6, 0)
+			bar(1.2, 9.6, 1.6, 6, 0)
+		elseif kind == "copy" then
+			box(1, 4, 8, 9)
+			box(5, 1, 8, 9)
+		elseif kind == "trash" then
+			bar(7, 3, 11, 1.6, 0)
+			bar(7, 1.4, 4, 1.4, 0)
+			box(3, 5, 8, 8)
+		end
+	end
+
 	WindowObj._centerPopupOnField = function(popup, field)
 		if not popup or not popup.Parent or not field or not field.Parent then return end
 		if WindowObj._styleListPopup then WindowObj._styleListPopup(popup) end
@@ -3946,6 +3988,135 @@ AddProfileDisplayRow(82, "DeveloperMode", "Developer Mode", nil, Library.Profile
 -- About and Chat have no chevron in the reference.
 AddProfileDisplayRow(90, "About", "About", nil, Library.ProfileIcons.about, "plain")
 AddProfileDisplayRow(100, "Chat", "Chat", nil, Library.ProfileIcons.chat, "plain")
+-- Profile rows are live: arrow rows open a choice list on their value,
+-- switches toggle, About/Chat fire an action. Values are readable through
+-- Win:GetProfileSetting(key); Win:OnProfileSetting(fn) and
+-- Win:OnProfileAction(fn) report changes. Windows Scale really scales the
+-- on-screen overlays (hotkeys, spectators, watermark).
+do
+	local settings = { ESPScale = "150%", WindowsScale = "Auto", Units = "Auto", SafeMode = "Automatic", Synchronization = true, DeveloperMode = false }
+	local choices = {
+		ESPScale = { "50%", "75%", "100%", "125%", "150%", "200%" },
+		WindowsScale = { "Auto", "75%", "100%", "125%", "150%" },
+		Units = { "Auto", "Metric", "Imperial" },
+		SafeMode = { "Automatic", "Enabled", "Disabled" },
+	}
+	local function notify(key, value)
+		if type(WindowObj._onProfileSetting) == "function" then InvokeCallback(WindowObj._onProfileSetting, key, value) end
+	end
+	local function applyWindowsScale(value)
+		local factor = tonumber(tostring(value):match("^(%d+)%%$"))
+		factor = factor and factor / 100 or 1
+		for _, name in ipairs({ "OverlayStack", "GameInfo", "WMShadow" }) do
+			local target = NeverloseCS2:FindFirstChild(name)
+			if target then
+				local scale = target:FindFirstChild("ProfileWindowsScale") or New("UIScale", { Name = "ProfileWindowsScale" }, target)
+				scale.Scale = factor
+			end
+		end
+	end
+
+	local openList
+	local function closeList()
+		if not openList then return end
+		local list = openList
+		openList = nil
+		UnregisterPopup(list)
+		SmoothClose(list, 0.1, function() list:Destroy() end)
+	end
+	local function openChoiceList(field, options, current, onPick)
+		closeList()
+		local list = New("Frame", {
+			Name = "ProfileChoices", Size = UDim2.fromOffset(150, #options * 30 + 10), BackgroundColor3 = Color3.fromRGB(18, 18, 27),
+			BorderSizePixel = 0, Visible = false, ZIndex = 9000,
+		}, MainFrame)
+		New("UICorner", { CornerRadius = UDim.new(0, 10) }, list)
+		Stroke(list)
+		local rows = New("Frame", { Name = "Rows", Position = UDim2.fromOffset(5, 5), Size = UDim2.new(1, -10, 1, -10), BackgroundTransparency = 1 }, list)
+		New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, rows)
+		for index, option in ipairs(options) do
+			local item = New("TextButton", {
+				Name = "Choice", LayoutOrder = index, Size = UDim2.new(1, 0, 0, 30), BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+				BackgroundTransparency = 1, AutoButtonColor = false, Text = option,
+				TextColor3 = option == current and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180),
+				TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left,
+			}, rows)
+			New("UICorner", { CornerRadius = UDim.new(0, 6) }, item)
+			New("UIPadding", { PaddingLeft = UDim.new(0, 12) }, item)
+			item.MouseEnter:Connect(function() Tween(item, { BackgroundTransparency = 0.95 }, 0.08) end)
+			item.MouseLeave:Connect(function() Tween(item, { BackgroundTransparency = 1 }, 0.1) end)
+			if onPick then
+				item.MouseButton1Click:Connect(function()
+					closeList()
+					onPick(option)
+				end)
+			end
+		end
+		openList = list
+		ApplyZIndexLadder(list, NextPopupZ())
+		list.Visible = true
+		WindowObj._centerPopupOnField(list, field)
+		SmoothOpen(list, 0, 0.14)
+		RegisterPopup(list, closeList, field)
+	end
+
+	for key, options in pairs(choices) do
+		local row = SettingsContainer:FindFirstChild("Profile_" .. key)
+		local valueLabel = row and row:FindFirstChild("ProfileValue")
+		if row and valueLabel then
+			local hit = New("TextButton", { Name = "ProfileHit", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "", ZIndex = 140 }, row)
+			hit.MouseButton1Click:Connect(function()
+				if openList then closeList() return end
+				openChoiceList(valueLabel, options, settings[key], function(option)
+					settings[key] = option
+					valueLabel.Text = option
+					if key == "WindowsScale" then applyWindowsScale(option) end
+					notify(key, option)
+				end)
+			end)
+		end
+	end
+
+	for _, key in ipairs({ "Synchronization", "DeveloperMode" }) do
+		local row = SettingsContainer:FindFirstChild("Profile_" .. key)
+		local track = row and row:FindFirstChild("Switch")
+		local knob = track and track:FindFirstChild("Knob")
+		if row and track and knob then
+			local hit = New("TextButton", { Name = "ProfileHit", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "", ZIndex = 140 }, row)
+			hit.MouseButton1Click:Connect(function()
+				local on = not settings[key]
+				settings[key] = on
+				Tween(track, { BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16) }, 0.15)
+				Tween(knob, {
+					Position = on and UDim2.fromOffset(15, 1) or UDim2.fromOffset(1, 1),
+					BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157),
+				}, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				notify(key, on)
+			end)
+		end
+	end
+
+	for _, key in ipairs({ "About", "Chat" }) do
+		local row = SettingsContainer:FindFirstChild("Profile_" .. key)
+		local label = row and row:FindFirstChild("ProfileLabel")
+		if row and label then
+			local hit = New("TextButton", { Name = "ProfileHit", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "", ZIndex = 140 }, row)
+			hit.MouseButton1Click:Connect(function()
+				if type(WindowObj._onProfileAction) == "function" then
+					InvokeCallback(WindowObj._onProfileAction, key)
+				elseif key == "About" then
+					openChoiceList(label, { tostring(hubTitle) .. " UI", "Roblox port", "Build v30" }, nil, nil)
+				else
+					openChoiceList(label, { "Chat is not connected" }, nil, nil)
+				end
+			end)
+		end
+	end
+
+	function WindowObj:GetProfileSetting(key) return settings[key] end
+	function WindowObj:OnProfileSetting(callback) WindowObj._onProfileSetting = callback return self end
+	function WindowObj:OnProfileAction(callback) WindowObj._onProfileAction = callback return self end
+end
 -- Rounded hover tint on every popover row, same as the menu rows.
 for _, profileRow in ipairs(SettingsContainer:GetChildren()) do
 	if profileRow:IsA("Frame") and profileRow.Name ~= "ProfileHeader" and profileRow.Name ~= "ProfileGroupGap" and profileRow.Name ~= "WatermarkRow" then
@@ -4580,6 +4751,73 @@ asss.Parent = SearchBtn
 		return success
 	end
 
+	-- Share codes: "NL1:" + base64 of {"name","data"}. Copied from a preset's
+	-- menu; pasting one into the "+" name field imports it as a new preset.
+	do
+		local B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+		local function encode(data)
+			return ((data:gsub(".", function(x)
+				local r, b = "", x:byte()
+				for i = 8, 1, -1 do r = r .. (b % 2 ^ i - b % 2 ^ (i - 1) > 0 and "1" or "0") end
+				return r
+			end) .. "0000"):gsub("%d%d%d?%d?%d?%d?", function(x)
+				if #x < 6 then return "" end
+				local c = 0
+				for i = 1, 6 do c = c + (x:sub(i, i) == "1" and 2 ^ (6 - i) or 0) end
+				return B64:sub(c + 1, c + 1)
+			end) .. ({ "", "==", "=" })[#data % 3 + 1])
+		end
+		local function decode(data)
+			data = data:gsub("[^" .. B64 .. "=]", "")
+			return (data:gsub(".", function(x)
+				if x == "=" then return "" end
+				local r, f = "", (B64:find(x, 1, true) - 1)
+				for i = 6, 1, -1 do r = r .. (f % 2 ^ i - f % 2 ^ (i - 1) > 0 and "1" or "0") end
+				return r
+			end):gsub("%d%d%d?%d?%d?%d?%d?%d?", function(x)
+				if #x ~= 8 then return "" end
+				local c = 0
+				for i = 1, 8 do c = c + (x:sub(i, i) == "1" and 2 ^ (8 - i) or 0) end
+				return string.char(c)
+			end))
+		end
+		local http = game:GetService("HttpService")
+		WindowObj._makeShareCode = function(name)
+			local data
+			if type(readfile) == "function" and type(isfile) == "function" then
+				local okExists, exists = pcall(isfile, GetConfigPath(name))
+				if okExists and exists then
+					local okRead, content = pcall(readfile, GetConfigPath(name))
+					if okRead and type(content) == "string" then
+						local okDecode, decoded = pcall(http.JSONDecode, http, content)
+						if okDecode and type(decoded) == "table" then data = decoded end
+					end
+				end
+			end
+			if not data then return nil end
+			local okEncode, json = pcall(http.JSONEncode, http, { name = name, data = data })
+			if not okEncode then return nil end
+			return "NL1:" .. encode(json)
+		end
+		-- Returns the imported preset name, or nil if the text is not a valid code.
+		WindowObj._importShareCode = function(text)
+			text = tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", "")
+			if string.sub(text, 1, 4) ~= "NL1:" or type(writefile) ~= "function" then return nil end
+			local okDecode, payload = pcall(function() return http:JSONDecode(decode(string.sub(text, 5))) end)
+			if not okDecode or type(payload) ~= "table" or type(payload.data) ~= "table" then return nil end
+			local base = SanitizeConfigName(payload.name or "Shared")
+			local finalName, n = base, 1
+			while type(isfile) == "function" and select(2, pcall(isfile, GetConfigPath(finalName))) == true do
+				n = n + 1
+				finalName = base .. " (" .. n .. ")"
+			end
+			local okJson, json = pcall(http.JSONEncode, http, payload.data)
+			if not okJson then return nil end
+			local okWrite = pcall(writefile, GetConfigPath(finalName), json)
+			return okWrite and finalName or nil
+		end
+	end
+
 	local function ListConfigs()
 		if type(listfiles) ~= "function" then return {} end
 		local result = {}
@@ -4964,7 +5202,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	NameOfConfig.Size = UDim2.new(1, -96, 1, 0)
 	NameOfConfig.BackgroundTransparency = 1
 	NameOfConfig.Text = ""
-	NameOfConfig.PlaceholderText = "Config name..."
+	NameOfConfig.PlaceholderText = "Name or share code..."
 	NameOfConfig.PlaceholderColor3 = Color3.fromRGB(130, 134, 152)
 	NameOfConfig.TextColor3 = Color3.fromRGB(228, 230, 238)
 	NameOfConfig.TextSize = 14
@@ -5253,6 +5491,170 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local activeLoadBtn = nil
 	local activeConfigName = nil
 
+	-- Header controls, Neverlose-style: the save icon is its own button (saves
+	-- the loaded preset), every segment lights up on hover like the tabs, and
+	-- "Global" opens the Weapon Presets list.
+	do
+		local function hoverPlate(parent, position, size)
+			local plate = New("Frame", {
+				Name = "HoverPlate", Position = position, Size = size, BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+				BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 14,
+			}, parent)
+			New("UICorner", { CornerRadius = UDim.new(0, 8) }, plate)
+			return plate
+		end
+		local function bindHover(target, plate)
+			target.MouseEnter:Connect(function() Tween(plate, { BackgroundTransparency = 0.95 }, 0.1) end)
+			target.MouseLeave:Connect(function() Tween(plate, { BackgroundTransparency = 1 }, 0.14) end)
+		end
+
+		local savePlate = hoverPlate(Save, UDim2.fromOffset(0, 0), UDim2.new(0, 32, 1, 0))
+		local namePlate = hoverPlate(Save, UDim2.fromOffset(33, 0), UDim2.new(1, -33, 1, 0))
+		local saveButton = New("TextButton", {
+			Name = "SaveSegment", Size = UDim2.new(0, 32, 1, 0), BackgroundTransparency = 1, Text = "", ZIndex = 16,
+		}, Save)
+		bindHover(saveButton, savePlate)
+		-- TriggerSaveConfig covers the whole pill; only light the name part for it.
+		TriggerSaveConfig.MouseEnter:Connect(function() Tween(namePlate, { BackgroundTransparency = 0.95 }, 0.1) end)
+		TriggerSaveConfig.MouseLeave:Connect(function() Tween(namePlate, { BackgroundTransparency = 1 }, 0.14) end)
+		saveButton.MouseButton1Click:Connect(function()
+			if activeConfigName and SaveNamedConfig(activeConfigName) then
+				FlashSaved()
+			end
+		end)
+
+		-- Weapon Presets popup under "Global".
+		local presets = { "Global" }
+		local selectedPreset = "Global"
+		local globalPlate = hoverPlate(GlobalPreset, UDim2.fromOffset(0, 0), UDim2.fromScale(1, 1))
+		local globalHit = New("TextButton", {
+			Name = "GlobalPresetHit", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "", ZIndex = 16,
+		}, GlobalPreset)
+		bindHover(globalHit, globalPlate)
+
+		local popup = New("Frame", {
+			Name = "WeaponPresets", Position = UDim2.new(0, 0, 1, 6),
+			Size = UDim2.fromOffset(230, 0), AutomaticSize = Enum.AutomaticSize.Y,
+			BackgroundColor3 = Color3.fromRGB(18, 18, 27), BorderSizePixel = 0, Visible = false, ZIndex = 120,
+		}, GlobalPreset)
+		New("UICorner", { CornerRadius = UDim.new(0, 10) }, popup)
+		Stroke(popup)
+		AttachShadow(popup, { radius = 10, layers = 5, step = 1.6, bias = 3 })
+		New("TextLabel", {
+			Name = "PlateTitle", Position = UDim2.fromOffset(14, 10), Size = UDim2.new(1, -60, 0, 20), BackgroundTransparency = 1,
+			Text = "Weapon Presets", TextColor3 = Color3.fromRGB(226, 227, 233), TextSize = 15,
+			TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 121,
+		}, popup)
+		local addBtn = New("TextButton", {
+			Name = "AddPreset", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 8), Size = UDim2.fromOffset(24, 24),
+			BackgroundTransparency = 1, Text = "+", TextColor3 = Color3.fromRGB(200, 203, 213), TextSize = 20, ZIndex = 122,
+		}, popup)
+		local list = New("Frame", {
+			Name = "PresetList", Position = UDim2.fromOffset(10, 38), Size = UDim2.new(1, -20, 0, 0),
+			AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, ZIndex = 121,
+		}, popup)
+		New("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+		New("UIPadding", { PaddingBottom = UDim.new(0, 10) }, list)
+
+		local function selectPreset(name)
+			selectedPreset = name
+			GlobalPreset.GlobalPresetLabel.Text = name
+			for _, row in ipairs(list:GetChildren()) do
+				if row:IsA("TextButton") then
+					local isSel = row.Text == name
+					row.BackgroundColor3 = isSel and Color3.fromRGB(27, 27, 35) or Color3.fromRGB(21, 21, 29)
+					local outline = row:FindFirstChild("RowOutline")
+					if outline then
+						outline.Color = isSel and Color3.fromRGB(73, 79, 117) or Color3.fromRGB(255, 255, 255)
+						outline.Transparency = isSel and 0 or 0.95
+					end
+				end
+			end
+			if type(WindowObj._onWeaponPreset) == "function" then InvokeCallback(WindowObj._onWeaponPreset, name) end
+		end
+
+		local function addRow(name)
+			local row = New("TextButton", {
+				Name = "Preset", Size = UDim2.new(1, 0, 0, 34), BackgroundColor3 = Color3.fromRGB(21, 21, 29),
+				AutoButtonColor = false, Text = name, TextColor3 = Color3.fromRGB(214, 216, 224), TextSize = 14,
+				TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = #list:GetChildren(), ZIndex = 122,
+			}, list)
+			New("UICorner", { CornerRadius = UDim.new(0, 8) }, row)
+			New("UIPadding", { PaddingLeft = UDim.new(0, 12) }, row)
+			local outline = Instance.new("UIStroke")
+			outline.Name = "RowOutline"
+			outline.Color = Color3.fromRGB(255, 255, 255)
+			outline.Transparency = 0.95
+			outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+			outline.Parent = row
+			row.MouseButton1Click:Connect(function() selectPreset(name) end)
+			return row
+		end
+		for _, name in ipairs(presets) do addRow(name) end
+		selectPreset(selectedPreset)
+
+		-- "+" turns into an inline name field; Enter adds the preset.
+		addBtn.MouseButton1Click:Connect(function()
+			local input = New("TextBox", {
+				Name = "NewPreset", Size = UDim2.new(1, 0, 0, 34), BackgroundColor3 = Color3.fromRGB(26, 26, 38),
+				Text = "", PlaceholderText = "Preset name", PlaceholderColor3 = Color3.fromRGB(130, 134, 152),
+				TextColor3 = Color3.fromRGB(228, 230, 238), TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left,
+				ClearTextOnFocus = false, LayoutOrder = 9999, ZIndex = 122,
+			}, list)
+			New("UICorner", { CornerRadius = UDim.new(0, 8) }, input)
+			New("UIPadding", { PaddingLeft = UDim.new(0, 12) }, input)
+			input:CaptureFocus()
+			input.FocusLost:Connect(function(enter)
+				local name = tostring(input.Text or ""):gsub("^%s+", ""):gsub("%s+$", "")
+				input:Destroy()
+				if enter and name ~= "" and not table.find(presets, name) then
+					table.insert(presets, name)
+					addRow(name)
+					selectPreset(name)
+				end
+			end)
+		end)
+
+		local presetsOpen = false
+		local function closePresets()
+			presetsOpen = false
+			UnregisterPopup(popup)
+			SmoothClose(popup, 0.12)
+		end
+		globalHit.MouseButton1Click:Connect(function()
+			if presetsOpen then closePresets() return end
+			CloseAllPopupsExcept(popup)
+			presetsOpen = true
+			RememberPopupClipping(popup)
+			ApplyZIndexLadder(popup, NextPopupZ())
+			SmoothOpen(popup, 0, 0.16)
+			local scale = popup:FindFirstChild("_PopScale")
+			if scale then
+				scale.Scale = 0.92
+				Tween(scale, { Scale = 1 }, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			end
+			RegisterPopup(popup, closePresets, globalHit)
+		end)
+
+		function WindowObj:SetWeaponPresets(names)
+			for _, row in ipairs(list:GetChildren()) do
+				if row:IsA("TextButton") then row:Destroy() end
+			end
+			presets = {}
+			for _, name in ipairs(type(names) == "table" and names or { "Global" }) do
+				table.insert(presets, tostring(name))
+				addRow(tostring(name))
+			end
+			selectPreset(presets[1] or "Global")
+			return self
+		end
+		function WindowObj:OnWeaponPreset(callback)
+			WindowObj._onWeaponPreset = callback
+			return self
+		end
+		function WindowObj:GetWeaponPreset() return selectedPreset end
+	end
+
 	local function SetActiveConfigName(name)
 		if type(name) == "string" and name ~= "" and name ~= "Save" then
 			activeConfigName = name
@@ -5353,47 +5755,78 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		LoadConfigBtn.ZIndex = 3000
 		LoadConfigBtn.Parent = row
 
+		-- Neverlose row menu: Share / Duplicate / divider / Delete, with icons,
+		-- opening just right of the dots.
 		local SettingsFrame = Instance.new("Frame")
 		SettingsFrame.Name = "SettingsFrame"
-		SettingsFrame.Position = UDim2.new(0.02, 0, 1, 2)
-		SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
-		SettingsFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
-		SettingsFrame.BackgroundTransparency = 0.045
+		SettingsFrame.Position = UDim2.new(0, 0, 0, 0)
+		SettingsFrame.Size = UDim2.fromOffset(160, 0)
+		SettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
+		SettingsFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 27)
+		SettingsFrame.BackgroundTransparency = 0
 		SettingsFrame.BorderSizePixel = 0
 		SettingsFrame.ZIndex = 6000
-		SettingsFrame.AutomaticSize = Enum.AutomaticSize.None
 		SettingsFrame.Visible = false
 		SettingsFrame.ClipsDescendants = false
 		SettingsFrame.Active = true
 		SettingsFrame.Parent = row
-		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = SettingsFrame end
+		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = SettingsFrame end
 		local SettingsFrameStroke = Stroke(SettingsFrame, "SettingsFrameStroke")
+		local SettingsFrameItems = Instance.new("Frame")
+		SettingsFrameItems.Name = "Items"
+		SettingsFrameItems.Size = UDim2.new(1, 0, 0, 0)
+		SettingsFrameItems.AutomaticSize = Enum.AutomaticSize.Y
+		SettingsFrameItems.BackgroundTransparency = 1
+		SettingsFrameItems.ZIndex = 6001
+		SettingsFrameItems.Parent = SettingsFrame
 		do
 			local ll = Instance.new("UIListLayout")
-			ll.Padding = UDim.new(0, 2)
-			ll.Parent = SettingsFrame
+			ll.Padding = UDim.new(0, 1)
+			ll.SortOrder = Enum.SortOrder.LayoutOrder
+			ll.Parent = SettingsFrameItems
+			local pad = Instance.new("UIPadding")
+			pad.PaddingTop = UDim.new(0, 5); pad.PaddingBottom = UDim.new(0, 5)
+			pad.PaddingLeft = UDim.new(0, 5); pad.PaddingRight = UDim.new(0, 5)
+			pad.Parent = SettingsFrameItems
 		end
+		AttachShadow(SettingsFrame, { radius = 10, layers = 5, step = 1.6, bias = 3 })
 
 		local sfOpen = false
 		local closeSfRow
-		local SF_ROW_HEIGHT = 58
-		local function MakeSettingBtn(text, textColor, callback)
+		local sfOrder = 0
+		local function MakeSettingBtn(text, textColor, iconKind, callback)
+			sfOrder = sfOrder + 1
 			local btn = Instance.new("TextButton")
-			btn.Size = UDim2.new(1, 0, 0, 27)
+			btn.Name = "MenuItem"
+			btn.LayoutOrder = sfOrder
+			btn.Size = UDim2.new(1, 0, 0, 30)
+			btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			btn.BackgroundTransparency = 1
+			btn.AutoButtonColor = false
 			btn.Text = text
 			btn.TextColor3 = textColor
-			btn.TextSize = 13
+			btn.TextSize = 14
 			btn.Font = FONT
-			btn.ZIndex = 6001
-			btn.Parent = SettingsFrame
+			btn.TextXAlignment = Enum.TextXAlignment.Left
+			btn.ZIndex = 6002
+			btn.Parent = SettingsFrameItems
+			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = btn end
+			do local pad = Instance.new("UIPadding"); pad.PaddingLeft = UDim.new(0, 34); pad.Parent = btn end
+			local glyph = Instance.new("Frame")
+			glyph.Name = "Glyph"
+			glyph.AnchorPoint = Vector2.new(0, 0.5)
+			glyph.Position = UDim2.new(0, -24, 0.5, 0) -- UIPadding shifts children too
+			glyph.Size = UDim2.fromOffset(14, 14)
+			glyph.BackgroundTransparency = 1
+			glyph.ZIndex = 6003
+			glyph.Parent = btn
+			WindowObj._drawGlyph(iconKind, glyph, textColor)
 
 			btn.MouseEnter:Connect(function()
-				Tween(btn, {BackgroundTransparency = 0.7}, 0.1)
-				btn.BackgroundColor3 = Color3.fromRGB(25,28,42)
+				Tween(btn, {BackgroundTransparency = 0.95}, 0.1)
 			end)
 			btn.MouseLeave:Connect(function()
-				Tween(btn, {BackgroundTransparency = 1}, 0.1)
+				Tween(btn, {BackgroundTransparency = 1}, 0.12)
 			end)
 			btn.MouseButton1Click:Connect(function()
 				if closeSfRow then closeSfRow() else SettingsFrame.Visible = false end
@@ -5402,7 +5835,55 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			return btn
 		end
 
-		MakeSettingBtn("Delete", Color3.fromRGB(255, 80, 80), function()
+		MakeSettingBtn("Share", Color3.fromRGB(214, 216, 224), "share", function()
+			-- Copies a share code; paste it into the "+" field to import.
+			local code = WindowObj._makeShareCode and WindowObj._makeShareCode(name)
+			if code and type(setclipboard) == "function" then
+				pcall(setclipboard, code)
+				local before = Rename.Text
+				Rename.Text = "Share code copied"
+				task.delay(1.2, function() if Rename.Parent then Rename.Text = before end end)
+			end
+		end)
+
+		MakeSettingBtn("Duplicate", Color3.fromRGB(214, 216, 224), "copy", function()
+			local dupName = name .. " (Copy)"
+			local saved = false
+			local path = GetConfigPath(name)
+			if type(readfile) == "function" and type(isfile) == "function" and type(writefile) == "function" then
+				local existsOk, exists = pcall(isfile, path)
+				if existsOk then
+					if exists then
+						local readOk, content = pcall(readfile, path)
+						if readOk and type(content) == "string" then
+							local writeOk, writeResult = pcall(writefile, GetConfigPath(dupName), content)
+							saved = writeOk and writeResult ~= false
+						end
+					else
+						saved = SaveNamedConfig(dupName)
+					end
+				end
+			else
+				saved = SaveNamedConfig(dupName)
+			end
+			if saved then MakeConfigButton(dupName) end
+		end)
+
+		do
+			sfOrder = sfOrder + 1
+			local divider = Instance.new("Frame")
+			divider.Name = "Divider"
+			divider.LayoutOrder = sfOrder
+			divider.Size = UDim2.new(1, -12, 0, 1)
+			divider.Position = UDim2.fromOffset(6, 0)
+			divider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			divider.BackgroundTransparency = 0.93
+			divider.BorderSizePixel = 0
+			divider.ZIndex = 6002
+			divider.Parent = SettingsFrameItems
+		end
+
+		MakeSettingBtn("Delete", Color3.fromRGB(233, 90, 110), "trash", function()
 			local configData = {}
 			for _, entry in ipairs(_registeredElements) do
 				local ok, val = pcall(function() return entry.obj:Get() end)
@@ -5433,49 +5914,33 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			task.delay(0.22, function() row:Destroy() end)
 		end)
 
-		MakeSettingBtn("Duplicate", Color3.fromRGB(180, 200, 255), function()
-			local dupName = name .. " (Copy)"
-			local saved = false
-			local path = GetConfigPath(name)
-			if type(readfile) == "function" and type(isfile) == "function" and type(writefile) == "function" then
-				local existsOk, exists = pcall(isfile, path)
-				if existsOk then
-					if exists then
-						local readOk, content = pcall(readfile, path)
-						if readOk and type(content) == "string" then
-							local writeOk, writeResult = pcall(writefile, GetConfigPath(dupName), content)
-							saved = writeOk and writeResult ~= false
-						end
-					else
-						saved = SaveNamedConfig(dupName)
-					end
-				end
-			else
-				saved = SaveNamedConfig(dupName)
-			end
-			if saved then MakeConfigButton(dupName) end
-		end)
-
 		closeSfRow = function()
 			sfOpen = false
 			UnregisterPopup(SettingsFrame)
-			Tween(SettingsFrame, { Size = UDim2.new(0.44, 0, 0, 0), BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-			task.delay(0.19, function() if not sfOpen then SettingsFrame.Visible = false end end)
+			SmoothClose(SettingsFrame, 0.12)
+			local menuScale = SettingsFrame:FindFirstChild("_PopScale")
+			if menuScale then Tween(menuScale, { Scale = 0.94 }, 0.12) end
 		end
 		SettingsBtn.MouseButton1Click:Connect(function()
 			sfOpen = not sfOpen
 			if sfOpen then
 				CloseAllPopupsExcept(SettingsFrame)
-				SettingsFrame.BackgroundTransparency = 1
+				RememberPopupClipping(SettingsFrame)
+				ForceLiftClipping(SettingsFrame)
+				ApplyZIndexLadder(SettingsFrame, NextPopupZ())
 				SettingsFrame.Visible = true
-				local targetSize = UDim2.new(0.44, 0, 0, SF_ROW_HEIGHT)
-				SettingsFrame.Size = targetSize
-				PositionPopupWithinMain(SettingsFrame, true)
-				local targetPosition = SettingsFrame.Position
-				SettingsFrame.Size = UDim2.new(0.44, 0, 0, 0)
-				SettingsFrame.Position = targetPosition
+				-- Right of the dots, top a little above them; kept inside the window.
+				MovePopupToAbsolute(SettingsFrame,
+					SettingsBtn.AbsolutePosition.X + SettingsBtn.AbsoluteSize.X + 4,
+					SettingsBtn.AbsolutePosition.Y + 2)
+				ConstrainPopupToMainFrame(SettingsFrame, 6)
+				SmoothOpen(SettingsFrame, 0, 0.16)
+				local menuScale = SettingsFrame:FindFirstChild("_PopScale")
+				if menuScale then
+					menuScale.Scale = 0.9
+					Tween(menuScale, { Scale = 1 }, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				end
 				RegisterPopup(SettingsFrame, closeSfRow, SettingsBtn)
-				Tween(SettingsFrame, { Size = targetSize, BackgroundTransparency = 0.045 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			else
 				closeSfRow()
 			end
@@ -5497,7 +5962,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				SaveNamedConfig(name)
 				Tween(LoadConfigBtn, {ImageColor3 = Color3.fromRGB(80, 255, 140)}, 0.1)
 				task.delay(0.6, function()
-					Tween(LoadConfigBtn, {ImageColor3 = mainColor}, 0.3)
+					Tween(LoadConfigBtn, {ImageColor3 = Color3.fromRGB(205, 208, 218)}, 0.3)
 				end)
 			else
 				local loaded = LoadNamedConfig(name)
@@ -5575,8 +6040,13 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 ConfirmAddBtn.MouseButton1Click:Connect(function()
 		local n = NameOfConfig.Text
-		if n == "" then n = "Config " .. tostring(#ListContainer:GetChildren()) end
-		if not SaveNamedConfig(n) then return end
+		local imported = WindowObj._importShareCode(n)
+		if imported then
+			n = imported
+		else
+			if n == "" then n = "Config " .. tostring(#ListContainer:GetChildren()) end
+			if not SaveNamedConfig(n) then return end
+		end
 		NameOfConfig.Text = ""
 		MakeConfigButton(n)
 		insertMode = false
