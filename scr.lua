@@ -2655,7 +2655,6 @@ GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = GameInfo end
 if WindowObj._attachBlur then WindowObj._attachBlur(GameInfo) end
-WindowObj._makeDraggable(GameInfo, GameInfo, "watermark")
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 14); pd.PaddingRight = UDim.new(0, 5); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
@@ -2970,6 +2969,349 @@ do
 	task.defer(WMShadowSync)
 end
 
+-- Watermark items, settings and reordering (Neverlose): left-click the strip
+-- while the menu is open for its settings (Items, Additional Colors, Display
+-- Avatar); Items picks what the strip shows; dragging an item along the strip
+-- reorders it, dragging elsewhere (the NL logo, the edges) moves the strip.
+-- Built inside a function so its locals live in their own register frame
+-- (AddWindow is close to Luau's register limit).
+WindowObj._buildWatermarkUI = function()
+	local ICON = {
+		logo = "rbxassetid://10723407092", kd = "rbxassetid://10709818534", speed = "rbxassetid://10723395708",
+		fps = "rbxassetid://10734896881", gpu = "rbxassetid://10723424505", cpu = "rbxassetid://10709813383",
+		cpufreq = "rbxassetid://10709752035", ram = "rbxassetid://10709770317", latency = "rbxassetid://10734961133",
+		ping = "rbxassetid://10734949856", loss = "rbxassetid://10747382268", issues = "rbxassetid://10709753149",
+		server = "rbxassetid://10723404337", preset = "rbxassetid://10723387563", name = "rbxassetid://10747373176",
+		time = "rbxassetid://10709805144",
+	}
+	local LAVENDER, SALMON = Color3.fromRGB(150, 164, 255), Color3.fromRGB(225, 165, 135)
+
+	-- New stat cells (hidden until picked in Items).
+	local extra = {}
+	for _, def in ipairs({
+		{ "kd", "KD", "0.00 KD" }, { "gpu", "GPU", "0% GPU" }, { "cpu", "CPU", "0% CPU" },
+		{ "cpufreq", "CPUFreq", "0 HZ" }, { "latency", "Latency", "0 MS" }, { "loss", "Loss", "0% LOSS" },
+		{ "issues", "Issues", "LAG" }, { "server", "Server", "LOCAL" }, { "preset", "Preset", "Default" },
+	}) do
+		local cell, icon, text = WMCell(def[2], 20, ICON[def[1]], def[3])
+		icon.ImageColor3 = LAVENDER
+		extra[def[1]] = { cell = cell, icon = icon, text = text }
+		WMCells[def[1]] = cell
+		table.insert(WMDefaultOrder, def[1])
+		WMShowMap[def[1]] = false
+	end
+	extra.issues.icon.ImageColor3 = SALMON
+	extra.issues.text.TextColor3 = SALMON
+	extra.latency.icon.ImageColor3 = SALMON
+	extra.latency.text.TextColor3 = SALMON
+	do
+		local jobId = tostring(game.JobId or "")
+		extra.server.text.Text = jobId ~= "" and string.upper(string.sub(jobId, 1, 8)) or "LOCAL"
+	end
+	ApplyWatermarkLayout(nil, nil)
+
+	-- Called once a second from the stats loop with the current frame rate.
+	WindowObj._wmUpdateExtra = function(fps)
+		local function stat(name)
+			local ok, v = pcall(function() return Stats[name] end)
+			if not ok or type(v) ~= "number" then return nil end
+			return v < 0.5 and v * 1000 or v -- seconds or milliseconds
+		end
+		local frameMs = (fps and fps > 0) and (1000 / fps) or 16.7
+		local gpuMs, cpuMs = stat("RenderGPUFrameTime"), stat("RenderCPUFrameTime")
+		extra.gpu.text.Text = (gpuMs and math.clamp(math.floor(gpuMs / frameMs * 100 + 0.5), 0, 100) or 0) .. "% GPU"
+		extra.cpu.text.Text = (cpuMs and math.clamp(math.floor(cpuMs / frameMs * 100 + 0.5), 0, 100) or 0) .. "% CPU"
+		local okHz, hz = pcall(function() return workspace:GetRealPhysicsFPS() end)
+		extra.cpufreq.text.Text = (okHz and math.floor(hz + 0.5) or 0) .. " HZ"
+		local ping = WindowObj._lastPing or 0
+		extra.latency.text.Text = tostring(ping) .. " MS"
+		local stats = LocalPlayer:FindFirstChild("leaderstats")
+		local kills = stats and (stats:FindFirstChild("Kills") or stats:FindFirstChild("K"))
+		local deaths = stats and (stats:FindFirstChild("Deaths") or stats:FindFirstChild("D"))
+		local k, d = kills and tonumber(kills.Value) or 0, deaths and tonumber(deaths.Value) or 0
+		extra.kd.text.Text = string.format("%.2f KD", d > 0 and k / d or k)
+		-- Roblox exposes no packet loss; a "Packet Loss" stat is read when present.
+		local loss = 0
+		pcall(function()
+			local item = Stats.Network.ServerStatsItem["Packet Loss"]
+			if item then loss = math.floor(item:GetValue() + 0.5) end
+		end)
+		extra.loss.text.Text = tostring(loss) .. "% LOSS"
+		extra.preset.text.Text = tostring(WindowObj._activePresetName or "Default")
+		-- Connectivity Issues shows only while the connection is bad.
+		local hist, spread = WindowObj._pingHistory, 0
+		if hist and #hist > 1 then
+			local lo, hi = math.huge, -math.huge
+			for _, v in ipairs(hist) do lo = math.min(lo, v); hi = math.max(hi, v) end
+			spread = hi - lo
+		end
+		extra.issues.cell.Visible = WMShowMap.issues == true and GameInfo.Visible and (ping > 200 or spread > 80 or loss > 2)
+	end
+
+	-- ---------------------------------------------------------------- items
+	local ITEMS = {
+		{ "logo", "Logo" }, { "kd", "KD Ratio" }, { "speed", "Speed" }, { "fps", "Framerate" }, { "gpu", "GPU Load" },
+		{ "cpu", "CPU Load" }, { "cpufreq", "CPU Frequency" }, { "ram", "Memory Load" }, { "latency", "Latency" },
+		{ "ping", "Var" }, { "loss", "Loss" }, { "issues", "Connectivity Issues" }, { "server", "Server Address" },
+		{ "preset", "Preset" }, { "name", "Username" }, { "time", "Time" },
+	}
+	local TEXT, MUTED = Color3.fromRGB(235, 236, 241), Color3.fromRGB(150, 152, 162)
+	local settingsFrame, itemsFrame, colorSwatch, avatarSwitch
+	local wmColor = LAVENDER
+
+	local function paintIcons(color)
+		wmColor = color
+		for key, cell in pairs(WMCells) do
+			if key ~= "brand" and key ~= "user" and key ~= "issues" and key ~= "latency" and key ~= "ping" then
+				for _, child in ipairs(cell:GetChildren()) do
+					if child:IsA("ImageLabel") then child.ImageColor3 = color end
+				end
+			end
+		end
+		if colorSwatch then colorSwatch.BackgroundColor3 = color end
+	end
+
+	local function plate(name, w, h)
+		local f = New("Frame", {
+			Name = name, Size = UDim2.fromOffset(w, h), BackgroundColor3 = Color3.fromRGB(24, 25, 33),
+			BorderSizePixel = 0, Visible = false, ZIndex = 9000, ClipsDescendants = false,
+		}, MainFrame)
+		New("UICorner", { CornerRadius = UDim.new(0, 10) }, f)
+		Stroke(f)
+		if WindowObj._attachShadow then WindowObj._attachShadow(f, { radius = 10, layers = 5, step = 1.6, bias = 3 }) end
+		return f
+	end
+	local function closeFrame(frame)
+		if not frame or not frame.Visible then return end
+		UnregisterPopup(frame)
+		SmoothClose(frame, 0.14)
+	end
+	local function openFrame(frame, x, y, trigger, closeFn)
+		ApplyZIndexLadder(frame, NextPopupZ())
+		SmoothOpen(frame, 0, 0.16)
+		MovePopupToAbsolute(frame, x, y)
+		ConstrainPopupToMainFrame(frame, 8)
+		RegisterPopup(frame, closeFn, trigger)
+	end
+
+	local function setSwitch(track, on)
+		Tween(track, { BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16) }, 0.15)
+		local knob = track:FindFirstChild("Knob")
+		if knob then
+			Tween(knob, {
+				Position = on and UDim2.fromOffset(16, 2) or UDim2.fromOffset(2, 2),
+				BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157),
+			}, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		end
+	end
+
+	local function buildItems()
+		itemsFrame = plate("WatermarkItems", 180, 8 + #ITEMS * 22)
+		local list = New("Frame", { Name = "List", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 9001 }, itemsFrame)
+		New("UIPadding", { PaddingTop = UDim.new(0, 4), PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4) }, list)
+		New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, list)
+		for i, item in ipairs(ITEMS) do
+			local key, label = item[1], item[2]
+			local row = New("TextButton", {
+				Name = "Item_" .. key, LayoutOrder = i, Size = UDim2.new(1, 0, 0, 22), BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+				BackgroundTransparency = 1, AutoButtonColor = false, Text = "", ZIndex = 9002,
+			}, list)
+			New("UICorner", { CornerRadius = UDim.new(0, 5) }, row)
+			local check = New("ImageLabel", {
+				Name = "Check", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 6, 0.5, 0), Size = UDim2.fromOffset(12, 12),
+				BackgroundTransparency = 1, Image = "rbxassetid://10709790644", ImageColor3 = TEXT, ZIndex = 9003,
+			}, row)
+			New("ImageLabel", {
+				Name = "Icon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 24, 0.5, 0), Size = UDim2.fromOffset(13, 13),
+				BackgroundTransparency = 1, Image = ICON[key], ImageColor3 = MUTED, ZIndex = 9003,
+			}, row)
+			local text = New("TextLabel", {
+				Name = "Label", Position = UDim2.fromOffset(44, 0), Size = UDim2.new(1, -48, 1, 0), BackgroundTransparency = 1,
+				Text = label, TextColor3 = TEXT, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9003,
+			}, row)
+			local function paint()
+				local on = WMShowMap[key] == true
+				check.Visible = on
+				text.TextColor3 = on and TEXT or MUTED
+			end
+			paint()
+			row.MouseEnter:Connect(function() Tween(row, { BackgroundTransparency = 0.97 }, 0.08) end)
+			row.MouseLeave:Connect(function() Tween(row, { BackgroundTransparency = 1 }, 0.12) end)
+			row.MouseButton1Click:Connect(function()
+				WMShowMap[key] = not (WMShowMap[key] == true)
+				ApplyWatermarkLayout(nil, nil)
+				paint()
+			end)
+		end
+	end
+
+	local function buildSettings()
+		settingsFrame = plate("WatermarkSettings", 220, 36 + 3 * 30 + 8)
+		New("TextLabel", {
+			Name = "Title", Position = UDim2.fromOffset(14, 6), Size = UDim2.new(1, -28, 0, 26), BackgroundTransparency = 1,
+			Text = "Watermark", TextColor3 = TEXT, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9001,
+		}, settingsFrame)
+		New("Frame", {
+			Name = "TitleRule", Position = UDim2.fromOffset(10, 34), Size = UDim2.new(1, -20, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BackgroundTransparency = 0.93, BorderSizePixel = 0, ZIndex = 9001,
+		}, settingsFrame)
+		local function row(order, icon, label)
+			local r = New("TextButton", {
+				Name = "Row" .. order, Position = UDim2.fromOffset(6, 38 + (order - 1) * 30), Size = UDim2.new(1, -12, 0, 30),
+				BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 1, AutoButtonColor = false, Text = "", ZIndex = 9001,
+			}, settingsFrame)
+			New("UICorner", { CornerRadius = UDim.new(0, 6) }, r)
+			New("ImageLabel", {
+				Name = "Icon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14),
+				BackgroundTransparency = 1, Image = icon, ImageColor3 = Color3.fromRGB(200, 201, 210), ZIndex = 9002,
+			}, r)
+			New("TextLabel", {
+				Name = "Label", Position = UDim2.fromOffset(32, 0), Size = UDim2.new(0.6, -32, 1, 0), BackgroundTransparency = 1,
+				Text = label, TextColor3 = TEXT, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9002,
+			}, r)
+			r.MouseEnter:Connect(function() Tween(r, { BackgroundTransparency = 0.97 }, 0.08) end)
+			r.MouseLeave:Connect(function() Tween(r, { BackgroundTransparency = 1 }, 0.12) end)
+			return r
+		end
+
+		local itemsRow = row(1, "rbxassetid://10723433811", "Items")
+		New("TextLabel", {
+			Name = "Value", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -24, 0.5, 0), Size = UDim2.fromOffset(60, 20),
+			BackgroundTransparency = 1, Text = "Select", TextColor3 = MUTED, TextSize = 13, Font = FONT,
+			TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 9002,
+		}, itemsRow)
+		New("ImageLabel", {
+			Name = "Chevron", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(12, 12),
+			BackgroundTransparency = 1, Image = "rbxassetid://10709791437", ImageColor3 = MUTED, ZIndex = 9002,
+		}, itemsRow)
+		itemsRow.MouseButton1Click:Connect(function()
+			if not itemsFrame then buildItems() end
+			if itemsFrame.Visible then closeFrame(itemsFrame) return end
+			openFrame(itemsFrame, settingsFrame.AbsolutePosition.X + settingsFrame.AbsoluteSize.X + 6, itemsRow.AbsolutePosition.Y - 4,
+				itemsRow, function() closeFrame(itemsFrame) end)
+		end)
+
+		local colorRow = row(2, "rbxassetid://10734910430", "Additional Colors")
+		colorSwatch = New("TextButton", {
+			Name = "ColorSwatch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(16, 16),
+			BackgroundColor3 = wmColor, Text = "", AutoButtonColor = false, ZIndex = 9003,
+		}, colorRow)
+		New("UICorner", { CornerRadius = UDim.new(0, 4) }, colorSwatch)
+		if AcrylicBlur and AcrylicBlur.CreateColorPicker then
+			AcrylicBlur.CreateColorPicker(colorSwatch, wmColor, function(c) paintIcons(c) end)
+		end
+
+		local avatarRow = row(3, "rbxassetid://10747373176", "Display Avatar")
+		avatarSwitch = New("Frame", {
+			Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(32, 18),
+			BackgroundColor3 = Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = 9002,
+		}, avatarRow)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, avatarSwitch)
+		local knob = New("Frame", {
+			Name = "Knob", Position = UDim2.fromOffset(2, 2), Size = UDim2.fromOffset(14, 14),
+			BackgroundColor3 = Color3.fromRGB(139, 145, 157), BorderSizePixel = 0, ZIndex = 9003,
+		}, avatarSwitch)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
+		setSwitch(avatarSwitch, WMShowMap.user == true)
+		avatarRow.MouseButton1Click:Connect(function()
+			WMShowMap.user = not (WMShowMap.user == true)
+			ApplyWatermarkLayout(nil, nil)
+			setSwitch(avatarSwitch, WMShowMap.user)
+		end)
+	end
+
+	local function openSettings()
+		if not settingsFrame then buildSettings() end
+		if settingsFrame.Visible then closeFrame(settingsFrame) return end
+		setSwitch(avatarSwitch, WMShowMap.user == true)
+		openFrame(settingsFrame, GameInfo.AbsolutePosition.X + GameInfo.AbsoluteSize.X - settingsFrame.AbsoluteSize.X,
+			GameInfo.AbsolutePosition.Y + GameInfo.AbsoluteSize.Y + 8, GameInfo, function()
+				if itemsFrame then closeFrame(itemsFrame) end
+				closeFrame(settingsFrame)
+			end)
+	end
+
+	-- ------------------------------------------------- click / drag / reorder
+	local drag
+	local function cellAt(point)
+		for key, cell in pairs(WMCells) do
+			if key ~= "brand" and cell.Visible and IsPointInside(cell, point) then return key end
+		end
+		return nil
+	end
+	local function currentOrder()
+		local keys = {}
+		for key in pairs(WMCells) do table.insert(keys, key) end
+		table.sort(keys, function(a, b) return WMCells[a].LayoutOrder < WMCells[b].LayoutOrder end)
+		return keys
+	end
+	local function reorder(key, x)
+		local order = currentOrder()
+		for i, k in ipairs(order) do if k == key then table.remove(order, i) break end end
+		local index = 1
+		for i, k in ipairs(order) do
+			local cell = WMCells[k]
+			if cell.Visible and x > cell.AbsolutePosition.X + cell.AbsoluteSize.X / 2 then index = i + 1 end
+		end
+		table.insert(order, index, key)
+		ApplyWatermarkLayout(order, nil)
+	end
+	GameInfo.InputBegan:Connect(function(input)
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+		if not MainFrame.Visible then return end
+		drag = { point = input.Position, pos = GameInfo.Position, key = cellAt(input.Position), moved = false }
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if not drag then return end
+		if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then return end
+		local d = input.Position - drag.point
+		if not drag.moved and d.Magnitude < 5 then return end
+		drag.moved = true
+		if drag.key then
+			reorder(drag.key, input.Position.X)
+		else
+			GameInfo.Position = UDim2.new(drag.pos.X.Scale, drag.pos.X.Offset + d.X, drag.pos.Y.Scale, drag.pos.Y.Offset + d.Y)
+			GameInfo:SetAttribute("Dragged", true)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+		local was = drag
+		drag = nil
+		if was and not was.moved then openSettings() end
+	end)
+
+	-- Config: position (when moved), item order and visibility, icon colour.
+	WindowObj._configExtras.pos_watermark = {
+		get = function()
+			if not GameInfo:GetAttribute("Dragged") then return nil end
+			local p = GameInfo.Position
+			return { p.X.Scale, p.X.Offset, p.Y.Scale, p.Y.Offset }
+		end,
+		set = function(v)
+			if type(v) ~= "table" or type(v[4]) ~= "number" then return end
+			GameInfo.Position = UDim2.new(v[1], v[2], v[3], v[4])
+			GameInfo:SetAttribute("Dragged", true)
+		end,
+	}
+	WindowObj._configExtras.watermark = {
+		get = function()
+			local show = {}
+			for k, v in pairs(WMShowMap) do show[k] = v == true end
+			return { order = currentOrder(), show = show, color = { wmColor.R, wmColor.G, wmColor.B } }
+		end,
+		set = function(v)
+			if type(v) ~= "table" then return end
+			if type(v.show) == "table" then
+				for k, on in pairs(v.show) do if WMShowMap[k] ~= nil then WMShowMap[k] = on == true end end
+			end
+			ApplyWatermarkLayout(type(v.order) == "table" and v.order or nil, nil)
+			if type(v.color) == "table" and #v.color == 3 then paintIcons(Color3.new(v.color[1], v.color[2], v.color[3])) end
+		end,
+	}
+end
+WindowObj._buildWatermarkUI()
+
 WindowObj.Watermark = {
 	frame = GameInfo,
 	logo = NeverIcon,
@@ -3114,12 +3456,14 @@ lastFps = fps
 setTextSmooth(FPSText, tostring(fps) .. " FPS")
 end
 end
+if WindowObj._wmUpdateExtra then pcall(WindowObj._wmUpdateExtra, lastFps) end
 local ping = Stats and Stats.Network and Stats.Network.ServerStatsItem and Stats.Network.ServerStatsItem["Data Ping"]
 if ping then
 local ok, value = pcall(function() return ping:GetValue() end)
 if ok and type(value) == "number" then
 local ms = math.round(value)
 lastMs = ms
+WindowObj._lastPing = ms
 -- Neverlose shows the ping variance: half the spread of recent samples.
 local hist = WindowObj._pingHistory or {}
 WindowObj._pingHistory = hist
@@ -3140,6 +3484,7 @@ end)
 -- PATCH 2: AttachShadow guards against layout parents
 -- ============================================================================
 local function AttachShadow(frame, opts)
+	WindowObj._attachShadow = WindowObj._attachShadow or AttachShadow
 	if not frame or not frame.Parent then return end
 	if frame:FindFirstChildWhichIsA("UIListLayout") or frame:FindFirstChildWhichIsA("UIGridLayout") then
 		warn("[ui] AttachShadow: " .. frame.Name .. " has a layout, shadow skipped")
@@ -3308,7 +3653,7 @@ function OV.row(rows, order, text, leftText, iconRight)
 	if leftText then
 		New("TextLabel", {
 			Name = "EntryValue", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = leftText,
-			TextColor3 = mainColor, TextTransparency = 0, TextSize = 12, Font = FONT,
+			TextColor3 = Color3.fromRGB(235, 236, 241), TextTransparency = 0, TextSize = 12, Font = FONT,
 			ZIndex = Z_BASE + 892,
 		}, leftPill)
 	end
@@ -6260,6 +6605,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		else
 			activeConfigName = nil
 		end
+		WindowObj._activePresetName = activeConfigName
 		SaveText.Text = activeConfigName or "Default"
 		UpdateSavePillWidth(SaveText.Text)
 	end
