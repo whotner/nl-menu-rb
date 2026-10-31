@@ -8332,14 +8332,22 @@ New("UIAspectRatioConstraint", {
 			Left:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitHeight)
 			task.defer(fitHeight)
 
+			-- Slot tile as on the Neverlose inventory: dark tile, faint outline,
+			-- a grade bar along the bottom edge (neutral grey on templates).
 			local function card(parent, name)
 				local c = New("TextButton", {
-					Name = name, BackgroundColor3 = CARD, BackgroundTransparency = 0.35, AutoButtonColor = false, Text = "", BorderSizePixel = 0,
+					Name = name, BackgroundColor3 = Color3.fromRGB(16, 18, 25), BackgroundTransparency = 0.15, AutoButtonColor = false,
+					Text = "", BorderSizePixel = 0,
 				}, parent)
-				New("UICorner", { CornerRadius = UDim.new(0, 8) }, c)
-				Stroke(c)
-				c.MouseEnter:Connect(function() Tween(c, { BackgroundTransparency = 0.15 }, 0.1) end)
-				c.MouseLeave:Connect(function() Tween(c, { BackgroundTransparency = 0.35 }, 0.14) end)
+				New("UICorner", { CornerRadius = UDim.new(0, 6) }, c)
+				Stroke(c).Transparency = 0.95
+				local bar = New("Frame", {
+					Name = "GradeBar", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0), Size = UDim2.new(1, -6, 0, 3),
+					BackgroundColor3 = Color3.fromRGB(176, 180, 192), BackgroundTransparency = 0.25, BorderSizePixel = 0,
+				}, c)
+				New("UICorner", { CornerRadius = UDim.new(0, 2) }, bar)
+				c.MouseEnter:Connect(function() Tween(c, { BackgroundColor3 = Color3.fromRGB(24, 27, 36) }, 0.1) end)
+				c.MouseLeave:Connect(function() Tween(c, { BackgroundColor3 = Color3.fromRGB(16, 18, 25) }, 0.14) end)
 				return c
 			end
 
@@ -8352,14 +8360,13 @@ New("UIAspectRatioConstraint", {
 			local teamButtons = {}
 			for index, which in ipairs({ "CT", "T" }) do
 				local b = New("TextButton", {
-					Name = "Team_" .. which, Position = UDim2.fromOffset(0, 2), Size = UDim2.fromOffset(28, 28),
-					BackgroundColor3 = CARD, BackgroundTransparency = 0.2, AutoButtonColor = false, Text = "", BorderSizePixel = 0,
+					Name = "Team_" .. which, Position = UDim2.fromOffset(0, 3), Size = UDim2.fromOffset(24, 24),
+					BackgroundColor3 = Color3.fromRGB(32, 36, 50), BackgroundTransparency = 1, AutoButtonColor = false, Text = "", BorderSizePixel = 0,
 					ClipsDescendants = true,
 				}, side)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, b)
-				Stroke(b)
+				New("UICorner", { CornerRadius = UDim.new(0, 6) }, b)
 				local logo = New("Frame", {
-					Name = "TeamLogo", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 4, 0.5, 0), Size = UDim2.fromOffset(20, 20),
+					Name = "TeamLogo", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 3, 0.5, 0), Size = UDim2.fromOffset(18, 18),
 					BackgroundColor3 = TEAM_COLOR[which], BackgroundTransparency = 0.78, BorderSizePixel = 0,
 				}, b)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, logo)
@@ -8368,12 +8375,12 @@ New("UIAspectRatioConstraint", {
 					BackgroundTransparency = 1, Image = TEAM_ICON[which], ImageColor3 = TEAM_COLOR[which], ScaleType = Enum.ScaleType.Fit,
 				}, logo)
 				local title = New("TextLabel", {
-					Name = "TeamTitle", Position = UDim2.fromOffset(30, 0), Size = UDim2.new(0, 96, 1, 0), BackgroundTransparency = 1,
-					Text = which .. " Loadout", TextColor3 = TEXT, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left,
-					TextTransparency = 1,
+					Name = "TeamTitle", Position = UDim2.fromOffset(26, 0), Size = UDim2.new(0, 90, 1, 0), BackgroundTransparency = 1,
+					Text = which .. " Loadout", TextColor3 = TEAM_COLOR[which]:Lerp(Color3.new(1, 1, 1), 0.35), TextSize = 14, Font = FONT,
+					TextXAlignment = Enum.TextXAlignment.Left, TextTransparency = 1,
 				}, b)
-				b.MouseEnter:Connect(function() if team ~= which then Tween(b, { BackgroundTransparency = 0 }, 0.1) end end)
-				b.MouseLeave:Connect(function() Tween(b, { BackgroundTransparency = 0.2 }, 0.14) end)
+				b.MouseEnter:Connect(function() if team ~= which then Tween(b, { BackgroundTransparency = 0.6 }, 0.1) end end)
+				b.MouseLeave:Connect(function() if team ~= which then Tween(b, { BackgroundTransparency = 1 }, 0.14) end end)
 				teamButtons[which] = { button = b, title = title, index = index }
 			end
 			local function layoutTeams(instant)
@@ -8381,16 +8388,18 @@ New("UIAspectRatioConstraint", {
 				for _, which in ipairs({ "CT", "T" }) do
 					local entry = teamButtons[which]
 					local open = which == team
-					local size = UDim2.fromOffset(open and 126 or 28, 28)
-					local pos = UDim2.fromOffset(x, 2)
+					local width = open and math.ceil(26 + MeasureText(which .. " Loadout", 14, FONT) + 10) or 24
+					local size = UDim2.fromOffset(width, 24)
+					local pos = UDim2.fromOffset(x, 3)
+					local plate = open and 0 or 1
 					if instant then
-						entry.button.Size, entry.button.Position = size, pos
+						entry.button.Size, entry.button.Position, entry.button.BackgroundTransparency = size, pos, plate
 						entry.title.TextTransparency = open and 0 or 1
 					else
-						Tween(entry.button, { Size = size, Position = pos }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Tween(entry.button, { Size = size, Position = pos, BackgroundTransparency = plate }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						Tween(entry.title, { TextTransparency = open and 0 or 1 }, 0.18)
 					end
-					x = x + (open and 126 or 28) + 6
+					x = x + width + 8
 				end
 			end
 			layoutTeams(true)
@@ -8414,10 +8423,6 @@ New("UIAspectRatioConstraint", {
 			for i, item in ipairs(GEAR) do
 				local slot = card(gear, "Gear_" .. item[1])
 				slot.LayoutOrder = i
-				New("ImageLabel", {
-					Name = "GearIcon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(18, 18),
-					BackgroundTransparency = 1, Image = item[2], ImageColor3 = MUTED, ImageTransparency = 0.3,
-				}, slot)
 				slot.MouseButton1Click:Connect(function()
 					if type(options.onSelect) == "function" then pcall(options.onSelect, team, "Gear", i, item[1]) end
 				end)
@@ -8533,7 +8538,7 @@ New("UIAspectRatioConstraint", {
 			for i, category in ipairs(CATEGORIES) do
 				New("TextLabel", {
 					Name = "Header_" .. category, Position = UDim2.new((i - 1) / 3, 0, 0, 0), Size = UDim2.new(1 / 3, -8, 0, 28),
-					BackgroundTransparency = 1, Text = category, TextColor3 = TEXT, TextSize = 13, Font = FONT,
+					BackgroundTransparency = 1, Text = category, TextColor3 = TEXT, TextSize = 14, Font = FONT,
 				}, grid)
 			end
 			local slots = New("Frame", { Name = "Slots", Position = UDim2.fromOffset(0, 36), Size = UDim2.new(1, 0, 1, -36), BackgroundTransparency = 1 }, grid)
@@ -8546,10 +8551,6 @@ New("UIAspectRatioConstraint", {
 					local slot = card(slots, category .. "_" .. i)
 					slot.LayoutOrder = (c - 1) * 5 + i
 					-- Light rule under each slot, as on the CS2 loadout.
-					New("Frame", {
-						Name = "Rule", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -5), Size = UDim2.new(1, -16, 0, 2),
-						BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.82, BorderSizePixel = 0,
-					}, slot)
 					-- Blank template: the weapon is known (onSelect gets its name) but
 					-- not written on the card.
 					slot.MouseButton1Click:Connect(function()
