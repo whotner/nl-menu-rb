@@ -5275,9 +5275,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local function DeactivateRow(rowFrame, loadBtn)
 		Tween(rowFrame, {BackgroundColor3 = Color3.fromRGB(21, 21, 29)}, 0.15)
 		local outline = rowFrame:FindFirstChild("ConfigRowStroke")
-		if outline then Tween(outline, { Color = STROKE.Color, Transparency = STROKE.Transparency }, 0.15) end
+		if outline then Tween(outline, { Color = STROKE.Color, Transparency = 0.95 }, 0.15) end
 		loadBtn.Image = LOAD_ICON
-		Tween(loadBtn, {ImageColor3 = Color3.fromRGB(180, 180, 200)}, 0.15)
+		Tween(loadBtn, {ImageColor3 = Color3.fromRGB(128, 132, 146)}, 0.15)
 	end
 
 	local function MakeConfigButton(name)
@@ -5291,7 +5291,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		row.Parent = ListContainer
 		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = row end
 
-		Stroke(row, "ConfigRowStroke")
+		Stroke(row, "ConfigRowStroke").Transparency = 0.95
 		row.MouseEnter:Connect(function()
 			Tween(row, { BackgroundColor3 = Color3.fromRGB(27, 27, 35) }, 0.1, Enum.EasingStyle.Sine)
 		end)
@@ -5301,13 +5301,13 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 		local Rename = Instance.new("TextBox")
 		Rename.Name = "Rename"
-		Rename.Position = UDim2.new(0, 12, 0, 0)
-		Rename.Size = UDim2.new(1, -80, 1, 0)
+		Rename.Position = UDim2.new(0, 14, 0, 0)
+		Rename.Size = UDim2.new(1, -84, 1, 0)
 		Rename.BackgroundTransparency = 1
 		Rename.Text = name
 		Rename.PlaceholderText = "No Name"
 		Rename.PlaceholderColor3 = Color3.fromRGB(130, 134, 152)
-		Rename.TextColor3 = Color3.fromRGB(228, 230, 238)
+		Rename.TextColor3 = Color3.fromRGB(210, 212, 220)
 		Rename.TextSize = 14
 		Rename.Font = FONT
 		Rename.ZIndex = 1000
@@ -5320,8 +5320,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		local SettingsBtn = Instance.new("TextButton")
 		SettingsBtn.Name = "Settings"
 		SettingsBtn.AnchorPoint = Vector2.new(1, 0)
-		SettingsBtn.Position = UDim2.new(1, -34, 0, 0)
-		SettingsBtn.Size = UDim2.fromOffset(28, 36)
+		SettingsBtn.Position = UDim2.new(1, -36, 0, 0)
+		SettingsBtn.Size = UDim2.fromOffset(26, 38)
 		SettingsBtn.BackgroundTransparency = 1
 		SettingsBtn.Text = ""
 		SettingsBtn.ZIndex = 3000
@@ -5331,10 +5331,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			dotsIcon.Name = "DotsIcon"
 			dotsIcon.AnchorPoint = Vector2.new(0.5, 0.5)
 			dotsIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-			dotsIcon.Size = UDim2.fromOffset(16, 16)
+			-- Neverlose keeps the row icons small and muted; only the label stands out.
+			dotsIcon.Size = UDim2.fromOffset(14, 14)
 			dotsIcon.BackgroundTransparency = 1
 			dotsIcon.Image = "rbxassetid://95127553964880"
-			dotsIcon.ImageColor3 = Color3.fromRGB(176, 180, 198)
+			dotsIcon.ImageColor3 = Color3.fromRGB(128, 132, 146)
 			dotsIcon.ScaleType = Enum.ScaleType.Fit
 			dotsIcon.ZIndex = 3001
 			dotsIcon.Parent = SettingsBtn
@@ -5343,11 +5344,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		local LoadConfigBtn = Instance.new("ImageButton")
 		LoadConfigBtn.Name = "LoadConfig"
 		LoadConfigBtn.AnchorPoint = Vector2.new(1, 0.5)
-		LoadConfigBtn.Position = UDim2.new(1, -14, 0.5, 0)
-		LoadConfigBtn.Size = UDim2.fromOffset(18, 18)
+		LoadConfigBtn.Position = UDim2.new(1, -12, 0.5, 0)
+		LoadConfigBtn.Size = UDim2.fromOffset(15, 15)
 		LoadConfigBtn.BackgroundTransparency = 1
 		LoadConfigBtn.Image = LOAD_ICON
-		LoadConfigBtn.ImageColor3 = Color3.fromRGB(176, 180, 198)
+		LoadConfigBtn.ImageColor3 = Color3.fromRGB(128, 132, 146)
 		LoadConfigBtn.ScaleType = Enum.ScaleType.Fit
 		LoadConfigBtn.ZIndex = 3000
 		LoadConfigBtn.Parent = row
