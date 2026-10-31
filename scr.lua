@@ -2563,24 +2563,22 @@ GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(1, -6, 0, 2)
 -- Neverlose watermark: a thin, dark, see-through strip without outline or
 -- dividers; small caps text, accent icons, avatar at the end.
-GameInfo.Size = UDim2.fromOffset(0, 36)
+GameInfo.Size = UDim2.fromOffset(0, 35)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
--- Window glass under the content panel, mixed into one plate (as the lists).
-GameInfo.BackgroundColor3 = Color3.fromRGB(12, 14, 21)
-GameInfo.BackgroundTransparency = 0.13
+-- Neverlose watermark: a dark see-through capsule over the blur (the game
+-- shows through tinted), no outline.
+GameInfo.BackgroundColor3 = Color3.fromRGB(8, 9, 12)
+GameInfo.BackgroundTransparency = 0.42
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
 GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
-do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = GameInfo end
--- The menu's glass: its colour and transparency over an acrylic blur, with
--- its hairline outline.
-Stroke(GameInfo)
+do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = GameInfo end
 if WindowObj._attachBlur then WindowObj._attachBlur(GameInfo) end
 WindowObj._makeDraggable(GameInfo, GameInfo, "watermark")
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 14); pd.PaddingRight = UDim.new(0, 7); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 12); pd.PaddingRight = UDim.new(0, 5); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
 local ICON_LAYERS   = "rbxassetid://114499998778667"
@@ -2594,20 +2592,20 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local cell = Instance.new("Frame")
 	cell.Name = name .. "Cell"
 	cell.LayoutOrder = order
-	cell.Size = UDim2.fromOffset(0, 36)
+	cell.Size = UDim2.fromOffset(0, 35)
 	cell.AutomaticSize = Enum.AutomaticSize.X
 	cell.BackgroundTransparency = 1
 	cell.BorderSizePixel = 0
 	cell.ZIndex = Z_BASE + 901
 	cell.Parent = GameInfo
-	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 6); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
-	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 8); pd.PaddingRight = UDim.new(0, 8); pd.Parent = cell end
+	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
+	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 7); pd.PaddingRight = UDim.new(0, 7); pd.Parent = cell end
 	local icon
 	if iconAsset then
 		icon = Instance.new("ImageLabel")
 		icon.Name = name .. "Icon"
 		icon.LayoutOrder = 1
-		icon.Size = UDim2.fromOffset(iconSize or 16, iconSize or 16)
+		icon.Size = UDim2.fromOffset(iconSize or 15, iconSize or 15)
 		icon.BackgroundTransparency = 1
 		icon.BorderSizePixel = 0
 		icon.Image = iconAsset
@@ -2621,12 +2619,12 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local label = Instance.new("TextLabel")
 	label.Name = name
 	label.LayoutOrder = 2
-	label.Size = UDim2.fromOffset(0, 36)
+	label.Size = UDim2.fromOffset(0, 35)
 	label.AutomaticSize = Enum.AutomaticSize.X
 	label.BackgroundTransparency = 1
 	label.BorderSizePixel = 0
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(214, 216, 224)
+	label.TextColor3 = Color3.fromRGB(180, 182, 188)
 	label.TextTransparency = 0
 	label.TextScaled = false
 	label.TextSize = 15
@@ -2654,14 +2652,14 @@ end
 local BrandCell = Instance.new("Frame")
 BrandCell.Name = "BrandCell"
 BrandCell.LayoutOrder = 2
-BrandCell.Size = UDim2.fromOffset(0, 36)
+BrandCell.Size = UDim2.fromOffset(0, 35)
 BrandCell.AutomaticSize = Enum.AutomaticSize.X
 BrandCell.BackgroundTransparency = 1
 BrandCell.BorderSizePixel = 0
 BrandCell.ZIndex = Z_BASE + 901
 BrandCell.Parent = GameInfo
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = BrandCell end
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 0); pd.PaddingRight = UDim.new(0, 8); pd.Parent = BrandCell end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 0); pd.PaddingRight = UDim.new(0, 9); pd.Parent = BrandCell end
 
 local NeverIcon = Instance.new("ImageLabel")
 NeverIcon.Name = "NeverIcon"
@@ -2682,16 +2680,26 @@ do
 	local brandText = Instance.new("TextLabel")
 	brandText.Name = "BrandText"
 	brandText.LayoutOrder = 2
-	brandText.Size = UDim2.fromOffset(0, 36)
+	brandText.Size = UDim2.fromOffset(0, 35)
 	brandText.AutomaticSize = Enum.AutomaticSize.X
 	brandText.BackgroundTransparency = 1
 	brandText.BorderSizePixel = 0
 	brandText.Text = "NL"
-	brandText.TextColor3 = Color3.fromRGB(208, 226, 248)
-	brandText.TextSize = 18
+	brandText.TextColor3 = Color3.fromRGB(240, 240, 250)
+	brandText.TextSize = 20
 	brandText.Font = FONT_BOLD
 	brandText.ZIndex = Z_BASE + 901
 	brandText.Parent = BrandCell
+	-- Lavender copy 1px left/down under the white letters, as on Neverlose.
+	brandText.ZIndex = Z_BASE + 903
+	local brandShade = brandText:Clone()
+	brandShade.Name = "BrandShade"
+	brandShade.Position = UDim2.fromOffset(-1, 1)
+	brandShade.Size = UDim2.fromScale(1, 1)
+	brandShade.AutomaticSize = Enum.AutomaticSize.None
+	brandShade.TextColor3 = Color3.fromRGB(150, 164, 255)
+	brandShade.ZIndex = brandText.ZIndex - 1
+	brandShade.Parent = brandText
 end
 
 local UserCell = WMCell("Username", 4, nil, LocalPlayer.DisplayName or "Player")
@@ -2714,7 +2722,7 @@ do local pd = UserCell:FindFirstChildOfClass("UIPadding"); if pd then pd.Padding
 local FpsCell, FpsCellIcon
 FpsCell, FpsCellIcon, FPSText = WMCell("FPS", 6, ICON_LAYERS, "0 FPS")
 local PingCell
-PingCell, SignalImage, MSText = WMCell("Ping", 8, ICON_WIFI, "0 MS")
+PingCell, SignalImage, MSText = WMCell("Ping", 8, ICON_WIFI, "VAR ±0 MS")
 local RamCell, RamCellIcon
 RamCell, RamCellIcon, RamText = WMCell("RAM", 10, ICON_RAM, "0 MB")
 local TimeCell, TimeCellIcon
@@ -2783,13 +2791,22 @@ end
 -- Lucide icons (Fluent UI uploads): gauge, signal, clock. The drawn glyphs
 -- above stay available through WindowObj._wmGlyph.
 WindowObj._wmSpeed.icon.Image = "rbxassetid://10723395708"
-SignalImage.Image = "rbxassetid://10734961133"
+SignalImage.Image = "rbxassetid://10734949856" -- lucide server
 TimeCellIcon.Image = "rbxassetid://10709805144"
-for _, icon in ipairs({ WindowObj._wmSpeed.icon, SignalImage, TimeCellIcon }) do icon.ImageTransparency = 0.12 end
+for _, icon in ipairs({ WindowObj._wmSpeed.icon, TimeCellIcon }) do icon.ImageTransparency = 0.12 end
 
-local WMCells = { brand = BrandCell, user = UserCell, speed = WindowObj._wmSpeed.cell, fps = FpsCell, ping = PingCell, ram = RamCell, time = TimeCell }
-local WMDefaultOrder = { "brand", "speed", "fps", "ping", "time", "user", "ram" }
-local WMShowMap = { logo = true, user = true, speed = true, fps = false, ping = true, ram = false, time = true }
+-- Neverlose strip: NL | user icon + name | server icon + "VAR ±N MS" | avatar.
+-- Name in grey with a lavender icon, ping in salmon (icon and text).
+do
+	local cell, icon, text = WMCell("Name", 3, "rbxassetid://10747373176", LocalPlayer.DisplayName or "Player") -- lucide user
+	icon.ImageColor3 = Color3.fromRGB(150, 164, 255)
+	WindowObj._wmName = { cell = cell, icon = icon, text = text }
+end
+SignalImage.ImageColor3 = Color3.fromRGB(225, 165, 135)
+MSText.TextColor3 = Color3.fromRGB(225, 165, 135)
+local WMCells = { brand = BrandCell, name = WindowObj._wmName.cell, user = UserCell, speed = WindowObj._wmSpeed.cell, fps = FpsCell, ping = PingCell, ram = RamCell, time = TimeCell }
+local WMDefaultOrder = { "brand", "name", "ping", "speed", "time", "fps", "user", "ram" }
+local WMShowMap = { logo = true, name = true, user = true, speed = false, fps = false, ping = true, ram = false, time = false }
 local WMDividers = {}
 for key in pairs(WMCells) do WMDividers[key] = WMDivider() end
 
@@ -2853,18 +2870,18 @@ do
 	local layers = {}
 	-- The window's shadow (6 layers, 2px steps, 2px down), built here
 	-- because AttachShadow is defined further down.
-	for i = 1, 6 do
+	for i = 1, 4 do
 		local spread = i * 2
 		local layer = Instance.new("Frame")
 		layer.Name = "ShadowLayer" .. i
 		layer.Position = UDim2.new(0, -spread, 0, 2 - spread)
 		layer.Size = UDim2.new(1, spread * 2, 1, spread * 2)
 		layer.BackgroundColor3 = Color3.new(0, 0, 0)
-		layer.BackgroundTransparency = 0.76 + (i - 1) * 0.044
+		layer.BackgroundTransparency = 0.86 + (i - 1) * 0.04
 		layer.BorderSizePixel = 0
 		layer.ZIndex = Z_BASE + 898
 		layer.Parent = WMShadowHost
-		local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8 + spread); c.Parent = layer
+		local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = layer
 	end
 
 	WMShadowSync = function()
@@ -3040,11 +3057,15 @@ if ping then
 local ok, value = pcall(function() return ping:GetValue() end)
 if ok and type(value) == "number" then
 local ms = math.round(value)
-if ms ~= lastMs then
 lastMs = ms
--- Neverlose keeps the ping neutral; no traffic-light tint.
-setTextSmooth(MSText, tostring(ms) .. " MS")
-end
+-- Neverlose shows the ping variance: half the spread of recent samples.
+local hist = WindowObj._pingHistory or {}
+WindowObj._pingHistory = hist
+table.insert(hist, ms)
+if #hist > 6 then table.remove(hist, 1) end
+local lo, hi = math.huge, -math.huge
+for _, v in ipairs(hist) do lo = math.min(lo, v); hi = math.max(hi, v) end
+setTextSmooth(MSText, "VAR ±" .. tostring(math.floor((hi - lo) / 2 + 0.5)) .. " MS")
 end
 end
 local okMem, memMb = pcall(function() return game:GetTotalMemoryUsageMb() end)
