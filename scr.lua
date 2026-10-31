@@ -2997,7 +2997,7 @@ New("UIListLayout", {
 -- entry, a square icon pill next to a name pill. Pills carry their resting
 -- alpha in the "PillAlpha" attribute so the fades know where to return.
 -- Kept in one table: AddWindow is close to the Luau register limit.
-local OV = { color = Color3.fromRGB(11, 10, 14), h = 27 }
+local OV = { color = Color3.fromRGB(17, 16, 27), h = 20 }
 function OV.pill(name, parent, alpha, z)
 	local pill = New("Frame", {
 		Name = name, Size = UDim2.fromOffset(OV.h, OV.h), BackgroundColor3 = OV.color,
@@ -3018,26 +3018,26 @@ local function MakeOverlayPanel(name, iconAsset, title)
 		Visible = false,
 		ZIndex = Z_BASE + 890,
 	}, OverlayStack)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Left, Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Left, Padding = UDim.new(0, 7), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
 
-	-- Measured on the Neverlose reference: header 35px tall, glyph 7px in,
-	-- title 16px after it so it lines up with the entry names below.
-	local header = OV.pill("Header", panel, 0.3)
-	header.Size = UDim2.fromOffset(171, 35)
+	-- Measured on the Neverlose reference: a 26px near-opaque capsule hugging
+	-- its content, glyph 9px in, grey title 13px after it.
+	local header = OV.pill("Header", panel, 0.06)
+	header.Size = UDim2.fromOffset(100, 26)
 	header.LayoutOrder = 1
-	header:FindFirstChildOfClass("UICorner").CornerRadius = UDim.new(0, 10)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 7), PaddingRight = UDim.new(0, 14) }, header)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 16), SortOrder = Enum.SortOrder.LayoutOrder }, header)
+	header:FindFirstChildOfClass("UICorner").CornerRadius = UDim.new(0, 11)
+	New("UIPadding", { PaddingLeft = UDim.new(0, 9), PaddingRight = UDim.new(0, 11) }, header)
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 13), SortOrder = Enum.SortOrder.LayoutOrder }, header)
 	if title == "Hotkeys" then
 		-- Tree list: a bracket on the left (top cap, stem, two branches) and
-		-- three lines on the right, on a 21x16 pixel grid.
+		-- three lines on the right, on a 13x10 pixel grid.
 		local listIcon = New("Frame", {
-			Name = "HeaderIcon", Size = UDim2.fromOffset(21, 16), BackgroundTransparency = 1,
+			Name = "HeaderIcon", Size = UDim2.fromOffset(13, 10), BackgroundTransparency = 1,
 			LayoutOrder = 1, ZIndex = Z_BASE + 892,
 		}, header)
 		for i, r in ipairs({
-			{ 0, 0, 5, 2 }, { 1, 0, 2, 16 }, { 1, 7, 5, 2 }, { 1, 14, 5, 2 },
-			{ 8, 0, 13, 2 }, { 8, 7, 13, 2 }, { 8, 14, 13, 2 },
+			{ 0, 0, 4, 2 }, { 0, 0, 2, 10 }, { 0, 4, 4, 2 }, { 0, 8, 4, 2 },
+			{ 6, 0, 7, 2 }, { 6, 4, 7, 2 }, { 6, 8, 7, 2 },
 		}) do
 			local part = New("Frame", {
 				Name = "ListPart" .. tostring(i), Position = UDim2.fromOffset(r[1], r[2]),
@@ -3048,22 +3048,22 @@ local function MakeOverlayPanel(name, iconAsset, title)
 		end
 	else
 		New("ImageLabel", {
-			Name = "HeaderIcon", Size = UDim2.fromOffset(21, 18), BackgroundTransparency = 1,
+			Name = "HeaderIcon", Size = UDim2.fromOffset(14, 11), BackgroundTransparency = 1,
 			Image = iconAsset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 892,
 		}, header)
 	end
 	New("TextLabel", {
 		Name = "HeaderTitle", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
-		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(228, 226, 230), TextTransparency = 0.08,
+		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(160, 160, 167), TextTransparency = 0,
 		TextSize = 18, Font = FONT_BOLD, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, ZIndex = Z_BASE + 892,
 	}, header)
-	panel:SetAttribute("HeaderWidth", 7 + 21 + 16 + MeasureText(title, 18, FONT_BOLD) + 16)
+	panel:SetAttribute("HeaderWidth", 9 + 14 + 13 + MeasureText(title, 18, FONT_BOLD) + 11)
 
 	local rows = New("Frame", {
 		Name = "Rows", Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1, LayoutOrder = 2, ZIndex = Z_BASE + 891,
 	}, panel)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, rows)
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, rows)
 	return panel, rows
 end
 
@@ -3074,31 +3074,33 @@ function OV.row(rows, order, text)
 		Name = "OverlayRow", Size = UDim2.fromOffset(150, OV.h), BackgroundTransparency = 1,
 		LayoutOrder = order, ZIndex = Z_BASE + 891,
 	}, rows)
-	local iconPill = OV.pill("IconPill", row, 0.4)
-	local namePill = OV.pill("NamePill", row, 0.4)
-	namePill.Position = UDim2.fromOffset(OV.h + 10, 0)
-	namePill.Size = UDim2.new(1, -(OV.h + 10), 0, OV.h)
+	local iconPill = OV.pill("IconPill", row, 0.15)
+	local namePill = OV.pill("NamePill", row, 0.15)
+	iconPill:FindFirstChildOfClass("UICorner").CornerRadius = UDim.new(0, 7)
+	namePill:FindFirstChildOfClass("UICorner").CornerRadius = UDim.new(0, 7)
+	namePill.Position = UDim2.fromOffset(OV.h + 7, 0)
+	namePill.Size = UDim2.new(1, -(OV.h + 7), 0, OV.h)
 	New("TextLabel", {
-		Name = "EntryName", Position = UDim2.fromOffset(8, 0), Size = UDim2.new(1, -16, 1, 0),
-		BackgroundTransparency = 1, Text = text, TextColor3 = Color3.fromRGB(232, 230, 234), TextTransparency = 0.08,
-		TextSize = 15, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
+		Name = "EntryName", Position = UDim2.fromOffset(7, 0), Size = UDim2.new(1, -14, 1, 0),
+		BackgroundTransparency = 1, Text = text, TextColor3 = Color3.fromRGB(205, 203, 208), TextTransparency = 0,
+		TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = Z_BASE + 892,
 	}, namePill)
 	return row, iconPill, namePill
 end
 
 function OV.rowWidth(text)
-	return OV.h + 10 + 8 + MeasureText(text, 15, FONT) + 10
+	return OV.h + 7 + 7 + MeasureText(text, 14, FONT) + 9
 end
 
 -- Sizes the header and rows to one shared width and the panel to fit them.
 function OV.layout(panel, rowList, widest)
-	local w = math.ceil(math.max(171, panel:GetAttribute("HeaderWidth") or 0, widest or 0))
+	local w = math.ceil(math.max(panel:GetAttribute("HeaderWidth") or 0, widest or 0))
 	local header = panel:FindFirstChild("Header")
-	if header then header.Size = UDim2.fromOffset(w, 35) end
+	if header then header.Size = UDim2.fromOffset(w, 26) end
 	for _, row in ipairs(rowList) do row.Size = UDim2.fromOffset(w, OV.h) end
 	local n = #rowList
-	local h = 35 + (n > 0 and (10 + n * OV.h + (n - 1) * 8) or 0)
+	local h = 26 + (n > 0 and (7 + n * OV.h + (n - 1) * 6) or 0)
 	panel.Size = UDim2.fromOffset(w, h)
 end
 
@@ -3161,13 +3163,13 @@ function OV.modeGlyph(pill, mode)
 	end
 	local WHITE = Color3.fromRGB(240, 240, 244)
 	if mode == "hold" then
-		local cap = part(8, 8, 11, 11, WHITE, UDim.new(0, 3))
-		part(3, 3, 5, 5, OV.color, UDim.new(0, 2), cap)
+		local cap = part(5, 5, 10, 10, WHITE, UDim.new(0, 3))
+		part(3, 3, 4, 4, OV.color, UDim.new(0, 1), cap)
 	elseif mode == "always" then
-		part(9, 9, 9, 9, WHITE)
+		part(6, 6, 8, 8, WHITE)
 	else
-		local sw = part(4, 8, 19, 11, WHITE)
-		part(10, 2, 7, 7, OV.color, nil, sw)
+		local sw = part(2, 5, 16, 10, WHITE)
+		part(8, 2, 6, 6, OV.color, nil, sw)
 	end
 end
 
@@ -3230,7 +3232,7 @@ local function BuildSpecRow(person, order)
 			Name = "SpecAvatar",
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromScale(0.5, 0.5),
-			Size = UDim2.fromOffset(17, 17),
+			Size = UDim2.fromOffset(14, 14),
 			BackgroundTransparency = 1,
 			Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(person.id) .. "&w=150&h=150",
 			ZIndex = Z_BASE + 892,
@@ -4206,9 +4208,9 @@ local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
 	New("TextLabel", { Name = "ProfileLabel", Position = UDim2.fromOffset(34, 0), Size = labelWidth, BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(205,205,211), TextScaled = false, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
 	if kind == "switch-off" or kind == "switch-on" then
 		local on = kind == "switch-on"
-		local track = New("Frame", { Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(28, 14), BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = 131 }, row)
+		local track = New("Frame", { Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(32, 18), BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = 131 }, row)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
-		local knob = New("Frame", { Name = "Knob", Position = on and UDim2.fromOffset(15,1) or UDim2.fromOffset(1,1), Size = UDim2.fromOffset(12,12), BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157), BorderSizePixel = 0, ZIndex = 132 }, track)
+		local knob = New("Frame", { Name = "Knob", Position = on and UDim2.fromOffset(16,2) or UDim2.fromOffset(2,2), Size = UDim2.fromOffset(14,14), BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157), BorderSizePixel = 0, ZIndex = 132 }, track)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
 	else
 		if value and value ~= "" then
@@ -4330,7 +4332,7 @@ do
 				settings[key] = on
 				Tween(track, { BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16) }, 0.15)
 				Tween(knob, {
-					Position = on and UDim2.fromOffset(15, 1) or UDim2.fromOffset(1, 1),
+					Position = on and UDim2.fromOffset(16, 2) or UDim2.fromOffset(2, 2),
 					BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157),
 				}, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				notify(key, on)
