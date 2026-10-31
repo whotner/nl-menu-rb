@@ -8122,6 +8122,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		BackgroundTransparency = 1, Text = "0 of 10", TextColor3 = Color3.fromRGB(225, 227, 234), TextSize = 14, Font = FONT_BOLD,
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = Z_BASE + 991,
 	}, toast)
+	counter.Font = FONT_BOLD -- New() resets fonts by name; bold as on Neverlose
 
 	-- The watermark waits for the loader, like Neverlose's.
 	-- (Later SetWatermark calls stay hidden too: ApplyWatermarkLayout checks the flag.)
