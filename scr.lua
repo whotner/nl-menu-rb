@@ -533,7 +533,7 @@ local function New(class, props, parent)
 	-- copies of a control all match: grey regular labels, value fields on a dark
 	-- fill with a hairline border, muted "..." dots.
 	if obj.Name == "TextToggle" and obj:IsA("TextLabel") then
-		obj.TextColor3 = Color3.fromRGB(214, 214, 219)
+		obj.TextColor3 = Color3.fromRGB(235, 236, 241)
 	elseif obj.Name == "TopBarText" and obj:IsA("TextLabel") then
 		obj.TextColor3 = Color3.fromRGB(205, 208, 218)
 	elseif (obj.Name == "TopBar" or obj.Name == "SliderValue") and obj:IsA("GuiObject") then
@@ -1048,6 +1048,14 @@ local function AnimateSectionColumn(column)
     if not column or not column.Parent or not column.Visible then return end
     local token = (column:GetAttribute("NLSectionMotionToken") or 0) + 1
     column:SetAttribute("NLSectionMotionToken", token)
+    -- Tab switch: the column rises into place. Columns sit in a UIListLayout,
+    -- so Position is ignored; the top padding carries the motion instead.
+    local columnPadding = column:FindFirstChildOfClass("UIPadding")
+    if columnPadding then
+        local delaySeconds = column.Name == "Right" and 0.035 or 0
+        columnPadding.PaddingTop = UDim.new(0, 12)
+        Tween(columnPadding, { PaddingTop = UDim.new(0, 0) }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, delaySeconds)
+    end
     local sections = {}
     for _, section in ipairs(column:GetChildren()) do
         if section:IsA("GuiObject") and section.Visible then
@@ -3753,7 +3761,8 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 				local popupH = math.min(#scales, 8) * 30 + 10
 				ScaleDownBar.Size = UDim2.fromOffset(150, popupH)
 				ApplyZIndexLadder(ScaleDownBar, NextPopupZ())
-				PositionPopupWithinMain(ScaleDownBar, true, 4, ScaleDefault, Vector2.new(150, popupH))
+				ScaleDownBar.Visible = true
+				WindowObj._centerPopupOnField(ScaleDownBar, ScaleDefault)
 				SmoothOpen(ScaleDownBar, 0.02, 0.16)
 				Tween(ScaleArrow, {ImageTransparency = 0, Rotation = -90}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				RegisterPopup(ScaleDownBar, closeScaleDropdown, ScaleOpenBtn)
@@ -3897,7 +3906,8 @@ end
 				local popupH = math.min(#langs, 8) * 30 + 10
 				LangDownBar.Size = UDim2.fromOffset(150, popupH)
 				ApplyZIndexLadder(LangDownBar, NextPopupZ())
-				PositionPopupWithinMain(LangDownBar, true, 4, LangDefault, Vector2.new(150, popupH))
+				LangDownBar.Visible = true
+				WindowObj._centerPopupOnField(LangDownBar, LangDefault)
 				SmoothOpen(LangDownBar, 0.02, 0.16)
 				Tween(LangArrow, {Rotation = -90, ImageTransparency = 0}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				RegisterPopup(LangDownBar, WindowObj._closeLangDropdown, LangOpenBtn)
@@ -4320,9 +4330,8 @@ end
 				DropPopup.Size = UDim2.fromOffset(150, popupH)
 				DropPopup.BackgroundTransparency = 0
 						DropPopup.Visible = true
-		Tween(Arrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				Tween(Arrow, {ImageTransparency = 0}, 0.2)
-				PositionPopupWithinMain(DropPopup, true, 4, TextDefault, Vector2.new(150, popupH)); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
+				WindowObj._centerPopupOnField(DropPopup, TextDefault); SmoothOpen(DropPopup, 0, 0.14); RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 			end
 		end)
 
@@ -7236,10 +7245,9 @@ New("Frame", {
 							DropPopup.BackgroundTransparency = 0
 							DropPopup.Visible = false
 							ApplyZIndexLadder(DropPopup, NextPopupZ())
-							PositionPopupWithinMain(DropPopup, true, 4, TextDefault, Vector2.new(popupW, popupH))
-							ForceLiftClipping(DropPopup)
 							DropPopup.Visible = true
-							Tween(SelArrow, {Rotation = 180}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+							WindowObj._centerPopupOnField(DropPopup, TextDefault)
+							SmoothOpen(DropPopup, 0, 0.14)
 							RegisterPopup(DropPopup, closeDropdown, OpenBtn)
 						end
 					end)
@@ -8440,7 +8448,7 @@ New("Frame", {
 					dropOpen = false
 					UnregisterPopup(DownBar)
 					DownBar:SetAttribute("CloseToken", (DownBar:GetAttribute("CloseToken") or 0) + 1)
-					DownBar.Visible = false
+					SmoothClose(DownBar, 0.1)
 					if _openDropdown == closeDropdown then _openDropdown = nil end
 				end
 
@@ -8465,7 +8473,7 @@ New("Frame", {
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 6) }, Buttons)
 					New("UIPadding", { PaddingLeft = UDim.new(0, 28), PaddingRight = UDim.new(0, 8) }, Buttons)
-					New("ImageLabel", { Name = "SelectedCheck", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 4, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = "rbxassetid://138494545053627", ImageColor3 = Color3.fromRGB(255, 255, 255), Visible = selected == opt, ZIndex = 5003 }, Buttons)
+					New("ImageLabel", { Name = "SelectedCheck", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, -22, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = "rbxassetid://138494545053627", ImageColor3 = Color3.fromRGB(255, 255, 255), Visible = selected == opt, ZIndex = 5003 }, Buttons)
 					optionRows[opt] = Buttons
 
 					Buttons.MouseEnter:Connect(function()
@@ -8507,7 +8515,7 @@ New("Frame", {
 						DownBar.BackgroundTransparency = 0
 						DownBar.Visible = true
 						WindowObj._centerPopupOnField(DownBar, TopBar)
-						task.defer(function() if DownBar.Visible then WindowObj._centerPopupOnField(DownBar, TopBar) end end)
+						SmoothOpen(DownBar, 0, 0.14)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
@@ -8685,7 +8693,7 @@ New("Frame", {
 				end
 				local function closeDropdown()
 					dropOpen = false
-					DownBar.Visible = false
+					SmoothClose(DownBar, 0.1)
 					UnregisterPopup(DownBar)
 					if _openDropdown == closeDropdown then _openDropdown = nil end
 				end
@@ -8727,7 +8735,7 @@ New("Frame", {
 					New("ImageLabel", {
 						Name = "SelectedCheck",
 						AnchorPoint = Vector2.new(0, 0.5),
-						Position = UDim2.new(0, 4, 0.5, 0),
+						Position = UDim2.new(0, -22, 0.5, 0), -- UIPadding (28) shifts children too
 						Size = UDim2.fromOffset(14, 14),
 						BackgroundTransparency = 1,
 						Image = "rbxassetid://138494545053627",
@@ -8759,7 +8767,7 @@ New("Frame", {
 					DownBar.Visible = true
 					ApplyZIndexLadder(DownBar, NextPopupZ())
 					WindowObj._centerPopupOnField(DownBar, TopBar)
-					task.defer(function() if DownBar.Visible then WindowObj._centerPopupOnField(DownBar, TopBar) end end)
+					SmoothOpen(DownBar, 0, 0.14)
 					RegisterPopup(DownBar, closeDropdown, TopBar)
 				end
 				TopBar.MouseButton1Click:Connect(openDropdown)
@@ -9498,10 +9506,9 @@ New("Frame", {
 							DropPopup.BackgroundTransparency = 0
 							DropPopup.Visible = false
 							ApplyZIndexLadder(DropPopup, NextPopupZ())
-							PositionPopupWithinMain(DropPopup, true, 4, TextDefault, Vector2.new(knownW, knownH))
-							ForceLiftClipping(DropPopup)
 							DropPopup.Visible = true
-							Tween(SelArrow, { Rotation = 180 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+							WindowObj._centerPopupOnField(DropPopup, TextDefault)
+							SmoothOpen(DropPopup, 0, 0.14)
 							RegisterPopup(DropPopup, closeDropdown2, OpenBtn)
 						end
 					end)
@@ -9816,9 +9823,10 @@ New("Frame", {
 				-- ActivateTab() has just selected it; running the opposite tweens
 				-- in the same frame caused a visible flash on every tab switch.
 				if activeTabIndex == tabIndex then
+					-- With sub-tabs, Neverlose highlights the sub-tab, not the parent.
 					Tween(TabButtonFrame, {
 						BackgroundColor3 = Color3.fromRGB(35, 38, 50),
-						BackgroundTransparency = 0.08,
+						BackgroundTransparency = 1,
 					}, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					Tween(TabText, { TextTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
@@ -9901,13 +9909,15 @@ New("Frame", {
 			local STRow = New("Frame", {
 				Name = "STRow_" .. name,
 				Size = UDim2.new(0.92, 0, 1, 0),
-				BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-				BackgroundTransparency = isFirstST and 0.9 or 1,
+				-- Sub-tabs use the same plate, grey idle text/icon and accent icon as
+				-- the main tabs (Neverlose "Players / World"), not a side bar.
+				BackgroundColor3 = Color3.fromRGB(35, 38, 50),
+				BackgroundTransparency = isFirstST and 0.08 or 1,
 				LayoutOrder = stIndex,
 			}, subTabContainer)
 			STRow:SetAttribute("TabIndex", tabIndex)
 			STRow:SetAttribute("SubTabIndex", stIndex)
-			New("UICorner", { CornerRadius = UDim.new(0, 5) }, STRow)
+			New("UICorner", { CornerRadius = UDim.new(0, 8) }, STRow)
 			New("UIAspectRatioConstraint", {
 				AspectRatio = 4.6,
 				AspectType = Enum.AspectType.ScaleWithParentSize,
@@ -9919,8 +9929,9 @@ New("Frame", {
 				Position = UDim2.new(0, 0, 0.5, 0),
 				Size = UDim2.new(0, 2, 0.58, 0),
 				BackgroundColor3 = mainColor,
-				BackgroundTransparency = isFirstST and 0 or 1,
+				BackgroundTransparency = 1,
 				BorderSizePixel = 0,
+				Visible = false,
 				ZIndex = 3,
 			}, STRow)
 			New("UICorner", { CornerRadius = UDim.new(1, 0) }, STIndicator)
@@ -9933,8 +9944,8 @@ New("Frame", {
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					Size = UDim2.new(0.20000000298023224, 0, 0.6500000011920929, 0),
 					BackgroundTransparency = 1,
-					ImageColor3 = isFirstST and mainColor or Color3.fromRGB(200, 200, 210),
-					ImageTransparency = isFirstST and 0 or 0.6,
+					ImageColor3 = isFirstST and mainColor or Color3.fromRGB(150, 155, 172),
+					ImageTransparency = 0,
 				}, STRow)
 				New("UIAspectRatioConstraint", { AspectRatio = 1 }, iconRef)
 				GetImageData(icon, iconRef)
@@ -9946,10 +9957,10 @@ New("Frame", {
 				Size = UDim2.new(0.7070000171661377, 0, 0.510000011920929, 0),
 				BackgroundTransparency = 1,
 				Text = name,
-				TextColor3 = Color3.fromRGB(255, 255, 255),
+				TextColor3 = isFirstST and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 155, 172),
 				TextScaled = false,
 				Font = FONT,
-				TextTransparency = isFirstST and 0 or 0.55,
+				TextTransparency = 0,
 				TextXAlignment = Enum.TextXAlignment.Left,
 			}, STRow)
 
@@ -9963,26 +9974,18 @@ New("Frame", {
 			local function ActivateSubTab()
 				CloseAllPopupsExcept(nil)
 				for _, st in ipairs(subTabs) do
-					Tween(st.row, {
-						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-						BackgroundTransparency = 1,
-					}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-					if st.indicator then Tween(st.indicator, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) end
+					Tween(st.row, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					if st.row ~= STRow then
-						Tween(st.lbl, { TextTransparency = 0.55 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(st.lbl, { TextColor3 = Color3.fromRGB(150, 155, 172), TextTransparency = 0 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end
 					if st.icon then
-						Tween(st.icon, { ImageColor3 = Color3.fromRGB(200, 200, 210), ImageTransparency = 0.6 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(st.icon, { ImageColor3 = Color3.fromRGB(150, 155, 172), ImageTransparency = 0 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end
 					st.left.Visible  = false
 					st.right.Visible = false
 				end
-				Tween(STRow, {
-					BackgroundColor3 = Color3.fromRGB(39, 43, 54),
-					BackgroundTransparency = 0.22,
-				}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				Tween(STIndicator, { BackgroundTransparency = 0 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				Tween(STLabel, { TextTransparency = 0 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+				Tween(STRow, { BackgroundTransparency = 0.08 }, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				Tween(STLabel, { TextColor3 = Color3.fromRGB(255, 255, 255), TextTransparency = 0 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				if iconRef then
 					Tween(iconRef, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.10, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end
@@ -10024,15 +10027,15 @@ New("Frame", {
 			STClick.MouseButton1Click:Connect(ActivateSubTab)
 			STRow.MouseEnter:Connect(function()
 				if activeSubTabIndex == stIndex then return end
-				Tween(STRow, { BackgroundTransparency = 0.94 }, 0.11, Enum.EasingStyle.Sine)
-				Tween(STLabel, { TextTransparency = 0.22 }, 0.11, Enum.EasingStyle.Sine)
+				Tween(STRow, { BackgroundTransparency = 0.55 }, 0.11, Enum.EasingStyle.Sine)
+				Tween(STLabel, { TextColor3 = Color3.fromRGB(220, 222, 230) }, 0.11, Enum.EasingStyle.Sine)
 				if iconRef then Tween(iconRef, { ImageColor3 = mainColor, ImageTransparency = 0.24 }, 0.11, Enum.EasingStyle.Sine) end
 			end)
 			STRow.MouseLeave:Connect(function()
 				if activeSubTabIndex == stIndex then return end
 				Tween(STRow, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Sine)
-				Tween(STLabel, { TextTransparency = 0.55 }, 0.14, Enum.EasingStyle.Sine)
-				if iconRef then Tween(iconRef, { ImageColor3 = Color3.fromRGB(200, 200, 210), ImageTransparency = 0.6 }, 0.14, Enum.EasingStyle.Sine) end
+				Tween(STLabel, { TextColor3 = Color3.fromRGB(150, 155, 172) }, 0.14, Enum.EasingStyle.Sine)
+				if iconRef then Tween(iconRef, { ImageColor3 = Color3.fromRGB(150, 155, 172), ImageTransparency = 0 }, 0.14, Enum.EasingStyle.Sine) end
 			end)
 
 			if isFirstST and activeTabIndex == tabIndex then
