@@ -2842,10 +2842,23 @@ do
 	WMShadowHost.ZIndex = Z_BASE + 899
 	WMShadowHost.Parent = NeverloseCS2
 
-	-- Watermark shadow: one soft 9-slice shadow on the sibling host (the strip
-	-- itself owns a list layout, which would swallow the image).
+	-- Watermark shadow: the menu's layered shadow (AttachShadow, defined
+	-- further down, so built here the same way) on the sibling host; the
+	-- strip itself owns a list layout, which would swallow the layers.
 	local layers = {}
-	WindowObj._softShadow(WMShadowHost, 0.45, 22)
+	for i = 1, 6 do
+		local spread = math.floor(i * 2 + 0.5)
+		local layer = Instance.new("Frame")
+		layer.Name = "ShadowLayer" .. i
+		layer.Position = UDim2.new(0, -spread, 0, 2 - spread)
+		layer.Size = UDim2.new(1, spread * 2, 1, spread * 2)
+		layer.BackgroundColor3 = Color3.new(0, 0, 0)
+		layer.BackgroundTransparency = math.clamp(0.76 + (i - 1) * ((0.98 - 0.76) / 5), 0.76, 0.98)
+		layer.BorderSizePixel = 0
+		layer.ZIndex = Z_BASE + 898
+		layer.Parent = WMShadowHost
+		local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8 + spread); c.Parent = layer
+	end
 
 	WMShadowSync = function()
 		local w, h = GameInfo.AbsoluteSize.X, GameInfo.AbsoluteSize.Y
@@ -3120,7 +3133,8 @@ function OV.pill(name, parent, color, radius, height)
 	pill:SetAttribute("PillAlpha", 0.04)
 	New("UICorner", { CornerRadius = UDim.new(0, radius) }, pill)
 	Stroke(pill)
-	if WindowObj._softShadow then WindowObj._softShadow(pill, 0.6) end
+	-- Same layered shadow as the menu window and its popups.
+	AttachShadow(pill, { radius = radius, layers = 5, step = 1.6, bias = 2 })
 	return pill
 end
 
@@ -3233,6 +3247,9 @@ local function FadeOverlayContents(root, show)
 		elseif node:IsA("Frame") and node:GetAttribute("PillAlpha") then
 			if show then node.BackgroundTransparency = 1 end
 			go(node, { BackgroundTransparency = show and node:GetAttribute("PillAlpha") or 1 })
+		elseif node:IsA("Frame") and node:GetAttribute("IsShadowLayer") then
+			if show then node.BackgroundTransparency = 1 end
+			go(node, { BackgroundTransparency = show and (node:GetAttribute("ShadowAlpha") or 0.9) or 1 })
 		elseif node:IsA("Frame") and node:GetAttribute("NLOverlayAccentPart") then
 			if show then node.BackgroundTransparency = 1 end
 			go(node, { BackgroundTransparency = show and 0 or 1 })
