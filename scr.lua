@@ -7820,7 +7820,7 @@ Line9.Parent = MainFrame
 			if d:IsA("GuiObject") then
 				props = { "BackgroundTransparency" }
 				if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then table.insert(props, "TextTransparency") end
-				if d:IsA("ImageLabel") or d:IsA("ImageButton") then table.insert(props, "ImageTransparency") end
+				if d:IsA("ImageLabel") or d:IsA("ImageButton") or d:IsA("ViewportFrame") then table.insert(props, "ImageTransparency") end
 			elseif d:IsA("UIStroke") then
 				props = { "Transparency" }
 			end
@@ -8432,15 +8432,20 @@ New("UIAspectRatioConstraint", {
 				end
 				local title = New("TextLabel", {
 					Name = "TeamTitle", Position = UDim2.fromOffset(26, 0), Size = UDim2.new(0, 90, 1, 0), BackgroundTransparency = 1,
-					Text = which .. " Loadout", TextColor3 = TEXT, TextSize = 14, Font = FONT,
+					Text = which .. " Loadout", TextColor3 = TEAM_COLOR[which]:Lerp(Color3.new(1, 1, 1), 0.2), TextSize = 14, Font = FONT,
 					TextXAlignment = Enum.TextXAlignment.Left, TextTransparency = 1,
 				}, b)
 				b.MouseEnter:Connect(function() if team ~= which then Tween(b, { BackgroundTransparency = 0.6 }, 0.1) end end)
 				b.MouseLeave:Connect(function() if team ~= which then Tween(b, { BackgroundTransparency = 1 }, 0.14) end end)
 				teamButtons[which] = { button = b, title = title, index = index }
 			end
+			-- The pair is centred over the agent (CT left, T right), as on Neverlose.
 			local function layoutTeams(instant)
-				local x = 0
+				local total = -8
+				for _, which in ipairs({ "CT", "T" }) do
+					total = total + (which == team and math.ceil(26 + MeasureText(which .. " Loadout", 14, FONT) + 10) or 24) + 8
+				end
+				local x = math.max(0, math.floor((side.AbsoluteSize.X - total) / 2))
 				for _, which in ipairs({ "CT", "T" }) do
 					local entry = teamButtons[which]
 					local open = which == team
@@ -8459,6 +8464,7 @@ New("UIAspectRatioConstraint", {
 				end
 			end
 			layoutTeams(true)
+			side:GetPropertyChangedSignal("AbsoluteSize"):Connect(function() layoutTeams(true) end)
 
 			-- The agent stands free on the page (no plate behind it).
 			local agent = New("Frame", { Name = "Agent", Position = UDim2.fromOffset(0, 38), BackgroundTransparency = 1, Active = true }, side)
