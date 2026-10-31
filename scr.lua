@@ -1123,6 +1123,17 @@ end
 				return
 			end
 		end
+		-- Logical parent: the open popup that holds the trigger. A color picker or
+		-- list opened from a plate lives under MainFrame, not inside the plate, so
+		-- the instance tree alone cannot tell they belong together.
+		local parentFrame
+		if trigger then
+			for _, entry in ipairs(_openPopups) do
+				if entry.frame ~= frame and IsPopupAncestor(entry.frame, trigger) then
+					parentFrame = entry.frame
+				end
+			end
+		end
 		local connection
 		if frame.Destroying and frame.Destroying.Connect then
 			local ok, result = pcall(function()
@@ -1133,7 +1144,7 @@ end
 			end)
 			if ok then connection = result end
 		end
-		table.insert(_openPopups, {frame = frame, closeFn = closeFn, trigger = trigger, connection = connection})
+		table.insert(_openPopups, {frame = frame, closeFn = closeFn, trigger = trigger, parent = parentFrame, connection = connection})
 	end
 
 	UnregisterPopup = function(frame)
@@ -1146,11 +1157,34 @@ end
 		end
 	end
 
+	-- Marks every open popup that must stay because a kept popup was opened from it.
+	local function KeepPopupChain(keep, frame)
+		local guard = 0
+		while frame and not keep[frame] and guard < 16 do
+			keep[frame] = true
+			guard = guard + 1
+			local parentFrame
+			for _, entry in ipairs(_openPopups) do
+				if entry.frame == frame then parentFrame = entry.parent end
+			end
+			frame = parentFrame
+		end
+	end
+
 	local function CloseAllPopupsExcept(exceptFrame)
 		local copy = {}
 		for i, entry in ipairs(_openPopups) do copy[i] = entry end
+		-- The click that opens a popup comes from inside the popup holding its
+		-- trigger; that popup (and its own parents) stays open.
+		local keep = {}
+		local pointer = GetPointerPosition()
 		for _, entry in ipairs(copy) do
-			if entry.frame and entry.frame.Parent and entry.frame ~= exceptFrame
+			if entry.frame and entry.frame.Parent and entry.frame.Visible and pointer and IsPointInsideTree(entry.frame, pointer) then
+				KeepPopupChain(keep, entry.frame)
+			end
+		end
+		for _, entry in ipairs(copy) do
+			if entry.frame and entry.frame.Parent and entry.frame ~= exceptFrame and not keep[entry.frame]
 				and not IsPopupAncestor(entry.frame, exceptFrame) and type(entry.closeFn) == "function" then
 				pcall(entry.closeFn)
 			end
@@ -1199,6 +1233,9 @@ end
 		if not IsPrimaryInput(input) then return end
 		local point = GetInputPosition(input)
 		local toClose = {}
+		-- A click inside a child popup (color picker, list) counts as inside every
+		-- popup it was opened from, so the parent plate stays open.
+		local keep = {}
 		for _, entry in ipairs(_openPopups) do
 			local frame = entry.frame
 			if frame and frame.Parent and frame.Visible then
@@ -1206,7 +1243,13 @@ end
 				if entry.trigger and entry.trigger.Parent then
 					inside = inside or IsPointInsideTree(entry.trigger, point)
 				end
-				if not inside and type(entry.closeFn) == "function" then table.insert(toClose, entry.closeFn) end
+				if inside then KeepPopupChain(keep, frame) end
+			end
+		end
+		for _, entry in ipairs(_openPopups) do
+			local frame = entry.frame
+			if frame and frame.Parent and frame.Visible and not keep[frame] and type(entry.closeFn) == "function" then
+				table.insert(toClose, entry.closeFn)
 			end
 		end
 		for _, fn in ipairs(toClose) do pcall(fn) end
@@ -1959,7 +2002,7 @@ GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(1, -6, 0, 2)
 -- Neverlose watermark: a thin, dark, see-through strip without outline or
 -- dividers; small caps text, accent icons, avatar at the end.
-GameInfo.Size = UDim2.fromOffset(0, 26)
+GameInfo.Size = UDim2.fromOffset(0, 32)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
 GameInfo.BackgroundColor3 = Color3.fromRGB(9, 10, 15)
 GameInfo.BackgroundTransparency = 0.25
@@ -1970,7 +2013,7 @@ GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 5); c.Parent = GameInfo end
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 6); pd.PaddingRight = UDim.new(0, 5); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 8); pd.PaddingRight = UDim.new(0, 6); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
 local ICON_LAYERS   = "rbxassetid://114499998778667"
@@ -1984,20 +2027,20 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local cell = Instance.new("Frame")
 	cell.Name = name .. "Cell"
 	cell.LayoutOrder = order
-	cell.Size = UDim2.fromOffset(0, 26)
+	cell.Size = UDim2.fromOffset(0, 32)
 	cell.AutomaticSize = Enum.AutomaticSize.X
 	cell.BackgroundTransparency = 1
 	cell.BorderSizePixel = 0
 	cell.ZIndex = Z_BASE + 901
 	cell.Parent = GameInfo
-	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 5); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
-	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 7); pd.PaddingRight = UDim.new(0, 7); pd.Parent = cell end
+	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 6); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
+	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 9); pd.PaddingRight = UDim.new(0, 9); pd.Parent = cell end
 	local icon
 	if iconAsset then
 		icon = Instance.new("ImageLabel")
 		icon.Name = name .. "Icon"
 		icon.LayoutOrder = 1
-		icon.Size = UDim2.fromOffset(iconSize or 12, iconSize or 12)
+		icon.Size = UDim2.fromOffset(iconSize or 15, iconSize or 15)
 		icon.BackgroundTransparency = 1
 		icon.BorderSizePixel = 0
 		icon.Image = iconAsset
@@ -2011,7 +2054,7 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local label = Instance.new("TextLabel")
 	label.Name = name
 	label.LayoutOrder = 2
-	label.Size = UDim2.fromOffset(0, 26)
+	label.Size = UDim2.fromOffset(0, 32)
 	label.AutomaticSize = Enum.AutomaticSize.X
 	label.BackgroundTransparency = 1
 	label.BorderSizePixel = 0
@@ -2019,7 +2062,7 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	label.TextColor3 = Color3.fromRGB(214, 218, 228)
 	label.TextTransparency = 0
 	label.TextScaled = false
-	label.TextSize = 11
+	label.TextSize = 13
 	label.Font = FONT
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Center
@@ -2044,7 +2087,7 @@ end
 local BrandCell = Instance.new("Frame")
 BrandCell.Name = "BrandCell"
 BrandCell.LayoutOrder = 2
-BrandCell.Size = UDim2.fromOffset(0, 26)
+BrandCell.Size = UDim2.fromOffset(0, 32)
 BrandCell.AutomaticSize = Enum.AutomaticSize.X
 BrandCell.BackgroundTransparency = 1
 BrandCell.BorderSizePixel = 0
@@ -2065,12 +2108,30 @@ NeverIcon.ScaleType = Enum.ScaleType.Fit
 NeverIcon.ZIndex = Z_BASE + 901
 NeverIcon.Parent = BrandCell
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 5); c.Parent = NeverIcon end
+-- Neverlose writes "NL" as bold text with a cold tint; the image (with its dark
+-- square) stays available as Watermark.logo but is hidden by default.
+NeverIcon.Visible = false
+do
+	local brandText = Instance.new("TextLabel")
+	brandText.Name = "BrandText"
+	brandText.LayoutOrder = 2
+	brandText.Size = UDim2.fromOffset(0, 32)
+	brandText.AutomaticSize = Enum.AutomaticSize.X
+	brandText.BackgroundTransparency = 1
+	brandText.BorderSizePixel = 0
+	brandText.Text = "NL"
+	brandText.TextColor3 = Color3.fromRGB(226, 232, 255)
+	brandText.TextSize = 15
+	brandText.Font = FONT_BOLD
+	brandText.ZIndex = Z_BASE + 901
+	brandText.Parent = BrandCell
+end
 
 local UserCell = WMCell("Username", 4, nil, LocalPlayer.DisplayName or "Player")
 local UserIcon = Instance.new("ImageLabel")
 UserIcon.Name = "UserIcon"
 UserIcon.LayoutOrder = 1
-UserIcon.Size = UDim2.fromOffset(18, 18)
+UserIcon.Size = UDim2.fromOffset(22, 22)
 UserIcon.BackgroundTransparency = 1
 UserIcon.BorderSizePixel = 0
 UserIcon.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId or 0) .. "&w=150&h=150"
@@ -2779,7 +2840,11 @@ Aspect.AspectRatio = 798 / 610
 		Name = "HubIcon",
 		Position = UDim2.fromOffset(16, 11),
 		Size = UDim2.fromOffset(30, 30),
-		BackgroundTransparency = 1,
+		-- The logo image has a semi-transparent dark square. On the glass window
+		-- the game showed through it; an opaque backing in the old window colour
+		-- keeps the logo looking as it did on the solid window.
+		BackgroundColor3 = Color3.fromRGB(13, 15, 22),
+		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	}, MainFrame)
