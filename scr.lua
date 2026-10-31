@@ -8138,6 +8138,323 @@ end) end
 		return lbl
 	end
 
+	-- Neverlose "Players" preview for the right column of a tab or sub-tab:
+	-- Enemies / Teammates switch, ESP Items and expand buttons on top; below,
+	-- your character standing idle, or the ESP Items picker (chips in Main,
+	-- Flags and Weapon groups). Sections bound to a team show only while that
+	-- team is open. Built in a function of its own (register budget).
+	-- options: team ("Enemies"/"Teammates"), sections = { Enemies = {...},
+	-- Teammates = {...} } (section objects), groups = { { "Main", {...} }, ... },
+	-- onTeam(team), onItem(team, group, item, on).
+	WindowObj._buildESPPreview = function(leftCol, rightCol, options)
+		options = type(options) == "table" and options or {}
+		local LAVENDER, MUTED, TEXT = Color3.fromRGB(150, 164, 255), Color3.fromRGB(150, 152, 162), Color3.fromRGB(235, 236, 241)
+		local GROUPS = type(options.groups) == "table" and options.groups or {
+			{ "Main", { "Bounding Box", "Name", "Distance", "Health Bar", "Ammo Bar", "Skeleton" } },
+			{ "Flags", { "Unarmored", "Defuser", "Blind", "Scoped", "Reload", "Immunity", "Slowed", "Vulnerable", "Bomb",
+				"Hostage", "Defuse", "Pin Pulled", "Money", "Order Priority", "Delay" } },
+			{ "Weapon", { "Text", "Icon", "Readiness Bar", "Bomb", "Defuser", "Taser" } },
+		}
+		local TEAMS = { { "Enemies", "rbxassetid://10747373176" }, { "Teammates", "rbxassetid://10747372346" } }
+		local team = options.team == "Teammates" and "Teammates" or "Enemies"
+		local state = { Enemies = {}, Teammates = {} }
+		local showItems, expanded = false, false
+
+		local page = New("Frame", { Name = "ESPPreview", Size = UDim2.new(1, 0, 0, 420), BackgroundTransparency = 1, LayoutOrder = 100 }, rightCol)
+		local function fit()
+			local h = rightCol.AbsoluteSize.Y - 14
+			if h > 100 then page.Size = UDim2.new(1, 0, 0, h) end
+		end
+		rightCol:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+		task.defer(fit)
+
+		-- ------------------------------------------------------------ top bar
+		local bar = New("Frame", { Name = "TopBar", Size = UDim2.new(1, 0, 0, 28), BackgroundTransparency = 1 }, page)
+		local teamButtons, tools = {}, {}
+		local function iconButton(name, icon)
+			local b = New("TextButton", {
+				Name = name, Size = UDim2.fromOffset(24, 24), BackgroundColor3 = Color3.fromRGB(35, 38, 50), BackgroundTransparency = 1,
+				AutoButtonColor = false, Text = "", BorderSizePixel = 0, ClipsDescendants = true,
+			}, bar)
+			New("UICorner", { CornerRadius = UDim.new(0, 6) }, b)
+			New("ImageLabel", {
+				Name = "Icon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(14, 14),
+				BackgroundTransparency = 1, Image = icon, ImageColor3 = MUTED, ScaleType = Enum.ScaleType.Fit,
+			}, b)
+			return b
+		end
+		for _, def in ipairs(TEAMS) do
+			local b = iconButton("Team_" .. def[1], def[2])
+			local title = New("TextLabel", {
+				Name = "TeamTitle", Position = UDim2.fromOffset(25, 0), Size = UDim2.new(0, 90, 1, 0), BackgroundTransparency = 1,
+				Text = def[1], TextColor3 = LAVENDER, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTransparency = 1,
+			}, b)
+			teamButtons[def[1]] = { button = b, title = title, icon = b:FindFirstChild("Icon") }
+		end
+		tools.items = iconButton("ESPItems", "rbxassetid://10723424963") -- layout-list
+		tools.expand = iconButton("Expand", "rbxassetid://10734886496") -- maximize-2
+		local function layoutBar(instant)
+			local widths, total = {}, 0
+			for _, def in ipairs(TEAMS) do
+				local open = def[1] == team
+				widths[def[1]] = open and math.ceil(25 + MeasureText(def[1], 14, FONT) + 8) or 24
+				total = total + widths[def[1]] + 6
+			end
+			total = total + 10 + 24 + 6 + 24
+			local x = math.max(0, math.floor((bar.AbsoluteSize.X - total) / 2))
+			for _, def in ipairs(TEAMS) do
+				local entry, open = teamButtons[def[1]], def[1] == team
+				local goal = { Size = UDim2.fromOffset(widths[def[1]], 24), Position = UDim2.fromOffset(x, 2) }
+				if instant then
+					entry.button.Size, entry.button.Position = goal.Size, goal.Position
+					entry.title.TextTransparency = open and 0 or 1
+				else
+					Tween(entry.button, goal, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					Tween(entry.title, { TextTransparency = open and 0 or 1 }, 0.18)
+				end
+				Tween(entry.icon, { ImageColor3 = open and LAVENDER or MUTED }, 0.15)
+				x = x + widths[def[1]] + 6
+			end
+			x = x + 10
+			for _, key in ipairs({ "items", "expand" }) do
+				local b = tools[key]
+				local goal = { Position = UDim2.fromOffset(x, 2) }
+				if instant then b.Position = goal.Position else Tween(b, goal, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out) end
+				x = x + 30
+			end
+			Tween(tools.items, { BackgroundTransparency = showItems and 0 or 1 }, 0.15)
+			Tween(tools.items.Icon, { ImageColor3 = showItems and TEXT or MUTED }, 0.15)
+			Tween(tools.expand.Icon, { ImageColor3 = expanded and LAVENDER or MUTED }, 0.15)
+		end
+		bar:GetPropertyChangedSignal("AbsoluteSize"):Connect(function() layoutBar(true) end)
+
+		-- --------------------------------------------------------- model view
+		local body = New("Frame", { Name = "Body", Position = UDim2.fromOffset(0, 34), Size = UDim2.new(1, 0, 1, -34), BackgroundTransparency = 1 }, page)
+		local viewport = New("ViewportFrame", {
+			Name = "PlayerView", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+			Ambient = Color3.fromRGB(150, 150, 165), LightColor = Color3.fromRGB(255, 255, 255), LightDirection = Vector3.new(-0.6, -1, -0.8),
+		}, body)
+		local world = Instance.new("WorldModel")
+		world.Parent = viewport
+		local camera = Instance.new("Camera")
+		camera.FieldOfView = 30
+		camera.Parent = viewport
+		viewport.CurrentCamera = camera
+		local model
+		local function fitCamera()
+			if not model then return end
+			local cf, size = model:GetBoundingBox()
+			local view = viewport.AbsoluteSize
+			local aspect = (view.X > 0 and view.Y > 0) and view.X / view.Y or 0.75
+			local span = math.max(size.Y, math.max(size.X, size.Z) / aspect)
+			camera.CFrame = CFrame.new(cf.Position + Vector3.new(0, 0, span / 2 / math.tan(math.rad(15)) * 1.3), cf.Position)
+		end
+		viewport:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitCamera)
+		local function loadModel()
+			world:ClearAllChildren()
+			model = nil
+			local char = LocalPlayer.Character
+			if not char then return end
+			local was = char.Archivable
+			char.Archivable = true
+			local ok, clone = pcall(function() return char:Clone() end)
+			char.Archivable = was
+			if not ok or not clone then return end
+			local links = {}
+			for _, d in ipairs(clone:GetDescendants()) do
+				if d:IsA("BaseScript") or d:IsA("ModuleScript") or d:IsA("Sound") then
+					d:Destroy()
+				elseif d:IsA("BasePart") then
+					d.Anchored = true
+					d.CanCollide = false
+				elseif (d:IsA("Motor6D") or d:IsA("Weld")) and d.Part0 and d.Part1 then
+					table.insert(links, { a = d.Part0, b = d.Part1, rel = d.C0 * d.C1:Inverse() })
+				elseif d:IsA("WeldConstraint") and d.Part0 and d.Part1 then
+					table.insert(links, { a = d.Part0, b = d.Part1, rel = d.Part0.CFrame:ToObjectSpace(d.Part1.CFrame) })
+				end
+			end
+			-- Idle: rebuild the body from the root through its joints at rest.
+			local root = clone:FindFirstChild("HumanoidRootPart") or clone.PrimaryPart
+			if root then
+				local placed, progress = { [root] = true }, true
+				while progress do
+					progress = false
+					for _, l in ipairs(links) do
+						if l.a.Parent and l.b.Parent then
+							if placed[l.a] and not placed[l.b] then
+								l.b.CFrame = l.a.CFrame * l.rel
+								placed[l.b], progress = true, true
+							elseif placed[l.b] and not placed[l.a] then
+								l.a.CFrame = l.b.CFrame * l.rel:Inverse()
+								placed[l.a], progress = true, true
+							end
+						end
+					end
+				end
+			end
+			local humanoid = clone:FindFirstChildOfClass("Humanoid")
+			if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
+			clone.Parent = world
+			clone:PivotTo(CFrame.Angles(0, math.pi, 0))
+			model = clone
+			fitCamera()
+		end
+		loadModel()
+		LocalPlayer.CharacterAdded:Connect(function(char)
+			char:WaitForChild("HumanoidRootPart", 10)
+			task.wait(0.5)
+			loadModel()
+		end)
+
+		-- ----------------------------------------------------------- ESP items
+		local itemsCard = New("Frame", {
+			Name = "ESPItems", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(18, 18, 25), BackgroundTransparency = 0.04,
+			BorderSizePixel = 0, Visible = false,
+		}, body)
+		New("UICorner", { CornerRadius = UDim.new(0, 10) }, itemsCard)
+		Stroke(itemsCard)
+		New("TextLabel", {
+			Name = "ItemsTitle", Position = UDim2.fromOffset(14, 0), Size = UDim2.new(1, -28, 0, 40), BackgroundTransparency = 1,
+			Text = "ESP Items", TextColor3 = TEXT, TextSize = 15, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left,
+		}, itemsCard)
+		New("Frame", {
+			Name = "ItemsRule", Position = UDim2.fromOffset(0, 40), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BackgroundTransparency = 0.93, BorderSizePixel = 0,
+		}, itemsCard)
+		local scroller = New("ScrollingFrame", {
+			Name = "ItemsList", Position = UDim2.fromOffset(6, 46), Size = UDim2.new(1, -12, 1, -52), BackgroundTransparency = 1,
+			BorderSizePixel = 0, ScrollBarThickness = 2, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(),
+			ScrollingDirection = Enum.ScrollingDirection.Y,
+		}, itemsCard)
+		New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, scroller)
+		New("UIPadding", { PaddingBottom = UDim.new(0, 4), PaddingRight = UDim.new(0, 2) }, scroller)
+		local chips = {}
+		for g, group in ipairs(GROUPS) do
+			local groupCard = New("Frame", {
+				Name = "Group_" .. group[1], LayoutOrder = g, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+				BackgroundColor3 = Color3.fromRGB(23, 23, 31), BackgroundTransparency = 0, BorderSizePixel = 0,
+			}, scroller)
+			New("UICorner", { CornerRadius = UDim.new(0, 8) }, groupCard)
+			Stroke(groupCard)
+			New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 10) }, groupCard)
+			New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, groupCard)
+			New("TextLabel", {
+				Name = "GroupTitle", LayoutOrder = 1, Size = UDim2.new(1, 0, 0, 18), BackgroundTransparency = 1,
+				Text = group[1], TextColor3 = TEXT, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left,
+			}, groupCard)
+			local wrap = New("Frame", { Name = "Chips", LayoutOrder = 2, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1 }, groupCard)
+			New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Wraps = true, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, wrap)
+			for i, item in ipairs(group[2]) do
+				local chip = New("TextButton", {
+					Name = "Chip", LayoutOrder = i, Size = UDim2.fromOffset(math.ceil(MeasureText(item, 13, FONT) + 18), 26),
+					BackgroundColor3 = Color3.fromRGB(30, 32, 42), BackgroundTransparency = 0.2, AutoButtonColor = false,
+					Text = item, TextColor3 = MUTED, TextSize = 13, Font = FONT, BorderSizePixel = 0,
+				}, wrap)
+				New("UICorner", { CornerRadius = UDim.new(0, 6) }, chip)
+				Stroke(chip)
+				local key = group[1] .. "/" .. item
+				chips[key] = chip
+				chip.MouseButton1Click:Connect(function()
+					local on = not state[team][key]
+					state[team][key] = on or nil
+					Tween(chip, { BackgroundColor3 = on and Color3.fromRGB(44, 48, 66) or Color3.fromRGB(30, 32, 42), TextColor3 = on and TEXT or MUTED }, 0.12)
+					if type(options.onItem) == "function" then pcall(options.onItem, team, group[1], item, on) end
+				end)
+			end
+		end
+		local function paintChips()
+			for key, chip in pairs(chips) do
+				local on = state[team][key] == true
+				chip.BackgroundColor3 = on and Color3.fromRGB(44, 48, 66) or Color3.fromRGB(30, 32, 42)
+				chip.TextColor3 = on and TEXT or MUTED
+			end
+		end
+
+		-- ----------------------------------------------------- team & buttons
+		local bound = { Enemies = {}, Teammates = {} }
+		if type(options.sections) == "table" then
+			for _, which in ipairs({ "Enemies", "Teammates" }) do
+				for _, sec in ipairs(options.sections[which] or {}) do table.insert(bound[which], sec) end
+			end
+		end
+		local function applySections()
+			for which, list in pairs(bound) do
+				for _, sec in ipairs(list) do
+					local frame = type(sec) == "table" and sec.frame or sec
+					if typeof(frame) == "Instance" then frame.Visible = which == team end
+				end
+			end
+		end
+		local api = { frame = page }
+		function api:GetTeam() return team end
+		function api:SetTeam(which)
+			team = which == "Teammates" and "Teammates" or "Enemies"
+			layoutBar(false)
+			applySections()
+			paintChips()
+			if type(options.onTeam) == "function" then pcall(options.onTeam, team) end
+			return self
+		end
+		function api:Bind(section, which)
+			table.insert(bound[which == "Teammates" and "Teammates" or "Enemies"], section)
+			applySections()
+			return self
+		end
+		function api:IsItemOn(which, group, item) return state[which][group .. "/" .. item] == true end
+		for which, entry in pairs(teamButtons) do
+			entry.button.MouseButton1Click:Connect(function() if team ~= which then api:SetTeam(which) end end)
+			entry.button.MouseEnter:Connect(function() if team ~= which then Tween(entry.button, { BackgroundTransparency = 0.6 }, 0.1) end end)
+			entry.button.MouseLeave:Connect(function() Tween(entry.button, { BackgroundTransparency = 1 }, 0.14) end)
+		end
+		tools.items.MouseButton1Click:Connect(function()
+			showItems = not showItems
+			itemsCard.Visible = true
+			if showItems then
+				itemsCard.BackgroundTransparency = 1
+				FadePopupContent(itemsCard, true, 0.18)
+				Tween(itemsCard, { BackgroundTransparency = 0.04 }, 0.18)
+				Tween(viewport, { ImageTransparency = 1 }, 0.18)
+			else
+				FadePopupContent(itemsCard, false, 0.16)
+				Tween(itemsCard, { BackgroundTransparency = 1 }, 0.16)
+				Tween(viewport, { ImageTransparency = 0 }, 0.18)
+				task.delay(0.17, function() if not showItems then itemsCard.Visible = false end end)
+			end
+			layoutBar(false)
+		end)
+		-- Expand: the preview takes the whole tab (left column folds away).
+		local leftSize, rightSize = leftCol.Size, rightCol.Size
+		tools.expand.MouseButton1Click:Connect(function()
+			expanded = not expanded
+			Tween(leftCol, { Size = expanded and UDim2.new(0, 0, leftSize.Y.Scale, leftSize.Y.Offset) or leftSize }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(rightCol, { Size = expanded and UDim2.new(1, -12, rightSize.Y.Scale, rightSize.Y.Offset) or rightSize }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			tools.expand.Icon.Image = expanded and "rbxassetid://10734895530" or "rbxassetid://10734886496"
+			layoutBar(false)
+		end)
+
+		-- Saved with the config: open team and each team's ESP items.
+		WindowObj._configExtras["esp_" .. tostring(options.id or "players")] = {
+			get = function()
+				local out = { team = team, Enemies = {}, Teammates = {} }
+				for which, items in pairs(state) do for key in pairs(items) do table.insert(out[which], key) end end
+				return out
+			end,
+			set = function(v)
+				if type(v) ~= "table" then return end
+				for _, which in ipairs({ "Enemies", "Teammates" }) do
+					state[which] = {}
+					for _, key in ipairs(type(v[which]) == "table" and v[which] or {}) do state[which][key] = true end
+				end
+				api:SetTeam(v.team)
+			end,
+		}
+
+		layoutBar(true)
+		applySections()
+		paintChips()
+		return api
+	end
+
 	function WindowObj:AddTab(name, icon)
 		local function TintTabIcon(iconObject, color, transparency, duration, style, direction)
 			Tween(iconObject, { ImageColor3 = color, ImageTransparency = transparency }, duration, style, direction)
@@ -8637,6 +8954,11 @@ New("UIAspectRatioConstraint", {
 			return api
 		end
 
+		-- Players-style preview in this tab's right column (see _buildESPPreview).
+		function TabObj:AddESPPreview(options)
+			return WindowObj._buildESPPreview(Left, Right, options)
+		end
+
 		function TabObj:AddSection(title, side)
 			title = tostring(title or "Section")
 			side = side == "right" and "right" or "left"
@@ -8730,6 +9052,7 @@ end
 			WatchRowDividers(Elements)
 
 			local SectionObj = {}
+			SectionObj.frame = Section -- lets a preview show/hide whole sections
 			local elemCount = 0
 			local _openDropdown = nil
 			local _openAccordion = nil
@@ -12598,6 +12921,10 @@ New("Frame", {
 
 			local SubTabObj = {}
 			local stSectionOrder = { left = 0, right = 0 }
+
+			function SubTabObj:AddESPPreview(options)
+				return WindowObj._buildESPPreview(stLeft, stRight, options)
+			end
 
 			function SubTabObj:AddSection(title, side)
 				side = side == "right" and "right" or "left"
