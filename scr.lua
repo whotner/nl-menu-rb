@@ -2646,7 +2646,9 @@ GameInfo.Position = UDim2.new(1, -6, 0, 2)
 -- Neverlose watermark: a thin, dark, see-through strip without outline or
 -- dividers; small caps text, accent icons, avatar at the end.
 GameInfo.Size = UDim2.fromOffset(0, 35)
-GameInfo.AutomaticSize = Enum.AutomaticSize.X
+-- Width and item positions come from WindowObj._wmRelayout (animated), not
+-- from a list layout.
+GameInfo.AutomaticSize = Enum.AutomaticSize.None
 -- Neverlose watermark: a dark see-through capsule over the blur (the game
 -- shows through tinted), no outline.
 GameInfo.BackgroundColor3 = Color3.fromRGB(8, 9, 12)
@@ -2660,7 +2662,6 @@ GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = GameInfo end
 if WindowObj._attachBlur then WindowObj._attachBlur(GameInfo) end
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 14); pd.PaddingRight = UDim.new(0, 5); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
-do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
 local ICON_LAYERS   = "rbxassetid://114499998778667"
 local ICON_WIFI     = "rbxassetid://104941258142372"
@@ -2767,10 +2768,13 @@ do
 	brandText.BorderSizePixel = 0
 	brandText.Text = "NL"
 	brandText.TextColor3 = Color3.fromRGB(240, 240, 250)
-	brandText.TextSize = 20
+	brandText.TextSize = 18
 	brandText.Font = FONT_BOLD
 	brandText.ZIndex = Z_BASE + 901
 	brandText.Parent = BrandCell
+	-- Bold caps sit high next to the 15px items; 2px top padding centres
+	-- them on the same line.
+	do local pd = Instance.new("UIPadding"); pd.PaddingTop = UDim.new(0, 2); pd.Parent = brandText end
 	-- Lavender copy 1px left/down under the white letters, as on Neverlose.
 	brandText.ZIndex = Z_BASE + 903
 	local brandShade = brandText:Clone()
@@ -2930,6 +2934,7 @@ local function ApplyWatermarkLayout(orderList, showMap)
 	-- No dividers: Neverlose separates the stats with spacing only.
 	for _, divider in pairs(WMDividers) do divider.Visible = false end
 	GameInfo.Visible = #shown > 0 and not WindowObj._loaderActive
+	if WindowObj._wmRelayout then WindowObj._wmRelayout() end
 	if WMShadowSync then WMShadowSync() end
 end
 ApplyWatermarkLayout(nil, nil)
@@ -3008,6 +3013,40 @@ WindowObj._buildWatermarkUI = function()
 	extra.issues.text.TextColor3 = SALMON
 	extra.latency.icon.ImageColor3 = SALMON
 	extra.latency.text.TextColor3 = SALMON
+
+	-- Manual row layout: visible items left to right by LayoutOrder, each
+	-- gliding to its slot (reorders, items shown/hidden, numbers changing
+	-- width); an item that just appeared starts in place. The strip's width
+	-- follows. 14 + 5 = the strip's UIPadding.
+	local GLIDE = TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	WindowObj._wmRelayout = function()
+		local keys = {}
+		for key, cell in pairs(WMCells) do
+			if cell.Visible then table.insert(keys, key) else cell:SetAttribute("Placed", false) end
+		end
+		table.sort(keys, function(a, b) return WMCells[a].LayoutOrder < WMCells[b].LayoutOrder end)
+		local x = 0
+		for _, key in ipairs(keys) do
+			local cell = WMCells[key]
+			local slot = UDim2.fromOffset(x, 0)
+			if cell:GetAttribute("Placed") and GameInfo.Visible then
+				if cell.Position ~= slot then TweenService:Create(cell, GLIDE, { Position = slot }):Play() end
+			else
+				cell.Position = slot
+				cell:SetAttribute("Placed", true)
+			end
+			x = x + cell.AbsoluteSize.X
+		end
+		local size = UDim2.fromOffset(x + 14 + 5, 35)
+		if GameInfo.Visible and GameInfo.Size ~= size and GameInfo.AbsoluteSize.X > 0 then
+			TweenService:Create(GameInfo, GLIDE, { Size = size }):Play()
+		else
+			GameInfo.Size = size
+		end
+	end
+	for _, cell in pairs(WMCells) do
+		cell:GetPropertyChangedSignal("AbsoluteSize"):Connect(function() WindowObj._wmRelayout() end)
+	end
 	do
 		local jobId = tostring(game.JobId or "")
 		extra.server.text.Text = jobId ~= "" and string.upper(string.sub(jobId, 1, 8)) or "LOCAL"
@@ -3119,9 +3158,12 @@ WindowObj._buildWatermarkUI = function()
 	end
 	local function openFrame(frame, x, y, trigger, closeFn)
 		ApplyZIndexLadder(frame, NextPopupZ())
-		SmoothOpen(frame, 0, 0.16)
+		SmoothOpen(frame, 0, 0.2)
 		MovePopupToAbsolute(frame, x, y)
 		ConstrainPopupToMainFrame(frame, 8)
+		local settled = frame.Position
+		frame.Position = UDim2.new(settled.X.Scale, settled.X.Offset, settled.Y.Scale, settled.Y.Offset - 8)
+		TweenService:Create(frame, TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = settled }):Play()
 		RegisterPopup(frame, closeFn, trigger)
 	end
 
@@ -3293,8 +3335,8 @@ WindowObj._buildWatermarkUI = function()
 		if settingsFrame.Visible then closeFrame(settingsFrame) return end
 		setSwitch(avatarSwitch, WMShowMap.user == true)
 		if positionValue then positionValue.Text = GameInfo:GetAttribute("Preset") or "Custom" end
-		-- Opens where the strip was clicked (kept on screen).
-		openFrame(settingsFrame, point.X + 2, point.Y + 2, GameInfo, function()
+		-- Opens under the strip at the click's x (kept on screen), sliding down.
+		openFrame(settingsFrame, point.X - 20, GameInfo.AbsolutePosition.Y + GameInfo.AbsoluteSize.Y + 6, GameInfo, function()
 				if itemsFrame then closeFrame(itemsFrame) end
 				if positionFrame then closeFrame(positionFrame) end
 				closeFrame(settingsFrame)
@@ -3388,6 +3430,7 @@ WindowObj._buildWatermarkUI = function()
 			if type(v.color) == "table" and #v.color == 3 then paintIcons(Color3.new(v.color[1], v.color[2], v.color[3])) end
 		end,
 	}
+	paintIcons(wmColor)
 end
 WindowObj._buildWatermarkUI()
 
