@@ -2985,23 +2985,26 @@ local Aspect = Instance.new("UIAspectRatioConstraint")
 Aspect.Parent = MainFrame
 Aspect.AspectRatio = 798 / 610
 
-	local HubIcon = New("Frame", {
+	-- CanvasGroup + UICorner clips the logo to a rounded badge (ClipsDescendants
+	-- only clips to the rectangle, which left hard square corners). The badge is
+	-- larger than before so the letters are no longer cut at the edges.
+	local HubIcon = New("CanvasGroup", {
 		Name = "HubIcon",
-		Position = UDim2.fromOffset(16, 11),
-		Size = UDim2.fromOffset(30, 30),
+		Position = UDim2.fromOffset(14, 9),
+		Size = UDim2.fromOffset(34, 34),
 		-- The logo image has a semi-transparent dark square. On the glass window
 		-- the game showed through it; an opaque backing in the old window colour
 		-- keeps the logo looking as it did on the solid window.
 		BackgroundColor3 = Color3.fromRGB(13, 15, 22),
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
-		ClipsDescendants = true,
 	}, MainFrame)
+	New("UICorner", { CornerRadius = UDim.new(0, 8) }, HubIcon)
 	New("ImageLabel", {
 		Name = "HubGlyph",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.fromOffset(46, 46),
+		Size = UDim2.fromOffset(44, 44),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
@@ -3137,8 +3140,10 @@ local SettingsArrow = New("ImageLabel", {
 		}, Info)
 		local hoverPlate = New("Frame", {
 			Name = "HoverPlate",
+			-- Stays inside the 170px sidebar (block starts at x=15, 150 wide);
+			-- +12 width spilled over the content panel edge.
 			Position = UDim2.new(0, -6, 0, -6),
-			Size = UDim2.new(1, 12, 1, 12),
+			Size = UDim2.new(1, 6, 1, 12),
 			BackgroundColor3 = Color3.fromRGB(245, 247, 255),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
@@ -3580,15 +3585,30 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 					end
 				end)
 			end
+			-- Recolour only what currently shows the old accent. The old check
+			-- skipped pure black only, so off switches (8,10,16) turned accent too.
+			local old = mainColor
+			local function isAccent(color)
+				return math.abs(color.R - old.R) < 0.02 and math.abs(color.G - old.G) < 0.02 and math.abs(color.B - old.B) < 0.02
+			end
 			for _, object in ipairs(NeverloseCS2:GetDescendants()) do
-				pcall(function()
-					if object.Name == "Effect" and object:IsA("Frame") then
-						local color = object.BackgroundColor3
-						local isOff = math.round(color.R * 255) == 0 and math.round(color.G * 255) == 0 and math.round(color.B * 255) == 0
-						if not isOff then object.BackgroundColor3 = c end
+				-- Colour swatches show a user's chosen value, not the theme.
+				local lowerName = string.lower(object.Name)
+				local isSwatch = lowerName:find("colorpicker") or lowerName:find("swatch") or lowerName:find("preview") or lowerName:find("svcursor")
+					or object:FindFirstAncestor("ColorPickerFrame")
+				if not isSwatch then pcall(function()
+					if object.Name == "InLine" and object:IsA("Frame") then
+						object.BackgroundColor3 = c
+					elseif object:IsA("GuiObject") and object.BackgroundTransparency < 1 and isAccent(object.BackgroundColor3) then
+						object.BackgroundColor3 = c
 					end
-					if object.Name == "InLine" and object:IsA("Frame") then object.BackgroundColor3 = c end
-				end)
+					if (object:IsA("ImageLabel") or object:IsA("ImageButton")) and isAccent(object.ImageColor3) then
+						object.ImageColor3 = c
+					end
+					if (object:IsA("TextLabel") or object:IsA("TextButton")) and isAccent(object.TextColor3) then
+						object.TextColor3 = c
+					end
+				end) end
 			end
 			mainColor = c
 			if wsPicker then wsPicker.Set(c) end
