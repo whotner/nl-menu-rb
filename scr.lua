@@ -600,7 +600,8 @@ local function AttachRowHover(row)
 	end
 	row.MouseEnter:Connect(function()
 		if not row.Parent then return end
-		Tween(row, { BackgroundColor3 = Color3.fromRGB(245, 247, 255), BackgroundTransparency = 0.955 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+		-- All hover tints share 0.97: Neverlose hover is a barely-there lift.
+		Tween(row, { BackgroundColor3 = Color3.fromRGB(245, 247, 255), BackgroundTransparency = 0.97 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 	end)
 	row.MouseLeave:Connect(function()
 		if not row.Parent then return end
@@ -1898,9 +1899,11 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			part(grid, 13, 8, 5, 2)     -- right tick
 			part(grid, 8, 8, 2, 2)      -- centre dot
 		elseif isMouse then
-			local body = part(grid, 4, 1, 10, 16, UDim.new(0, 5))
-			part(body, 0, 6, 10, 1, nil, true)  -- button split
-			part(body, 4, 0, 2, 6, nil, true)   -- wheel gap
+			-- Neverlose mouse: an egg-shaped solid body (fully rounded ends), a
+			-- thin line under the buttons and a thin divider between them.
+			local body = part(grid, 4, 1, 10, 16, UDim.new(0.5, 0))
+			part(body, 0, 6, 10, 1, nil, true)   -- button split
+			part(body, 5, 0, 1, 6, nil, true)    -- left/right button divider
 		elseif isUser then
 			part(grid, 5, 1, 8, 8, ROUND)                 -- head
 			part(grid, 2, 10, 14, 7, UDim.new(0, 5))      -- shoulders
@@ -3459,7 +3462,7 @@ local SettingsArrow = New("ImageLabel", {
 		}, Info)
 		New("UICorner", { CornerRadius = UDim.new(0, 8) }, hoverPlate)
 		Info.MouseEnter:Connect(function()
-			Tween(hoverPlate, {BackgroundTransparency = 0.94}, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(hoverPlate, {BackgroundTransparency = 0.97}, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(SettingsArrow, {ImageTransparency = 0}, 0.15)
 		end)
 		Info.MouseLeave:Connect(function()
@@ -3488,8 +3491,8 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = WindowSettingsFrame end
-	-- Neverlose's profile popover casts a wide, soft, clearly visible shadow.
-	AttachShadow(WindowSettingsFrame, { radius = 14, layers = 8, step = 2.6, bias = 6, strength = 0.5 })
+	-- Neverlose's profile popover casts a soft shadow all around it.
+	AttachShadow(WindowSettingsFrame, { radius = 12, layers = 6, step = 1.8, bias = 4, strength = 0.62 })
 
 
 	local WSScale = New("UIScale", { Scale = 1 }, WindowSettingsFrame)
@@ -3546,6 +3549,16 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	SettingsContainer.ZIndex = 13
 	SettingsContainer.AutomaticSize = Enum.AutomaticSize.Y
 	SettingsContainer.Parent = WindowSettingsFrame
+	-- The popover gets an explicit height from its content: with AutomaticSize
+	-- the scale-sized shadow layers only measured the base height and covered
+	-- just the top of the menu.
+	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.None
+	SettingsContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+		local frameWidth = WindowSettingsFrame.AbsoluteSize.X
+		if frameWidth <= 0 then return end
+		local unit = frameWidth / 240 -- on-screen pixels per layout pixel (width is 240)
+		WindowSettingsFrame.Size = UDim2.fromOffset(240, math.ceil(SettingsContainer.AbsoluteSize.Y / unit))
+	end)
 	do
         local ll = Instance.new("UIListLayout")
         ll.Padding = UDim.new(0, 1)
@@ -4007,7 +4020,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			RowBtn.Text = ""
 			RowBtn.ZIndex = 1003
 			RowBtn.Parent = BtnRow
-			RowBtn.MouseEnter:Connect(function() Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08) end)
+			RowBtn.MouseEnter:Connect(function() Tween(BtnRow, { BackgroundTransparency = 0.97 }, 0.08) end)
 			RowBtn.MouseLeave:Connect(function() Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12) end)
 
 			local function selectScale()
@@ -4120,7 +4133,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			RowBtn.Text = ""
 			RowBtn.ZIndex = 1003
 			RowBtn.Parent = BtnRow
-			RowBtn.MouseEnter:Connect(function() Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08) end)
+			RowBtn.MouseEnter:Connect(function() Tween(BtnRow, { BackgroundTransparency = 0.97 }, 0.08) end)
 			RowBtn.MouseLeave:Connect(function() Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12) end)
 
 			local function selectLang()
@@ -4216,7 +4229,7 @@ do
 			}, rows)
 			New("UICorner", { CornerRadius = UDim.new(0, 6) }, item)
 			New("UIPadding", { PaddingLeft = UDim.new(0, 12) }, item)
-			item.MouseEnter:Connect(function() Tween(item, { BackgroundTransparency = 0.95 }, 0.08) end)
+			item.MouseEnter:Connect(function() Tween(item, { BackgroundTransparency = 0.97 }, 0.08) end)
 			item.MouseLeave:Connect(function() Tween(item, { BackgroundTransparency = 1 }, 0.1) end)
 			if onPick then
 				item.MouseButton1Click:Connect(function()
@@ -4699,7 +4712,7 @@ end
 			RowBtn.ZIndex = 1005
 			RowBtn.Parent = BtnRow
 			RowBtn.MouseEnter:Connect(function()
-				Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08)
+				Tween(BtnRow, { BackgroundTransparency = 0.97 }, 0.08)
 			end)
 			RowBtn.MouseLeave:Connect(function()
 				Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12)
@@ -5621,7 +5634,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, btn)
 				local glyph = New("Frame", { Name = "Glyph", Position = UDim2.fromOffset(4, 4), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, ZIndex = 125 }, btn)
 				WindowObj._drawGlyph(kind, glyph, color)
-				btn.MouseEnter:Connect(function() Tween(btn, { BackgroundTransparency = 0.93 }, 0.08) end)
+				btn.MouseEnter:Connect(function() Tween(btn, { BackgroundTransparency = 0.97 }, 0.08) end)
 				btn.MouseLeave:Connect(function() Tween(btn, { BackgroundTransparency = 1 }, 0.1) end)
 				return btn
 			end
@@ -5686,7 +5699,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			return plate
 		end
 		local function bindHover(target, plate)
-			target.MouseEnter:Connect(function() Tween(plate, { BackgroundTransparency = 0.95 }, 0.1) end)
+			target.MouseEnter:Connect(function() Tween(plate, { BackgroundTransparency = 0.97 }, 0.1) end)
 			target.MouseLeave:Connect(function() Tween(plate, { BackgroundTransparency = 1 }, 0.14) end)
 		end
 
@@ -5697,7 +5710,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		}, Save)
 		bindHover(saveButton, savePlate)
 		-- TriggerSaveConfig covers the whole pill; only light the name part for it.
-		TriggerSaveConfig.MouseEnter:Connect(function() Tween(namePlate, { BackgroundTransparency = 0.95 }, 0.1) end)
+		TriggerSaveConfig.MouseEnter:Connect(function() Tween(namePlate, { BackgroundTransparency = 0.97 }, 0.1) end)
 		TriggerSaveConfig.MouseLeave:Connect(function() Tween(namePlate, { BackgroundTransparency = 1 }, 0.14) end)
 		saveButton.MouseButton1Click:Connect(function()
 			if activeConfigName and SaveNamedConfig(activeConfigName) then
@@ -6005,7 +6018,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			WindowObj._drawGlyph(iconKind, glyph, textColor)
 
 			btn.MouseEnter:Connect(function()
-				Tween(btn, {BackgroundTransparency = 0.95}, 0.1)
+				Tween(btn, {BackgroundTransparency = 0.97}, 0.1)
 			end)
 			btn.MouseLeave:Connect(function()
 				Tween(btn, {BackgroundTransparency = 1}, 0.12)
@@ -6206,12 +6219,15 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			task.defer(function()
 				if not child.Parent or not panel.Visible then return end
 				ApplyZIndexLadder(panel, panel.ZIndex)
-				if child:IsA("Frame") and child.Name ~= "Space" then
+				-- Grow only (no text fade): rows rebuilt while the panel opens were
+				-- caught mid open-fade and stayed invisible. Rows built during the
+				-- opening itself are not animated at all.
+				local openedAt = panel:GetAttribute("NLOpenedAt") or 0
+				if child:IsA("Frame") and child.Name ~= "Space" and os.clock() - openedAt > 0.35 then
 					local full = child.Size
 					child.ClipsDescendants = true
 					child.Size = UDim2.new(full.X.Scale, full.X.Offset, 0, 0)
 					Tween(child, { Size = full }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-					FadePopupContent(child, true, 0.22)
 					task.delay(0.24, function() if child.Parent then child.ClipsDescendants = false end end)
 				end
 			end)
@@ -6333,6 +6349,7 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 				ConfigMainFrame.Position.X.Offset + ConfigMainFrame.Size.X.Offset + 8,
 				ConfigMainFrame.Position.Y.Offset)
 			ApplyZIndexLadder(RecentlyDeletedPanel, NextPopupZ())
+			RecentlyDeletedPanel:SetAttribute("NLOpenedAt", os.clock())
 			RememberPopupClipping(RecentlyDeletedPanel)
 			SmoothOpen(RecentlyDeletedPanel, 0, 0.16)
 			local rdScale = GetPopupScale(RecentlyDeletedPanel)
@@ -6388,6 +6405,7 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 				end
 			end)
 			ConfigMainFrame.Visible = true
+			ConfigMainFrame:SetAttribute("NLOpenedAt", os.clock())
 			ConfigScale.Scale = 0.92
 			Tween(ConfigScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			FadePopupContent(ConfigMainFrame, true, 0.2)
@@ -6915,14 +6933,14 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	-- Glow: stacked rounded layers in the accent colour, fading outwards. Each
 	-- carries a gradient so one side is brighter; rotating it moves the light.
 	local glowGradients = {}
-	for i = 1, 9 do
-		local spread = i * 2
+	for i = 1, 6 do
+		local spread = i * 1.5
 		local layer = New("Frame", {
 			Name = "LoaderGlow" .. i,
 			Position = UDim2.fromOffset(-spread, -spread),
 			Size = UDim2.new(1, spread * 2, 1, spread * 2),
 			BackgroundColor3 = mainColor,
-			BackgroundTransparency = 0.45 + i * 0.055,
+			BackgroundTransparency = 0.62 + i * 0.06,
 			BorderSizePixel = 0,
 			ZIndex = Z_BASE + 989 - i,
 		}, toast)
@@ -8155,7 +8173,7 @@ New("Frame", {
 							ZIndex = 5005,
 						}, BtnRow)
 						RowBtn.MouseEnter:Connect(function()
-							Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08)
+							Tween(BtnRow, { BackgroundTransparency = 0.97 }, 0.08)
 						end)
 						RowBtn.MouseLeave:Connect(function()
 							Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12)
@@ -8557,7 +8575,7 @@ New("Frame", {
 					ZIndex = 8002,
 				}, item)
 				item.MouseEnter:Connect(function()
-					Tween(item, { BackgroundTransparency = 0.94 }, 0.08)
+					Tween(item, { BackgroundTransparency = 0.97 }, 0.08)
 				end)
 				item.MouseLeave:Connect(function()
 					Tween(item, { BackgroundTransparency = 1 }, 0.12)
@@ -9426,7 +9444,7 @@ New("Frame", {
 					optionRows[opt] = Buttons
 
 					Buttons.MouseEnter:Connect(function()
-						Tween(Buttons, { BackgroundTransparency = 0.94 }, 0.09, Enum.EasingStyle.Sine)
+						Tween(Buttons, { BackgroundTransparency = 0.97 }, 0.09, Enum.EasingStyle.Sine)
 					end)
 					Buttons.MouseLeave:Connect(function()
 						Tween(Buttons, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Sine)
@@ -9693,7 +9711,7 @@ New("Frame", {
 						ZIndex = Z_BASE + 503,
 					}, row)
 					optionRows[opt] = row
-					row.MouseEnter:Connect(function() Tween(row, { BackgroundTransparency = 0.94 }, 0.09, Enum.EasingStyle.Sine) end)
+					row.MouseEnter:Connect(function() Tween(row, { BackgroundTransparency = 0.97 }, 0.09, Enum.EasingStyle.Sine) end)
 					row.MouseLeave:Connect(function() Tween(row, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Sine) end)
 					row.MouseButton1Click:Connect(function()
 						selected = opt
@@ -10413,7 +10431,7 @@ New("Frame", {
 								ZIndex = 1005,
 							}, BtnRow)
 							RowBtn.MouseEnter:Connect(function()
-								Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08)
+								Tween(BtnRow, { BackgroundTransparency = 0.97 }, 0.08)
 							end)
 							RowBtn.MouseLeave:Connect(function()
 								Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12)
