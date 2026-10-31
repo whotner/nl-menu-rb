@@ -2969,10 +2969,10 @@ do
 	task.defer(WMShadowSync)
 end
 
--- Watermark items, settings and reordering (Neverlose): left-click the strip
+-- Watermark items, settings and reordering (Neverlose): right-click the strip
 -- while the menu is open for its settings (Items, Additional Colors, Display
--- Avatar); Items picks what the strip shows; dragging an item along the strip
--- reorders it, dragging elsewhere (the NL logo, the edges) moves the strip.
+-- Avatar, Position); Items picks what the strip shows; dragging an item along
+-- the strip reorders it, dragging elsewhere (the NL logo, the edges) moves it.
 -- Built inside a function so its locals live in their own register frame
 -- (AddWindow is close to Luau's register limit).
 WindowObj._buildWatermarkUI = function()
@@ -3056,7 +3056,33 @@ WindowObj._buildWatermarkUI = function()
 		{ "preset", "Preset" }, { "name", "Username" }, { "time", "Time" },
 	}
 	local TEXT, MUTED = Color3.fromRGB(235, 236, 241), Color3.fromRGB(150, 152, 162)
-	local settingsFrame, itemsFrame, colorSwatch, avatarSwitch
+	local settingsFrame, itemsFrame, colorSwatch, avatarSwitch, positionFrame, positionValue
+	-- Position presets. The ScreenGui keeps Roblox's top-bar inset, so top
+	-- presets subtract it: the strip sits 8px under the real screen edge.
+	local PRESETS = { "Top Right", "Top Center", "Top Left", "Bottom Right", "Bottom Center", "Bottom Left" }
+	local function topInset()
+		local ok, inset = pcall(function() return game:GetService("GuiService"):GetGuiInset() end)
+		return ok and inset and inset.Y or 0
+	end
+	WindowObj._wmPlace = function(name)
+		local top = 8 - topInset()
+		local spots = {
+			["Top Right"] = { Vector2.new(1, 0), UDim2.new(1, -8, 0, top) },
+			["Top Center"] = { Vector2.new(0.5, 0), UDim2.new(0.5, 0, 0, top) },
+			["Top Left"] = { Vector2.new(0, 0), UDim2.new(0, 8, 0, top) },
+			["Bottom Right"] = { Vector2.new(1, 1), UDim2.new(1, -8, 1, -8) },
+			["Bottom Center"] = { Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -8) },
+			["Bottom Left"] = { Vector2.new(0, 1), UDim2.new(0, 8, 1, -8) },
+		}
+		local spot = spots[name]
+		if not spot then return end
+		GameInfo.AnchorPoint = spot[1]
+		GameInfo.Position = spot[2]
+		GameInfo:SetAttribute("Dragged", false)
+		GameInfo:SetAttribute("Preset", name)
+		if positionValue then positionValue.Text = name end
+	end
+	WindowObj._wmPlace("Top Right")
 	local wmColor = LAVENDER
 
 	local function paintIcons(color)
@@ -3146,7 +3172,7 @@ WindowObj._buildWatermarkUI = function()
 	end
 
 	local function buildSettings()
-		settingsFrame = plate("WatermarkSettings", 220, 36 + 3 * 30 + 8)
+		settingsFrame = plate("WatermarkSettings", 230, 36 + 4 * 30 + 8)
 		New("TextLabel", {
 			Name = "Title", Position = UDim2.fromOffset(14, 6), Size = UDim2.new(1, -28, 0, 26), BackgroundTransparency = 1,
 			Text = "Watermark", TextColor3 = TEXT, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9001,
@@ -3218,15 +3244,54 @@ WindowObj._buildWatermarkUI = function()
 			ApplyWatermarkLayout(nil, nil)
 			setSwitch(avatarSwitch, WMShowMap.user)
 		end)
+
+		local positionRow = row(4, "rbxassetid://10734900011", "Position")
+		positionValue = New("TextLabel", {
+			Name = "Value", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -24, 0.5, 0), Size = UDim2.fromOffset(100, 20),
+			BackgroundTransparency = 1, Text = GameInfo:GetAttribute("Preset") or "Custom", TextColor3 = MUTED, TextSize = 13, Font = FONT,
+			TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 9002,
+		}, positionRow)
+		New("ImageLabel", {
+			Name = "Chevron", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(12, 12),
+			BackgroundTransparency = 1, Image = "rbxassetid://10709791437", ImageColor3 = MUTED, ZIndex = 9002,
+		}, positionRow)
+		positionRow.MouseButton1Click:Connect(function()
+			if not positionFrame then
+				positionFrame = plate("WatermarkPositions", 150, 8 + #PRESETS * 24)
+				local list = New("Frame", { Name = "List", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 9001 }, positionFrame)
+				New("UIPadding", { PaddingTop = UDim.new(0, 4), PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4) }, list)
+				New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, list)
+				for i, name in ipairs(PRESETS) do
+					local item = New("TextButton", {
+						Name = "Preset_" .. i, LayoutOrder = i, Size = UDim2.new(1, 0, 0, 24), BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+						BackgroundTransparency = 1, AutoButtonColor = false, Text = name, TextColor3 = TEXT, TextSize = 13, Font = FONT,
+						TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9002,
+					}, list)
+					New("UICorner", { CornerRadius = UDim.new(0, 5) }, item)
+					New("UIPadding", { PaddingLeft = UDim.new(0, 10) }, item)
+					item.MouseEnter:Connect(function() Tween(item, { BackgroundTransparency = 0.97 }, 0.08) end)
+					item.MouseLeave:Connect(function() Tween(item, { BackgroundTransparency = 1 }, 0.12) end)
+					item.MouseButton1Click:Connect(function()
+						WindowObj._wmPlace(name)
+						closeFrame(positionFrame)
+					end)
+				end
+			end
+			if positionFrame.Visible then closeFrame(positionFrame) return end
+			openFrame(positionFrame, settingsFrame.AbsolutePosition.X + settingsFrame.AbsoluteSize.X + 6, positionRow.AbsolutePosition.Y - 4,
+				positionRow, function() closeFrame(positionFrame) end)
+		end)
 	end
 
 	local function openSettings()
 		if not settingsFrame then buildSettings() end
 		if settingsFrame.Visible then closeFrame(settingsFrame) return end
 		setSwitch(avatarSwitch, WMShowMap.user == true)
+		if positionValue then positionValue.Text = GameInfo:GetAttribute("Preset") or "Custom" end
 		openFrame(settingsFrame, GameInfo.AbsolutePosition.X + GameInfo.AbsoluteSize.X - settingsFrame.AbsoluteSize.X,
 			GameInfo.AbsolutePosition.Y + GameInfo.AbsoluteSize.Y + 8, GameInfo, function()
 				if itemsFrame then closeFrame(itemsFrame) end
+				if positionFrame then closeFrame(positionFrame) end
 				closeFrame(settingsFrame)
 			end)
 	end
@@ -3257,8 +3322,12 @@ WindowObj._buildWatermarkUI = function()
 		ApplyWatermarkLayout(order, nil)
 	end
 	GameInfo.InputBegan:Connect(function(input)
-		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
 		if not MainFrame.Visible then return end
+		if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			openSettings()
+			return
+		end
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
 		drag = { point = input.Position, pos = GameInfo.Position, key = cellAt(input.Position), moved = false }
 	end)
 	UserInputService.InputChanged:Connect(function(input)
@@ -3272,26 +3341,31 @@ WindowObj._buildWatermarkUI = function()
 		else
 			GameInfo.Position = UDim2.new(drag.pos.X.Scale, drag.pos.X.Offset + d.X, drag.pos.Y.Scale, drag.pos.Y.Offset + d.Y)
 			GameInfo:SetAttribute("Dragged", true)
+			GameInfo:SetAttribute("Preset", "Custom")
 		end
 	end)
 	UserInputService.InputEnded:Connect(function(input)
 		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
-		local was = drag
 		drag = nil
-		if was and not was.moved then openSettings() end
 	end)
 
 	-- Config: position (when moved), item order and visibility, icon colour.
 	WindowObj._configExtras.pos_watermark = {
 		get = function()
+			local preset = GameInfo:GetAttribute("Preset")
+			if preset and preset ~= "Custom" then return { preset = preset } end
 			if not GameInfo:GetAttribute("Dragged") then return nil end
-			local p = GameInfo.Position
-			return { p.X.Scale, p.X.Offset, p.Y.Scale, p.Y.Offset }
+			local p, a = GameInfo.Position, GameInfo.AnchorPoint
+			return { p.X.Scale, p.X.Offset, p.Y.Scale, p.Y.Offset, a.X, a.Y }
 		end,
 		set = function(v)
-			if type(v) ~= "table" or type(v[4]) ~= "number" then return end
+			if type(v) ~= "table" then return end
+			if type(v.preset) == "string" then WindowObj._wmPlace(v.preset) return end
+			if type(v[4]) ~= "number" then return end
+			if type(v[6]) == "number" then GameInfo.AnchorPoint = Vector2.new(v[5], v[6]) end
 			GameInfo.Position = UDim2.new(v[1], v[2], v[3], v[4])
 			GameInfo:SetAttribute("Dragged", true)
+			GameInfo:SetAttribute("Preset", "Custom")
 		end,
 	}
 	WindowObj._configExtras.watermark = {
@@ -3339,7 +3413,9 @@ end
 function WindowObj:SetWatermark(options)
 	local wm = WindowObj.Watermark
 	if type(options) ~= "table" then return wm end
-	if options.position then
+	if type(options.positionPreset) == "string" and WindowObj._wmPlace then
+		WindowObj._wmPlace(options.positionPreset)
+	elseif options.position then
 		-- Preserve the current anchor when callers only change Position.
 		-- Resetting it to (0, 0) here made top/right presets jump unexpectedly.
 		if options.anchorPoint then
