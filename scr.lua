@@ -8343,32 +8343,47 @@ New("UIAspectRatioConstraint", {
 
 			-- Left side: team switch, agent, gear slots.
 			local side = New("Frame", { Name = "AgentSide", Size = UDim2.new(0.32, 0, 1, 0), BackgroundTransparency = 1 }, page)
-			local switch = New("TextButton", {
-				Name = "TeamSwitch", Size = UDim2.fromOffset(150, 28), BackgroundColor3 = CARD, BackgroundTransparency = 0.2,
-				AutoButtonColor = false, Text = "", BorderSizePixel = 0,
+			-- Team switch as on CS2: the open team's pill shows its logo and
+			-- "X Loadout", the other team sits beside it as a round logo only;
+			-- clicking that logo switches.
+			local function teamLogo(parent, which, size)
+				local logo = New("Frame", {
+					Name = "TeamLogo", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 5, 0.5, 0), Size = UDim2.fromOffset(size, size),
+					BackgroundColor3 = TEAM_COLOR[which], BackgroundTransparency = 0.75, BorderSizePixel = 0,
+				}, parent)
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, logo)
+				New("TextLabel", {
+					Name = "TeamLogoText", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = which,
+					TextColor3 = TEAM_COLOR[which], TextSize = 9, Font = FONT_BOLD,
+				}, logo)
+				return logo
+			end
+			local switch = New("Frame", {
+				Name = "TeamSwitch", Size = UDim2.fromOffset(130, 28), BackgroundColor3 = CARD, BackgroundTransparency = 0.2, BorderSizePixel = 0,
 			}, side)
 			New("UICorner", { CornerRadius = UDim.new(1, 0) }, switch)
 			Stroke(switch)
-			local badge = New("Frame", {
-				Name = "TeamBadge", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 6, 0.5, 0), Size = UDim2.fromOffset(18, 18),
-				BackgroundColor3 = TEAM_COLOR[team], BackgroundTransparency = 0.75, BorderSizePixel = 0,
-			}, switch)
-			New("UICorner", { CornerRadius = UDim.new(1, 0) }, badge)
-			local badgeText = New("TextLabel", {
-				Name = "TeamBadgeText", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = team,
-				TextColor3 = TEAM_COLOR[team], TextSize = 9, Font = FONT_BOLD,
-			}, badge)
+			local badge = teamLogo(switch, team, 18)
+			local badgeText = badge:FindFirstChild("TeamLogoText")
 			local switchText = New("TextLabel", {
-				Name = "TeamTitle", Position = UDim2.fromOffset(32, 0), Size = UDim2.new(1, -56, 1, 0), BackgroundTransparency = 1,
+				Name = "TeamTitle", Position = UDim2.fromOffset(30, 0), Size = UDim2.new(1, -36, 1, 0), BackgroundTransparency = 1,
 				Text = team .. " Loadout", TextColor3 = TEXT, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left,
 			}, switch)
-			New("ImageLabel", {
-				Name = "SwapIcon", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -9, 0.5, 0), Size = UDim2.fromOffset(13, 13),
-				BackgroundTransparency = 1, Image = "rbxassetid://10709768019", ImageColor3 = MUTED,
-			}, switch)
+			local other = New("TextButton", {
+				Name = "OtherTeam", Position = UDim2.fromOffset(136, 0), Size = UDim2.fromOffset(28, 28), BackgroundColor3 = CARD,
+				BackgroundTransparency = 0.2, AutoButtonColor = false, Text = "", BorderSizePixel = 0,
+			}, side)
+			New("UICorner", { CornerRadius = UDim.new(1, 0) }, other)
+			Stroke(other)
+			local otherLogo = teamLogo(other, team == "CT" and "T" or "CT", 18)
+			otherLogo.AnchorPoint = Vector2.new(0.5, 0.5)
+			otherLogo.Position = UDim2.fromScale(0.5, 0.5)
+			local otherText = otherLogo:FindFirstChild("TeamLogoText")
+			other.MouseEnter:Connect(function() Tween(other, { BackgroundTransparency = 0 }, 0.1) end)
+			other.MouseLeave:Connect(function() Tween(other, { BackgroundTransparency = 0.2 }, 0.14) end)
 
-			local agent = card(side, "Agent")
-			agent.Position = UDim2.fromOffset(0, 36)
+			-- The agent stands free on the page (no plate behind it).
+			local agent = New("Frame", { Name = "Agent", Position = UDim2.fromOffset(0, 36), BackgroundTransparency = 1, Active = true }, side)
 			local viewport = New("ViewportFrame", {
 				Name = "AgentView", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
 				Ambient = Color3.fromRGB(150, 150, 165), LightColor = Color3.fromRGB(255, 255, 255), LightDirection = Vector3.new(-0.6, -1, -0.8),
@@ -8507,6 +8522,10 @@ New("UIAspectRatioConstraint", {
 				badgeText.Text = team
 				Tween(badge, { BackgroundColor3 = TEAM_COLOR[team] }, 0.2)
 				Tween(badgeText, { TextColor3 = TEAM_COLOR[team] }, 0.2)
+				local otherTeam = team == "CT" and "T" or "CT"
+				otherText.Text = otherTeam
+				Tween(otherLogo, { BackgroundColor3 = TEAM_COLOR[otherTeam] }, 0.2)
+				Tween(otherText, { TextColor3 = TEAM_COLOR[otherTeam] }, 0.2)
 				-- Weapon names cross-fade to the other team's set.
 				for _, entry in ipairs(nameLabels) do
 					local label = entry.label
@@ -8519,7 +8538,7 @@ New("UIAspectRatioConstraint", {
 				if type(options.onTeam) == "function" then pcall(options.onTeam, team) end
 				return self
 			end
-			switch.MouseButton1Click:Connect(function() api:SetTeam(team == "CT" and "T" or "CT") end)
+			other.MouseButton1Click:Connect(function() api:SetTeam(team == "CT" and "T" or "CT") end)
 			return api
 		end
 
