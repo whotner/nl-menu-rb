@@ -3252,7 +3252,8 @@ local function MakeOverlayPanel(name, iconAsset, title)
 		ZIndex = Z_BASE + 890,
 	}, NeverloseCS2)
 	New("UIPadding", { PaddingLeft = UDim.new(0, OV.pad), PaddingRight = UDim.new(0, OV.pad), PaddingTop = UDim.new(0, OV.pad), PaddingBottom = UDim.new(0, OV.pad) }, panel)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Left, Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
+	-- 8px under the header: its 5px shadow (1px lower) ends before the rows.
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Left, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
 	New("UIScale", { Name = "PopScale", Scale = 1 }, panel)
 
 	local header = OV.pill("Header", panel, OV.header, 16, OV.head)
@@ -3390,7 +3391,7 @@ function OV.layout(panel, rows)
 			n = n + 1
 		end
 	end
-	local h = OV.head + (n > 0 and (5 + n * OV.h + (n - 1) * 4) or 0)
+	local h = OV.head + (n > 0 and (8 + n * OV.h + (n - 1) * 4) or 0)
 	if panel:GetAttribute("TargetW") == w and panel:GetAttribute("TargetH") == h then return end
 	panel:SetAttribute("TargetW", w)
 	panel:SetAttribute("TargetH", h)
@@ -5417,7 +5418,7 @@ asss.Parent = SearchBtn
 	local GlobalPreset
 	local Save = Instance.new("Frame")
 	Save.Name = "Save"
-	Save.Position = UDim2.fromOffset(11, 13)
+	Save.Position = UDim2.fromOffset(11 + 34, 13)
 	Save.Size = UDim2.fromOffset(150, 28)
 	Save.BackgroundColor3 = Color3.fromRGB(20, 23, 34)
 	Save.BackgroundTransparency = 0
@@ -5425,17 +5426,24 @@ asss.Parent = SearchBtn
 	Save.Parent = Header
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = Save end
 	do Stroke(Save) end
+	-- Save is its own square button left of the preset field (a field, not a
+	-- local: AddWindow is near the register cap).
+	WindowObj._saveBox = New("Frame", {
+		Name = "SaveButtonBox", Position = UDim2.fromOffset(11, 13), Size = UDim2.fromOffset(28, 28),
+		BackgroundColor3 = Color3.fromRGB(20, 23, 34), BackgroundTransparency = 0, BorderSizePixel = 0,
+	}, Header)
+	New("UICorner", { CornerRadius = UDim.new(0, 8) }, WindowObj._saveBox)
+	Stroke(WindowObj._saveBox)
 
 	local SaveIcon = Instance.new('ImageLabel')
 SaveIcon.Name = "SaveIcon"
-SaveIcon.Position = UDim2.fromOffset(10, 8)
+SaveIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+SaveIcon.Position = UDim2.fromScale(0.5, 0.5)
 SaveIcon.Size = UDim2.fromOffset(13, 13)
 SaveIcon.BackgroundTransparency = 1
 SaveIcon.Image = "rbxassetid://6035067857"
 SaveIcon.ImageTransparency = 0.20000000298023224
-SaveIcon.Parent = Save
--- Neverlose splits the save icon into its own segment of the config selector.
-New("Frame", { Name = "SaveDivider", Position = UDim2.fromOffset(32, 0), Size = UDim2.new(0, 1, 1, 0), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.93, BorderSizePixel = 0 }, Save)
+SaveIcon.Parent = WindowObj._saveBox
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
@@ -5443,8 +5451,8 @@ UIAspectRatioConstraint.Parent = SaveIcon
 
 	local SaveText = Instance.new('TextLabel')
 	SaveText.Name = "SaveText"
-	SaveText.Position = UDim2.fromOffset(42, 0)
-	SaveText.Size = UDim2.new(1, -82, 1, 0)
+	SaveText.Position = UDim2.fromOffset(12, 0)
+	SaveText.Size = UDim2.new(1, -52, 1, 0)
 	SaveText.BackgroundTransparency = 1
 	SaveText.Text = "Default"
 SaveText.TextColor3 = Color3.fromRGB(226, 228, 236)
@@ -5458,19 +5466,20 @@ SaveText.Parent = Save
 
 	local function UpdateSavePillWidth(textValue)
 		local textWidth = MeasureText(tostring(textValue or SaveText.Text or "Default"), 15, FONT)
-		local width = math.clamp(math.ceil(textWidth) + 42 + 40, 150, 265)
+		local width = math.clamp(math.ceil(textWidth) + 12 + 40, 120, 235)
 		Save.Size = UDim2.fromOffset(width, 28)
-		Save.Position = UDim2.fromOffset(11, 13)
-		SaveText.Size = UDim2.new(1, -82, 1, 0)
-		if GlobalPreset then GlobalPreset.Position = UDim2.fromOffset(11 + width + 17, 13) end
+		Save.Position = UDim2.fromOffset(11 + 34, 13)
+		SaveText.Size = UDim2.new(1, -52, 1, 0)
+		if GlobalPreset then GlobalPreset.Position = UDim2.fromOffset(11 + 34 + width + 12, 13) end
 	end
 	UpdateSavePillWidth(SaveText.Text)
 
 	local function FlashSaved()
-		if not Save then return end
-		Tween(Save, { BackgroundColor3 = mainColor }, 0.09)
+		local box = WindowObj._saveBox
+		if not box then return end
+		Tween(box, { BackgroundColor3 = mainColor }, 0.09)
 		task.delay(0.1, function()
-			if Save then Tween(Save, { BackgroundColor3 = Color3.fromRGB(17, 19, 27) }, 0.22) end
+			if box then Tween(box, { BackgroundColor3 = Color3.fromRGB(20, 23, 34) }, 0.22) end
 		end)
 	end
 	local function ShowSavedName()
@@ -6098,17 +6107,17 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			target.MouseLeave:Connect(function() Tween(plate, { BackgroundTransparency = 1 }, 0.14) end)
 		end
 
-		local savePlate = hoverPlate(Save, UDim2.fromOffset(0, 0), UDim2.new(0, 32, 1, 0))
-		local namePlate = hoverPlate(Save, UDim2.fromOffset(33, 0), UDim2.new(1, -33, 1, 0))
+		local savePlate = hoverPlate(WindowObj._saveBox, UDim2.fromOffset(0, 0), UDim2.fromScale(1, 1))
+		local namePlate = hoverPlate(Save, UDim2.fromOffset(0, 0), UDim2.fromScale(1, 1))
 		local saveButton = New("TextButton", {
-			Name = "SaveSegment", Size = UDim2.new(0, 32, 1, 0), BackgroundTransparency = 1, Text = "", ZIndex = 16,
-		}, Save)
+			Name = "SaveSegment", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "", ZIndex = 16,
+		}, WindowObj._saveBox)
 		bindHover(saveButton, savePlate)
-		-- TriggerSaveConfig covers the whole pill; only light the name part for it.
 		TriggerSaveConfig.MouseEnter:Connect(function() Tween(namePlate, { BackgroundTransparency = 0.97 }, 0.1) end)
 		TriggerSaveConfig.MouseLeave:Connect(function() Tween(namePlate, { BackgroundTransparency = 1 }, 0.14) end)
+		-- Saves into the selected preset; with none selected, into "Default".
 		saveButton.MouseButton1Click:Connect(function()
-			if activeConfigName and SaveNamedConfig(activeConfigName) then
+			if SaveNamedConfig(activeConfigName or "Default") then
 				FlashSaved()
 			end
 		end)
@@ -6581,6 +6590,16 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 		local query = string.lower(tostring(ConfigSearchBox.Text or "")):gsub("^%s+", ""):gsub("%s+$", "")
 		row.Visible = query == "" or string.lower(Rename.Text or ""):find(query, 1, true) ~= nil
+		-- The selected preset keeps its mark when the list is rebuilt.
+		if name == activeConfigName then
+			activeRow = row
+			activeLoadBtn = LoadConfigBtn
+			row.BackgroundColor3 = Color3.fromRGB(27, 27, 35)
+			local outline = row:FindFirstChild("ConfigRowStroke")
+			if outline then outline.Color = Color3.fromRGB(73, 79, 117); outline.Transparency = 0 end
+			LoadConfigBtn.Image = SAVE_ICON
+			LoadConfigBtn.ImageColor3 = Color3.fromRGB(205, 208, 218)
+		end
 		return row
 	end
 
@@ -6633,7 +6652,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RDList.ChildRemoved:Connect(function() task.defer(UpdateConfigPanelHeight) end)
 
 	local function RefreshConfigList()
-		ClearActiveConfig()
+		-- Keep the selected preset's name; its row is rebuilt and re-marked.
+		activeRow = nil
+		activeLoadBtn = nil
 		for _, c in ipairs(ListContainer:GetChildren()) do
 			if c:IsA("Frame") and c.Name ~= "Space" then c:Destroy() end
 		end
@@ -6759,7 +6780,6 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 
 	closeConfigPanel = function()
 		configOpen = false
-		ClearActiveConfig()
 		ClosePopupsUnder(ConfigMainFrame)
 		ClosePopupsUnder(RecentlyDeletedPanel)
 		UnregisterPopup(ConfigMainFrame)
@@ -6777,7 +6797,6 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 			if configOpen then return end
 			ConfigMainFrame.Visible = false
 			RecentlyDeletedPanel.Visible = false
-			ClearActiveConfig()
 		end)
 	end
 	TriggerSaveConfig.MouseButton1Click:Connect(function()
