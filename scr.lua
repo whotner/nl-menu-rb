@@ -7418,11 +7418,10 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 		ClosePopupsUnder(RecentlyDeletedPanel)
 		UnregisterPopup(ConfigMainFrame)
 		UnregisterPopup(RecentlyDeletedPanel)
-		Tween(ConfigMainFrame, { BackgroundTransparency = 1 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-		Tween(ConfigScale, { Scale = 0.96 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-		-- Rows, icons and the shadow fade with the panel instead of popping off.
-		FadePopupContent(ConfigMainFrame, false, 0.13)
-		TweenShadowLayers(ConfigMainFrame, false, 0.13, Enum.EasingDirection.In)
+		-- Panel, rows, icons, outlines and shadow fade out as one.
+		Tween(ConfigMainFrame, { BackgroundTransparency = 1 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+		Tween(ConfigScale, { Scale = 0.96 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+		WindowObj._fadeTree(ConfigMainFrame, false, 0.16)
 		Tween(RecentlyDeletedPanel, { BackgroundTransparency = 1 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 		local rdScale = RecentlyDeletedPanel:FindFirstChild("_PopScale")
 		if rdScale and rdScale:IsA("UIScale") then Tween(rdScale, { Scale = 0.94 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In) end
@@ -7437,7 +7436,11 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 		if configOpen then
 			CloseAllPopupsExcept(ConfigMainFrame)
 			RecentlyDeletedPanel.Visible = false
+			-- One motion: everything (rows rebuilt below included) starts clear
+			-- and comes in together with the panel.
+			WindowObj._fadeTree(ConfigMainFrame, true, 0)
 			RefreshConfigList()
+			WindowObj._fadeTree(ConfigMainFrame, false, 0)
 			ConfigMainFrame.BackgroundTransparency = 1
 			ConfigMainFrame.Visible = false
 			ConfigMainFrame.ZIndex = 7000
@@ -7453,14 +7456,13 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 			end)
 			ConfigMainFrame.Visible = true
 			ConfigMainFrame:SetAttribute("NLOpenedAt", os.clock())
-			ConfigScale.Scale = 0.92
-			Tween(ConfigScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-			FadePopupContent(ConfigMainFrame, true, 0.2)
-			TweenShadowLayers(ConfigMainFrame, true, 0.2)
-			Tween(ConfigMainFrame, { BackgroundTransparency = 0.045 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			ConfigScale.Scale = 0.95
+			Tween(ConfigScale, { Scale = 1 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			WindowObj._fadeTree(ConfigMainFrame, true, 0.22)
+			Tween(ConfigMainFrame, { BackgroundTransparency = 0.045 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			local cfgSettled = ConfigMainFrame.Position
-			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 5)
-			Tween(ConfigMainFrame, { Position = cfgSettled }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 6)
+			Tween(ConfigMainFrame, { Position = cfgSettled }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		else
 			closeConfigPanel()
 		end
@@ -7909,7 +7911,9 @@ Line9.Parent = MainFrame
 			if props then
 				local goal
 				for _, prop in ipairs(props) do
-					local key = "FadeBase_" .. prop
+					-- Keyed by root, so nested fades (menu over a panel) keep
+					-- their own remembered values.
+					local key = "FB_" .. root.Name .. "_" .. prop
 					if show then
 						local base = d:GetAttribute(key)
 						if base ~= nil then
@@ -8034,9 +8038,9 @@ WindowObj._setupWindowToggle = nil
 -- accent gradient running around the border. Opens the window when done.
 -- Set Library.ShowLoader = false before AddWindow to skip it.
 if Library.ShowLoader ~= false then task.spawn(function()
-	-- Loader in the watermark's look: a dark see-through capsule over the
-	-- acrylic blur with the melting capsule shadow; NL badge, title, status,
-	-- "k of 10" and a progress line that fills step by step.
+	-- Loader in the watermark's look (dark see-through capsule over the blur)
+	-- framed by the soft accent glow whose bright side slowly circles; NL
+	-- badge, title, status and "k of 10".
 	local toast = New("Frame", {
 		Name = "NeverloseLoader",
 		AnchorPoint = Vector2.new(1, 0),
@@ -8050,8 +8054,33 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		ZIndex = Z_BASE + 990,
 	}, NeverloseCS2)
 	New("UICorner", { CornerRadius = UDim.new(1, 0) }, toast)
-	WindowObj._edgeShadow(toast, Z_BASE + 989)
 	if WindowObj._attachBlur then WindowObj._attachBlur(toast, 18) end
+	-- Glow: faint capsule layers in the accent colour fading outwards, each
+	-- with a gradient so one side is brighter; rotating it moves the light.
+	local glowGradients = {}
+	for i = 1, 10 do
+		local spread = i * 2
+		local layer = New("Frame", {
+			Name = "LoaderGlow" .. i, Position = UDim2.fromOffset(-spread, -spread), Size = UDim2.new(1, spread * 2, 1, spread * 2),
+			BackgroundColor3 = mainColor, BackgroundTransparency = 0.72 + i * 0.026, BorderSizePixel = 0, ZIndex = Z_BASE + 989 - i,
+		}, toast)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, layer)
+		local g = Instance.new("UIGradient")
+		g.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.5, 0.45), NumberSequenceKeypoint.new(1, 0.85),
+		})
+		g.Rotation = 120
+		g.Parent = layer
+		table.insert(glowGradients, g)
+	end
+	task.spawn(function()
+		local angle = 120
+		while toast.Parent do
+			local dt = RunService.RenderStepped:Wait()
+			angle = (angle + dt * 90) % 360
+			for _, g in ipairs(glowGradients) do g.Rotation = angle end
+		end
+	end)
 
 	local badge = New("Frame", {
 		Name = "Badge", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 10, 0.5, 0),
@@ -8069,30 +8098,21 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		WindowObj._logoWithFallback(badge, 18, Z_BASE + 992, 20)
 	end
 	New("TextLabel", {
-		Name = "LoaderTitle", Position = UDim2.fromOffset(60, 9), Size = UDim2.new(1, -140, 0, 20), BackgroundTransparency = 1,
+		Name = "LoaderTitle", Position = UDim2.fromOffset(60, 11), Size = UDim2.new(1, -140, 0, 20), BackgroundTransparency = 1,
 		Text = string.lower(tostring(hubTitle)), TextColor3 = Color3.fromRGB(235, 236, 241), TextSize = 16,
 		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 991,
 	}, toast)
 	local status = New("TextLabel", {
-		Name = "LoaderStatus", Position = UDim2.fromOffset(60, 28), Size = UDim2.new(1, -84, 0, 16), BackgroundTransparency = 1,
+		Name = "LoaderStatus", Position = UDim2.fromOffset(60, 31), Size = UDim2.new(1, -84, 0, 16), BackgroundTransparency = 1,
 		Text = "Initialization in progress", TextColor3 = Color3.fromRGB(160, 162, 172), TextSize = 13,
 		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 991,
 	}, toast)
 	local counter = New("TextLabel", {
-		Name = "LoaderCounter", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -22, 0, 9), Size = UDim2.fromOffset(70, 20),
+		Name = "LoaderCounter", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 11), Size = UDim2.fromOffset(70, 20),
 		BackgroundTransparency = 1, Text = "0 of 10", TextColor3 = Color3.fromRGB(160, 162, 172), TextSize = 13,
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = Z_BASE + 991,
 	}, toast)
-	-- Progress line under the status: fills one step at a time.
-	local track = New("Frame", {
-		Name = "LoaderTrack", Position = UDim2.fromOffset(60, 47), Size = UDim2.new(1, -84, 0, 3),
-		BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.9, BorderSizePixel = 0, ZIndex = Z_BASE + 991,
-	}, toast)
-	New("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
-	local fill = New("Frame", {
-		Name = "LoaderFill", Size = UDim2.fromScale(0, 1), BackgroundColor3 = mainColor, BorderSizePixel = 0, ZIndex = Z_BASE + 992,
-	}, track)
-	New("UICorner", { CornerRadius = UDim.new(1, 0) }, fill)
+
 	-- The watermark waits for the loader, like Neverlose's.
 	-- (Later SetWatermark calls stay hidden too: ApplyWatermarkLayout checks the flag.)
 	WindowObj._loaderActive = true
@@ -8145,7 +8165,6 @@ if Library.ShowLoader ~= false then task.spawn(function()
 			local left = 0.12 - (os.clock() - started)
 			if left > 0 then task.wait(left) end
 			counter.Text = tostring(step) .. " of 10"
-			Tween(fill, { Size = UDim2.fromScale(step / 10, 1) }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		end
 	end
 	status.Text = "Initialization complete"
