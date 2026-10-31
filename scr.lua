@@ -8450,7 +8450,7 @@ New("Frame", {
 				for key, target in pairs(_keybinds) do
 					if target and target.label and key and not target.hideInList then
 						local value
-						if target.obj and type(target.obj.Get) == "function" then
+						if target.showValue and target.obj and type(target.obj.Get) == "function" then
 							local ok, v = pcall(target.obj.Get, target.obj)
 							if ok and type(v) == "number" then
 								value = (v % 1 == 0) and tostring(v) or string.format("%.1f", v)
@@ -8465,30 +8465,23 @@ New("Frame", {
 				return out
 			end
 
+			-- Neverlose hotkey editor (opens right of the hotkey menu): Key chip,
+			-- Mode chip with its glyph, Value and Visible switches, red Delete.
+			-- Everything the editor needs lives in bindRefs (register budget).
+			local bindRefs = {}
 			local function CloseBindMenu()
 				UnregisterPopup(_bindMenu)
+				bindRefs.listening = false
 				if not _bindMenu then return end
-				if _bindMenu.Visible then
-					Tween(_bindMenu, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-					TweenShadowLayers(_bindMenu, false, 0.12, Enum.EasingDirection.In)
-					task.delay(0.13, function()
-						if _bindMenu and _bindMenu.Parent and not _bindTarget then
-							_bindMenu.Visible = false
-						end
-					end)
-				end
+				if _bindMenu.Visible then SmoothClose(_bindMenu, 0.14) end
 				_bindTarget = nil
 			end
 
-			local BIND_MODES = { "hold", "toggle", "always" }
+			local BIND_MODES = { "toggle", "hold", "always" }
 			local function CurrentBindMode(target)
 				return target and target.bindMode or "toggle"
 			end
 
-			-- ============================================================================
-			-- PATCH 5: BuildBindMenu rewritten (themed, Body container, rows Key/Mode/Visible/Delete)
-			-- ============================================================================
-			local bindRefs = {}
 
 			local function BindValueText(target)
 				if target and target.obj and type(target.obj.Get) == "function" then
@@ -8505,104 +8498,180 @@ New("Frame", {
 				return "—"
 			end
 			local function PaintBindMenu(target)
-				bindRefs.key.Text = target.key and BindKeyName(target.key) or "press key"
+				local keyText = bindRefs.listening and "..." or (target.key and BindKeyName(target.key) or "-")
+				bindRefs.key.Text = keyText
+				bindRefs.key.Size = UDim2.fromOffset(math.max(20, math.ceil(MeasureText(keyText, 12, FONT) + 12)), 20)
 				local mode = CurrentBindMode(target)
-				bindRefs.mode.Text = mode:sub(1, 1):upper() .. mode:sub(2) .. "  ▾"
-				bindRefs.value.Text = BindValueText(target)
-				local on = not target.hideInList
-				Tween(bindRefs.sw, { BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16) }, 0.15)
-				Tween(bindRefs.knob, {
-					Position = on and UDim2.fromOffset(15, 2) or UDim2.fromOffset(2, 2),
-					BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157),
-				}, 0.15)
+				bindRefs.modeText.Text = mode:sub(1, 1):upper() .. mode:sub(2)
+				bindRefs.modeChip.Size = UDim2.fromOffset(math.ceil(MeasureText(bindRefs.modeText.Text, 13, FONT) + 34), 22)
+				for name, glyph in pairs(bindRefs.modeGlyphs) do glyph.Visible = name == mode end
+				bindRefs.setSwitch("value", target.showValue == true)
+				bindRefs.setSwitch("visible", not target.hideInList)
 			end
 
 			local function BuildBindMenu()
 				if _bindMenu then return _bindMenu end
+				local ICON = Color3.fromRGB(200, 201, 210)
+				local TEXT = Color3.fromRGB(235, 236, 241)
+				local RED = Color3.fromRGB(226, 96, 116)
 				_bindMenu = New("Frame", {
 					Name = "BindPrompt",
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					Position = UDim2.new(0.5, 0, 0.5, 0),
-					Size = UDim2.fromOffset(212, 170),
-					BackgroundColor3 = Color3.fromRGB(17, 19, 28),
-					BackgroundTransparency = 0.02,
+					Size = UDim2.fromOffset(196, 166),
+					BackgroundColor3 = Color3.fromRGB(18, 18, 25),
+					BackgroundTransparency = 0,
 					BorderSizePixel = 0,
 					Visible = false,
 					ZIndex = Z_BASE + 950,
 					ClipsDescendants = false,
 				}, MainFrame)
-				New("UICorner", { CornerRadius = UDim.new(0, THEME.radius) }, _bindMenu)
+				New("UICorner", { CornerRadius = UDim.new(0, 10) }, _bindMenu)
 				Stroke(_bindMenu)
-				AttachShadow(_bindMenu, { radius = THEME.radius, layers = 4, step = 1.5, bias = 3 })
+				AttachShadow(_bindMenu, { radius = 10, layers = 5, step = 1.6, bias = 3 })
 
 				local body = New("Frame", { Name = "Body", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = Z_BASE + 951 }, _bindMenu)
-				New("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 0), PaddingRight = UDim.new(0, 0) }, body)
-				New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, body)
+				New("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, body)
+				New("UIListLayout", { Padding = UDim.new(0, 0), SortOrder = Enum.SortOrder.LayoutOrder }, body)
 
 				local function makeRow(order, icon, text, color)
 					local row = New("TextButton", {
-						Name = "Row" .. order, LayoutOrder = order, Size = UDim2.new(1, 0, 0, 30),
-						BackgroundColor3 = THEME.row, BackgroundTransparency = 1, AutoButtonColor = false, Text = "", ZIndex = Z_BASE + 952,
+						Name = "Row" .. order, LayoutOrder = order, Size = UDim2.new(1, 0, 0, 28),
+						BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 1, AutoButtonColor = false, Text = "", ZIndex = Z_BASE + 952,
 					}, body)
-					New("UICorner", { CornerRadius = UDim.new(0, 8) }, row)
-					New("ImageLabel", {
-						Name = "Icon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(15, 15),
-						BackgroundTransparency = 1, Image = icon, ImageColor3 = color, ScaleType = Enum.ScaleType.Fit, ZIndex = Z_BASE + 953,
-					}, row)
+					New("UICorner", { CornerRadius = UDim.new(0, 6) }, row)
+					if icon then
+						New("ImageLabel", {
+							Name = "Icon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 10, 0.5, 0), Size = UDim2.fromOffset(14, 14),
+							BackgroundTransparency = 1, Image = icon, ImageColor3 = color == RED and RED or ICON, ScaleType = Enum.ScaleType.Fit, ZIndex = Z_BASE + 953,
+						}, row)
+					end
 					New("TextLabel", {
-						Name = "Label", Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(0.5, -32, 1, 0), BackgroundTransparency = 1,
+						Name = "Label", Position = UDim2.new(0, 36, 0, 0), Size = UDim2.new(0, 70, 1, 0), BackgroundTransparency = 1,
 						Text = text, TextColor3 = color, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 953,
 					}, row)
-					row.MouseEnter:Connect(function() Tween(row, { BackgroundTransparency = 0.35 }, 0.08) end)
+					row.MouseEnter:Connect(function() Tween(row, { BackgroundTransparency = 0.97 }, 0.08) end)
 					row.MouseLeave:Connect(function() Tween(row, { BackgroundTransparency = 1 }, 0.12) end)
 					return row
 				end
-
-				local function makeChip(row, width, text, accent)
-					local chip = New("TextLabel", {
-						Name = "Value", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(width, 20),
-						BackgroundColor3 = accent and mainColor or THEME.row, BackgroundTransparency = accent and 0 or 0.1, Text = text, TextColor3 = Color3.fromRGB(255,255,255),
-						TextSize = 12, Font = FONT, ZIndex = Z_BASE + 953,
-					}, row)
-					New("UICorner", { CornerRadius = UDim.new(0, 5) }, chip)
-					return chip
+				local function gap(order)
+					New("Frame", { Name = "Gap" .. order, LayoutOrder = order, Size = UDim2.new(1, 0, 0, 6), BackgroundTransparency = 1, ZIndex = Z_BASE + 952 }, body)
 				end
 
-				local keyRow = makeRow(1, "rbxassetid://121978468376124", "Key", THEME.text)
-				bindRefs.key = makeChip(keyRow, 84, "press key")
+				-- Key: small dark chip on the right; click it, then press a key.
+				local keyRow = makeRow(1, "rbxassetid://121978468376124", "Key", TEXT)
+				bindRefs.key = New("TextLabel", {
+					Name = "KeyChip", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(20, 20),
+					BackgroundColor3 = Color3.fromRGB(28, 29, 39), BackgroundTransparency = 0, Text = "-", TextColor3 = Color3.fromRGB(190, 192, 202),
+					TextSize = 12, Font = FONT, ZIndex = Z_BASE + 953,
+				}, keyRow)
+				New("UICorner", { CornerRadius = UDim.new(0, 5) }, bindRefs.key)
+				keyRow.MouseButton1Click:Connect(function()
+					if not _bindTarget then return end
+					bindRefs.listening = true
+					PaintBindMenu(_bindTarget)
+				end)
 
-				local modeRow = makeRow(2, "rbxassetid://109485777305919", "Mode", THEME.text)
-				bindRefs.mode = makeChip(modeRow, 84, "Toggle  ▾", true)
+				-- Mode: dark chip with the mode glyph and accent text, then a small
+				-- key-cap icon; both cycle Toggle / Hold / Always.
+				local modeRow = makeRow(2, "rbxassetid://109485777305919", "Mode", TEXT)
+				bindRefs.modeChip = New("Frame", {
+					Name = "ModeChip", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -30, 0.5, 0), Size = UDim2.fromOffset(74, 22),
+					BackgroundColor3 = Color3.fromRGB(28, 29, 39), BackgroundTransparency = 0, ZIndex = Z_BASE + 953,
+				}, modeRow)
+				New("UICorner", { CornerRadius = UDim.new(0, 6) }, bindRefs.modeChip)
+				bindRefs.modeText = New("TextLabel", {
+					Name = "ModeText", Position = UDim2.fromOffset(26, 0), Size = UDim2.new(1, -30, 1, 0), BackgroundTransparency = 1,
+					Text = "Toggle", TextColor3 = mainColor, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 954,
+				}, bindRefs.modeChip)
+				bindRefs.modeGlyphs = {}
+				do
+					local function glyphPart(parent, x, y, w, h, color, radius)
+						local f = New("Frame", {
+							Name = "GlyphPart", Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(w, h),
+							BackgroundColor3 = color, BackgroundTransparency = 0, BorderSizePixel = 0, ZIndex = parent.ZIndex + 1,
+						}, parent)
+						New("UICorner", { CornerRadius = radius or UDim.new(1, 0) }, f)
+						return f
+					end
+					for _, mode in ipairs(BIND_MODES) do
+						local host = New("Frame", {
+							Name = "ModeGlyph_" .. mode, Position = UDim2.fromOffset(7, 5), Size = UDim2.fromOffset(16, 12),
+							BackgroundTransparency = 1, ZIndex = Z_BASE + 954, Visible = false,
+						}, bindRefs.modeChip)
+						if mode == "toggle" then
+							local track = glyphPart(host, 0, 2, 16, 9, mainColor)
+							glyphPart(track, 8, 1, 7, 7, Color3.fromRGB(28, 29, 39))
+						elseif mode == "hold" then
+							local cap = glyphPart(host, 3, 1, 10, 10, mainColor, UDim.new(0, 3))
+							glyphPart(cap, 3, 3, 4, 4, Color3.fromRGB(28, 29, 39), UDim.new(0, 1))
+						else
+							glyphPart(host, 4, 2, 8, 8, mainColor)
+						end
+						bindRefs.modeGlyphs[mode] = host
+					end
+				end
+				local modeMore = New("Frame", {
+					Name = "ModeMore", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(14, 14),
+					BackgroundTransparency = 1, ZIndex = Z_BASE + 953,
+				}, modeRow)
+				do
+					local cap = New("Frame", {
+						Name = "MoreCap", Position = UDim2.fromOffset(0, 1), Size = UDim2.fromOffset(14, 8),
+						BackgroundColor3 = ICON, BorderSizePixel = 0, ZIndex = Z_BASE + 954,
+					}, modeMore)
+					New("UICorner", { CornerRadius = UDim.new(0, 2) }, cap)
+					local tip = New("Frame", {
+						Name = "MoreTip", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(7, 10), Size = UDim2.fromOffset(5, 5),
+						Rotation = 45, BackgroundColor3 = ICON, BorderSizePixel = 0, ZIndex = Z_BASE + 954,
+					}, modeMore)
+				end
 				modeRow.MouseButton1Click:Connect(function()
 					if not _bindTarget then return end
 					local current, index = CurrentBindMode(_bindTarget), 1
 					for i, m in ipairs(BIND_MODES) do if m == current then index = i break end end
 					_bindTarget.bindMode = BIND_MODES[(index % #BIND_MODES) + 1]
 					PaintBindMenu(_bindTarget)
-				end)
-
-				local valueRow = makeRow(3, "rbxassetid://114499998778667", "Value", THEME.text)
-				bindRefs.value = makeChip(valueRow, 84, "—", false)
-
-				local visRow = makeRow(4, "rbxassetid://127234874352422", "Visible", THEME.text)
-				bindRefs.sw = New("Frame", {
-					Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(33, 20),
-					BackgroundColor3 = mainColor, ZIndex = Z_BASE + 953,
-				}, visRow)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, bindRefs.sw)
-				bindRefs.knob = New("Frame", {
-					Name = "Knob", Position = UDim2.fromOffset(15, 2), Size = UDim2.fromOffset(16, 16),
-					BackgroundColor3 = Color3.fromRGB(255, 255, 255), ZIndex = Z_BASE + 954,
-				}, bindRefs.sw)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, bindRefs.knob)
-				visRow.MouseButton1Click:Connect(function()
-					if not _bindTarget then return end
-					_bindTarget.hideInList = not _bindTarget.hideInList
-					PaintBindMenu(_bindTarget)
 					if RefreshKeybindOverlay then task.defer(RefreshKeybindOverlay) end
 				end)
 
-				local delRow = makeRow(5, "rbxassetid://116396312853810", "Delete", Color3.fromRGB(233, 90, 110))
+				gap(3)
+
+				-- Switches in the menu's toggle style (off: dark track, grey knob).
+				bindRefs.switches = {}
+				bindRefs.setSwitch = function(name, on)
+					local s = bindRefs.switches[name]
+					if not s then return end
+					Tween(s.track, { BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16) }, 0.15)
+					Tween(s.knob, {
+						Position = on and UDim2.fromOffset(14, 2) or UDim2.fromOffset(2, 2),
+						BackgroundColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(139, 145, 157),
+					}, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				end
+				local function switchRow(order, icon, text, name, onClick)
+					local row = makeRow(order, icon, text, TEXT)
+					local track = New("Frame", {
+						Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(28, 16),
+						BackgroundColor3 = Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = Z_BASE + 953,
+					}, row)
+					New("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
+					local knob = New("Frame", {
+						Name = "Knob", Position = UDim2.fromOffset(2, 2), Size = UDim2.fromOffset(12, 12),
+						BackgroundColor3 = Color3.fromRGB(139, 145, 157), BorderSizePixel = 0, ZIndex = Z_BASE + 954,
+					}, track)
+					New("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
+					bindRefs.switches[name] = { track = track, knob = knob }
+					row.MouseButton1Click:Connect(function()
+						if not _bindTarget then return end
+						onClick(_bindTarget)
+						PaintBindMenu(_bindTarget)
+						if RefreshKeybindOverlay then task.defer(RefreshKeybindOverlay) end
+					end)
+				end
+				switchRow(4, "rbxassetid://114499998778667", "Value", "value", function(t) t.showValue = not t.showValue end)
+				switchRow(5, "rbxassetid://127234874352422", "Visible", "visible", function(t) t.hideInList = not t.hideInList end)
+
+				gap(6)
+
+				local delRow = makeRow(7, "rbxassetid://116396312853810", "Delete", RED)
 				delRow.MouseButton1Click:Connect(function()
 					local t = _bindTarget
 					if t then SetTargetBind(t, nil) end
@@ -8611,26 +8680,26 @@ New("Frame", {
 				return _bindMenu
 			end
 
-			local function OpenBindMenu(target)
-				CloseAllPopupsExcept(nil)
+			-- anchor: the hotkey menu it was opened from (editor goes to its
+			-- right and stays its child), or nil to open under the row.
+			local function OpenBindMenu(target, anchor, trigger)
+				if not anchor then CloseAllPopupsExcept(nil) end
 				_bindTarget = target
+				bindRefs.listening = false
 				BuildBindMenu()
 				PaintBindMenu(target)
-				_bindMenu.Visible = true
-				_bindMenu.BackgroundTransparency = 1
-				Tween(_bindMenu, { BackgroundTransparency = 0.02 }, 0.15)
-				TweenShadowLayers(_bindMenu, true, 0.15)
-				local pop = GetPopupScale(_bindMenu)
-				if pop then
-					pop.Scale = 0.96
-					Tween(pop, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				ApplyZIndexLadder(_bindMenu, NextPopupZ())
+				SmoothOpen(_bindMenu, 0, 0.16)
+				if anchor and anchor.Parent and anchor.Visible then
+					MovePopupToAbsolute(_bindMenu, anchor.AbsolutePosition.X + anchor.AbsoluteSize.X + 6, anchor.AbsolutePosition.Y)
+				else
+					local row = target.row
+					MovePopupToAbsolute(_bindMenu,
+						row.AbsolutePosition.X + row.AbsoluteSize.X - _bindMenu.AbsoluteSize.X,
+						row.AbsolutePosition.Y + row.AbsoluteSize.Y + 4)
 				end
-				local row = target.row
-				MovePopupToAbsolute(_bindMenu,
-					row.AbsolutePosition.X + row.AbsoluteSize.X - _bindMenu.AbsoluteSize.X,
-					row.AbsolutePosition.Y + row.AbsoluteSize.Y + 4)
 				ConstrainPopupToMainFrame(_bindMenu, 8)
-				RegisterPopup(_bindMenu, CloseBindMenu, nil)
+				RegisterPopup(_bindMenu, CloseBindMenu, trigger)
 			end
 
 			local function CloseContextMenu()
@@ -8646,9 +8715,9 @@ New("Frame", {
 				_contextMenu = New("Frame", {
 					Name = "ElementContextMenu",
 					Position = UDim2.new(0.5, 0, 0.5, 0),
-					Size = UDim2.fromOffset(150, 94),
-					BackgroundColor3 = Color3.fromRGB(17, 19, 28),
-					BackgroundTransparency = 0.02,
+					Size = UDim2.fromOffset(136, 102),
+					BackgroundColor3 = Color3.fromRGB(18, 18, 25),
+					BackgroundTransparency = 0,
 					BorderSizePixel = 0,
 					Visible = false,
 					ZIndex = 8000,
@@ -8656,44 +8725,48 @@ New("Frame", {
 				}, MainFrame)
 				New("UICorner", { CornerRadius = UDim.new(0, 10) }, _contextMenu)
 				Stroke(_contextMenu)
-				New("UIListLayout", { Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder }, _contextMenu)
-				New("UIPadding", { PaddingTop = UDim.new(0, 3), PaddingBottom = UDim.new(0, 3) }, _contextMenu)
-				AttachShadow(_contextMenu, { radius = 6, layers = 3, step = 1.4, bias = 2 })
+				AttachShadow(_contextMenu, { radius = 10, layers = 5, step = 1.6, bias = 3 })
+				-- Rows live in a child so the shadow (skipped on layout frames) works.
+				local list = New("Frame", { Name = "Items", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 8001 }, _contextMenu)
+				New("UIListLayout", { Padding = UDim.new(0, 0), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+				New("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, list)
 				return _contextMenu
 			end
 
+			-- keepOpen: the menu stays (the hotkey editor opens to its right).
 			local contextItemOrder = 0
-			local function AddContextItem(labelText, iconAsset, callback)
+			local function AddContextItem(labelText, iconAsset, callback, keepOpen)
 				contextItemOrder = contextItemOrder + 1
-				if labelText == "Reset" then contextItemOrder = 4 end
+				local isReset = labelText == "Reset"
+				local list = _contextMenu:FindFirstChild("Items")
 				local item = New("TextButton", {
 					LayoutOrder = contextItemOrder,
 					Name = "MenuItem",
-					Size = UDim2.new(1, -8, 0, 28),
-					Position = UDim2.new(0, 4, 0, 0),
-					BackgroundColor3 = Color3.fromRGB(42, 42, 49),
+					Size = UDim2.new(1, 0, 0, 28),
+					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 					BackgroundTransparency = 1,
 					AutoButtonColor = false,
 					Text = labelText,
-					TextColor3 = labelText == "Reset" and Color3.fromRGB(233, 90, 110) or Color3.fromRGB(232, 234, 240),
+					TextColor3 = isReset and Color3.fromRGB(226, 96, 116) or Color3.fromRGB(235, 236, 241),
 					TextScaled = false,
 					TextSize = 13,
 					Font = FONT,
 					TextXAlignment = Enum.TextXAlignment.Left,
-					ZIndex = 8001,
-				}, _contextMenu)
+					ZIndex = 8002,
+				}, list)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, item)
-				New("UIPadding", { PaddingLeft = UDim.new(0, 30) }, item)
-				New("ImageLabel", {
+				New("UIPadding", { PaddingLeft = UDim.new(0, 36) }, item)
+				-- UIPadding shifts the icon too: offset it back by the padding.
+				local icon = New("ImageLabel", {
 					Name = "MenuIcon",
 					AnchorPoint = Vector2.new(0, 0.5),
-					Position = UDim2.new(0, 9, 0.5, 0),
-					Size = UDim2.fromOffset(15, 15),
+					Position = UDim2.new(0, -26, 0.5, 0),
+					Size = UDim2.fromOffset(14, 14),
 					BackgroundTransparency = 1,
-					Image = iconAsset,
-					ImageColor3 = Color3.fromRGB(210, 212, 222),
+					Image = iconAsset or "",
+					ImageColor3 = isReset and Color3.fromRGB(226, 96, 116) or Color3.fromRGB(200, 201, 210),
 					ScaleType = Enum.ScaleType.Fit,
-					ZIndex = 8002,
+					ZIndex = 8003,
 				}, item)
 				item.MouseEnter:Connect(function()
 					Tween(item, { BackgroundTransparency = 0.97 }, 0.08)
@@ -8703,65 +8776,57 @@ New("Frame", {
 				end)
 				item.MouseButton1Click:Connect(function()
 					local target = _contextTarget
-					CloseContextMenu()
-					if target and callback then callback(target) end
+					if not keepOpen then CloseContextMenu() end
+					if target and callback then callback(target, item) end
 				end)
-				return item
+				return item, icon
 			end
 
 			local function OpenContextMenu(target, point)
 				BuildContextMenu()
 				CloseAllPopupsExcept(_contextMenu)
 				_contextTarget = target
-				for _, child in ipairs(_contextMenu:GetChildren()) do
+				local list = _contextMenu:FindFirstChild("Items")
+				for _, child in ipairs(list:GetChildren()) do
 					if child:IsA("GuiObject") then child:Destroy() end
 				end
 				contextItemOrder = 0
-				local layout = _contextMenu:FindFirstChildOfClass("UIListLayout")
-				if not layout then New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, _contextMenu) end
-				-- Neverlose right-click menu: All Hotkeys / New Hotkey / Reset.
-				AddContextItem("All Hotkeys", "rbxassetid://121978468376124", function(current)
-					if current.key then
-						OpenBindMenu(current)
-					elseif WindowObj.KeybindList then
-						WindowObj.KeybindList.setEnabled(true)
-					end
-				end)
-				AddContextItem("New Hotkey", "rbxassetid://101123124881873", function(current)
-					OpenBindMenu(current)
-				end)
-				New("Frame", {
-					Name = "ContextDivider", LayoutOrder = 3,
-					Size = UDim2.new(1, -20, 0, 1),
-					BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92,
-					BorderSizePixel = 0, ZIndex = 8001,
-				}, _contextMenu)
+				-- Neverlose hotkey menu: All Hotkeys / New Hotkey / Reset.
+				local _, listIcon = AddContextItem("All Hotkeys", nil, function(current, item)
+					if WindowObj.KeybindList then WindowObj.KeybindList.setEnabled(true) end
+					if current.key then OpenBindMenu(current, _contextMenu, item) end
+				end, true)
+				listIcon.Image = ""
+				for i = 0, 2 do
+					New("Frame", { Name = "Dot", Position = UDim2.fromOffset(0, 1 + i * 5), Size = UDim2.fromOffset(2, 2), BackgroundColor3 = Color3.fromRGB(200, 201, 210), BorderSizePixel = 0, ZIndex = 8004 }, listIcon)
+					New("Frame", { Name = "Line", Position = UDim2.fromOffset(4, 1 + i * 5), Size = UDim2.fromOffset(10, 2), BackgroundColor3 = Color3.fromRGB(200, 201, 210), BorderSizePixel = 0, ZIndex = 8004 }, listIcon)
+				end
+				local _, newIcon = AddContextItem("New Hotkey", nil, function(current, item)
+					OpenBindMenu(current, _contextMenu, item)
+				end, true)
+				newIcon.Image = ""
+				do
+					local disc = New("Frame", { Name = "Disc", Position = UDim2.fromOffset(1, 1), Size = UDim2.fromOffset(12, 12), BackgroundColor3 = Color3.fromRGB(200, 201, 210), BorderSizePixel = 0, ZIndex = 8004 }, newIcon)
+					New("UICorner", { CornerRadius = UDim.new(1, 0) }, disc)
+					local hole = New("Frame", { Name = "Hole", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(4, 4), BackgroundColor3 = Color3.fromRGB(18, 18, 25), BorderSizePixel = 0, ZIndex = 8005 }, disc)
+					New("UICorner", { CornerRadius = UDim.new(1, 0) }, hole)
+				end
+				New("Frame", { Name = "Gap", LayoutOrder = 3, Size = UDim2.new(1, 0, 0, 6), BackgroundTransparency = 1, ZIndex = 8001 }, list)
+				contextItemOrder = 3
 				AddContextItem("Reset", "rbxassetid://106497040962250", function(current)
 					if current.obj and current.obj.Set and current.defaultValue ~= nil then
 						current.obj:Set(current.defaultValue)
 					end
 				end)
-				_contextMenu.Size = UDim2.fromOffset(150, 94)
+				_contextMenu.Size = UDim2.fromOffset(136, 6 + 28 * 3 + 6 + 6)
 				ApplyZIndexLadder(_contextMenu, NextPopupZ())
-				SmoothOpen(_contextMenu, 0.02, 0.15)
-				local anchorX, anchorY = point.X, point.Y
-				if target.dots and target.dots.Parent and target.dots.AbsoluteSize.X > 0 then
-					anchorX = target.dots.AbsolutePosition.X + target.dots.AbsoluteSize.X - 150
-					anchorY = target.dots.AbsolutePosition.Y + target.dots.AbsoluteSize.Y + 4
-				end
-				MovePopupToAbsolute(_contextMenu, anchorX, anchorY)
+				SmoothOpen(_contextMenu, 0, 0.15)
+				-- Opens at the cursor, like Neverlose.
+				MovePopupToAbsolute(_contextMenu, point.X + 4, point.Y + 4)
 				ConstrainPopupToMainFrame(_contextMenu, 8)
 				local settled = _contextMenu.Position
-				_contextMenu.Position = UDim2.new(settled.X.Scale, settled.X.Offset, settled.Y.Scale, settled.Y.Offset - 8)
+				_contextMenu.Position = UDim2.new(settled.X.Scale, settled.X.Offset, settled.Y.Scale, settled.Y.Offset - 6)
 				Tween(_contextMenu, { Position = settled }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				local entryIndex = 0
-				for _, child in ipairs(_contextMenu:GetChildren()) do
-					if child:IsA("TextButton") then
-						entryIndex = entryIndex + 1
-						child.TextTransparency = 1
-						Tween(child, { TextTransparency = 0 }, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, entryIndex * 0.035)
-					end
-				end
 				_contextOpen = true
 				RegisterPopup(_contextMenu, CloseContextMenu, target.dots)
 			end
@@ -8839,37 +8904,28 @@ New("Frame", {
 			end
 
 			UserInputService.InputBegan:Connect(function(input, gameProcessed)
-				if _bindTarget then
-					if input.UserInputType == Enum.UserInputType.Keyboard then
-						local key = input.KeyCode
-						if key ~= Enum.KeyCode.Unknown then SetTargetBind(_bindTarget, key) end
-						CloseBindMenu()
-						return
-					end
-					if IsExtraMouseType(input.UserInputType) then
-						SetTargetBind(_bindTarget, input.UserInputType)
-						CloseBindMenu()
-						return
-					end
-					if input.UserInputType == Enum.UserInputType.MouseButton2
-						or input.UserInputType == Enum.UserInputType.MouseButton3 then
-						local bindPoint = GetInputPosition(input)
-						local retargeted = false
-						for bindRow, bindTargetRow in pairs(_contextTargets) do
-							if bindRow.Parent and bindRow.Visible and IsPointInsideTree(bindRow, bindPoint) then
-								OpenBindMenu(bindTargetRow)
-								retargeted = true
-								break
-							end
+				-- Key chip clicked: the next key (or side mouse button) becomes the
+				-- bind; Backspace/Delete clears it, Escape cancels.
+				if _bindTarget and bindRefs.listening then
+					local isKeyboard = input.UserInputType == Enum.UserInputType.Keyboard
+					if isKeyboard or IsExtraMouseType(input.UserInputType) then
+						local key = isKeyboard and input.KeyCode or input.UserInputType
+						if key == Enum.KeyCode.Backspace or key == Enum.KeyCode.Delete then
+							SetTargetBind(_bindTarget, nil)
+						elseif key ~= Enum.KeyCode.Escape and key ~= Enum.KeyCode.Unknown then
+							SetTargetBind(_bindTarget, key)
 						end
-						if not retargeted then CloseBindMenu() end
+						bindRefs.listening = false
+						PaintBindMenu(_bindTarget)
 						return
 					end
-					return
 				end
-				if gameProcessed then return end
+				-- Middle (or right) click on any function opens the hotkey menu.
+				-- No gameProcessed check: clicks over the menu's own buttons are
+				-- always "processed", which used to swallow every one of them.
 				if input.UserInputType == Enum.UserInputType.MouseButton2
 					or input.UserInputType == Enum.UserInputType.MouseButton3 then
+					if not MainFrame.Visible then return end
 					local point = GetInputPosition(input)
 					for _, entry in ipairs(_openPopups) do
 						if entry.frame and entry.frame.Visible and IsPointInsideTree(entry.frame, point) then return end
@@ -8884,7 +8940,7 @@ New("Frame", {
 			end)
 
 			UserInputService.InputBegan:Connect(function(input, gameProcessed)
-				if _bindTarget then return end
+				if bindRefs.listening then return end
 				local key = input.KeyCode
 				if key == nil or key == Enum.KeyCode.Unknown then
 					local t = input.UserInputType
@@ -8893,7 +8949,8 @@ New("Frame", {
 				end
 				if not IsEditableTarget() then return end
 				local target = _keybinds[key]
-				if target and target.bindMode ~= "hold" then
+				-- Hold presses here and releases in InputEnded; Always ignores keys.
+				if target and target.bindMode ~= "always" then
 					RunBoundFunction(target, "down")
 				end
 			end)
@@ -8904,10 +8961,11 @@ New("Frame", {
 				if wheelType ~= Enum.UserInputType.MouseWheel then return end
 				local wheelKey = input.Position.Z > 0 and "MouseWheelUp" or "MouseWheelDown"
 				if input.Position.Z == 0 then return end
-				if _bindTarget then
+				if _bindTarget and bindRefs.listening then
 					-- Keep wheel direction as a string token; Roblox has no enum members for up/down.
 					SetTargetBind(_bindTarget, wheelKey)
-					CloseBindMenu()
+					bindRefs.listening = false
+					PaintBindMenu(_bindTarget)
 					return
 				end
 				if gameProcessed or not IsEditableTarget() then return end
