@@ -1926,6 +1926,54 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		popup.Position = UDim2.new(position.X.Scale, position.X.Offset + dx, position.Y.Scale, position.Y.Offset + dy)
 	end
 
+	-- Tooltips (Neverlose): hovering a function for 1.5s shows its description
+	-- in a dark plate beside the cursor; leaving or clicking hides it. One
+	-- shared plate, inside the window so it fades with the menu.
+	WindowObj._tooltip = function(target, text)
+		if not target or type(text) ~= "string" or text == "" then return end
+		target:SetAttribute("Tooltip", text)
+		if target:GetAttribute("TooltipHooked") then return end
+		target:SetAttribute("TooltipHooked", true)
+		local tip = WindowObj._tooltipFrame
+		if not tip then
+			tip = New("TextLabel", {
+				Name = "Tooltip", Size = UDim2.fromOffset(0, 28), AutomaticSize = Enum.AutomaticSize.X,
+				BackgroundColor3 = Color3.fromRGB(18, 18, 25), BackgroundTransparency = 1, Text = "", TextColor3 = Color3.fromRGB(235, 236, 241),
+				TextTransparency = 1, TextSize = 13, Font = FONT, Visible = false, ZIndex = 9500,
+			}, MainFrame)
+			New("UICorner", { CornerRadius = UDim.new(0, 6) }, tip)
+			local outline = Stroke(tip)
+			outline:SetAttribute("Base", outline.Transparency)
+			New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, tip)
+			WindowObj._tooltipFrame = tip
+			WindowObj._tooltipToken = 0
+		end
+		local function hide()
+			WindowObj._tooltipToken = WindowObj._tooltipToken + 1
+			local token = WindowObj._tooltipToken
+			Tween(tip, { BackgroundTransparency = 1, TextTransparency = 1 }, 0.1)
+			task.delay(0.11, function() if token == WindowObj._tooltipToken then tip.Visible = false end end)
+		end
+		target.MouseEnter:Connect(function()
+			WindowObj._tooltipToken = WindowObj._tooltipToken + 1
+			local token = WindowObj._tooltipToken
+			task.delay(1.5, function()
+				if token ~= WindowObj._tooltipToken or not target.Parent or not MainFrame.Visible then return end
+				tip.Text = target:GetAttribute("Tooltip") or ""
+				local point = GetPointerPosition()
+				local inset = WindowObj._topInset or 0
+				tip.Visible = true
+				ApplyZIndexLadder(tip, NextPopupZ())
+				MovePopupToAbsolute(tip, point.X + 14, point.Y - inset + 10)
+				Tween(tip, { BackgroundTransparency = 0.04, TextTransparency = 0 }, 0.14)
+			end)
+		end)
+		target.MouseLeave:Connect(hide)
+		target.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then hide() end
+		end)
+	end
+
 	local function PopupSafeArea()
 		local gui = MainFrame and MainFrame.Parent
 		if gui and gui:IsA("ScreenGui") and gui.AbsoluteSize.X > 0 and gui.AbsoluteSize.Y > 0 then
@@ -5964,7 +6012,7 @@ asss.Parent = SearchBtn
 	local GlobalPreset
 	local Save = Instance.new("Frame")
 	Save.Name = "Save"
-	Save.Position = UDim2.fromOffset(11 + 34, 13)
+	Save.Position = UDim2.fromOffset(11, 13)
 	Save.Size = UDim2.fromOffset(150, 28)
 	Save.BackgroundColor3 = Color3.fromRGB(20, 23, 34)
 	Save.BackgroundTransparency = 0
@@ -5974,12 +6022,16 @@ asss.Parent = SearchBtn
 	do Stroke(Save) end
 	-- Save is its own square button left of the preset field (a field, not a
 	-- local: AddWindow is near the register cap).
+	-- Save and preset are one pill (Neverlose): a 32px save segment, a hairline
+	-- divider, then the preset name. A field, not a local (register cap).
 	WindowObj._saveBox = New("Frame", {
-		Name = "SaveButtonBox", Position = UDim2.fromOffset(11, 13), Size = UDim2.fromOffset(28, 28),
-		BackgroundColor3 = Color3.fromRGB(20, 23, 34), BackgroundTransparency = 0, BorderSizePixel = 0,
-	}, Header)
-	New("UICorner", { CornerRadius = UDim.new(0, 8) }, WindowObj._saveBox)
-	Stroke(WindowObj._saveBox)
+		Name = "SaveSegmentBox", Position = UDim2.fromOffset(0, 0), Size = UDim2.fromOffset(32, 28),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = Save.ZIndex + 1,
+	}, Save)
+	New("Frame", {
+		Name = "SaveDivider", Position = UDim2.fromOffset(32, 5), Size = UDim2.new(0, 1, 1, -10), BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		BackgroundTransparency = 0.9, BorderSizePixel = 0,
+	}, Save)
 
 	local SaveIcon = Instance.new('ImageLabel')
 SaveIcon.Name = "SaveIcon"
@@ -5997,8 +6049,8 @@ UIAspectRatioConstraint.Parent = SaveIcon
 
 	local SaveText = Instance.new('TextLabel')
 	SaveText.Name = "SaveText"
-	SaveText.Position = UDim2.fromOffset(12, 0)
-	SaveText.Size = UDim2.new(1, -52, 1, 0)
+	SaveText.Position = UDim2.fromOffset(43, 0)
+	SaveText.Size = UDim2.new(1, -83, 1, 0)
 	SaveText.BackgroundTransparency = 1
 	SaveText.Text = "Default"
 SaveText.TextColor3 = Color3.fromRGB(226, 228, 236)
@@ -6012,11 +6064,11 @@ SaveText.Parent = Save
 
 	local function UpdateSavePillWidth(textValue)
 		local textWidth = MeasureText(tostring(textValue or SaveText.Text or "Default"), 15, FONT)
-		local width = math.clamp(math.ceil(textWidth) + 12 + 40, 120, 235)
+		local width = math.clamp(math.ceil(textWidth) + 43 + 40, 150, 266)
 		Save.Size = UDim2.fromOffset(width, 28)
-		Save.Position = UDim2.fromOffset(11 + 34, 13)
-		SaveText.Size = UDim2.new(1, -52, 1, 0)
-		if GlobalPreset then GlobalPreset.Position = UDim2.fromOffset(11 + 34 + width + 12, 13) end
+		Save.Position = UDim2.fromOffset(11, 13)
+		SaveText.Size = UDim2.new(1, -83, 1, 0)
+		if GlobalPreset then GlobalPreset.Position = UDim2.fromOffset(11 + width + 12, 13) end
 	end
 	UpdateSavePillWidth(SaveText.Text)
 
@@ -6680,7 +6732,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		end
 
 		local savePlate = hoverPlate(WindowObj._saveBox, UDim2.fromOffset(0, 0), UDim2.fromScale(1, 1))
-		local namePlate = hoverPlate(Save, UDim2.fromOffset(0, 0), UDim2.fromScale(1, 1))
+		local namePlate = hoverPlate(Save, UDim2.fromOffset(33, 0), UDim2.new(1, -33, 1, 0))
 		local saveButton = New("TextButton", {
 			Name = "SaveSegment", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "", ZIndex = 16,
 		}, WindowObj._saveBox)
@@ -8184,6 +8236,7 @@ end) end
 			{ "Flags", { "Unarmored", "Defuser", "Blind", "Scoped", "Reload", "Immunity", "Slowed", "Vulnerable", "Bomb",
 				"Hostage", "Defuse", "Pin Pulled", "Money", "Order Priority", "Delay" } },
 			{ "Weapon", { "Text", "Icon", "Readiness Bar", "Bomb", "Defuser", "Taser" } },
+			{ "Aimbot", { "Hit Chance", "Hitboxes" } },
 		}
 		local TEAMS = { { "Enemies", "rbxassetid://10747373176" }, { "Teammates", "rbxassetid://10747372346" } }
 		local team = options.team == "Teammates" and "Teammates" or "Enemies"
@@ -8382,13 +8435,15 @@ end) end
 					Text = item, TextColor3 = MUTED, TextSize = 13, Font = FONT, BorderSizePixel = 0,
 				}, wrap)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, chip)
-				Stroke(chip)
+				Stroke(chip, "ChipOutline")
 				local key = group[1] .. "/" .. item
 				chips[key] = chip
 				chip.MouseButton1Click:Connect(function()
 					local on = not state[team][key]
 					state[team][key] = on or nil
 					Tween(chip, { BackgroundColor3 = on and Color3.fromRGB(44, 48, 66) or Color3.fromRGB(30, 32, 42), TextColor3 = on and TEXT or MUTED }, 0.12)
+					local outline = chip:FindFirstChild("ChipOutline")
+					if outline then Tween(outline, { Color = on and LAVENDER or STROKE.Color, Transparency = on and 0.35 or STROKE.Transparency }, 0.12) end
 					if type(options.onItem) == "function" then pcall(options.onItem, team, group[1], item, on) end
 				end)
 			end
@@ -8398,6 +8453,11 @@ end) end
 				local on = state[team][key] == true
 				chip.BackgroundColor3 = on and Color3.fromRGB(44, 48, 66) or Color3.fromRGB(30, 32, 42)
 				chip.TextColor3 = on and TEXT or MUTED
+				local outline = chip:FindFirstChild("ChipOutline")
+				if outline then
+					outline.Color = on and LAVENDER or STROKE.Color
+					outline.Transparency = on and 0.35 or STROKE.Transparency
+				end
 			end
 		end
 
@@ -10630,6 +10690,10 @@ New("Frame", {
 				local dots = row:FindFirstChild("ContextDots")
 				target.dots = dots
 				PaintBindDots(target)
+				-- obj:SetTooltip(text): description shown after hovering ~1.5s.
+				if not obj.SetTooltip then
+					function obj:SetTooltip(text) WindowObj._tooltip(row, text) return self end
+				end
 				if obj.Bind then return end
 				-- Script API works on the function's first hotkey.
 				function obj:Bind(key)
