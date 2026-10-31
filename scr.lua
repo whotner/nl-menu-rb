@@ -514,7 +514,7 @@ local function New(class, props, parent)
 			TextToggle = 14, TextDropdown = 14, TextDefault = 13, TopBar = 14, SliderValue = 12,
 			Username = 14, Daysleft = 12, SaveText = 14, HeaderLabel = 11, SearchBox = 14 }
 		obj.TextSize = roleSizes[obj.Name] or ((props and props.TextSize) or 13)
-		obj.Font = (obj.Name == "Title" or obj.Name == "PlateTitle") and FONT_BOLD or FONT
+		obj.Font = (obj.Name == "Title" or obj.Name == "PlateTitle" or obj.Name == "HeaderTitle") and FONT_BOLD or FONT
 		if obj.Name == "GameTitle" or obj.Name == "TabLabel" or obj.Name == "SectionLabel"
 			or obj.Name == "Daysleft" or obj.Name == "HeaderLabel" or obj.Name == "SearchEmptyState" then
 			obj.TextColor3 = Color3.fromRGB(112, 116, 138)
@@ -2666,7 +2666,7 @@ if title == "Hotkeys" then
 	New("TextLabel", {
 		Name = "HeaderTitle", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(255, 255, 255), TextTransparency = 0.08,
-		TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, ZIndex = Z_BASE + 891,
+		TextSize = 14, Font = FONT_BOLD, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, ZIndex = Z_BASE + 891,
 	}, header)
 
 	New("Frame", {
