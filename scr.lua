@@ -4806,6 +4806,27 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CloudIcon.ScaleType = Enum.ScaleType.Fit
 	CloudIcon.ZIndex = 1000
 	CloudIcon.Parent = CMHeader
+	-- The asset reads as a folder; Neverlose's PRESETS tab has a cloud. Draw it
+	-- from rounded frames instead (two puffs over a rounded base).
+	CloudIcon.Image = ""
+	do
+		local tint = mainColor:Lerp(Color3.new(1, 1, 1), 0.35)
+		for _, part in ipairs({
+			{ UDim2.fromOffset(1, 8), UDim2.fromOffset(16, 7), UDim.new(0, 4) },
+			{ UDim2.fromOffset(2, 5), UDim2.fromOffset(8, 8), UDim.new(1, 0) },
+			{ UDim2.fromOffset(6, 2), UDim2.fromOffset(10, 10), UDim.new(1, 0) },
+		}) do
+			local piece = Instance.new("Frame")
+			piece.Name = "CloudPart"
+			piece.Position = part[1]
+			piece.Size = part[2]
+			piece.BackgroundColor3 = tint
+			piece.BorderSizePixel = 0
+			piece.ZIndex = 1001
+			piece.Parent = CloudIcon
+			local c = Instance.new("UICorner"); c.CornerRadius = part[3]; c.Parent = piece
+		end
+	end
 	do
 		local tabPill = Instance.new("Frame")
 		tabPill.Name = "PresetsTabPill"
@@ -6181,90 +6202,77 @@ WindowObj._setupWindowToggle = nil
 -- accent gradient running around the border. Opens the window when done.
 -- Set Library.ShowLoader = false before AddWindow to skip it.
 if Library.ShowLoader ~= false then task.spawn(function()
+	-- Matches the Neverlose loader: a dark rounded pill with a soft accent glow
+	-- around it (brightest on one side, slowly circling), NL badge, title,
+	-- status line and an "k of 10" counter.
 	local toast = New("Frame", {
 		Name = "NeverloseLoader",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 340, 0, 20), -- starts off-screen, slides in
-		Size = UDim2.fromOffset(320, 64),
-		BackgroundColor3 = Color3.fromRGB(14, 15, 22),
-		BackgroundTransparency = 0.04,
+		Position = UDim2.new(1, 360, 0, 22), -- starts off-screen, slides in
+		Size = UDim2.fromOffset(330, 64),
+		BackgroundColor3 = Color3.fromRGB(19, 22, 27),
+		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		ZIndex = Z_BASE + 990,
 	}, NeverloseCS2)
-	New("UICorner", { CornerRadius = UDim.new(0, 10) }, toast)
-	-- Border sweep: a wide accent arc (bright core, soft tails) running round
-	-- the frame, plus a blurred-looking halo ring behind it using the same arc.
-	local function makeSweep(parentStroke, tail)
+	New("UICorner", { CornerRadius = UDim.new(0, 20) }, toast)
+	local edge = Instance.new("UIStroke")
+	edge.Thickness = 1.2
+	edge.Color = mainColor
+	edge.Transparency = 0.35
+	edge.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	edge.Parent = toast
+
+	-- Glow: stacked rounded layers in the accent colour, fading outwards. Each
+	-- carries a gradient so one side is brighter; rotating it moves the light.
+	local glowGradients = {}
+	for i = 1, 7 do
+		local spread = i * 1.6
+		local layer = New("Frame", {
+			Name = "LoaderGlow" .. i,
+			Position = UDim2.fromOffset(-spread, -spread),
+			Size = UDim2.new(1, spread * 2, 1, spread * 2),
+			BackgroundColor3 = mainColor,
+			BackgroundTransparency = 0.62 + i * 0.05,
+			BorderSizePixel = 0,
+			ZIndex = Z_BASE + 989 - i,
+		}, toast)
+		New("UICorner", { CornerRadius = UDim.new(0, 20 + spread) }, layer)
 		local g = Instance.new("UIGradient")
-		g.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0, mainColor),
-			ColorSequenceKeypoint.new(0.5, mainColor:Lerp(Color3.new(1, 1, 1), 0.45)),
-			ColorSequenceKeypoint.new(1, mainColor),
-		})
 		g.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 1),
-			NumberSequenceKeypoint.new(0.22, 1),
-			NumberSequenceKeypoint.new(0.4, tail),
-			NumberSequenceKeypoint.new(0.5, 0),
-			NumberSequenceKeypoint.new(0.6, tail),
-			NumberSequenceKeypoint.new(0.78, 1),
-			NumberSequenceKeypoint.new(1, 1),
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.5, 0.45),
+			NumberSequenceKeypoint.new(1, 0.85),
 		})
-		g.Parent = parentStroke
-		return g
+		g.Rotation = 120
+		g.Parent = layer
+		table.insert(glowGradients, g)
 	end
-	local ring = Instance.new("UIStroke")
-	ring.Thickness = 2
-	ring.Color = Color3.fromRGB(255, 255, 255)
-	ring.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	ring.Parent = toast
-	local sweep = makeSweep(ring, 0.55)
-	local halo = New("Frame", {
-		Name = "LoaderHalo", Position = UDim2.fromOffset(-3, -3), Size = UDim2.new(1, 6, 1, 6),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = Z_BASE + 989,
-	}, toast)
-	New("UICorner", { CornerRadius = UDim.new(0, 13) }, halo)
-	local haloStroke = Instance.new("UIStroke")
-	haloStroke.Thickness = 5
-	haloStroke.Transparency = 0.55
-	haloStroke.Color = Color3.fromRGB(255, 255, 255)
-	haloStroke.Parent = halo
-	local haloSweep = makeSweep(haloStroke, 0.8)
+
 	local badge = New("Frame", {
-		Name = "Badge", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 12, 0.5, 0),
-		Size = UDim2.fromOffset(38, 38), BackgroundColor3 = Color3.fromRGB(22, 25, 38), BorderSizePixel = 0, ZIndex = Z_BASE + 991,
+		Name = "Badge", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 14, 0.5, 0),
+		Size = UDim2.fromOffset(40, 40), BackgroundColor3 = Color3.fromRGB(14, 17, 30), BorderSizePixel = 0, ZIndex = Z_BASE + 991,
 	}, toast)
-	New("UICorner", { CornerRadius = UDim.new(0, 8) }, badge)
+	New("UICorner", { CornerRadius = UDim.new(0, 10) }, badge)
 	New("TextLabel", {
 		Name = "BadgeText", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "NL",
-		TextColor3 = Color3.fromRGB(235, 240, 255), TextSize = 14, Font = FONT_BOLD, ZIndex = Z_BASE + 992,
+		TextColor3 = Color3.fromRGB(226, 230, 255), TextSize = 15, ZIndex = Z_BASE + 992,
 	}, badge)
 	New("TextLabel", {
-		Name = "LoaderTitle", Position = UDim2.fromOffset(62, 14), Size = UDim2.new(1, -140, 0, 18), BackgroundTransparency = 1,
-		Text = string.lower(tostring(hubTitle)), TextColor3 = Color3.fromRGB(240, 241, 246), TextSize = 15, Font = FONT_BOLD,
+		Name = "LoaderTitle", Position = UDim2.fromOffset(66, 13), Size = UDim2.new(1, -150, 0, 20), BackgroundTransparency = 1,
+		Text = string.lower(tostring(hubTitle)), TextColor3 = Color3.fromRGB(222, 223, 228), TextSize = 16,
 		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 991,
 	}, toast)
 	local status = New("TextLabel", {
-		Name = "LoaderStatus", Position = UDim2.fromOffset(62, 34), Size = UDim2.new(1, -72, 0, 16), BackgroundTransparency = 1,
-		Text = "Initialization in progress", TextColor3 = Color3.fromRGB(140, 144, 158), TextSize = 13,
+		Name = "LoaderStatus", Position = UDim2.fromOffset(66, 34), Size = UDim2.new(1, -80, 0, 18), BackgroundTransparency = 1,
+		Text = "Initialization in progress", TextColor3 = Color3.fromRGB(150, 152, 160), TextSize = 14,
 		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 991,
 	}, toast)
 	local counter = New("TextLabel", {
-		Name = "LoaderCounter", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.fromOffset(70, 18),
-		BackgroundTransparency = 1, Text = "0 of 10", TextColor3 = Color3.fromRGB(140, 144, 158), TextSize = 13,
+		Name = "LoaderCounter", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 13), Size = UDim2.fromOffset(80, 20),
+		BackgroundTransparency = 1, Text = "0 of 10", TextColor3 = Color3.fromRGB(150, 152, 160), TextSize = 15,
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = Z_BASE + 991,
 	}, toast)
-
-	-- Thin progress bar along the bottom edge, filled step by step.
-	local bar = New("Frame", {
-		Name = "LoaderBar", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 12, 1, -6), Size = UDim2.new(1, -24, 0, 2),
-		BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92, BorderSizePixel = 0, ZIndex = Z_BASE + 991,
-	}, toast)
-	New("UICorner", { CornerRadius = UDim.new(1, 0) }, bar)
-	local fill = New("Frame", {
-		Name = "LoaderFill", Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = mainColor, BorderSizePixel = 0, ZIndex = Z_BASE + 992,
-	}, bar)
-	New("UICorner", { CornerRadius = UDim.new(1, 0) }, fill)
 	-- The watermark waits for the loader, like Neverlose's.
 	-- (Later SetWatermark calls stay hidden too: ApplyWatermarkLayout checks the flag.)
 	WindowObj._loaderActive = true
@@ -6273,27 +6281,26 @@ if Library.ShowLoader ~= false then task.spawn(function()
 
 	local spinning = true
 	task.spawn(function()
+		local angle = 120
 		while spinning and toast.Parent do
 			local dt = RunService.RenderStepped:Wait()
-			sweep.Rotation = (sweep.Rotation + dt * 160) % 360
-			haloSweep.Rotation = sweep.Rotation
+			angle = (angle + dt * 90) % 360
+			for _, g in ipairs(glowGradients) do g.Rotation = angle end
 		end
 	end)
-	Tween(toast, { Position = UDim2.new(1, -20, 0, 20) }, 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	Tween(toast, { Position = UDim2.new(1, -22, 0, 22) }, 0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	for step = 1, 10 do
 		task.wait(0.14 + math.random() * 0.08)
 		counter.Text = tostring(step) .. " of 10"
-		Tween(fill, { Size = UDim2.new(step / 10, 0, 1, 0) }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	end
-	status.Text = "Welcome back, " .. tostring(LocalPlayer.Name or "user")
-	counter.Text = "Ready"
+	status.Text = "Initialization complete"
 	task.wait(0.5)
 	if AcrylicBlur.toggleGui then AcrylicBlur.toggleGui() end
 	WindowObj._loaderActive = false
 	if watermarkFrame and WindowObj.Watermark.applyLayout then WindowObj.Watermark.applyLayout(nil, nil) end
-	task.wait(0.6)
-	Tween(toast, { Position = UDim2.new(1, 360, 0, 20) }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-	task.wait(0.37)
+	task.wait(0.8)
+	Tween(toast, { Position = UDim2.new(1, 380, 0, 22) }, 0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+	task.wait(0.42)
 	spinning = false
 	toast:Destroy()
 end) end
@@ -6749,6 +6756,8 @@ end
 				UICorner.Parent = SettingsFrame
 
 				local UIStroke = Stroke(SettingsFrame, "UIStroke")
+				-- Solid plate with a soft shadow, like the option lists.
+				AttachShadow(SettingsFrame, { radius = 12, layers = 5, step = 1.6, bias = 3 })
 
 				-- PATCH 4: settings plate header + no divider watcher
 				-- Neverlose plate title: regular weight, light grey, larger than rows.
@@ -6901,7 +6910,7 @@ end
 					SFScale.Scale = 0.96
 					ApplyZIndexLadder(SettingsFrame, NextPopupZ())
 					placeSettings(getSettingsHeight())
-					SmoothOpen(SettingsFrame, 0.045, 0.18)
+					SmoothOpen(SettingsFrame, 0, 0.18)
 					Tween(SFScale, {Scale = 1}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					-- The dots stay highlighted while their plate is open, as in Neverlose.
 					if not SettingsBtn:FindFirstChildOfClass("UICorner") then New("UICorner", { CornerRadius = UDim.new(0, 5) }, SettingsBtn) end
@@ -6914,6 +6923,8 @@ end
 					end
 					task.defer(settle)
 					task.delay(0.05, settle)
+					-- Guarantee the solid end state even if another tween touched it.
+					task.delay(0.25, function() if settingsOpen then SettingsFrame.BackgroundTransparency = 0 end end)
 					if not settingsLayoutConnection then
 						local okLayout, layout = pcall(function() return SFContainer:FindFirstChildOfClass("UIListLayout") end)
 						if okLayout and layout then
@@ -9171,6 +9182,7 @@ New("Frame", {
 				UICorner.Parent = Section2Frame
 
 				local UIStroke = Stroke(Section2Frame, "UIStroke")
+				AttachShadow(Section2Frame, { radius = 12, layers = 5, step = 1.6, bias = 3 })
 
 				-- Plate header like the "..." settings plate: title, then the rows.
 				local ACC_HEADER = 40
@@ -9312,7 +9324,7 @@ New("Frame", {
 						local accordionHeight = getAccordionHeight()
 						Section2Frame.Size = UDim2.fromOffset(ACC_WIDTH, accordionHeight)
 						placeAccordion(accordionHeight)
-						SmoothOpen(Section2Frame, 0.045, 0.17)
+						SmoothOpen(Section2Frame, 0, 0.17)
 						Tween(TextArrow, {ImageTransparency = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						RegisterPopup(Section2Frame, closeAccordion, Open)
 						local function settle()
