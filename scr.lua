@@ -125,7 +125,9 @@ local LoadAcrylic = function()
 			pcall(function()
 				local userSettings = UserSettings():GetService("UserGameSettings")
 				qualityLevel = userSettings.SavedQualityLevel.Value
-				target = qualityLevel < 8 and 1 or 0.8
+				-- 0 is "Automatic", which usually renders at high quality; it used to
+				-- count as low and switched the blur off for most players.
+				target = (qualityLevel == 0 or qualityLevel >= 8) and 0.8 or 1
 			end)
 			if type(qualityLevel) ~= "number" or type(target) ~= "number" then return nil end
 			return qualityLevel, target
@@ -880,7 +882,7 @@ local function StartPlateGroup(container)
 		Name = "PlateGroup" .. order,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundColor3 = Color3.fromRGB(24, 27, 37),
+		BackgroundColor3 = Color3.fromRGB(27, 27, 36),
 		BorderSizePixel = 0,
 		LayoutOrder = order * 1000,
 		ZIndex = container.ZIndex,
@@ -1475,7 +1477,8 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		AnchorPoint = Vector2.new(0.5, 0.43),
 		Size = UDim2.new(0.78, 0, 0.78, 0),
 		Position = UDim2.new(0.5, 0, 0.43, 0),
-	BackgroundColor3 = Color3.fromRGB(13, 15, 22),
+	-- Neverlose sidebar reads ~6,9,17: darker, cooler base under the glass.
+	BackgroundColor3 = Color3.fromRGB(8, 10, 17),
 	BackgroundTransparency = 0.25,
 	BorderSizePixel = 0,
 	ClipsDescendants = false,
@@ -2985,10 +2988,11 @@ local Aspect = Instance.new("UIAspectRatioConstraint")
 Aspect.Parent = MainFrame
 Aspect.AspectRatio = 798 / 610
 
-	-- CanvasGroup + UICorner clips the logo to a rounded badge (ClipsDescendants
-	-- only clips to the rectangle, which left hard square corners). The badge is
-	-- larger than before so the letters are no longer cut at the edges.
-	local HubIcon = New("CanvasGroup", {
+	-- Rounded badge: UICorner on the frame (backing) and on the image itself, so
+	-- the logo's own dark square gets rounded corners too. The zoom is done with
+	-- ImageRect instead of an oversized, clipped child (which cut the letters and
+	-- could only clip to a hard rectangle).
+	local HubIcon = New("Frame", {
 		Name = "HubIcon",
 		Position = UDim2.fromOffset(14, 9),
 		Size = UDim2.fromOffset(34, 34),
@@ -3004,12 +3008,16 @@ Aspect.AspectRatio = 798 / 610
 		Name = "HubGlyph",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.fromOffset(44, 44),
+		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
-		ScaleType = Enum.ScaleType.Fit,
+		-- Default thumbnail is 420px; show its centre 324px (about 1.3x zoom).
+		ImageRectOffset = hubImage ~= "" and Vector2.new(0, 0) or Vector2.new(48, 48),
+		ImageRectSize = hubImage ~= "" and Vector2.new(0, 0) or Vector2.new(324, 324),
+		ScaleType = Enum.ScaleType.Stretch,
 	}, HubIcon)
+	New("UICorner", { CornerRadius = UDim.new(0, 8) }, HubIcon:FindFirstChild("HubGlyph"))
 
 	New("TextLabel", {
 		Name = "Title",
@@ -6365,8 +6373,8 @@ end
 				Name = "Elements",
 				Size = UDim2.new(1, 0, 0, 0),
 				Position = UDim2.new(0, 0, 0, 0),
-				BackgroundColor3 = Color3.fromRGB(19, 22, 32),
-				BackgroundTransparency = 0,
+				BackgroundColor3 = Color3.fromRGB(23, 23, 31),
+				BackgroundTransparency = 0.1, -- Neverlose card: neutral (~21,21,28 on the panel), slightly see-through
 				BorderSizePixel = 0,
 				AutomaticSize = Enum.AutomaticSize.Y,
 				LayoutOrder = 1,
@@ -6496,7 +6504,7 @@ end
 				SFContainer.Position = UDim2.new(0.04, 0, 0, PLATE_HEADER + 3 / GetMainFrameScale())
 				SFContainer.Size = UDim2.new(0.92, 0, 1, -(PLATE_HEADER + 10 / GetMainFrameScale()))
 				-- Neverlose plates group their rows on an inner card, without dividers.
-				SFContainer.BackgroundColor3 = Color3.fromRGB(24, 27, 37)
+				SFContainer.BackgroundColor3 = Color3.fromRGB(27, 27, 36)
 				SFContainer.BackgroundTransparency = 0
 				SFContainer.LayoutOrder = 1
 				SFContainer.ZIndex = 5001
@@ -8932,7 +8940,7 @@ New("Frame", {
 				Container.Position = UDim2.new(0.04, 0, 0, ACC_HEADER + 3 / GetMainFrameScale())
 				Container.Size = UDim2.new(0.92, 0, 1, -(ACC_HEADER + 10 / GetMainFrameScale()))
 				-- Same inner card as the "..." plate: rows grouped, no dividers.
-				Container.BackgroundColor3 = Color3.fromRGB(24, 27, 37)
+				Container.BackgroundColor3 = Color3.fromRGB(27, 27, 36)
 				Container.BackgroundTransparency = 0
 				Container.AnchorPoint = Vector2.new(0, 0)
 				Container.LayoutOrder = 1
