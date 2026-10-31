@@ -8148,7 +8148,7 @@ end) end
 	-- onTeam(team), onItem(team, group, item, on).
 	WindowObj._buildESPPreview = function(leftCol, rightCol, options)
 		options = type(options) == "table" and options or {}
-		local LAVENDER, MUTED, TEXT = Color3.fromRGB(150, 164, 255), Color3.fromRGB(150, 152, 162), Color3.fromRGB(235, 236, 241)
+		local LAVENDER, MUTED, TEXT = Color3.fromRGB(150, 164, 255), Color3.fromRGB(176, 178, 188), Color3.fromRGB(235, 236, 241)
 		local GROUPS = type(options.groups) == "table" and options.groups or {
 			{ "Main", { "Bounding Box", "Name", "Distance", "Health Bar", "Ammo Bar", "Skeleton" } },
 			{ "Flags", { "Unarmored", "Defuser", "Blind", "Scoped", "Reload", "Immunity", "Slowed", "Vulnerable", "Bomb",
@@ -8158,7 +8158,7 @@ end) end
 		local TEAMS = { { "Enemies", "rbxassetid://10747373176" }, { "Teammates", "rbxassetid://10747372346" } }
 		local team = options.team == "Teammates" and "Teammates" or "Enemies"
 		local state = { Enemies = {}, Teammates = {} }
-		local showItems, expanded = false, false
+		local showItems, scaleTogether = false, options.scaleTogether ~= false
 
 		local page = New("Frame", { Name = "ESPPreview", Size = UDim2.new(1, 0, 0, 420), BackgroundTransparency = 1, LayoutOrder = 100 }, rightCol)
 		local function fit()
@@ -8169,7 +8169,8 @@ end) end
 		task.defer(fit)
 
 		-- ------------------------------------------------------------ top bar
-		local bar = New("Frame", { Name = "TopBar", Size = UDim2.new(1, 0, 0, 28), BackgroundTransparency = 1 }, page)
+		-- Not "TopBar": New() styles that name as a dropdown field (plate).
+		local bar = New("Frame", { Name = "PreviewBar", Size = UDim2.new(1, 0, 0, 28), BackgroundTransparency = 1 }, page)
 		local teamButtons, tools = {}, {}
 		local function iconButton(name, icon)
 			local b = New("TextButton", {
@@ -8192,7 +8193,7 @@ end) end
 			teamButtons[def[1]] = { button = b, title = title, icon = b:FindFirstChild("Icon") }
 		end
 		tools.items = iconButton("ESPItems", "rbxassetid://10723424963") -- layout-list
-		tools.expand = iconButton("Expand", "rbxassetid://10734886496") -- maximize-2
+		tools.expand = iconButton("ScaleItems", "rbxassetid://10734886496") -- maximize-2: scale ESP items together
 		local function layoutBar(instant)
 			local widths, total = {}, 0
 			for _, def in ipairs(TEAMS) do
@@ -8224,7 +8225,7 @@ end) end
 			end
 			Tween(tools.items, { BackgroundTransparency = showItems and 0 or 1 }, 0.15)
 			Tween(tools.items.Icon, { ImageColor3 = showItems and TEXT or MUTED }, 0.15)
-			Tween(tools.expand.Icon, { ImageColor3 = expanded and LAVENDER or MUTED }, 0.15)
+			Tween(tools.expand.Icon, { ImageColor3 = scaleTogether and LAVENDER or MUTED }, 0.15)
 		end
 		bar:GetPropertyChangedSignal("AbsoluteSize"):Connect(function() layoutBar(true) end)
 
@@ -8377,20 +8378,49 @@ end) end
 				for _, sec in ipairs(options.sections[which] or {}) do table.insert(bound[which], sec) end
 			end
 		end
-		local function applySections()
+		-- animated: the shown team's sections fade out, then the other team's
+		-- fade in while the column rises (tab-switch motion).
+		local swapToken = 0
+		local function applySections(animated)
+			local hide, show = {}, {}
 			for which, list in pairs(bound) do
 				for _, sec in ipairs(list) do
 					local frame = type(sec) == "table" and sec.frame or sec
-					if typeof(frame) == "Instance" then frame.Visible = which == team end
+					if typeof(frame) == "Instance" then
+						if which == team then table.insert(show, frame) else table.insert(hide, frame) end
+					end
 				end
 			end
+			if not animated then
+				for _, f in ipairs(hide) do f.Visible = false end
+				for _, f in ipairs(show) do f.Visible = true end
+				return
+			end
+			swapToken = swapToken + 1
+			local token = swapToken
+			for _, f in ipairs(hide) do
+				if f.Visible then WindowObj._fadeTree(f, false, 0.14) end
+			end
+			task.delay(0.14, function()
+				if token ~= swapToken then return end
+				for _, f in ipairs(hide) do
+					f.Visible = false
+					WindowObj._fadeTree(f, true, 0)
+				end
+				for _, f in ipairs(show) do
+					f.Visible = true
+					WindowObj._fadeTree(f, false, 0)
+					WindowObj._fadeTree(f, true, 0.22)
+				end
+				AnimateSectionColumn(leftCol)
+			end)
 		end
 		local api = { frame = page }
 		function api:GetTeam() return team end
 		function api:SetTeam(which)
 			team = which == "Teammates" and "Teammates" or "Enemies"
 			layoutBar(false)
-			applySections()
+			applySections(true)
 			paintChips()
 			if type(options.onTeam) == "function" then pcall(options.onTeam, team) end
 			return self
@@ -8422,20 +8452,44 @@ end) end
 			end
 			layoutBar(false)
 		end)
-		-- Expand: the preview takes the whole tab (left column folds away).
-		local leftSize, rightSize = leftCol.Size, rightCol.Size
-		tools.expand.MouseButton1Click:Connect(function()
-			expanded = not expanded
-			Tween(leftCol, { Size = expanded and UDim2.new(0, 0, leftSize.Y.Scale, leftSize.Y.Offset) or leftSize }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Tween(rightCol, { Size = expanded and UDim2.new(1, -12, rightSize.Y.Scale, rightSize.Y.Offset) or rightSize }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			tools.expand.Icon.Image = expanded and "rbxassetid://10734895530" or "rbxassetid://10734886496"
-			layoutBar(false)
+		-- Scale switch (Neverlose): on = ESP items scale together; hover shows
+		-- what turning it off does.
+		local tip = New("TextLabel", {
+			Name = "ScaleTip", AnchorPoint = Vector2.new(0, 0.5), Size = UDim2.fromOffset(0, 26), AutomaticSize = Enum.AutomaticSize.X,
+			BackgroundColor3 = Color3.fromRGB(18, 18, 25), BackgroundTransparency = 1, Text = "When disabled, ESP items are scaled individually",
+			TextColor3 = TEXT, TextTransparency = 1, TextSize = 13, Font = FONT, Visible = false, ZIndex = 40,
+		}, page)
+		New("UICorner", { CornerRadius = UDim.new(0, 6) }, tip)
+		New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, tip)
+		local tipToken = 0
+		tools.expand.MouseEnter:Connect(function()
+			tipToken = tipToken + 1
+			local token = tipToken
+			task.delay(0.35, function()
+				if token ~= tipToken then return end
+				local b = tools.expand
+				tip.Position = UDim2.fromOffset(b.AbsolutePosition.X - page.AbsolutePosition.X + b.AbsoluteSize.X + 8, b.AbsolutePosition.Y - page.AbsolutePosition.Y + b.AbsoluteSize.Y / 2)
+				tip.Visible = true
+				Tween(tip, { BackgroundTransparency = 0.04, TextTransparency = 0 }, 0.14)
+			end)
 		end)
+		tools.expand.MouseLeave:Connect(function()
+			tipToken = tipToken + 1
+			Tween(tip, { BackgroundTransparency = 1, TextTransparency = 1 }, 0.1)
+			local token = tipToken
+			task.delay(0.11, function() if token == tipToken then tip.Visible = false end end)
+		end)
+		tools.expand.MouseButton1Click:Connect(function()
+			scaleTogether = not scaleTogether
+			layoutBar(false)
+			if type(options.onScale) == "function" then pcall(options.onScale, scaleTogether) end
+		end)
+		function api:GetScaleTogether() return scaleTogether end
 
 		-- Saved with the config: open team and each team's ESP items.
 		WindowObj._configExtras["esp_" .. tostring(options.id or "players")] = {
 			get = function()
-				local out = { team = team, Enemies = {}, Teammates = {} }
+				local out = { team = team, scale = scaleTogether, Enemies = {}, Teammates = {} }
 				for which, items in pairs(state) do for key in pairs(items) do table.insert(out[which], key) end end
 				return out
 			end,
@@ -8445,6 +8499,7 @@ end) end
 					state[which] = {}
 					for _, key in ipairs(type(v[which]) == "table" and v[which] or {}) do state[which][key] = true end
 				end
+				if type(v.scale) == "boolean" then scaleTogether = v.scale end
 				api:SetTeam(v.team)
 			end,
 		}
