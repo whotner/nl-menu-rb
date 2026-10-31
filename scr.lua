@@ -664,7 +664,7 @@ CenterElement = function(el)
 		if el:FindFirstChild("TopBar") then
 			cpOffset = -155
 		elseif effect and effect:FindFirstChild("Icon") then
-			cpOffset = -64
+			cpOffset = -55 -- 8px left of the switch
 		end
 		cp.AnchorPoint = Vector2.new(1, 0.5)
 		cp.Position = UDim2.new(1, cpOffset, 0.5, 0)
@@ -1536,6 +1536,9 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local activeTabIndex = nil
 	local tabOrder = 0
 	local WindowObj = {}
+	-- Set from the start so nothing (watermark, lists, toggle button) shows
+	-- before the loader finishes.
+	WindowObj._loaderActive = Library.ShowLoader ~= false
 	local _coloredElements = {}
 	local logoVisible = true
 	local customization = {
@@ -2506,21 +2509,20 @@ GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(1, -6, 0, 2)
 -- Neverlose watermark: a thin, dark, see-through strip without outline or
 -- dividers; small caps text, accent icons, avatar at the end.
-GameInfo.Size = UDim2.fromOffset(0, 36)
+GameInfo.Size = UDim2.fromOffset(0, 30)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
-GameInfo.BackgroundColor3 = Color3.fromRGB(8, 10, 17)
-GameInfo.BackgroundTransparency = 0.5
+GameInfo.BackgroundColor3 = Color3.fromRGB(11, 11, 15)
+GameInfo.BackgroundTransparency = 0.06
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
 GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
-do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = GameInfo end
--- Glass blur behind the strip, like the menu.
-if WindowObj._attachBlur then WindowObj._attachBlur(GameInfo) end
+do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = GameInfo end
+-- Neverlose's strip is a plain dark plate: no glass blur behind it.
 WindowObj._makeDraggable(GameInfo, GameInfo)
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 14); pd.PaddingRight = UDim.new(0, 7); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 12); pd.PaddingRight = UDim.new(0, 6); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
 local ICON_LAYERS   = "rbxassetid://114499998778667"
@@ -2534,20 +2536,20 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local cell = Instance.new("Frame")
 	cell.Name = name .. "Cell"
 	cell.LayoutOrder = order
-	cell.Size = UDim2.fromOffset(0, 36)
+	cell.Size = UDim2.fromOffset(0, 30)
 	cell.AutomaticSize = Enum.AutomaticSize.X
 	cell.BackgroundTransparency = 1
 	cell.BorderSizePixel = 0
 	cell.ZIndex = Z_BASE + 901
 	cell.Parent = GameInfo
-	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 6); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
-	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 8); pd.PaddingRight = UDim.new(0, 8); pd.Parent = cell end
+	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 5); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
+	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 7); pd.PaddingRight = UDim.new(0, 7); pd.Parent = cell end
 	local icon
 	if iconAsset then
 		icon = Instance.new("ImageLabel")
 		icon.Name = name .. "Icon"
 		icon.LayoutOrder = 1
-		icon.Size = UDim2.fromOffset(iconSize or 15, iconSize or 15)
+		icon.Size = UDim2.fromOffset(iconSize or 13, iconSize or 13)
 		icon.BackgroundTransparency = 1
 		icon.BorderSizePixel = 0
 		icon.Image = iconAsset
@@ -2561,15 +2563,15 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local label = Instance.new("TextLabel")
 	label.Name = name
 	label.LayoutOrder = 2
-	label.Size = UDim2.fromOffset(0, 36)
+	label.Size = UDim2.fromOffset(0, 30)
 	label.AutomaticSize = Enum.AutomaticSize.X
 	label.BackgroundTransparency = 1
 	label.BorderSizePixel = 0
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(200, 202, 212)
+	label.TextColor3 = Color3.fromRGB(184, 186, 195)
 	label.TextTransparency = 0
 	label.TextScaled = false
-	label.TextSize = 15
+	label.TextSize = 13
 	label.Font = FONT
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Center
@@ -2594,7 +2596,7 @@ end
 local BrandCell = Instance.new("Frame")
 BrandCell.Name = "BrandCell"
 BrandCell.LayoutOrder = 2
-BrandCell.Size = UDim2.fromOffset(0, 36)
+BrandCell.Size = UDim2.fromOffset(0, 30)
 BrandCell.AutomaticSize = Enum.AutomaticSize.X
 BrandCell.BackgroundTransparency = 1
 BrandCell.BorderSizePixel = 0
@@ -2622,13 +2624,13 @@ do
 	local brandText = Instance.new("TextLabel")
 	brandText.Name = "BrandText"
 	brandText.LayoutOrder = 2
-	brandText.Size = UDim2.fromOffset(0, 36)
+	brandText.Size = UDim2.fromOffset(0, 30)
 	brandText.AutomaticSize = Enum.AutomaticSize.X
 	brandText.BackgroundTransparency = 1
 	brandText.BorderSizePixel = 0
 	brandText.Text = "NL"
 	brandText.TextColor3 = Color3.fromRGB(208, 226, 248)
-	brandText.TextSize = 17
+	brandText.TextSize = 15
 	brandText.Font = FONT_BOLD
 	brandText.ZIndex = Z_BASE + 901
 	brandText.Parent = BrandCell
@@ -2638,7 +2640,7 @@ local UserCell = WMCell("Username", 4, nil, LocalPlayer.DisplayName or "Player")
 local UserIcon = Instance.new("ImageLabel")
 UserIcon.Name = "UserIcon"
 UserIcon.LayoutOrder = 1
-UserIcon.Size = UDim2.fromOffset(24, 24)
+UserIcon.Size = UDim2.fromOffset(20, 20)
 UserIcon.BackgroundTransparency = 1
 UserIcon.BorderSizePixel = 0
 UserIcon.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId or 0) .. "&w=150&h=150"
@@ -2725,6 +2727,7 @@ end
 WindowObj._wmSpeed.icon.Image = "rbxassetid://10723395708"
 SignalImage.Image = "rbxassetid://10734961133"
 TimeCellIcon.Image = "rbxassetid://10709805144"
+for _, icon in ipairs({ WindowObj._wmSpeed.icon, SignalImage, TimeCellIcon }) do icon.ImageTransparency = 0.12 end
 
 local WMCells = { brand = BrandCell, user = UserCell, speed = WindowObj._wmSpeed.cell, fps = FpsCell, ping = PingCell, ram = RamCell, time = TimeCell }
 local WMDefaultOrder = { "brand", "speed", "fps", "ping", "time", "user", "ram" }
@@ -3076,11 +3079,11 @@ function OV.pill(name, parent, color, radius, height)
 	pill:SetAttribute("PillAlpha", 0.04)
 	New("UICorner", { CornerRadius = UDim.new(0, radius) }, pill)
 	Stroke(pill)
-	-- Shadow from strokes (drawn only outside the shape): three thin rings,
-	-- nudged down 1px, so it stays close to the plate.
+	-- Shadow from strokes (drawn only outside the shape): thin rings flush
+	-- with the plate edge, no offset, so nothing sticks out on one side.
 	for i = 1, 3 do
 		local ring = New("Frame", {
-			Name = "ShadowRing" .. i, Position = UDim2.fromOffset(0, 1), Size = UDim2.fromScale(1, 1),
+			Name = "ShadowRing" .. i, Position = UDim2.fromOffset(0, 0), Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = Z_BASE + 890,
 		}, pill)
 		New("UICorner", { CornerRadius = UDim.new(0, radius) }, ring)
@@ -3088,7 +3091,7 @@ function OV.pill(name, parent, color, radius, height)
 		st.Name = "ShadowStroke"
 		st.Color = Color3.new(0, 0, 0)
 		st.Thickness = i
-		st.Transparency = 0.8 + i * 0.05
+		st.Transparency = 0.84 + i * 0.04
 		st:SetAttribute("StrokeAlpha", st.Transparency)
 		st.Parent = ring
 	end
@@ -3325,7 +3328,7 @@ RefreshKeybindOverlay = function()
 		if ok and type(result) == "table" then snapshot = result end
 	end
 	-- Shown while the menu is open, and without it while any bind is active.
-	local target = kbEnabled and (MainFrame.Visible or #snapshot > 0)
+	local target = kbEnabled and not WindowObj._loaderActive and (MainFrame.Visible or #snapshot > 0)
 	local entries = {}
 	for i, entry in ipairs(snapshot) do
 		entries[i] = {
@@ -3382,7 +3385,7 @@ end
 
 local function RefreshSpectatorOverlay()
 	if not SpecPanel.Parent then return end
-	local target = specEnabled and (MainFrame.Visible or #specList > 0)
+	local target = specEnabled and not WindowObj._loaderActive and (MainFrame.Visible or #specList > 0)
 	local entries = {}
 	for i, person in ipairs(specList) do
 		entries[i] = { id = tostring(person.id) .. ":" .. person.name, sig = "", data = person }
@@ -7178,6 +7181,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	WindowObj._loaderActive = true
 	local watermarkFrame = WindowObj.Watermark and WindowObj.Watermark.frame
 	if watermarkFrame then watermarkFrame.Visible = false end
+	ToggleBtn.Visible = false
 
 	local spinning = true
 	task.spawn(function()
@@ -7234,7 +7238,10 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	task.wait(0.5)
 	if AcrylicBlur.toggleGui then AcrylicBlur.toggleGui() end
 	WindowObj._loaderActive = false
+	ToggleBtn.Visible = true
 	if watermarkFrame and WindowObj.Watermark.applyLayout then WindowObj.Watermark.applyLayout(nil, nil) end
+	if WindowObj.KeybindList then WindowObj.KeybindList.refresh() end
+	if WindowObj.SpectatorList then WindowObj.SpectatorList.refresh() end
 	task.wait(0.8)
 	Tween(toast, { Position = UDim2.new(1, 380, 0, 22) }, 0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 	task.wait(0.42)
@@ -9335,7 +9342,7 @@ New("Frame", {
 				local cpBtn = New("ImageButton", {
 					Name = "colorpickerButton",
 					AnchorPoint = Vector2.new(1, 0.5),
-					Position = UDim2.new(1, -64, 0.5, 0),
+					Position = UDim2.new(1, -55, 0.5, 0),
 					Size = UDim2.fromOffset(20, 20),
 					BackgroundColor3 = color,
 					BorderSizePixel = 0,
