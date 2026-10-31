@@ -2720,9 +2720,11 @@ WindowObj._wmGlyph = function(icon, kind)
 	icon:GetPropertyChangedSignal("ImageTransparency"):Connect(sync)
 	sync()
 end
-WindowObj._wmGlyph(WindowObj._wmSpeed.icon, "speed")
-WindowObj._wmGlyph(SignalImage, "ping")
-WindowObj._wmGlyph(TimeCellIcon, "time")
+-- Lucide icons (Fluent UI uploads): gauge, signal, clock. The drawn glyphs
+-- above stay available through WindowObj._wmGlyph.
+WindowObj._wmSpeed.icon.Image = "rbxassetid://10723395708"
+SignalImage.Image = "rbxassetid://10734961133"
+TimeCellIcon.Image = "rbxassetid://10709805144"
 
 local WMCells = { brand = BrandCell, user = UserCell, speed = WindowObj._wmSpeed.cell, fps = FpsCell, ping = PingCell, ram = RamCell, time = TimeCell }
 local WMDefaultOrder = { "brand", "speed", "fps", "ping", "time", "user", "ram" }
@@ -3074,19 +3076,19 @@ function OV.pill(name, parent, color, radius, height)
 	pill:SetAttribute("PillAlpha", 0.04)
 	New("UICorner", { CornerRadius = UDim.new(0, radius) }, pill)
 	Stroke(pill)
-	-- Shadow from strokes (drawn only outside the shape), widening and fading,
-	-- nudged down 2px.
-	for i = 1, 6 do
+	-- Shadow from strokes (drawn only outside the shape): three thin rings,
+	-- nudged down 1px, so it stays close to the plate.
+	for i = 1, 3 do
 		local ring = New("Frame", {
-			Name = "ShadowRing" .. i, Position = UDim2.fromOffset(0, 2), Size = UDim2.fromScale(1, 1),
+			Name = "ShadowRing" .. i, Position = UDim2.fromOffset(0, 1), Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = Z_BASE + 890,
 		}, pill)
 		New("UICorner", { CornerRadius = UDim.new(0, radius) }, ring)
 		local st = Instance.new("UIStroke")
 		st.Name = "ShadowStroke"
 		st.Color = Color3.new(0, 0, 0)
-		st.Thickness = i * 1.5
-		st.Transparency = 0.78 + i * 0.03
+		st.Thickness = i
+		st.Transparency = 0.8 + i * 0.05
 		st:SetAttribute("StrokeAlpha", st.Transparency)
 		st.Parent = ring
 	end
@@ -3115,30 +3117,10 @@ local function MakeOverlayPanel(name, iconAsset, title)
 	local content = New("Frame", { Name = "Content", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = Z_BASE + 892 }, header)
 	New("UIPadding", { PaddingLeft = UDim.new(0, 11), PaddingRight = UDim.new(0, 12) }, content)
 	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, content)
-	if title == "Hotkeys" then
-		-- Tree list: a bracket on the left (top cap, stem, two branches) and
-		-- three lines on the right, on a 13x10 pixel grid.
-		local listIcon = New("Frame", {
-			Name = "HeaderIcon", Size = UDim2.fromOffset(13, 10), BackgroundTransparency = 1,
-			LayoutOrder = 1, ZIndex = Z_BASE + 892,
-		}, content)
-		for i, r in ipairs({
-			{ 0, 0, 4, 2 }, { 0, 0, 2, 10 }, { 0, 4, 4, 2 }, { 0, 8, 4, 2 },
-			{ 6, 0, 7, 2 }, { 6, 4, 7, 2 }, { 6, 8, 7, 2 },
-		}) do
-			local part = New("Frame", {
-				Name = "ListPart" .. tostring(i), Position = UDim2.fromOffset(r[1], r[2]),
-				Size = UDim2.fromOffset(r[3], r[4]), BackgroundColor3 = mainColor, BackgroundTransparency = 1,
-				BorderSizePixel = 0, ZIndex = Z_BASE + 893,
-			}, listIcon)
-			part:SetAttribute("NLOverlayAccentPart", true)
-		end
-	else
-		New("ImageLabel", {
-			Name = "HeaderIcon", Size = UDim2.fromOffset(14, 11), BackgroundTransparency = 1,
-			Image = iconAsset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 892,
-		}, content)
-	end
+	New("ImageLabel", {
+		Name = "HeaderIcon", Size = UDim2.fromOffset(15, 15), BackgroundTransparency = 1,
+		Image = iconAsset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 892,
+	}, content)
 	local divider = New("Frame", {
 		Name = "HeaderDivider", Size = UDim2.fromOffset(1, 14), BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 		BackgroundTransparency = 0.88, BorderSizePixel = 0, LayoutOrder = 2, ZIndex = Z_BASE + 892,
@@ -3149,7 +3131,7 @@ local function MakeOverlayPanel(name, iconAsset, title)
 		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(235, 236, 241), TextTransparency = 0,
 		TextSize = 14, Font = FONT_BOLD, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 3, ZIndex = Z_BASE + 892,
 	}, content)
-	local headerW = math.ceil(11 + 14 + 8 + 1 + 8 + MeasureText(title, 14, FONT_BOLD) + 12)
+	local headerW = math.ceil(11 + 15 + 8 + 1 + 8 + MeasureText(title, 14, FONT_BOLD) + 12)
 	header.Size = UDim2.fromOffset(headerW, OV.head)
 	panel:SetAttribute("HeaderWidth", headerW)
 	if WindowObj._makeDraggable then WindowObj._makeDraggable(header, panel) end
@@ -3305,37 +3287,27 @@ function OV.sync(panel, rows, cache, entries, build)
 	OV.layout(panel, rows)
 end
 
-local KBPanel, KBRows = MakeOverlayPanel("Keybinds", ICON_KEYBOARD, "Hotkeys")
+-- Icons: Lucide set as uploaded for the Fluent UI library.
+OV.icons = {
+	list = "rbxassetid://10723433811", eye = "rbxassetid://10723346959",
+	toggleOn = "rbxassetid://10734985040", toggleOff = "rbxassetid://10734984834",
+	hold = "rbxassetid://10723405649", always = "rbxassetid://10709797837",
+}
+local KBPanel, KBRows = MakeOverlayPanel("Keybinds", OV.icons.list, "Hotkeys")
 local kbEnabled = true
 local kbRowCache = {}
 
--- State glyph for binds without a value, sized for the 22px pill: switch
--- (on: white, dark knob right, as in Neverlose; off: grey, knob left),
--- hold = key cap, always = solid dot.
+-- State icon for binds without a value: toggle on (white) / off (grey),
+-- hand for hold, dot for always.
 function OV.modeGlyph(pill, mode, off)
-	local function part(x, y, w, h, color, radius, parent)
-		local f = New("Frame", {
-			Name = "ModePart", Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(w, h),
-			BackgroundColor3 = color, BackgroundTransparency = 1, BorderSizePixel = 0,
-			ZIndex = (parent or pill).ZIndex + 1,
-		}, parent or pill)
-		f:SetAttribute("NLOverlayAccentPart", true)
-		New("UICorner", { CornerRadius = radius or UDim.new(1, 0) }, f)
-		return f
-	end
-	local WHITE = Color3.fromRGB(240, 240, 244)
-	if mode == "hold" then
-		local cap = part(6, 6, 10, 10, WHITE, UDim.new(0, 3))
-		part(3, 3, 4, 4, OV.entry, UDim.new(0, 1), cap)
-	elseif mode == "always" then
-		part(7, 7, 8, 8, WHITE)
-	elseif off then
-		local sw = part(4, 6, 14, 10, Color3.fromRGB(112, 116, 128))
-		part(2, 2, 6, 6, OV.entry, nil, sw)
-	else
-		local sw = part(4, 6, 14, 10, WHITE)
-		part(6, 2, 6, 6, OV.entry, nil, sw)
-	end
+	local asset = mode == "hold" and OV.icons.hold or mode == "always" and OV.icons.always
+		or (off and OV.icons.toggleOff or OV.icons.toggleOn)
+	New("ImageLabel", {
+		Name = "StateIcon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1, Image = asset,
+		ImageColor3 = off and Color3.fromRGB(120, 124, 136) or Color3.fromRGB(240, 240, 244),
+		ScaleType = Enum.ScaleType.Fit, ZIndex = Z_BASE + 892,
+	}, pill)
 end
 
 local function BuildBindRow(entry, order)
@@ -3375,7 +3347,7 @@ WindowObj.KeybindList = {
 	refresh = function() RefreshKeybindOverlay() end,
 }
 
-local SpecPanel, SpecRows = MakeOverlayPanel("Spectators", ICON_EYE, "Spectators")
+local SpecPanel, SpecRows = MakeOverlayPanel("Spectators", OV.icons.eye, "Spectators")
 local specEnabled = true
 local specAuto = true
 local specList = {}
@@ -8524,6 +8496,21 @@ New("Frame", {
 				return BindKeyName(target.key)
 			end
 
+			-- A function (target) can carry many hotkeys: target.binds holds bind
+			-- objects that read everything else (obj, row, label...) from their
+			-- target through __index. _keybinds maps a key to its bind. The dots
+			-- show the first bound key of the function.
+			local function PaintBindDots(owner)
+				if not owner or not owner.dots then return end
+				owner.dots.Visible = true
+				local indicator = owner.dots:FindFirstChild("BindLabel")
+				if not indicator then return end
+				local text = ""
+				for _, b in ipairs(owner.binds or {}) do
+					if b.key then text = BindKeyName(b.key) break end
+				end
+				indicator.Text = text
+			end
 			local function SetTargetBind(target, key)
 				if not target or not target.obj then return end
 				if target.key and _keybinds[target.key] == target then _keybinds[target.key] = nil end
@@ -8531,19 +8518,12 @@ New("Frame", {
 					local previous = _keybinds[key]
 					if previous and previous ~= target then
 						previous.key = nil
-						if previous.dots then
-							local previousIndicator = previous.dots:FindFirstChild("BindLabel")
-							if previousIndicator then previousIndicator.Text = "" end
-						end
+						PaintBindDots(previous.owner or previous)
 					end
 				end
 				target.key = key
 				if key then _keybinds[key] = target end
-				if target.dots then
-					target.dots.Visible = true
-					local indicator = target.dots:FindFirstChild("BindLabel")
-					if indicator then indicator.Text = key and BindKeyName(key) or "" end
-				end
+				PaintBindDots(target.owner or target)
 				if RefreshKeybindOverlay then
 					task.defer(RefreshKeybindOverlay)
 				end
@@ -8641,6 +8621,8 @@ New("Frame", {
 				bindRefs.modeText.Text = mode:sub(1, 1):upper() .. mode:sub(2)
 				bindRefs.modeChip.Size = UDim2.fromOffset(math.ceil(MeasureText(bindRefs.modeText.Text, 13, FONT) + 34), 22)
 				for name, glyph in pairs(bindRefs.modeGlyphs) do glyph.Visible = name == mode end
+				local item = bindRefs.itemFor and bindRefs.itemFor[target]
+				if item and item.Parent then item.Text = target.key and BindKeyName(target.key) or "None" end
 				bindRefs.setSwitch("value", target.showValue == true)
 				bindRefs.setSwitch("visible", not target.hideInList)
 			end
@@ -8688,66 +8670,13 @@ New("Frame", {
 					row.MouseLeave:Connect(function() Tween(row, { BackgroundTransparency = 1 }, 0.12) end)
 					return row
 				end
-				-- Drawn 14px icons as on the Neverlose editor: sunrise (Key),
-				-- solid key cap (Mode), chain (Value), eye (Visible), bin (Delete).
-				local function drawIcon(row, kind, color)
-					local host = row:FindFirstChild("Icon")
-					if not host then return end
-					host.Image = ""
-					color = color or ICON
-					local CUT = Color3.fromRGB(18, 18, 25)
-					local function outline(x, y, w, h, radius, rot, thick)
-						local f = New("Frame", {
-							Name = "IconLine", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(x + w / 2, y + h / 2),
-							Size = UDim2.fromOffset(w, h), Rotation = rot or 0, BackgroundTransparency = 1, ZIndex = host.ZIndex + 1,
-						}, host)
-						New("UICorner", { CornerRadius = radius }, f)
-						local st = Instance.new("UIStroke")
-						st.Color = color
-						st.Thickness = thick or 1.5
-						st.Parent = f
-						return f
-					end
-					local function fill(x, y, w, h, radius, c, parent, clip)
-						local f = New("Frame", {
-							Name = "IconFill", Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(w, h),
-							BackgroundColor3 = c or color, BackgroundTransparency = clip and 1 or 0, BorderSizePixel = 0,
-							ClipsDescendants = clip == true, ZIndex = (parent or host).ZIndex + 1,
-						}, parent or host)
-						if radius then New("UICorner", { CornerRadius = radius }, f) end
-						return f
-					end
-					if kind == "key" then
-						-- half sun on a horizon line, short rays around it
-						local clip = fill(3, 6, 8, 4, nil, nil, nil, true)
-						fill(0, 0, 8, 8, UDim.new(1, 0), nil, clip)
-						fill(0, 10, 14, 2, UDim.new(1, 0))
-						fill(6, 1, 2, 3, UDim.new(1, 0))
-						fill(1, 4, 2, 2, UDim.new(1, 0)); fill(11, 4, 2, 2, UDim.new(1, 0))
-					elseif kind == "mode" then
-						local cap = fill(0, 2, 14, 10, UDim.new(0, 3))
-						fill(2, 3, 2, 2, nil, CUT, cap); fill(5, 3, 2, 2, nil, CUT, cap); fill(8, 3, 2, 2, nil, CUT, cap); fill(11, 3, 1, 2, nil, CUT, cap)
-						fill(4, 6, 6, 2, nil, CUT, cap)
-					elseif kind == "value" then
-						outline(0, 6, 9, 5, UDim.new(1, 0), -45)
-						outline(5, 3, 9, 5, UDim.new(1, 0), -45)
-					elseif kind == "eye" then
-						outline(0, 3, 14, 8, UDim.new(1, 0))
-						fill(5, 5, 4, 4, UDim.new(1, 0))
-					elseif kind == "bin" then
-						fill(4, 0, 6, 2, UDim.new(0, 1))
-						fill(1, 2, 12, 2, UDim.new(0, 1))
-						local body = fill(2, 5, 10, 9, UDim.new(0, 2))
-						fill(3, 2, 1, 5, nil, CUT, body); fill(6, 2, 1, 5, nil, CUT, body)
-					end
-				end
 				local function gap(order)
 					New("Frame", { Name = "Gap" .. order, LayoutOrder = order, Size = UDim2.new(1, 0, 0, 6), BackgroundTransparency = 1, ZIndex = Z_BASE + 952 }, body)
 				end
 
 				-- Key: small dark chip on the right; click it, then press a key.
-				local keyRow = makeRow(1, "rbxassetid://121978468376124", "Key", TEXT)
-				drawIcon(keyRow, "key")
+				-- Icons: Lucide set as uploaded for the Fluent UI library.
+				local keyRow = makeRow(1, "rbxassetid://10734974522", "Key", TEXT) -- sunrise
 				bindRefs.key = New("TextLabel", {
 					Name = "KeyChip", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(20, 20),
 					BackgroundColor3 = Color3.fromRGB(28, 29, 39), BackgroundTransparency = 0, Text = "-", TextColor3 = Color3.fromRGB(190, 192, 202),
@@ -8762,8 +8691,7 @@ New("Frame", {
 
 				-- Mode: dark chip with the mode glyph and accent text, then a small
 				-- key-cap icon; both cycle Toggle / Hold / Always.
-				local modeRow = makeRow(2, "rbxassetid://109485777305919", "Mode", TEXT)
-				drawIcon(modeRow, "mode")
+				local modeRow = makeRow(2, "rbxassetid://10723416765", "Mode", TEXT) -- keyboard
 				bindRefs.modeChip = New("Frame", {
 					Name = "ModeChip", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -30, 0.5, 0), Size = UDim2.fromOffset(74, 22),
 					BackgroundColor3 = Color3.fromRGB(28, 29, 39), BackgroundTransparency = 0, ZIndex = Z_BASE + 953,
@@ -8774,47 +8702,18 @@ New("Frame", {
 					Text = "Toggle", TextColor3 = mainColor, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 954,
 				}, bindRefs.modeChip)
 				bindRefs.modeGlyphs = {}
-				do
-					local function glyphPart(parent, x, y, w, h, color, radius)
-						local f = New("Frame", {
-							Name = "GlyphPart", Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(w, h),
-							BackgroundColor3 = color, BackgroundTransparency = 0, BorderSizePixel = 0, ZIndex = parent.ZIndex + 1,
-						}, parent)
-						New("UICorner", { CornerRadius = radius or UDim.new(1, 0) }, f)
-						return f
-					end
-					for _, mode in ipairs(BIND_MODES) do
-						local host = New("Frame", {
-							Name = "ModeGlyph_" .. mode, Position = UDim2.fromOffset(7, 5), Size = UDim2.fromOffset(16, 12),
-							BackgroundTransparency = 1, ZIndex = Z_BASE + 954, Visible = false,
-						}, bindRefs.modeChip)
-						if mode == "toggle" then
-							local track = glyphPart(host, 0, 2, 16, 9, mainColor)
-							glyphPart(track, 8, 1, 7, 7, Color3.fromRGB(28, 29, 39))
-						elseif mode == "hold" then
-							local cap = glyphPart(host, 3, 1, 10, 10, mainColor, UDim.new(0, 3))
-							glyphPart(cap, 3, 3, 4, 4, Color3.fromRGB(28, 29, 39), UDim.new(0, 1))
-						else
-							glyphPart(host, 4, 2, 8, 8, mainColor)
-						end
-						bindRefs.modeGlyphs[mode] = host
-					end
+				for mode, asset in pairs({ toggle = "rbxassetid://10734985040", hold = "rbxassetid://10723405649", always = "rbxassetid://10709797837" }) do
+					bindRefs.modeGlyphs[mode] = New("ImageLabel", {
+						Name = "ModeGlyph_" .. mode, AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 6, 0.5, 0), Size = UDim2.fromOffset(15, 15),
+						BackgroundTransparency = 1, Image = asset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit,
+						ZIndex = Z_BASE + 954, Visible = false,
+					}, bindRefs.modeChip)
 				end
-				local modeMore = New("Frame", {
+				New("ImageLabel", {
 					Name = "ModeMore", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(14, 14),
-					BackgroundTransparency = 1, ZIndex = Z_BASE + 953,
+					BackgroundTransparency = 1, Image = "rbxassetid://10709790948", ImageColor3 = ICON, ScaleType = Enum.ScaleType.Fit,
+					ZIndex = Z_BASE + 953,
 				}, modeRow)
-				do
-					local cap = New("Frame", {
-						Name = "MoreCap", Position = UDim2.fromOffset(0, 1), Size = UDim2.fromOffset(14, 8),
-						BackgroundColor3 = ICON, BorderSizePixel = 0, ZIndex = Z_BASE + 954,
-					}, modeMore)
-					New("UICorner", { CornerRadius = UDim.new(0, 2) }, cap)
-					local tip = New("Frame", {
-						Name = "MoreTip", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(7, 10), Size = UDim2.fromOffset(5, 5),
-						Rotation = 45, BackgroundColor3 = ICON, BorderSizePixel = 0, ZIndex = Z_BASE + 954,
-					}, modeMore)
-				end
 				modeRow.MouseButton1Click:Connect(function()
 					if not _bindTarget then return end
 					local current, index = CurrentBindMode(_bindTarget), 1
@@ -8839,7 +8738,6 @@ New("Frame", {
 				end
 				local function switchRow(order, icon, text, name, onClick)
 					local row = makeRow(order, icon, text, TEXT)
-					drawIcon(row, name == "value" and "value" or "eye")
 					local track = New("Frame", {
 						Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(28, 16),
 						BackgroundColor3 = Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = Z_BASE + 953,
@@ -8858,17 +8756,16 @@ New("Frame", {
 						if RefreshKeybindOverlay then task.defer(RefreshKeybindOverlay) end
 					end)
 				end
-				switchRow(4, "rbxassetid://114499998778667", "Value", "value", function(t) t.showValue = not t.showValue end)
-				switchRow(5, "rbxassetid://127234874352422", "Visible", "visible", function(t) t.hideInList = not t.hideInList end)
+				switchRow(4, "rbxassetid://10723426722", "Value", "value", function(t) t.showValue = not t.showValue end)
+				switchRow(5, "rbxassetid://10723346959", "Visible", "visible", function(t) t.hideInList = not t.hideInList end)
 
 				gap(6)
 
-				local delRow = makeRow(7, "rbxassetid://116396312853810", "Delete", RED)
-				drawIcon(delRow, "bin", RED)
+				local delRow = makeRow(7, "rbxassetid://10747362241", "Delete", RED) -- trash-2
 				delRow.MouseButton1Click:Connect(function()
 					local t = _bindTarget
-					if t then SetTargetBind(t, nil) end
 					CloseBindMenu()
+					if t then bindRefs.removeBind(t) end
 				end)
 				return _bindMenu
 			end
@@ -8975,43 +8872,65 @@ New("Frame", {
 				return item, icon
 			end
 
-			local function OpenContextMenu(target, point)
-				BuildContextMenu()
-				CloseAllPopupsExcept(_contextMenu)
-				_contextTarget = target
+			bindRefs.newBind = function(owner)
+				local bind = setmetatable({ owner = owner }, { __index = owner })
+				table.insert(owner.binds, bind)
+				return bind
+			end
+			bindRefs.removeBind = function(bind)
+				SetTargetBind(bind, nil)
+				local owner = bind.owner
+				if owner then
+					for i, b in ipairs(owner.binds) do
+						if b == bind then table.remove(owner.binds, i) break end
+					end
+					PaintBindDots(owner)
+					if _contextOpen and _contextTarget == owner then bindRefs.fillContext(owner) end
+				end
+			end
+
+			-- Neverlose hotkey menu: All Hotkeys, the function's hotkeys (each
+			-- opens its editor), New Hotkey (adds one under the others and opens
+			-- it), Reset. Rebuilt in place when the list changes.
+			bindRefs.fillContext = function(target)
 				local list = _contextMenu:FindFirstChild("Items")
 				for _, child in ipairs(list:GetChildren()) do
 					if child:IsA("GuiObject") then child:Destroy() end
 				end
 				contextItemOrder = 0
-				-- Neverlose hotkey menu: All Hotkeys / New Hotkey / Reset.
-				local _, listIcon = AddContextItem("All Hotkeys", nil, function(current, item)
+				bindRefs.itemFor = {}
+				AddContextItem("All Hotkeys", "rbxassetid://10723433811", function()
 					if WindowObj.KeybindList then WindowObj.KeybindList.setEnabled(true) end
-					if current.key then OpenBindMenu(current, _contextMenu, item) end
-				end, true)
-				listIcon.Image = ""
-				for i = 0, 2 do
-					New("Frame", { Name = "Dot", Position = UDim2.fromOffset(0, 1 + i * 5), Size = UDim2.fromOffset(2, 2), BackgroundColor3 = Color3.fromRGB(200, 201, 210), BorderSizePixel = 0, ZIndex = 8004 }, listIcon)
-					New("Frame", { Name = "Line", Position = UDim2.fromOffset(4, 1 + i * 5), Size = UDim2.fromOffset(10, 2), BackgroundColor3 = Color3.fromRGB(200, 201, 210), BorderSizePixel = 0, ZIndex = 8004 }, listIcon)
+				end)
+				for _, bind in ipairs(target.binds) do
+					local item = AddContextItem(bind.key and BindKeyName(bind.key) or "None", "rbxassetid://10723416765", function(_, it)
+						OpenBindMenu(bind, _contextMenu, it)
+					end, true)
+					bindRefs.itemFor[bind] = item
 				end
-				local _, newIcon = AddContextItem("New Hotkey", nil, function(current, item)
-					OpenBindMenu(current, _contextMenu, item)
+				AddContextItem("New Hotkey", "rbxassetid://10734923868", function(current)
+					local bind = bindRefs.newBind(current)
+					bindRefs.fillContext(current)
+					OpenBindMenu(bind, _contextMenu, bindRefs.itemFor[bind])
 				end, true)
-				newIcon.Image = ""
-				do
-					local disc = New("Frame", { Name = "Disc", Position = UDim2.fromOffset(1, 1), Size = UDim2.fromOffset(12, 12), BackgroundColor3 = Color3.fromRGB(200, 201, 210), BorderSizePixel = 0, ZIndex = 8004 }, newIcon)
-					New("UICorner", { CornerRadius = UDim.new(1, 0) }, disc)
-					local hole = New("Frame", { Name = "Hole", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(4, 4), BackgroundColor3 = Color3.fromRGB(18, 18, 25), BorderSizePixel = 0, ZIndex = 8005 }, disc)
-					New("UICorner", { CornerRadius = UDim.new(1, 0) }, hole)
-				end
-				New("Frame", { Name = "Gap", LayoutOrder = 3, Size = UDim2.new(1, 0, 0, 6), BackgroundTransparency = 1, ZIndex = 8001 }, list)
-				contextItemOrder = 3
-				AddContextItem("Reset", "rbxassetid://106497040962250", function(current)
+				New("Frame", { Name = "Gap", LayoutOrder = contextItemOrder + 1, Size = UDim2.new(1, 0, 0, 6), BackgroundTransparency = 1, ZIndex = 8001 }, list)
+				contextItemOrder = contextItemOrder + 1
+				AddContextItem("Reset", "rbxassetid://10734940376", function(current)
 					if current.obj and current.obj.Set and current.defaultValue ~= nil then
 						current.obj:Set(current.defaultValue)
 					end
 				end)
-				_contextMenu.Size = UDim2.fromOffset(136, 6 + 28 * 3 + 6 + 6)
+				local count = 3 + #target.binds
+				_contextMenu.Size = UDim2.fromOffset(136, 6 + 28 * count + 6 + 6)
+				-- Items added after the popup was laddered would draw behind it.
+				if _contextMenu.Visible then ApplyZIndexLadder(_contextMenu, _contextMenu.ZIndex) end
+			end
+
+			local function OpenContextMenu(target, point)
+				BuildContextMenu()
+				CloseAllPopupsExcept(_contextMenu)
+				_contextTarget = target
+				bindRefs.fillContext(target)
 				ApplyZIndexLadder(_contextMenu, NextPopupZ())
 				SmoothOpen(_contextMenu, 0, 0.15)
 				-- Opens at the cursor, like Neverlose.
@@ -9071,18 +8990,25 @@ New("Frame", {
 					min = min,
 					max = max,
 				}
+				target.binds = {}
 				_contextTargets[row] = target
 				local dots = row:FindFirstChild("ContextDots")
 				target.dots = dots
-				SetTargetBind(target, nil)
+				PaintBindDots(target)
 				if obj.Bind then return end
+				-- Script API works on the function's first hotkey.
 				function obj:Bind(key)
 					local normalized = type(key) == "string" and Enum.KeyCode[key] or key
-					if normalized and normalized ~= Enum.KeyCode.Unknown then SetTargetBind(target, normalized) end
+					if normalized and normalized ~= Enum.KeyCode.Unknown then
+						SetTargetBind(target.binds[1] or bindRefs.newBind(target), normalized)
+					end
 					return self:GetBind()
 				end
-				function obj:Unbind() SetTargetBind(target, nil) return self:GetBind() end
-				function obj:GetBind() return target.key end
+				function obj:Unbind()
+					while target.binds[1] do bindRefs.removeBind(target.binds[1]) end
+					return self:GetBind()
+				end
+				function obj:GetBind() return target.binds[1] and target.binds[1].key end
 			end
 
 			local function IsExtraMouseType(t)
