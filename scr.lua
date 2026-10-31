@@ -2882,14 +2882,29 @@ local SettingsArrow = New("ImageLabel", {
 	ZIndex = 102,
 }, WindowSettings)
 
-	Info.MouseEnter:Connect(function()
-		Tween(Info, {BackgroundTransparency = 0.95}, 0.15)
-		Tween(SettingsArrow, {ImageTransparency = 0}, 0.15)
-	end)
-	Info.MouseLeave:Connect(function()
-		Tween(Info, {BackgroundTransparency = 1}, 0.15)
-		Tween(SettingsArrow, {ImageTransparency = 0.3}, 0.15)
-	end)
+	-- Hover plate: a rounded pill a few px larger than the block, instead of
+	-- tinting the bare 150x30 frame into a hard rectangle. Kept in a do-block
+	-- so it adds no live local to AddWindow (register cap).
+	do
+		local hoverPlate = New("Frame", {
+			Name = "HoverPlate",
+			Position = UDim2.new(0, -6, 0, -5),
+			Size = UDim2.new(1, 12, 1, 10),
+			BackgroundColor3 = Color3.fromRGB(245, 247, 255),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+		}, Info)
+		New("UICorner", { CornerRadius = UDim.new(0, 8) }, hoverPlate)
+		Info.MouseEnter:Connect(function()
+			Tween(hoverPlate, {BackgroundTransparency = 0.955}, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(SettingsArrow, {ImageTransparency = 0}, 0.15)
+		end)
+		Info.MouseLeave:Connect(function()
+			Tween(hoverPlate, {BackgroundTransparency = 1}, 0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(SettingsArrow, {ImageTransparency = 0.3}, 0.15)
+		end)
+	end
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
@@ -3563,6 +3578,12 @@ AddProfileDisplayRow(80, "Synchronization", "Synchronization", nil, Library.Prof
 -- About and Chat have no chevron in the reference.
 AddProfileDisplayRow(90, "About", "About", nil, Library.ProfileIcons.about, "plain")
 AddProfileDisplayRow(100, "Chat", "Chat", nil, Library.ProfileIcons.chat, "plain")
+-- Rounded hover tint on every popover row, same as the menu rows.
+for _, profileRow in ipairs(SettingsContainer:GetChildren()) do
+	if profileRow:IsA("Frame") and profileRow.Name ~= "ProfileHeader" and profileRow.Name ~= "ProfileGroupGap" and profileRow.Name ~= "WatermarkRow" then
+		AttachRowHover(profileRow)
+	end
+end
 		syncLangSelection()
 
 
@@ -5893,8 +5914,8 @@ New("UIAspectRatioConstraint", {
 		Right:SetAttribute("SearchName", name)
 		Left:SetAttribute("TabIndex", tabIndex)
 		Right:SetAttribute("TabIndex", tabIndex)
-		New("UIPadding", { PaddingLeft = UDim.new(0, 0), PaddingRight = UDim.new(0, 0), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, Left)
-		New("UIPadding", { PaddingLeft = UDim.new(0, 0), PaddingRight = UDim.new(0, 0), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, Right)
+		New("UIPadding", { PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, Left)
+		New("UIPadding", { PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, Right)
 		New("UIListLayout", { Padding = UDim.new(0, 14), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
 		New("UIListLayout", { Padding = UDim.new(0, 14), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
 
@@ -8552,8 +8573,12 @@ New("Frame", {
 				Text.BackgroundColor3 = Color3.fromRGB(28,32,48)
 				Text.BackgroundTransparency = 1
 				Text.Text = text
-				Text.TextColor3 = Color3.fromRGB(255, 255, 255)
+				-- Built without New(), so it missed the row text size (16) and stayed tiny.
+				Text.TextColor3 = Color3.fromRGB(226, 228, 236)
 				Text.TextScaled = false
+				Text.TextSize = 16
+				Text.TextYAlignment = Enum.TextYAlignment.Center
+				Text.TextTruncate = Enum.TextTruncate.AtEnd
 				Text.Font = FONT
 				Text.TextTransparency = 0.10000000149011612
 				Text.TextXAlignment = Enum.TextXAlignment.Left
@@ -9512,8 +9537,8 @@ New("Frame", {
 			stRight:SetAttribute("TabIndex", tabIndex)
 			stLeft:SetAttribute("SubTabIndex", stIndex)
 			stRight:SetAttribute("SubTabIndex", stIndex)
-			New("UIPadding", { PaddingLeft = UDim.new(0, 0), PaddingRight = UDim.new(0, 0), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, stLeft)
-			New("UIPadding", { PaddingLeft = UDim.new(0, 0), PaddingRight = UDim.new(0, 0), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, stRight)
+			New("UIPadding", { PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, stLeft)
+			New("UIPadding", { PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), PaddingTop = UDim.new(0, 0), PaddingBottom = UDim.new(0, 12) }, stRight)
 			New("UIListLayout", { Padding = UDim.new(0, 14), SortOrder = Enum.SortOrder.LayoutOrder }, stRight)
 
 			local STRow = New("Frame", {
