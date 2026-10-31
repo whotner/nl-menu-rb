@@ -5,7 +5,7 @@
 local FONT = Enum.Font.SourceSansSemibold
 local FONT_BOLD = Enum.Font.SourceSansBold
 pcall(function()
-	FONT = Enum.Font.BuilderSansMedium
+	FONT = Enum.Font.BuilderSans
 	FONT_BOLD = Enum.Font.BuilderSansBold
 end)
 local LoadAcrylic = function()
@@ -525,6 +525,32 @@ local function New(class, props, parent)
 		end
 	end
 	if parent then obj.Parent = parent end
+	-- Neverlose control styling, applied by role so section, plate and accordion
+	-- copies of a control all match: grey regular labels, value fields on a dark
+	-- fill with a hairline border, muted "..." dots.
+	if obj.Name == "TextToggle" and obj:IsA("TextLabel") then
+		obj.TextColor3 = Color3.fromRGB(200, 203, 213)
+	elseif obj.Name == "TopBarText" and obj:IsA("TextLabel") then
+		obj.TextColor3 = Color3.fromRGB(205, 208, 218)
+	elseif (obj.Name == "TopBar" or obj.Name == "SliderValue") and obj:IsA("GuiObject") then
+		obj.BackgroundColor3 = Color3.fromRGB(27, 28, 38)
+		obj.BackgroundTransparency = 0
+		if obj:IsA("TextLabel") then
+			obj.TextColor3 = Color3.fromRGB(205, 208, 218)
+			obj.TextTransparency = 0
+		end
+		local fieldStroke = Instance.new("UIStroke")
+		fieldStroke.Name = "FieldOutline"
+		fieldStroke.Color = Color3.fromRGB(255, 255, 255)
+		fieldStroke.Transparency = 0.93
+		fieldStroke.Thickness = 1
+		fieldStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		fieldStroke.Parent = obj
+	elseif obj.Name == "Line" and obj:IsA("Frame") then
+		obj.BackgroundColor3 = Color3.fromRGB(40, 42, 54)
+	elseif type(obj.Name) == "string" and obj.Name:match("^Dot%d$") and obj:IsA("Frame") then
+		obj.BackgroundColor3 = Color3.fromRGB(150, 154, 166)
+	end
 	if obj:IsA("UIStroke") then
 		obj.Color = STROKE.Color
 		obj.Transparency = STROKE.Transparency
@@ -4352,6 +4378,8 @@ SaveIcon.BackgroundTransparency = 1
 SaveIcon.Image = "rbxassetid://6035067857"
 SaveIcon.ImageTransparency = 0.20000000298023224
 SaveIcon.Parent = Save
+-- Neverlose splits the save icon into its own segment of the config selector.
+New("Frame", { Name = "SaveDivider", Position = UDim2.fromOffset(32, 0), Size = UDim2.new(0, 1, 1, 0), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.93, BorderSizePixel = 0 }, Save)
 
 local UIAspectRatioConstraint = Instance.new('UIAspectRatioConstraint')
 UIAspectRatioConstraint.Name = "UIAspectRatioConstraint"
@@ -6725,7 +6753,7 @@ New("Frame", {
 						Name = "Thumb",
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(initRatio, 0, 0.5, 0),
-						Size = UDim2.fromOffset(14, 14),
+						Size = UDim2.fromOffset(12, 12),
 						BackgroundColor3 = Color3.fromRGB(248, 250, 255),
 						BorderSizePixel = 0,
 						ZIndex = Line.ZIndex + 3,
@@ -6733,10 +6761,10 @@ New("Frame", {
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 					Stroke(Thumb)
 					Line.MouseEnter:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(16, 16) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					Line.MouseLeave:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					local initialValue = value
 					task.defer(function()
@@ -7996,7 +8024,7 @@ New("Frame", {
 					Name = "Thumb",
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					Position = UDim2.new(initRatio, 0, 0.5, 0),
-					Size = UDim2.fromOffset(14, 14),
+					Size = UDim2.fromOffset(12, 12),
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 					BorderSizePixel = 0,
 					ZIndex = Line.ZIndex + 3,
@@ -8004,10 +8032,10 @@ New("Frame", {
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 				Stroke(Thumb)
 				Line.MouseEnter:Connect(function()
-					Tween(Thumb, { Size = UDim2.fromOffset(16, 16) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end)
 				Line.MouseLeave:Connect(function()
-					Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+					Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 				end)
 				local initialValue = value
 				task.defer(function()
@@ -9410,7 +9438,7 @@ New("Frame", {
 						Name = "Thumb",
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.new(initRatio, 0, 0.5, 0),
-						Size = UDim2.fromOffset(14, 14),
+						Size = UDim2.fromOffset(12, 12),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 						BorderSizePixel = 0,
 						ZIndex = Line.ZIndex + 3,
@@ -9418,10 +9446,10 @@ New("Frame", {
 					New("UICorner", { CornerRadius = UDim.new(1, 0) }, Thumb)
 					Stroke(Thumb)
 					Line.MouseEnter:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(16, 16) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					Line.MouseLeave:Connect(function()
-						Tween(Thumb, { Size = UDim2.fromOffset(14, 14) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(Thumb, { Size = UDim2.fromOffset(12, 12) }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					end)
 					local initialValue = value
 					task.defer(function()
