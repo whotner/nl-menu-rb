@@ -1724,27 +1724,59 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		return img
 	end
 
-	-- Neverlose capsule look: eight faint capsule layers, each 1.5px wider,
+	-- Neverlose capsule look: five faint capsule layers, each 1px wider,
 	-- stacked under a nearly clear plate. Inside they add up to the plate's
 	-- darkness; outside they thin out, so the plate's ends melt into the
 	-- shadow instead of having a hard edge. Layers carry IsShadowLayer and
 	-- ShadowAlpha for the fades.
 	WindowObj._edgeShadow = function(host, z)
-		for i = 1, 8 do
-			local spread = i * 1.5
+		for i = 1, 5 do
+			local spread = i
 			local layer = Instance.new("Frame")
 			layer.Name = "ShadowLayer" .. i
 			layer.Position = UDim2.new(0, -spread, 0, 1 - spread)
 			layer.Size = UDim2.new(1, spread * 2, 1, spread * 2)
 			layer.BackgroundColor3 = Color3.fromRGB(4, 5, 7)
-			layer.BackgroundTransparency = 0.93
+			layer.BackgroundTransparency = 0.88
 			layer.BorderSizePixel = 0
 			layer.ZIndex = z
 			layer:SetAttribute("IsShadowLayer", true)
-			layer:SetAttribute("ShadowAlpha", 0.93)
+			layer:SetAttribute("ShadowAlpha", 0.88)
 			local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = layer
 			layer.Parent = host
 		end
+	end
+
+	-- Thumbnails (rbxthumb://) sometimes never load. Avatars get the URL from
+	-- GetUserThumbnailAsync, which waits until the thumbnail is ready; any
+	-- image still not loaded after 6s shows `fallbackText` instead.
+	WindowObj._imageFallback = function(img, fallbackText, isAvatar)
+		if not img then return end
+		if isAvatar then
+			task.spawn(function()
+				local ok, url = pcall(function()
+					return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+				end)
+				if ok and type(url) == "string" and img.Parent then img.Image = url end
+			end)
+		end
+		task.delay(6, function()
+			if not img.Parent or img.IsLoaded then return end
+			local label = Instance.new("TextLabel")
+			label.Name = "ImageFallback"
+			label.Size = UDim2.fromScale(1, 1)
+			label.BackgroundTransparency = 1
+			label.Text = fallbackText
+			label.TextColor3 = Color3.fromRGB(235, 236, 241)
+			label.TextScaled = true
+			label.Font = FONT_BOLD
+			label.ZIndex = img.ZIndex + 1
+			local pad = Instance.new("UIPadding")
+			pad.PaddingTop = UDim.new(0.2, 0); pad.PaddingBottom = UDim.new(0.2, 0)
+			pad.PaddingLeft = UDim.new(0.15, 0); pad.PaddingRight = UDim.new(0.15, 0)
+			pad.Parent = label
+			label.Parent = img
+		end)
 	end
 
 	-- The glass is rectangular: `inset` pulls it in from the left/right ends so
@@ -2591,7 +2623,7 @@ GameInfo.AutomaticSize = Enum.AutomaticSize.X
 -- Neverlose watermark: a dark see-through capsule over the blur (the game
 -- shows through tinted), no outline.
 GameInfo.BackgroundColor3 = Color3.fromRGB(8, 9, 12)
-GameInfo.BackgroundTransparency = 0.9
+GameInfo.BackgroundTransparency = 0.62
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
@@ -2736,6 +2768,7 @@ UserIcon.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.Us
 UserIcon.ZIndex = Z_BASE + 901
 UserIcon.Parent = UserCell
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = UserIcon end
+WindowObj._imageFallback(UserIcon, string.upper(string.sub(tostring(LocalPlayer.Name or "?"), 1, 1)), true)
 local Username = UserCell:FindFirstChild("Username")
 -- Neverlose shows only the avatar at the end of the strip; the name label stays
 -- available through Watermark.user for scripts that want it back.
@@ -3165,7 +3198,7 @@ New("UIListLayout", {
 -- OV.entry stays the dark knob colour of the switch glyph.
 -- The menu reads as two glass layers (window 8,10,17 at 0.25 under the
 -- content panel 15,17,24 at 0.5); one plate at their mix looks the same.
-local OV = { h = 24, head = 32, header = 0.9, entryAlpha = 0.9, glass = Color3.fromRGB(8, 9, 12), entry = Color3.fromRGB(23, 23, 31) }
+local OV = { h = 24, head = 32, header = 0.62, entryAlpha = 0.66, glass = Color3.fromRGB(8, 9, 12), entry = Color3.fromRGB(23, 23, 31) }
 function OV.pill(name, parent, alpha, radius, height)
 	-- Same capsule as the watermark: nearly clear plate, melting edge shadow,
 	-- blur behind. (`radius` only sets how far the blur pulls in.)
@@ -3639,6 +3672,7 @@ Aspect.AspectRatio = 798 / 610
 		ScaleType = Enum.ScaleType.Stretch,
 	}, HubIcon)
 	New("UICorner", { CornerRadius = UDim.new(0, 8) }, HubIcon:FindFirstChild("HubGlyph"))
+	WindowObj._imageFallback(HubIcon:FindFirstChild("HubGlyph"), "NL")
 
 	New("TextLabel", {
 		Name = "Title",
@@ -3692,6 +3726,7 @@ Aspect.AspectRatio = 798 / 610
 	New("UICorner", { CornerRadius = UDim.new(1,0) }, UserImageEl)
 	New("UIAspectRatioConstraint", { AspectType = Enum.AspectType.ScaleWithParentSize }, UserImageEl)
 	local UserImageStroke = Stroke(UserImageEl)
+	WindowObj._imageFallback(UserImageEl, string.upper(string.sub(tostring(LocalPlayer.Name or "?"), 1, 1)), true)
 
 	local User = Instance.new('TextLabel')
 	User.Name = "Username"
