@@ -512,7 +512,7 @@ local function New(class, props, parent)
 		obj.TextYAlignment = Enum.TextYAlignment.Center
 		obj.TextScaled = false
 		-- Sized for BuilderSans/Inter metrics (SourceSans needed ~2px more for the same look).
-		local roleSizes = { Title = 16, GameTitle = 11, TabLabel = 11, TabText = 14, SectionLabel = 11,
+		local roleSizes = { Title = 16, GameTitle = 11, TabLabel = 11, TabText = 15, STLabel = 14, SectionLabel = 11,
 			TextToggle = 14, TextDropdown = 14, TextDefault = 13, TopBar = 14, SliderValue = 12,
 			Username = 14, Daysleft = 12, SaveText = 14, HeaderLabel = 11, SearchBox = 14 }
 		obj.TextSize = roleSizes[obj.Name] or ((props and props.TextSize) or 13)
@@ -1381,6 +1381,34 @@ local function GetPopupScale(frame)
 	return New("UIScale", { Name = "_PopScale", Scale = 1 }, frame)
 end
 
+-- Fades a popup's text and icons with its background, so closing reads as one
+-- fade instead of the text vanishing at the end. Each element's own
+-- transparency is remembered while hidden and restored on the next open.
+local function FadePopupContent(frame, show, dur)
+	for _, d in ipairs(frame:GetDescendants()) do
+		if not d:GetAttribute("IsShadowLayer") then
+			local prop, key
+			if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+				prop, key = "TextTransparency", "NLFadeText"
+			elseif d:IsA("ImageLabel") or d:IsA("ImageButton") then
+				prop, key = "ImageTransparency", "NLFadeImage"
+			end
+			if prop then
+				if show then
+					local base = d:GetAttribute(key)
+					if type(base) ~= "number" then base = d[prop] end
+					d:SetAttribute(key, nil)
+					d[prop] = 1
+					Tween(d, { [prop] = base }, dur, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				else
+					if d:GetAttribute(key) == nil then d:SetAttribute(key, d[prop]) end
+					Tween(d, { [prop] = 1 }, dur, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+				end
+			end
+		end
+	end
+end
+
 local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	if not frame or not frame.Parent then return end
 	local token = (frame:GetAttribute("PopupToken") or 0) + 1
@@ -1389,6 +1417,7 @@ local function SmoothOpen(frame, targetAlpha, dur, style, dir)
 	frame.BackgroundTransparency = 1
 	frame.Visible = true
 	TweenShadowLayers(frame, true, dur or 0.2)
+	FadePopupContent(frame, true, dur or 0.17)
 	local scale = GetPopupScale(frame)
 	if scale then
 		scale.Scale = 0.965
@@ -1403,6 +1432,7 @@ local function SmoothClose(frame, dur, cb)
 	frame:SetAttribute("PopupToken", token)
 	CancelPopupTween(frame)
 	TweenShadowLayers(frame, false, dur or 0.18, Enum.EasingDirection.In)
+	FadePopupContent(frame, false, dur or 0.14)
 	local scale = GetPopupScale(frame)
 	if scale then
 		Tween(scale, { Scale = 0.985 }, dur or 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
@@ -1747,6 +1777,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	-- WindowObj instead of a local: AddWindow is near Luau's register cap.
 	WindowObj._centerPopupOnField = function(popup, field)
 		if not popup or not popup.Parent or not field or not field.Parent then return end
+		if WindowObj._styleListPopup then WindowObj._styleListPopup(popup) end
 		RememberPopupClipping(popup)
 		ForceLiftClipping(popup)
 		local size = popup.AbsoluteSize
@@ -2614,6 +2645,18 @@ local function AttachShadow(frame, opts)
 	end
 end
 AttachShadow(MainFrame, { radius = 20, layers = 6, step = 2.0, bias = 2 })
+
+-- Neverlose option list: 18,18,27 plate with a soft shadow. The plate must not
+-- clip (the shadow and the scale-in sit outside it); its list frame clips rows.
+WindowObj._styleListPopup = function(popup)
+	if popup:GetAttribute("NLListStyled") then return end
+	popup:SetAttribute("NLListStyled", true)
+	popup.BackgroundColor3 = Color3.fromRGB(18, 18, 27)
+	popup.ClipsDescendants = false
+	if not popup:FindFirstChildWhichIsA("UIListLayout") then
+		AttachShadow(popup, { radius = 10, layers = 5, step = 1.6, bias = 3 })
+	end
+end
 
 local RefreshKeybindOverlay
 do
@@ -3665,12 +3708,12 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			ScaleDefault:SetAttribute("FullText", selectedLabel)
 			for label, check in pairs(scaleSelectedBtns) do
 				local isSelected = label == selectedLabel
-				check.Visible = isSelected
+				check.Visible = false
 				local row = check.Parent
 				if row then
-					row.BackgroundTransparency = isSelected and 0.94 or 1
+					row.BackgroundTransparency = 1
 					local optionLabel = row:FindFirstChild("Label")
-					if optionLabel then optionLabel.TextColor3 = isSelected and Color3.fromRGB(255,255,255) or Color3.fromRGB(200,204,218) end
+					if optionLabel then optionLabel.TextColor3 = isSelected and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180) end
 				end
 			end
 		end
@@ -3734,7 +3777,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			RowBtn.ZIndex = 1003
 			RowBtn.Parent = BtnRow
 			RowBtn.MouseEnter:Connect(function() Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08) end)
-			RowBtn.MouseLeave:Connect(function() Tween(BtnRow, { BackgroundTransparency = scaleLabel == ScaleDefault.Text and 0.94 or 1 }, 0.12) end)
+			RowBtn.MouseLeave:Connect(function() Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12) end)
 
 			local function selectScale()
 				syncScaleSelection(scaleLabel)
@@ -3786,12 +3829,12 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			LangDefault:SetAttribute("FullText", selectedLang)
 			for language, check in pairs(langSelectedBtns) do
 				local isSelected = language == selectedLang
-				check.Visible = isSelected
+				check.Visible = false
 				local row = check.Parent
 				if row then
-					row.BackgroundTransparency = isSelected and 0.94 or 1
+					row.BackgroundTransparency = 1
 					local optionLabel = row:FindFirstChild("Label")
-					if optionLabel then optionLabel.TextColor3 = isSelected and Color3.fromRGB(255,255,255) or Color3.fromRGB(200,204,218) end
+					if optionLabel then optionLabel.TextColor3 = isSelected and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180) end
 				end
 			end
 		end
@@ -3847,7 +3890,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			RowBtn.ZIndex = 1003
 			RowBtn.Parent = BtnRow
 			RowBtn.MouseEnter:Connect(function() Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08) end)
-			RowBtn.MouseLeave:Connect(function() Tween(BtnRow, { BackgroundTransparency = lang == selectedLang and 0.94 or 1 }, 0.12) end)
+			RowBtn.MouseLeave:Connect(function() Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12) end)
 
 			local function selectLang()
 				selectedLang = lang
@@ -4238,13 +4281,13 @@ end
 		local function updateCheckmarks()
 			for opt, sb in pairs(selectedBtns) do
 				local isSelected = opt == selected
-				sb.Visible = isSelected
+				sb.Visible = false
 				sb.ImageColor3 = mainColor
 				local row = sb.Parent
 				if row then
-					row.BackgroundTransparency = isSelected and 0.94 or 1
+					row.BackgroundTransparency = 1
 					local label = row:FindFirstChildWhichIsA("TextLabel")
-					if label then label.TextColor3 = isSelected and Color3.fromRGB(255,255,255) or Color3.fromRGB(200,204,218) end
+					if label then label.TextColor3 = isSelected and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180) end
 				end
 			end
 		end
@@ -4299,7 +4342,7 @@ end
 				Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08)
 			end)
 			RowBtn.MouseLeave:Connect(function()
-				Tween(BtnRow, { BackgroundTransparency = opt == selected and 0.94 or 1 }, 0.12)
+				Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12)
 			end)
 
 			local function selectOpt()
@@ -6241,9 +6284,9 @@ end) end
 
 		local TabIcon = New("ImageLabel", {
 			Name = "TabIcon",
-			Position = UDim2.new(0, 17, 0.5, 0),
+			Position = UDim2.new(0, 18, 0.5, 0),
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Size = UDim2.fromOffset(16, 16),
+			Size = UDim2.fromOffset(18, 18),
 			BackgroundColor3 = Color3.fromRGB(255, 191, 255),
 			BackgroundTransparency = 1,
 			Image = "",
@@ -6258,7 +6301,7 @@ end) end
 				Name = "MouseOutline",
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				Position = UDim2.new(0.5, 0, 0.5, 0),
-				Size = UDim2.fromOffset(9, 13),
+				Size = UDim2.fromOffset(10, 15),
 				BackgroundTransparency = 1,
 				BorderSizePixel = 0,
 			}, TabIcon)
@@ -6287,8 +6330,8 @@ New("UIAspectRatioConstraint", {
 
 		local TabText = New("TextLabel", {
 			Name = "TabText",
-			Position = UDim2.new(0, 35, 0, 0),
-			Size = UDim2.new(1, -43, 1, 0),
+			Position = UDim2.new(0, 38, 0, 0),
+			Size = UDim2.new(1, -46, 1, 0),
 			BackgroundColor3 = Color3.fromRGB(191, 255, 255),
 			BackgroundTransparency = 1,
 			Text = name,
@@ -7239,9 +7282,9 @@ New("Frame", {
 							selBtn.ImageColor3 = mainColor
 							local row = selBtn.Parent
 							if row then
-								row.BackgroundTransparency = isSelected and 0.94 or 1
+								row.BackgroundTransparency = 1
 								local label = row:FindFirstChild("Label") or row:FindFirstChildWhichIsA("TextLabel")
-								if label then label.TextColor3 = isSelected and Color3.fromRGB(255,255,255) or Color3.fromRGB(200,204,218) end
+								if label then label.TextColor3 = isSelected and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180) end
 							end
 						end
 					end
@@ -7298,7 +7341,7 @@ New("Frame", {
 							Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08)
 						end)
 						RowBtn.MouseLeave:Connect(function()
-							Tween(BtnRow, { BackgroundTransparency = opt == selected and 0.94 or 1 }, 0.12)
+							Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12)
 						end)
 						RowBtn.MouseButton1Click:Connect(function()
 							selected = opt
@@ -8548,9 +8591,9 @@ New("Frame", {
 						Size = UDim2.new(1, 0, 0, 28),
 						ClipsDescendants = false,
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-						BackgroundTransparency = selected == opt and 0.94 or 1,
+						BackgroundTransparency = 1,
 						Text = opt,
-						TextColor3 = selected == opt and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 204, 218),
+						TextColor3 = selected == opt and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180),
 						TextScaled = false,
 						TextSize = 14,
 						Font = FONT,
@@ -8561,24 +8604,24 @@ New("Frame", {
 						ZIndex = 5002,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 6) }, Buttons)
-					New("UIPadding", { PaddingLeft = UDim.new(0, 28), PaddingRight = UDim.new(0, 8) }, Buttons)
-					New("ImageLabel", { Name = "SelectedCheck", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, -22, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = "rbxassetid://138494545053627", ImageColor3 = Color3.fromRGB(255, 255, 255), Visible = selected == opt, ZIndex = 5003 }, Buttons)
+					New("UIPadding", { PaddingLeft = UDim.new(0, 16), PaddingRight = UDim.new(0, 8) }, Buttons)
+					New("ImageLabel", { Name = "SelectedCheck", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, -22, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = "rbxassetid://138494545053627", ImageColor3 = Color3.fromRGB(255, 255, 255), Visible = false, ZIndex = 5003 }, Buttons)
 					optionRows[opt] = Buttons
 
 					Buttons.MouseEnter:Connect(function()
 						Tween(Buttons, { BackgroundTransparency = 0.94 }, 0.09, Enum.EasingStyle.Sine)
 					end)
 					Buttons.MouseLeave:Connect(function()
-						Tween(Buttons, { BackgroundTransparency = selected == opt and 0.94 or 1 }, 0.12, Enum.EasingStyle.Sine)
+						Tween(Buttons, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Sine)
 					end)
 					Buttons.MouseButton1Click:Connect(function()
 						selected = opt
 						TopBarText.Text = opt; 
 						for option, row in pairs(optionRows) do
-							Tween(row, { BackgroundTransparency = option == selected and 0.94 or 1 }, 0.12, Enum.EasingStyle.Sine)
+							Tween(row, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Sine)
 							local check = row:FindFirstChild("SelectedCheck")
-							if check then check.Visible = option == selected end
-							row.TextColor3 = option == selected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 204, 218)
+							if check then check.Visible = false end
+							row.TextColor3 = option == selected and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180)
 						end
 						InvokeCallback(callback, opt)
 						closeDropdown()
@@ -8616,10 +8659,10 @@ New("Frame", {
 					TopBarText.Text = val
 					
 					for option, row in pairs(optionRows) do
-						Tween(row, { BackgroundTransparency = option == selected and 0.94 or 1 }, 0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(row, { BackgroundTransparency = 1 }, 0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						local check = row:FindFirstChild("SelectedCheck")
-						if check then check.Visible = option == selected end
-						row.TextColor3 = option == selected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 204, 218)
+						if check then check.Visible = false end
+						row.TextColor3 = option == selected and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180)
 					end
 					if not silent then InvokeCallback(callback, val) end
 				end
@@ -8774,10 +8817,10 @@ New("Frame", {
 					TopBarText.Text = selected
 					for option, row in pairs(optionRows) do
 						local isSelected = option == selected
-						row.BackgroundTransparency = isSelected and 0.94 or 1
-						row.TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 204, 218)
+						row.BackgroundTransparency = 1
+						row.TextColor3 = isSelected and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180)
 						local check = row:FindFirstChild("SelectedCheck")
-						if check then check.Visible = isSelected end
+						if check then check.Visible = false end
 					end
 				end
 				local function closeDropdown()
@@ -8808,9 +8851,9 @@ New("Frame", {
 						Name = "Option",
 						Size = UDim2.new(1, 0, 0, 28),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-						BackgroundTransparency = opt == selected and 0.94 or 1,
+						BackgroundTransparency = 1,
 						Text = opt,
-						TextColor3 = opt == selected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 204, 218),
+						TextColor3 = opt == selected and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180),
 						TextScaled = false,
 						TextSize = 14,
 						Font = FONT,
@@ -8820,7 +8863,7 @@ New("Frame", {
 						ZIndex = Z_BASE + 502,
 					}, Scrolls)
 					New("UICorner", { CornerRadius = UDim.new(0, 6) }, row)
-					New("UIPadding", { PaddingLeft = UDim.new(0, 28), PaddingRight = UDim.new(0, 8) }, row)
+					New("UIPadding", { PaddingLeft = UDim.new(0, 16), PaddingRight = UDim.new(0, 8) }, row)
 					New("ImageLabel", {
 						Name = "SelectedCheck",
 						AnchorPoint = Vector2.new(0, 0.5),
@@ -8834,7 +8877,7 @@ New("Frame", {
 					}, row)
 					optionRows[opt] = row
 					row.MouseEnter:Connect(function() Tween(row, { BackgroundTransparency = 0.94 }, 0.09, Enum.EasingStyle.Sine) end)
-					row.MouseLeave:Connect(function() Tween(row, { BackgroundTransparency = opt == selected and 0.94 or 1 }, 0.12, Enum.EasingStyle.Sine) end)
+					row.MouseLeave:Connect(function() Tween(row, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Sine) end)
 					row.MouseButton1Click:Connect(function()
 						selected = opt
 						updateSelected()
@@ -9496,9 +9539,9 @@ New("Frame", {
 							selBtn.ImageColor3 = mainColor
 							local row = selBtn.Parent
 							if row then
-								row.BackgroundTransparency = isSelected and 0.94 or 1
+								row.BackgroundTransparency = 1
 								local label = row:FindFirstChild("Label") or row:FindFirstChildWhichIsA("TextLabel")
-								if label then label.TextColor3 = isSelected and Color3.fromRGB(255,255,255) or Color3.fromRGB(200,204,218) end
+								if label then label.TextColor3 = isSelected and Color3.fromRGB(228, 228, 229) or Color3.fromRGB(175, 175, 180) end
 							end
 						end
 					end
@@ -9555,7 +9598,7 @@ New("Frame", {
 								Tween(BtnRow, { BackgroundTransparency = 0.94 }, 0.08)
 							end)
 							RowBtn.MouseLeave:Connect(function()
-								Tween(BtnRow, { BackgroundTransparency = opt == selected and 0.94 or 1 }, 0.12)
+								Tween(BtnRow, { BackgroundTransparency = 1 }, 0.12)
 							end)
 						RowBtn.MouseButton1Click:Connect(function()
 							selected = opt
