@@ -2481,20 +2481,20 @@ GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(1, -6, 0, 2)
 -- Neverlose watermark: a thin, dark, see-through strip without outline or
 -- dividers; small caps text, accent icons, avatar at the end.
-GameInfo.Size = UDim2.fromOffset(0, 30)
+GameInfo.Size = UDim2.fromOffset(0, 36)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
-GameInfo.BackgroundColor3 = Color3.fromRGB(10, 10, 13)
-GameInfo.BackgroundTransparency = 0.35
+GameInfo.BackgroundColor3 = Color3.fromRGB(8, 10, 17)
+GameInfo.BackgroundTransparency = 0.5
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
 GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
-do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = GameInfo end
+do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = GameInfo end
 -- Glass blur behind the strip, like the menu.
 if WindowObj._attachBlur then WindowObj._attachBlur(GameInfo) end
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 12); pd.PaddingRight = UDim.new(0, 5); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 14); pd.PaddingRight = UDim.new(0, 7); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
 local ICON_LAYERS   = "rbxassetid://114499998778667"
@@ -2508,20 +2508,20 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local cell = Instance.new("Frame")
 	cell.Name = name .. "Cell"
 	cell.LayoutOrder = order
-	cell.Size = UDim2.fromOffset(0, 30)
+	cell.Size = UDim2.fromOffset(0, 36)
 	cell.AutomaticSize = Enum.AutomaticSize.X
 	cell.BackgroundTransparency = 1
 	cell.BorderSizePixel = 0
 	cell.ZIndex = Z_BASE + 901
 	cell.Parent = GameInfo
-	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 5); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
-	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 7); pd.PaddingRight = UDim.new(0, 7); pd.Parent = cell end
+	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 6); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
+	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 8); pd.PaddingRight = UDim.new(0, 8); pd.Parent = cell end
 	local icon
 	if iconAsset then
 		icon = Instance.new("ImageLabel")
 		icon.Name = name .. "Icon"
 		icon.LayoutOrder = 1
-		icon.Size = UDim2.fromOffset(iconSize or 13, iconSize or 13)
+		icon.Size = UDim2.fromOffset(iconSize or 15, iconSize or 15)
 		icon.BackgroundTransparency = 1
 		icon.BorderSizePixel = 0
 		icon.Image = iconAsset
@@ -2535,15 +2535,15 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local label = Instance.new("TextLabel")
 	label.Name = name
 	label.LayoutOrder = 2
-	label.Size = UDim2.fromOffset(0, 30)
+	label.Size = UDim2.fromOffset(0, 36)
 	label.AutomaticSize = Enum.AutomaticSize.X
 	label.BackgroundTransparency = 1
 	label.BorderSizePixel = 0
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(180, 182, 192)
+	label.TextColor3 = Color3.fromRGB(200, 202, 212)
 	label.TextTransparency = 0
 	label.TextScaled = false
-	label.TextSize = 13
+	label.TextSize = 15
 	label.Font = FONT
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Center
@@ -2568,7 +2568,7 @@ end
 local BrandCell = Instance.new("Frame")
 BrandCell.Name = "BrandCell"
 BrandCell.LayoutOrder = 2
-BrandCell.Size = UDim2.fromOffset(0, 30)
+BrandCell.Size = UDim2.fromOffset(0, 36)
 BrandCell.AutomaticSize = Enum.AutomaticSize.X
 BrandCell.BackgroundTransparency = 1
 BrandCell.BorderSizePixel = 0
@@ -2596,13 +2596,13 @@ do
 	local brandText = Instance.new("TextLabel")
 	brandText.Name = "BrandText"
 	brandText.LayoutOrder = 2
-	brandText.Size = UDim2.fromOffset(0, 30)
+	brandText.Size = UDim2.fromOffset(0, 36)
 	brandText.AutomaticSize = Enum.AutomaticSize.X
 	brandText.BackgroundTransparency = 1
 	brandText.BorderSizePixel = 0
 	brandText.Text = "NL"
 	brandText.TextColor3 = Color3.fromRGB(208, 226, 248)
-	brandText.TextSize = 15
+	brandText.TextSize = 17
 	brandText.Font = FONT_BOLD
 	brandText.ZIndex = Z_BASE + 901
 	brandText.Parent = BrandCell
@@ -2612,7 +2612,7 @@ local UserCell = WMCell("Username", 4, nil, LocalPlayer.DisplayName or "Player")
 local UserIcon = Instance.new("ImageLabel")
 UserIcon.Name = "UserIcon"
 UserIcon.LayoutOrder = 1
-UserIcon.Size = UDim2.fromOffset(20, 20)
+UserIcon.Size = UDim2.fromOffset(24, 24)
 UserIcon.BackgroundTransparency = 1
 UserIcon.BorderSizePixel = 0
 UserIcon.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId or 0) .. "&w=150&h=150"
@@ -2640,7 +2640,7 @@ do
 	WindowObj._wmSpeedText = text
 end
 
--- Neverlose watermark glyphs drawn from frames on a 13px grid: gauge (speed),
+-- Neverlose watermark glyphs drawn from frames on a 15px grid: gauge (speed),
 -- rising bars (ping), clock (time). They follow the icon's ImageColor3 and
 -- ImageTransparency, so SetWatermark's accent still recolours them.
 WindowObj._wmGlyph = function(icon, kind)
@@ -2670,14 +2670,14 @@ WindowObj._wmGlyph = function(icon, kind)
 		table.insert(rings, st)
 	end
 	if kind == "speed" then
-		ring(1, 1, 11, 1.6)
-		part(5, 5, 3, 3, true)
+		ring(1, 1, 13, 1.8)
+		part(6, 6, 3, 3, true)
 	elseif kind == "ping" then
 		-- rising wedge
-		for k = 0, 5 do part(1 + k * 2, 10 - k * 2, 2, 3 + k * 2) end
+		for k = 0, 5 do part(1 + k * 2, 11 - k * 2, 2, 3 + k * 2) end
 	elseif kind == "time" then
-		ring(1, 1, 11, 1.5)
-		part(6, 3, 1, 4); part(6, 6, 4, 1)
+		ring(1, 1, 13, 1.6)
+		part(7, 4, 1, 4); part(7, 7, 4, 1)
 	end
 	icon.ImageTransparency = 0.18
 	local function sync()
@@ -3034,9 +3034,9 @@ New("UIListLayout", {
 
 -- Neverlose overlay list (Hotkeys / Spectators): a capsule header (accent
 -- glyph | divider | grey bold title) and per entry a pill pair: value or icon
--- on the left, name on the right. Pills hug their content and are dressed
--- like the menu: same glass colour and transparency, hairline outline, light
--- shadow, acrylic blur. Pills keep their resting alpha in "PillAlpha".
+-- on the left, name on the right. Pills hug their content: see-through glass
+-- over an acrylic blur, hairline outline, layered shadow. Pills keep their
+-- resting alpha in "PillAlpha".
 -- Kept in one table: AddWindow is close to the Luau register limit.
 local OV = { color = Color3.fromRGB(8, 10, 17), h = 26, head = 32 }
 function OV.pill(name, parent, alpha, radius, height)
@@ -3047,7 +3047,23 @@ function OV.pill(name, parent, alpha, radius, height)
 	pill:SetAttribute("PillAlpha", alpha)
 	New("UICorner", { CornerRadius = UDim.new(0, radius) }, pill)
 	Stroke(pill)
-	AttachShadow(pill, { radius = radius, layers = 3, step = 1.5, bias = 2, strength = 0.9 })
+	-- Shadow from strokes, not filled frames: a stroke draws only outside the
+	-- shape, so the see-through pill is not darkened from behind. Stacked
+	-- widening strokes, nudged down 2px, fade into a soft drop shadow.
+	for i = 1, 7 do
+		local ring = New("Frame", {
+			Name = "ShadowRing" .. i, Position = UDim2.fromOffset(0, 2), Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = Z_BASE + 890,
+		}, pill)
+		New("UICorner", { CornerRadius = UDim.new(0, radius) }, ring)
+		local st = Instance.new("UIStroke")
+		st.Name = "ShadowStroke"
+		st.Color = Color3.new(0, 0, 0)
+		st.Thickness = i * 1.6
+		st.Transparency = 0.8 + i * 0.025
+		st:SetAttribute("StrokeAlpha", st.Transparency)
+		st.Parent = ring
+	end
 	if WindowObj._attachBlur then WindowObj._attachBlur(pill, math.floor(radius * 0.7)) end
 	return pill
 end
@@ -3064,7 +3080,7 @@ local function MakeOverlayPanel(name, iconAsset, title)
 	}, OverlayStack)
 	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Left, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
 
-	local header = OV.pill("Header", panel, 0.25, 12, OV.head)
+	local header = OV.pill("Header", panel, 0.5, 12, OV.head)
 	header.LayoutOrder = 1
 	-- Layout lives in a child: AttachShadow skips frames that own a layout.
 	local content = New("Frame", { Name = "Content", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = Z_BASE + 892 }, header)
@@ -3125,7 +3141,7 @@ function OV.row(rows, order, text, leftText)
 		Name = "OverlayRow", Size = UDim2.fromOffset(leftW + 6 + nameW, OV.h), BackgroundTransparency = 1,
 		LayoutOrder = order, ZIndex = Z_BASE + 891,
 	}, rows)
-	local leftPill = OV.pill("IconPill", row, 0.35, 10)
+	local leftPill = OV.pill("IconPill", row, 0.58, 10)
 	leftPill.Size = UDim2.fromOffset(leftW, OV.h)
 	if leftText then
 		New("TextLabel", {
@@ -3134,7 +3150,7 @@ function OV.row(rows, order, text, leftText)
 			ZIndex = Z_BASE + 892,
 		}, leftPill)
 	end
-	local namePill = OV.pill("NamePill", row, 0.35, 10)
+	local namePill = OV.pill("NamePill", row, 0.58, 10)
 	namePill.Position = UDim2.fromOffset(leftW + 6, 0)
 	namePill.Size = UDim2.fromOffset(nameW, OV.h)
 	New("TextLabel", {
@@ -3167,7 +3183,7 @@ local function FadeOverlayContents(root, show)
 			Tween(node, { BackgroundTransparency = show and node:GetAttribute("PillAlpha") or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		elseif node:IsA("UIStroke") then
 			node.Transparency = 1
-			Tween(node, { Transparency = show and STROKE.Transparency or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			Tween(node, { Transparency = show and (node:GetAttribute("StrokeAlpha") or STROKE.Transparency) or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		elseif node:IsA("Frame") and node:GetAttribute("IsShadowLayer") then
 			node.BackgroundTransparency = 1
 			Tween(node, { BackgroundTransparency = show and (node:GetAttribute("ShadowAlpha") or 0.9) or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -3204,9 +3220,10 @@ local kbEnabled = true
 local kbRowCache = {}
 local lastKbSig = nil
 
--- Mode glyph for binds without a value: toggle = white switch with a dark
--- knob on the right (as in Neverlose), hold = key cap, always = solid dot.
-function OV.modeGlyph(pill, mode)
+-- Glyph for binds without a value: a switch showing the function's state
+-- (on: white with a dark knob right, as in Neverlose; off: grey, knob left);
+-- hold = key cap, always = solid dot.
+function OV.modeGlyph(pill, mode, off)
 	local function part(x, y, w, h, color, radius, parent)
 		local f = New("Frame", {
 			Name = "ModePart", Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(w, h),
@@ -3223,6 +3240,9 @@ function OV.modeGlyph(pill, mode)
 		part(3, 3, 6, 6, OV.color, UDim.new(0, 2), cap)
 	elseif mode == "always" then
 		part(8, 8, 10, 10, WHITE)
+	elseif off then
+		local sw = part(4, 7, 18, 12, Color3.fromRGB(112, 116, 128))
+		part(2, 2, 8, 8, OV.color, nil, sw)
 	else
 		local sw = part(4, 7, 18, 12, WHITE)
 		part(8, 2, 8, 8, OV.color, nil, sw)
@@ -3232,7 +3252,7 @@ end
 local function BuildBindRow(entry, order)
 	local row, leftPill = OV.row(KBRows, order, entry.label, entry.value)
 	row.Name = "BindRow"
-	if not entry.value then OV.modeGlyph(leftPill, entry.mode) end
+	if not entry.value then OV.modeGlyph(leftPill, entry.mode, entry.on == false) end
 	FadeOverlayContents(row, true)
 	return row
 end
@@ -3244,9 +3264,10 @@ RefreshKeybindOverlay = function()
 		local ok, result = pcall(WindowObj._bindSnapshot)
 		if ok and type(result) == "table" then snapshot = result end
 	end
-	local target = kbEnabled and MainFrame.Visible
+	-- Shown while the menu is open, and without it while any bind is active.
+	local target = kbEnabled and (MainFrame.Visible or #snapshot > 0)
 	local sigParts = {}
-	for i, entry in ipairs(snapshot) do sigParts[i] = entry.label .. "=" .. tostring(entry.mode) .. ":" .. tostring(entry.value) end
+	for i, entry in ipairs(snapshot) do sigParts[i] = entry.label .. "=" .. tostring(entry.mode) .. ":" .. tostring(entry.value) .. ":" .. tostring(entry.on) end
 	local sig = table.concat(sigParts, "|")
 	if sig == lastKbSig and KBPanel.Visible == target then return end
 	lastKbSig = sig
@@ -3299,7 +3320,7 @@ end
 
 local function RefreshSpectatorOverlay()
 	if not SpecPanel.Parent then return end
-	local target = specEnabled and MainFrame.Visible
+	local target = specEnabled and (MainFrame.Visible or #specList > 0)
 	local sigParts = {}
 	for i, person in ipairs(specList) do sigParts[i] = person.id .. ":" .. person.name end
 	local sig = table.concat(sigParts, "|")
@@ -3375,14 +3396,15 @@ function WindowObj:SetSpectatorsAuto(enabled)
 end
 
 MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-	OverlayStack.Visible = MainFrame.Visible
+	OverlayStack.Visible = true
 	if RefreshKeybindOverlay then RefreshKeybindOverlay() end
 	RefreshSpectatorOverlay()
 end)
 
 task.spawn(function()
+	-- 0.3s so the hotkey list follows toggles clicked in the menu.
 	while OverlayStack.Parent do
-		task.wait(1)
+		task.wait(0.3)
 		if not OverlayStack.Parent then break end
 		pcall(function()
 			if specAuto then UpdateAutoSpectators() end
@@ -8458,7 +8480,20 @@ New("Frame", {
 								value = #v > 12 and (v:sub(1, 11) .. "…") or v
 							end
 						end
-						table.insert(out, { label = target.label, key = BindKeyName(key), mode = target.bindMode or "toggle", value = value })
+						-- Switch functions are listed only while the bind has them away
+						-- from their default (default off: listed when on; default on:
+						-- listed as off once the bind turns it off).
+						local state, listed = nil, true
+						if target.obj and type(target.obj.Get) == "function" then
+							local ok, v = pcall(target.obj.Get, target.obj)
+							if ok and type(v) == "boolean" then
+								state = v
+								listed = (target.defaultValue == true) and not v or (target.defaultValue ~= true and v)
+							end
+						end
+						if listed then
+							table.insert(out, { label = target.label, key = BindKeyName(key), mode = target.bindMode or "toggle", value = value, on = state })
+						end
 					end
 				end
 				table.sort(out, function(a, b) return a.label:lower() < b.label:lower() end)
@@ -8552,12 +8587,49 @@ New("Frame", {
 					row.MouseLeave:Connect(function() Tween(row, { BackgroundTransparency = 1 }, 0.12) end)
 					return row
 				end
+				-- Drawn 14px line icons (keyboard, switch, chain) replacing the
+				-- row's image so they share one weight and colour.
+				local function drawIcon(row, kind)
+					local host = row:FindFirstChild("Icon")
+					if not host then return end
+					host.Image = ""
+					local function outline(x, y, w, h, radius, rot)
+						local f = New("Frame", {
+							Name = "IconLine", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(x + w / 2, y + h / 2),
+							Size = UDim2.fromOffset(w, h), Rotation = rot or 0, BackgroundTransparency = 1, ZIndex = host.ZIndex + 1,
+						}, host)
+						New("UICorner", { CornerRadius = radius }, f)
+						local st = Instance.new("UIStroke")
+						st.Color = ICON
+						st.Thickness = 1.4
+						st.Parent = f
+					end
+					local function fill(x, y, w, h, radius)
+						local f = New("Frame", {
+							Name = "IconFill", Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(w, h),
+							BackgroundColor3 = ICON, BorderSizePixel = 0, ZIndex = host.ZIndex + 1,
+						}, host)
+						if radius then New("UICorner", { CornerRadius = radius }, f) end
+					end
+					if kind == "key" then
+						outline(1, 3, 12, 9, UDim.new(0, 2))
+						fill(3, 5, 2, 2); fill(6, 5, 2, 2); fill(9, 5, 2, 2)
+						fill(4, 8, 6, 2)
+					elseif kind == "mode" then
+						outline(1, 4, 12, 7, UDim.new(1, 0))
+						fill(7, 5, 5, 5, UDim.new(1, 0))
+					elseif kind == "value" then
+						outline(0, 6, 8, 5, UDim.new(1, 0), -45)
+						outline(6, 3, 8, 5, UDim.new(1, 0), -45)
+					end
+				end
 				local function gap(order)
 					New("Frame", { Name = "Gap" .. order, LayoutOrder = order, Size = UDim2.new(1, 0, 0, 6), BackgroundTransparency = 1, ZIndex = Z_BASE + 952 }, body)
 				end
 
 				-- Key: small dark chip on the right; click it, then press a key.
 				local keyRow = makeRow(1, "rbxassetid://121978468376124", "Key", TEXT)
+				drawIcon(keyRow, "key")
 				bindRefs.key = New("TextLabel", {
 					Name = "KeyChip", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(20, 20),
 					BackgroundColor3 = Color3.fromRGB(28, 29, 39), BackgroundTransparency = 0, Text = "-", TextColor3 = Color3.fromRGB(190, 192, 202),
@@ -8573,6 +8645,7 @@ New("Frame", {
 				-- Mode: dark chip with the mode glyph and accent text, then a small
 				-- key-cap icon; both cycle Toggle / Hold / Always.
 				local modeRow = makeRow(2, "rbxassetid://109485777305919", "Mode", TEXT)
+				drawIcon(modeRow, "mode")
 				bindRefs.modeChip = New("Frame", {
 					Name = "ModeChip", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -30, 0.5, 0), Size = UDim2.fromOffset(74, 22),
 					BackgroundColor3 = Color3.fromRGB(28, 29, 39), BackgroundTransparency = 0, ZIndex = Z_BASE + 953,
@@ -8648,6 +8721,7 @@ New("Frame", {
 				end
 				local function switchRow(order, icon, text, name, onClick)
 					local row = makeRow(order, icon, text, TEXT)
+					if name == "value" then drawIcon(row, "value") end
 					local track = New("Frame", {
 						Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(28, 16),
 						BackgroundColor3 = Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = Z_BASE + 953,
@@ -8838,6 +8912,7 @@ New("Frame", {
 
 			local function RunBoundFunction(target, phase)
 				if not target or not target.obj then return end
+				task.delay(0.05, function() if RefreshKeybindOverlay then pcall(RefreshKeybindOverlay) end end)
 				local value = target.obj.Get and target.obj:Get()
 				if phase == "up" then
 					if target.bindMode == "hold" and type(value) == "boolean" then
