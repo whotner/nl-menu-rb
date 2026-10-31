@@ -2509,7 +2509,7 @@ GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(1, -6, 0, 2)
 -- Neverlose watermark: a thin, dark, see-through strip without outline or
 -- dividers; small caps text, accent icons, avatar at the end.
-GameInfo.Size = UDim2.fromOffset(0, 30)
+GameInfo.Size = UDim2.fromOffset(0, 36)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
 GameInfo.BackgroundColor3 = Color3.fromRGB(11, 11, 15)
 GameInfo.BackgroundTransparency = 0.06
@@ -2519,10 +2519,10 @@ GameInfo.Draggable = false
 GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
-do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = GameInfo end
+do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = GameInfo end
 -- Neverlose's strip is a plain dark plate: no glass blur behind it.
 WindowObj._makeDraggable(GameInfo, GameInfo)
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 12); pd.PaddingRight = UDim.new(0, 6); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 14); pd.PaddingRight = UDim.new(0, 7); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
 local ICON_LAYERS   = "rbxassetid://114499998778667"
@@ -2536,20 +2536,20 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local cell = Instance.new("Frame")
 	cell.Name = name .. "Cell"
 	cell.LayoutOrder = order
-	cell.Size = UDim2.fromOffset(0, 30)
+	cell.Size = UDim2.fromOffset(0, 36)
 	cell.AutomaticSize = Enum.AutomaticSize.X
 	cell.BackgroundTransparency = 1
 	cell.BorderSizePixel = 0
 	cell.ZIndex = Z_BASE + 901
 	cell.Parent = GameInfo
-	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 5); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
-	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 7); pd.PaddingRight = UDim.new(0, 7); pd.Parent = cell end
+	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 6); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
+	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 8); pd.PaddingRight = UDim.new(0, 8); pd.Parent = cell end
 	local icon
 	if iconAsset then
 		icon = Instance.new("ImageLabel")
 		icon.Name = name .. "Icon"
 		icon.LayoutOrder = 1
-		icon.Size = UDim2.fromOffset(iconSize or 13, iconSize or 13)
+		icon.Size = UDim2.fromOffset(iconSize or 16, iconSize or 16)
 		icon.BackgroundTransparency = 1
 		icon.BorderSizePixel = 0
 		icon.Image = iconAsset
@@ -2563,7 +2563,7 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local label = Instance.new("TextLabel")
 	label.Name = name
 	label.LayoutOrder = 2
-	label.Size = UDim2.fromOffset(0, 30)
+	label.Size = UDim2.fromOffset(0, 36)
 	label.AutomaticSize = Enum.AutomaticSize.X
 	label.BackgroundTransparency = 1
 	label.BorderSizePixel = 0
@@ -2571,7 +2571,7 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	label.TextColor3 = Color3.fromRGB(184, 186, 195)
 	label.TextTransparency = 0
 	label.TextScaled = false
-	label.TextSize = 13
+	label.TextSize = 15
 	label.Font = FONT
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Center
@@ -2596,7 +2596,7 @@ end
 local BrandCell = Instance.new("Frame")
 BrandCell.Name = "BrandCell"
 BrandCell.LayoutOrder = 2
-BrandCell.Size = UDim2.fromOffset(0, 30)
+BrandCell.Size = UDim2.fromOffset(0, 36)
 BrandCell.AutomaticSize = Enum.AutomaticSize.X
 BrandCell.BackgroundTransparency = 1
 BrandCell.BorderSizePixel = 0
@@ -2624,13 +2624,13 @@ do
 	local brandText = Instance.new("TextLabel")
 	brandText.Name = "BrandText"
 	brandText.LayoutOrder = 2
-	brandText.Size = UDim2.fromOffset(0, 30)
+	brandText.Size = UDim2.fromOffset(0, 36)
 	brandText.AutomaticSize = Enum.AutomaticSize.X
 	brandText.BackgroundTransparency = 1
 	brandText.BorderSizePixel = 0
 	brandText.Text = "NL"
 	brandText.TextColor3 = Color3.fromRGB(208, 226, 248)
-	brandText.TextSize = 15
+	brandText.TextSize = 18
 	brandText.Font = FONT_BOLD
 	brandText.ZIndex = Z_BASE + 901
 	brandText.Parent = BrandCell
@@ -2640,7 +2640,7 @@ local UserCell = WMCell("Username", 4, nil, LocalPlayer.DisplayName or "Player")
 local UserIcon = Instance.new("ImageLabel")
 UserIcon.Name = "UserIcon"
 UserIcon.LayoutOrder = 1
-UserIcon.Size = UDim2.fromOffset(20, 20)
+UserIcon.Size = UDim2.fromOffset(24, 24)
 UserIcon.BackgroundTransparency = 1
 UserIcon.BorderSizePixel = 0
 UserIcon.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId or 0) .. "&w=150&h=150"
@@ -3098,18 +3098,23 @@ function OV.pill(name, parent, color, radius, height)
 	return pill
 end
 
+-- The panel is a CanvasGroup: showing/hiding is one GroupTransparency tween,
+-- so header, rows, outlines and shadows fade together (and cheaply). A 6px
+-- margin (OV.pad) keeps the shadow rings inside the group's clip.
+OV.pad = 6
 local function MakeOverlayPanel(name, iconAsset, title)
-	local panel = New("Frame", {
+	local panel = New("CanvasGroup", {
 		Name = name,
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -8, 0, 52),
-		Size = UDim2.fromOffset(120, OV.head),
+		Position = UDim2.new(1, -8 + OV.pad, 0, 52 - OV.pad),
+		Size = UDim2.fromOffset(120, OV.head + OV.pad * 2),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ClipsDescendants = false,
+		GroupTransparency = 1,
 		Visible = false,
 		ZIndex = Z_BASE + 890,
 	}, NeverloseCS2)
+	New("UIPadding", { PaddingLeft = UDim.new(0, OV.pad), PaddingRight = UDim.new(0, OV.pad), PaddingTop = UDim.new(0, OV.pad), PaddingBottom = UDim.new(0, OV.pad) }, panel)
 	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Left, Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
 	New("UIScale", { Name = "PopScale", Scale = 1 }, panel)
 
@@ -3178,50 +3183,59 @@ function OV.row(rows, order, text, leftText)
 	return row, leftPill
 end
 
+-- One easing for every list animation.
+OV.ease = TweenInfo.new(0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+OV.easeIn = TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 local function FadeOverlayContents(root, show)
+	local info = show and OV.ease or OV.easeIn
+	local function go(node, props) TweenService:Create(node, info, props):Play() end
 	for _, node in ipairs(root:GetDescendants()) do
 		if node:IsA("TextLabel") then
-			node.TextTransparency = 1
-			Tween(node, { TextTransparency = show and 0 or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			if show then node.TextTransparency = 1 end
+			go(node, { TextTransparency = show and 0 or 1 })
 		elseif node:IsA("ImageLabel") then
-			node.ImageTransparency = 1
-			Tween(node, { ImageTransparency = show and 0 or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			if show then node.ImageTransparency = 1 end
+			go(node, { ImageTransparency = show and 0 or 1 })
 		elseif node:IsA("UIStroke") then
-			node.Transparency = 1
-			Tween(node, { Transparency = show and (node:GetAttribute("StrokeAlpha") or STROKE.Transparency) or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			if show then node.Transparency = 1 end
+			go(node, { Transparency = show and (node:GetAttribute("StrokeAlpha") or STROKE.Transparency) or 1 })
 		elseif node:IsA("Frame") and node:GetAttribute("PillAlpha") then
-			node.BackgroundTransparency = 1
-			Tween(node, { BackgroundTransparency = show and node:GetAttribute("PillAlpha") or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			if show then node.BackgroundTransparency = 1 end
+			go(node, { BackgroundTransparency = show and node:GetAttribute("PillAlpha") or 1 })
 		elseif node:IsA("Frame") and node:GetAttribute("NLOverlayAccentPart") then
-			node.BackgroundTransparency = 1
-			Tween(node, { BackgroundTransparency = show and 0 or 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			if show then node.BackgroundTransparency = 1 end
+			go(node, { BackgroundTransparency = show and 0 or 1 })
 		end
 	end
 end
 
--- Entry animation: both pills slide 10px in from the right while fading in;
--- leaving reverses it, then the row is removed and the list resized.
+-- Entry animation: the row opens from 0 to full height (rows below glide
+-- instead of jumping) while both pills slide 12px in from the right and
+-- fade in; leaving runs the same in reverse, then the row is removed.
 function OV.animateRow(row, show, onGone)
 	local icon, name = row:FindFirstChild("IconPill"), row:FindFirstChild("NamePill")
 	local nameX = row:GetAttribute("NameX") or 0
+	local width = row.Size.X.Offset
+	local info = show and OV.ease or OV.easeIn
 	FadeOverlayContents(row, show)
 	if show then
-		if icon then icon.Position = UDim2.fromOffset(10, 0) end
-		if name then name.Position = UDim2.fromOffset(nameX + 10, 0) end
+		row.Size = UDim2.fromOffset(width, 0)
+		if icon then icon.Position = UDim2.fromOffset(12, 0) end
+		if name then name.Position = UDim2.fromOffset(nameX + 12, 0) end
 	end
-	local dir = show and Enum.EasingDirection.Out or Enum.EasingDirection.In
-	if icon then Tween(icon, { Position = UDim2.fromOffset(show and 0 or 10, 0) }, 0.22, Enum.EasingStyle.Quint, dir) end
-	if name then Tween(name, { Position = UDim2.fromOffset(nameX + (show and 0 or 10), 0) }, 0.22, Enum.EasingStyle.Quint, dir) end
+	TweenService:Create(row, info, { Size = UDim2.fromOffset(width, show and OV.h or 0) }):Play()
+	if icon then TweenService:Create(icon, info, { Position = UDim2.fromOffset(show and 0 or 12, 0) }):Play() end
+	if name then TweenService:Create(name, info, { Position = UDim2.fromOffset(nameX + (show and 0 or 12), 0) }):Play() end
 	if not show then
-		task.delay(0.2, function()
+		task.delay(info.Time, function()
 			if row.Parent then row:Destroy() end
 			if onGone then onGone() end
 		end)
 	end
 end
 
--- Panel width from header and live rows; height from the stack. Spectators
--- sit under Hotkeys until either is dragged away.
+-- Panel width from header and live rows, height from the stack; the size
+-- glides to its target. Spectators sit under Hotkeys until dragged away.
 function OV.layout(panel, rows)
 	local w, n = panel:GetAttribute("HeaderWidth") or 0, 0
 	for _, row in ipairs(rows:GetChildren()) do
@@ -3230,33 +3244,31 @@ function OV.layout(panel, rows)
 			n = n + 1
 		end
 	end
-	panel.Size = UDim2.fromOffset(w, OV.head + (n > 0 and (5 + n * OV.h + (n - 1) * 4) or 0))
-	if OV.place then OV.place() end
+	local h = OV.head + (n > 0 and (5 + n * OV.h + (n - 1) * 4) or 0)
+	if panel:GetAttribute("TargetW") == w and panel:GetAttribute("TargetH") == h then return end
+	panel:SetAttribute("TargetW", w)
+	panel:SetAttribute("TargetH", h)
+	local size = UDim2.fromOffset(w + OV.pad * 2, h + OV.pad * 2)
+	if panel.Visible then TweenService:Create(panel, OV.ease, { Size = size }):Play() else panel.Size = size end
+	if OV.place then OV.place(true) end
 end
 
 local function SetOverlayPanelShown(panel, shown)
-	local token = (panel:GetAttribute("FadeToken") or 0) + 1
-	panel:SetAttribute("FadeToken", token)
 	local pop = panel:FindFirstChild("PopScale")
 	if shown then
 		if panel.Visible and panel:GetAttribute("Shown") then return end
 		panel:SetAttribute("Shown", true)
+		if panel.GroupTransparency > 0.95 and pop then pop.Scale = 0.95 end
 		panel.Visible = true
-		FadeOverlayContents(panel, true)
-		if pop then
-			pop.Scale = 0.94
-			Tween(pop, { Scale = 1 }, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-		end
+		TweenService:Create(panel, OV.ease, { GroupTransparency = 0 }):Play()
+		if pop then TweenService:Create(pop, OV.ease, { Scale = 1 }):Play() end
 	else
-		if not panel.Visible then return end
+		if not panel:GetAttribute("Shown") then return end
 		panel:SetAttribute("Shown", false)
-		FadeOverlayContents(panel, false)
-		if pop then Tween(pop, { Scale = 0.96 }, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In) end
-		task.delay(0.19, function()
-			if panel.Parent and panel:GetAttribute("FadeToken") == token then
-				panel.Visible = false
-				if pop then pop.Scale = 1 end
-			end
+		TweenService:Create(panel, OV.easeIn, { GroupTransparency = 1 }):Play()
+		if pop then TweenService:Create(pop, OV.easeIn, { Scale = 0.97 }):Play() end
+		task.delay(OV.easeIn.Time, function()
+			if panel.Parent and not panel:GetAttribute("Shown") then panel.Visible = false end
 		end)
 	end
 end
@@ -3275,7 +3287,7 @@ function OV.sync(panel, rows, cache, entries, build)
 			if held and held.row.Parent then held.row:Destroy() end
 			local row = build(entry.data, 10 + i)
 			cache[entry.id] = { row = row, sig = entry.sig }
-			if fresh then OV.animateRow(row, true) else FadeOverlayContents(row, true) end
+			if fresh and panel.Visible then OV.animateRow(row, true) end
 		end
 	end
 	for id, held in pairs(cache) do
@@ -3283,7 +3295,7 @@ function OV.sync(panel, rows, cache, entries, build)
 			cache[id] = nil
 			if held.row.Parent then
 				held.row:SetAttribute("Leaving", true)
-				OV.animateRow(held.row, false, function() OV.layout(panel, rows) end)
+				if panel.Visible then OV.animateRow(held.row, false) else held.row:Destroy() end
 			end
 		end
 	end
@@ -3300,11 +3312,28 @@ local KBPanel, KBRows = MakeOverlayPanel("Keybinds", OV.icons.list, "Hotkeys")
 local kbEnabled = true
 local kbRowCache = {}
 
--- State icon for binds without a value: toggle on (white) / off (grey),
--- hand for hold, dot for always.
+-- State glyph for binds without a value. Toggle: the Neverlose filled
+-- switch (on: white track, dark knob on the right; off: grey track, knob
+-- left). Hold and always use the hand and dot icons.
 function OV.modeGlyph(pill, mode, off)
-	local asset = mode == "hold" and OV.icons.hold or mode == "always" and OV.icons.always
-		or (off and OV.icons.toggleOff or OV.icons.toggleOn)
+	if mode ~= "hold" and mode ~= "always" then
+		local track = New("Frame", {
+			Name = "SwitchTrack", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(16, 10), BackgroundColor3 = off and Color3.fromRGB(96, 100, 112) or Color3.fromRGB(240, 240, 244),
+			BackgroundTransparency = 0, BorderSizePixel = 0, ZIndex = Z_BASE + 892,
+		}, pill)
+		track:SetAttribute("NLOverlayAccentPart", true)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
+		local knob = New("Frame", {
+			Name = "SwitchKnob", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, off and 2 or 8, 0.5, 0),
+			Size = UDim2.fromOffset(6, 6), BackgroundColor3 = OV.entry, BackgroundTransparency = 0, BorderSizePixel = 0,
+			ZIndex = Z_BASE + 893,
+		}, track)
+		knob:SetAttribute("NLOverlayAccentPart", true)
+		New("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
+		return
+	end
+	local asset = mode == "hold" and OV.icons.hold or OV.icons.always
 	New("ImageLabel", {
 		Name = "StateIcon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1, Image = asset,
@@ -3356,14 +3385,21 @@ local specAuto = true
 local specList = {}
 local specRowCache = {}
 
-function OV.place()
+-- animated: glide (list resized); otherwise follow at once (Hotkeys dragged).
+function OV.place(animated)
 	if SpecPanel:GetAttribute("Dragged") then return end
 	local kb = KBPanel.Position
-	local below = KBPanel.Visible and (KBPanel.Size.Y.Offset + 10) or 0
-	SpecPanel.Position = UDim2.new(kb.X.Scale, kb.X.Offset, kb.Y.Scale, kb.Y.Offset + below)
+	local shown = KBPanel:GetAttribute("Shown") == true
+	local below = shown and ((KBPanel:GetAttribute("TargetH") or OV.head) + 10) or 0
+	local pos = UDim2.new(kb.X.Scale, kb.X.Offset, kb.Y.Scale, kb.Y.Offset + below)
+	if animated == true and SpecPanel.Visible then
+		TweenService:Create(SpecPanel, OV.ease, { Position = pos }):Play()
+	else
+		SpecPanel.Position = pos
+	end
 end
-KBPanel:GetPropertyChangedSignal("Position"):Connect(OV.place)
-KBPanel:GetPropertyChangedSignal("Visible"):Connect(OV.place)
+KBPanel:GetPropertyChangedSignal("Position"):Connect(function() OV.place(false) end)
+KBPanel:GetAttributeChangedSignal("Shown"):Connect(function() OV.place(true) end)
 
 local function BuildSpecRow(person, order)
 	local row, leftPill = OV.row(SpecRows, order, person.name)
@@ -3567,8 +3603,9 @@ Aspect.AspectRatio = 798 / 610
 
 	local User = Instance.new('TextLabel')
 	User.Name = "Username"
-	User.Position = UDim2.fromOffset(44, 1)
-	User.Size = UDim2.fromOffset(86, 16)
+	-- Two lines (15 + 12) with a 2px gap, centred on the 30px avatar.
+	User.Position = UDim2.fromOffset(42, 0)
+	User.Size = UDim2.fromOffset(88, 16)
 	User.TextTruncate = Enum.TextTruncate.AtEnd
 	User.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	User.BackgroundTransparency = 1
@@ -3584,8 +3621,8 @@ Aspect.AspectRatio = 798 / 610
 
 	local DaysLeft = Instance.new('TextLabel')
 	DaysLeft.Name = "Daysleft"
-	DaysLeft.Position = UDim2.fromOffset(44, 21)
-	DaysLeft.Size = UDim2.fromOffset(86, 12)
+	DaysLeft.Position = UDim2.fromOffset(42, 17)
+	DaysLeft.Size = UDim2.fromOffset(88, 13)
 	DaysLeft.TextTruncate = Enum.TextTruncate.AtEnd
 	DaysLeft.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	DaysLeft.BackgroundTransparency = 1
@@ -3645,18 +3682,19 @@ local SettingsArrow = New("ImageLabel", {
 			-- +12 width spilled over the content panel edge.
 			Position = UDim2.new(0, -6, 0, -6),
 			Size = UDim2.new(1, 6, 1, 12),
-			BackgroundColor3 = Color3.fromRGB(245, 247, 255),
+			-- Same plate and hover strength as the sidebar tabs.
+			BackgroundColor3 = Color3.fromRGB(35, 38, 50),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			ZIndex = 0,
 		}, Info)
 		New("UICorner", { CornerRadius = UDim.new(0, 8) }, hoverPlate)
 		Info.MouseEnter:Connect(function()
-			Tween(hoverPlate, {BackgroundTransparency = 0.97}, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(hoverPlate, {BackgroundTransparency = 0.8}, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(SettingsArrow, {ImageTransparency = 0}, 0.15)
 		end)
 		Info.MouseLeave:Connect(function()
-			Tween(hoverPlate, {BackgroundTransparency = 1}, 0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(hoverPlate, {BackgroundTransparency = 1}, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(SettingsArrow, {ImageTransparency = 0.3}, 0.15)
 		end)
 	end
@@ -4481,7 +4519,10 @@ do
 				if type(WindowObj._onProfileAction) == "function" then
 					InvokeCallback(WindowObj._onProfileAction, key)
 				elseif key == "About" then
-					openChoiceList(label, { tostring(hubTitle) .. " UI", "Roblox port", "Build v30" }, nil, nil)
+					-- Links: clicking one copies it (executors expose setclipboard).
+					openChoiceList(label, { "t.me/neverlosewtf", "t.me/shizukuscripts" }, nil, function(choice)
+						if type(setclipboard) == "function" then pcall(setclipboard, "https://" .. tostring(choice)) end
+					end)
 				else
 					openChoiceList(label, { "Chat is not connected" }, nil, nil)
 				end
