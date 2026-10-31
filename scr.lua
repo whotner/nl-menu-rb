@@ -3660,11 +3660,17 @@ end
 -- so header, rows, outlines and shadows fade together (and cheaply). A 12px
 -- margin (OV.pad) keeps the soft shadows inside the group's clip.
 OV.pad = 12
+do
+	local ok, inset = pcall(function() return game:GetService("GuiService"):GetGuiInset() end)
+	OV.inset = ok and inset and inset.Y or 0
+end
 local function MakeOverlayPanel(name, iconAsset, title)
 	local panel = New("CanvasGroup", {
 		Name = name,
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -8 + OV.pad, 0, 52 - OV.pad),
+		-- Under the watermark (8px from the real top + 35px strip + 10px); the
+		-- ScreenGui keeps the top-bar inset, so it is subtracted.
+		Position = UDim2.new(1, -8 + OV.pad, 0, 53 - (OV.inset or 0) - OV.pad),
 		Size = UDim2.fromOffset(120, OV.head + OV.pad * 2),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
