@@ -2443,10 +2443,10 @@ GameInfo.AnchorPoint = Vector2.new(1, 0)
 GameInfo.Position = UDim2.new(1, -6, 0, 2)
 -- Neverlose watermark: a thin, dark, see-through strip without outline or
 -- dividers; small caps text, accent icons, avatar at the end.
-GameInfo.Size = UDim2.fromOffset(0, 28)
+GameInfo.Size = UDim2.fromOffset(0, 26)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
-GameInfo.BackgroundColor3 = Color3.fromRGB(10, 9, 13)
-GameInfo.BackgroundTransparency = 0.2
+GameInfo.BackgroundColor3 = Color3.fromRGB(9, 8, 11)
+GameInfo.BackgroundTransparency = 0.12
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
@@ -2454,7 +2454,7 @@ GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 5); c.Parent = GameInfo end
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 10); pd.PaddingRight = UDim.new(0, 5); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 11); pd.PaddingRight = UDim.new(0, 4); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
 local ICON_LAYERS   = "rbxassetid://114499998778667"
@@ -2468,20 +2468,20 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local cell = Instance.new("Frame")
 	cell.Name = name .. "Cell"
 	cell.LayoutOrder = order
-	cell.Size = UDim2.fromOffset(0, 28)
+	cell.Size = UDim2.fromOffset(0, 26)
 	cell.AutomaticSize = Enum.AutomaticSize.X
 	cell.BackgroundTransparency = 1
 	cell.BorderSizePixel = 0
 	cell.ZIndex = Z_BASE + 901
 	cell.Parent = GameInfo
 	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 5); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
-	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 7); pd.PaddingRight = UDim.new(0, 7); pd.Parent = cell end
+	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 6); pd.PaddingRight = UDim.new(0, 6); pd.Parent = cell end
 	local icon
 	if iconAsset then
 		icon = Instance.new("ImageLabel")
 		icon.Name = name .. "Icon"
 		icon.LayoutOrder = 1
-		icon.Size = UDim2.fromOffset(iconSize or 14, iconSize or 14)
+		icon.Size = UDim2.fromOffset(iconSize or 11, iconSize or 11)
 		icon.BackgroundTransparency = 1
 		icon.BorderSizePixel = 0
 		icon.Image = iconAsset
@@ -2495,15 +2495,15 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	local label = Instance.new("TextLabel")
 	label.Name = name
 	label.LayoutOrder = 2
-	label.Size = UDim2.fromOffset(0, 28)
+	label.Size = UDim2.fromOffset(0, 26)
 	label.AutomaticSize = Enum.AutomaticSize.X
 	label.BackgroundTransparency = 1
 	label.BorderSizePixel = 0
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(206, 208, 216)
+	label.TextColor3 = Color3.fromRGB(176, 178, 188)
 	label.TextTransparency = 0
 	label.TextScaled = false
-	label.TextSize = 12
+	label.TextSize = 11
 	label.Font = FONT
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Center
@@ -2528,14 +2528,14 @@ end
 local BrandCell = Instance.new("Frame")
 BrandCell.Name = "BrandCell"
 BrandCell.LayoutOrder = 2
-BrandCell.Size = UDim2.fromOffset(0, 28)
+BrandCell.Size = UDim2.fromOffset(0, 26)
 BrandCell.AutomaticSize = Enum.AutomaticSize.X
 BrandCell.BackgroundTransparency = 1
 BrandCell.BorderSizePixel = 0
 BrandCell.ZIndex = Z_BASE + 901
 BrandCell.Parent = GameInfo
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = BrandCell end
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 0); pd.PaddingRight = UDim.new(0, 4); pd.Parent = BrandCell end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 0); pd.PaddingRight = UDim.new(0, 8); pd.Parent = BrandCell end
 
 local NeverIcon = Instance.new("ImageLabel")
 NeverIcon.Name = "NeverIcon"
@@ -2556,13 +2556,13 @@ do
 	local brandText = Instance.new("TextLabel")
 	brandText.Name = "BrandText"
 	brandText.LayoutOrder = 2
-	brandText.Size = UDim2.fromOffset(0, 28)
+	brandText.Size = UDim2.fromOffset(0, 26)
 	brandText.AutomaticSize = Enum.AutomaticSize.X
 	brandText.BackgroundTransparency = 1
 	brandText.BorderSizePixel = 0
 	brandText.Text = "NL"
 	brandText.TextColor3 = Color3.fromRGB(208, 226, 248)
-	brandText.TextSize = 14
+	brandText.TextSize = 13
 	brandText.Font = FONT_BOLD
 	brandText.ZIndex = Z_BASE + 901
 	brandText.Parent = BrandCell
@@ -2572,7 +2572,7 @@ local UserCell = WMCell("Username", 4, nil, LocalPlayer.DisplayName or "Player")
 local UserIcon = Instance.new("ImageLabel")
 UserIcon.Name = "UserIcon"
 UserIcon.LayoutOrder = 1
-UserIcon.Size = UDim2.fromOffset(18, 18)
+UserIcon.Size = UDim2.fromOffset(17, 17)
 UserIcon.BackgroundTransparency = 1
 UserIcon.BorderSizePixel = 0
 UserIcon.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId or 0) .. "&w=150&h=150"
@@ -2600,7 +2600,7 @@ do
 	WindowObj._wmSpeedText = text
 end
 
--- Neverlose watermark glyphs drawn from frames on a 14px grid: gauge (speed),
+-- Neverlose watermark glyphs drawn from frames on an 11px grid: gauge (speed),
 -- rising bars (ping), clock (time). They follow the icon's ImageColor3 and
 -- ImageTransparency, so SetWatermark's accent still recolours them.
 WindowObj._wmGlyph = function(icon, kind)
@@ -2630,14 +2630,16 @@ WindowObj._wmGlyph = function(icon, kind)
 		table.insert(rings, st)
 	end
 	if kind == "speed" then
-		ring(2, 2, 10, 2)
-		part(5, 5, 4, 4, true)
+		ring(1, 1, 9, 1.5)
+		part(4, 4, 3, 3, true)
 	elseif kind == "ping" then
-		part(1, 10, 3, 3); part(4, 7, 3, 6); part(7, 4, 3, 9); part(10, 1, 3, 12)
+		-- rising wedge
+		for k = 0, 4 do part(k * 2, 9 - k * 2, 2, 2 + k * 2) end
 	elseif kind == "time" then
-		ring(2, 2, 10, 1.6)
-		part(6, 4, 2, 4); part(6, 6, 4, 2)
+		ring(1, 1, 9, 1.4)
+		part(5, 3, 1, 3); part(5, 5, 3, 1)
 	end
+	icon.ImageTransparency = 0.18
 	local function sync()
 		for _, f in ipairs(fills) do
 			f.BackgroundColor3 = icon.ImageColor3
@@ -2995,7 +2997,7 @@ New("UIListLayout", {
 -- entry, a square icon pill next to a name pill. Pills carry their resting
 -- alpha in the "PillAlpha" attribute so the fades know where to return.
 -- Kept in one table: AddWindow is close to the Luau register limit.
-local OV = { color = Color3.fromRGB(12, 11, 15), h = 28 }
+local OV = { color = Color3.fromRGB(11, 10, 14), h = 27 }
 function OV.pill(name, parent, alpha, z)
 	local pill = New("Frame", {
 		Name = name, Size = UDim2.fromOffset(OV.h, OV.h), BackgroundColor3 = OV.color,
@@ -3016,24 +3018,26 @@ local function MakeOverlayPanel(name, iconAsset, title)
 		Visible = false,
 		ZIndex = Z_BASE + 890,
 	}, OverlayStack)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Left, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Left, Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
 
-	local header = OV.pill("Header", panel, 0.45)
-	header.Size = UDim2.fromOffset(150, 34)
+	-- Measured on the Neverlose reference: header 35px tall, glyph 7px in,
+	-- title 16px after it so it lines up with the entry names below.
+	local header = OV.pill("Header", panel, 0.3)
+	header.Size = UDim2.fromOffset(171, 35)
 	header.LayoutOrder = 1
-	header:FindFirstChildOfClass("UICorner").CornerRadius = UDim.new(0, 9)
-	New("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 14) }, header)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, header)
+	header:FindFirstChildOfClass("UICorner").CornerRadius = UDim.new(0, 10)
+	New("UIPadding", { PaddingLeft = UDim.new(0, 7), PaddingRight = UDim.new(0, 14) }, header)
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 16), SortOrder = Enum.SortOrder.LayoutOrder }, header)
 	if title == "Hotkeys" then
 		-- Tree list: a bracket on the left (top cap, stem, two branches) and
-		-- three lines on the right, on an 18x14 pixel grid.
+		-- three lines on the right, on a 21x16 pixel grid.
 		local listIcon = New("Frame", {
-			Name = "HeaderIcon", Size = UDim2.fromOffset(18, 14), BackgroundTransparency = 1,
+			Name = "HeaderIcon", Size = UDim2.fromOffset(21, 16), BackgroundTransparency = 1,
 			LayoutOrder = 1, ZIndex = Z_BASE + 892,
 		}, header)
 		for i, r in ipairs({
-			{ 0, 0, 4, 2 }, { 1, 0, 2, 14 }, { 1, 6, 4, 2 }, { 1, 12, 4, 2 },
-			{ 7, 0, 11, 2 }, { 7, 6, 11, 2 }, { 7, 12, 11, 2 },
+			{ 0, 0, 5, 2 }, { 1, 0, 2, 16 }, { 1, 7, 5, 2 }, { 1, 14, 5, 2 },
+			{ 8, 0, 13, 2 }, { 8, 7, 13, 2 }, { 8, 14, 13, 2 },
 		}) do
 			local part = New("Frame", {
 				Name = "ListPart" .. tostring(i), Position = UDim2.fromOffset(r[1], r[2]),
@@ -3044,22 +3048,22 @@ local function MakeOverlayPanel(name, iconAsset, title)
 		end
 	else
 		New("ImageLabel", {
-			Name = "HeaderIcon", Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1,
+			Name = "HeaderIcon", Size = UDim2.fromOffset(21, 18), BackgroundTransparency = 1,
 			Image = iconAsset, ImageColor3 = mainColor, ScaleType = Enum.ScaleType.Fit, LayoutOrder = 1, ZIndex = Z_BASE + 892,
 		}, header)
 	end
 	New("TextLabel", {
 		Name = "HeaderTitle", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
-		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(228, 228, 234), TextTransparency = 0.08,
-		TextSize = 16, Font = FONT_BOLD, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, ZIndex = Z_BASE + 892,
+		BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(228, 226, 230), TextTransparency = 0.08,
+		TextSize = 18, Font = FONT_BOLD, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, ZIndex = Z_BASE + 892,
 	}, header)
-	panel:SetAttribute("HeaderWidth", 12 + 18 + 10 + MeasureText(title, 16, FONT_BOLD) + 16)
+	panel:SetAttribute("HeaderWidth", 7 + 21 + 16 + MeasureText(title, 18, FONT_BOLD) + 16)
 
 	local rows = New("Frame", {
 		Name = "Rows", Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1, LayoutOrder = 2, ZIndex = Z_BASE + 891,
 	}, panel)
-	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, rows)
+	New("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, rows)
 	return panel, rows
 end
 
@@ -3070,31 +3074,31 @@ function OV.row(rows, order, text)
 		Name = "OverlayRow", Size = UDim2.fromOffset(150, OV.h), BackgroundTransparency = 1,
 		LayoutOrder = order, ZIndex = Z_BASE + 891,
 	}, rows)
-	local iconPill = OV.pill("IconPill", row, 0.55)
-	local namePill = OV.pill("NamePill", row, 0.55)
-	namePill.Position = UDim2.fromOffset(OV.h + 5, 0)
-	namePill.Size = UDim2.new(1, -(OV.h + 5), 0, OV.h)
+	local iconPill = OV.pill("IconPill", row, 0.4)
+	local namePill = OV.pill("NamePill", row, 0.4)
+	namePill.Position = UDim2.fromOffset(OV.h + 10, 0)
+	namePill.Size = UDim2.new(1, -(OV.h + 10), 0, OV.h)
 	New("TextLabel", {
-		Name = "EntryName", Position = UDim2.fromOffset(11, 0), Size = UDim2.new(1, -20, 1, 0),
-		BackgroundTransparency = 1, Text = text, TextColor3 = Color3.fromRGB(235, 236, 241), TextTransparency = 0.08,
-		TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
+		Name = "EntryName", Position = UDim2.fromOffset(8, 0), Size = UDim2.new(1, -16, 1, 0),
+		BackgroundTransparency = 1, Text = text, TextColor3 = Color3.fromRGB(232, 230, 234), TextTransparency = 0.08,
+		TextSize = 15, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = Z_BASE + 892,
 	}, namePill)
 	return row, iconPill, namePill
 end
 
 function OV.rowWidth(text)
-	return OV.h + 5 + 11 + MeasureText(text, 13, FONT) + 12
+	return OV.h + 10 + 8 + MeasureText(text, 15, FONT) + 10
 end
 
 -- Sizes the header and rows to one shared width and the panel to fit them.
 function OV.layout(panel, rowList, widest)
-	local w = math.ceil(math.max(150, panel:GetAttribute("HeaderWidth") or 0, widest or 0))
+	local w = math.ceil(math.max(171, panel:GetAttribute("HeaderWidth") or 0, widest or 0))
 	local header = panel:FindFirstChild("Header")
-	if header then header.Size = UDim2.fromOffset(w, 34) end
+	if header then header.Size = UDim2.fromOffset(w, 35) end
 	for _, row in ipairs(rowList) do row.Size = UDim2.fromOffset(w, OV.h) end
 	local n = #rowList
-	local h = 34 + (n > 0 and (6 + n * OV.h + (n - 1) * 5) or 0)
+	local h = 35 + (n > 0 and (10 + n * OV.h + (n - 1) * 8) or 0)
 	panel.Size = UDim2.fromOffset(w, h)
 end
 
@@ -3157,13 +3161,13 @@ function OV.modeGlyph(pill, mode)
 	end
 	local WHITE = Color3.fromRGB(240, 240, 244)
 	if mode == "hold" then
-		local cap = part(8, 8, 12, 12, WHITE, UDim.new(0, 3))
-		part(3, 3, 6, 6, OV.color, UDim.new(0, 2), cap)
+		local cap = part(8, 8, 11, 11, WHITE, UDim.new(0, 3))
+		part(3, 3, 5, 5, OV.color, UDim.new(0, 2), cap)
 	elseif mode == "always" then
-		part(9, 9, 10, 10, WHITE)
+		part(9, 9, 9, 9, WHITE)
 	else
-		local sw = part(6, 9, 16, 10, WHITE)
-		part(8, 2, 6, 6, OV.color, nil, sw)
+		local sw = part(4, 8, 19, 11, WHITE)
+		part(10, 2, 7, 7, OV.color, nil, sw)
 	end
 end
 
@@ -3226,7 +3230,7 @@ local function BuildSpecRow(person, order)
 			Name = "SpecAvatar",
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromScale(0.5, 0.5),
-			Size = UDim2.fromOffset(18, 18),
+			Size = UDim2.fromOffset(17, 17),
 			BackgroundTransparency = 1,
 			Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(person.id) .. "&w=150&h=150",
 			ZIndex = Z_BASE + 892,
