@@ -1689,7 +1689,9 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		local hueBar = New("ImageButton", {
 			Name = "HueBar",
 			Size = UDim2.fromOffset(192, 10),
-			BackgroundColor3 = Color3.fromRGB(255, 0, 0),
+			-- UIGradient multiplies the background: red here zeroed green/blue and
+			-- turned the spectrum into red-black-red.
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BorderSizePixel = 0,
 			AutoButtonColor = false,
 			Image = "",
@@ -2797,6 +2799,9 @@ Aspect.AspectRatio = 798 / 610
 	}, MainFrame)
 	local Info = Instance.new('Frame')
 	Info.Name = "Info"
+	-- Anchor to the bottom: with a top anchor the 30px block hung 17px below the
+	-- window and the "days left" line was cut off.
+	Info.AnchorPoint = Vector2.new(0, 1)
 	Info.Position = UDim2.new(0, 15, 1, -13)
 	Info.Size = UDim2.new(0, 150, 0, 30)
 	Info.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -5253,7 +5258,9 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 	New("ImageLabel", {
 		Name = "SearchGlyph",
 		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 10, 0.5, 0),
+		-- The UIPadding below also shifts children: -30 + 40 puts the glyph 10px
+		-- from the edge instead of on top of the placeholder text.
+		Position = UDim2.new(0, -30, 0.5, 0),
 		Size = UDim2.fromOffset(14, 14),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://6031154871",
@@ -6153,15 +6160,16 @@ end
 				local UIStroke = Stroke(SettingsFrame, "UIStroke")
 
 				-- PATCH 4: settings plate header + no divider watcher
-				local PLATE_HEADER = 30
+				-- Neverlose shows the plate title as a white heading, larger than row text.
+				local PLATE_HEADER = 34
 				New("TextLabel", {
 					Name = "PlateTitle",
-					Position = UDim2.new(0, 14, 0, 14),
-					Size = UDim2.new(1, -28, 0, 16),
+					Position = UDim2.new(0, 14, 0, 12),
+					Size = UDim2.new(1, -28, 0, 18),
 					BackgroundTransparency = 1,
 					Text = label,
-					TextColor3 = THEME.text,
-					TextSize = 13,
+					TextColor3 = Color3.fromRGB(255, 255, 255),
+					TextSize = 15,
 					Font = FONT,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTruncate = Enum.TextTruncate.AtEnd,
@@ -8517,7 +8525,8 @@ New("Frame", {
 
 				local DropdownSection = Instance.new('Frame')
 				DropdownSection.Name = "Accordion"
-				DropdownSection.Size = UDim2.new(1, 0, 0, 0)
+				-- Same height as every other row; 0 squashed the header text into a smear.
+				DropdownSection.Size = UDim2.new(1, 0, 0, 39)
 				DropdownSection.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
 				DropdownSection.BackgroundTransparency = 1
 				DropdownSection.LayoutOrder = elemCount
