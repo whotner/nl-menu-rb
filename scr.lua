@@ -516,7 +516,7 @@ local function New(class, props, parent)
 			TextToggle = 14, TextDropdown = 14, TextDefault = 13, TopBar = 14, SliderValue = 12,
 			Username = 14, Daysleft = 12, SaveText = 14, HeaderLabel = 11, SearchBox = 14 }
 		obj.TextSize = roleSizes[obj.Name] or ((props and props.TextSize) or 13)
-		obj.Font = (obj.Name == "Title" or obj.Name == "PlateTitle" or obj.Name == "HeaderTitle") and FONT_BOLD or FONT
+		obj.Font = (obj.Name == "Title" or obj.Name == "PlateTitle" or obj.Name == "HeaderTitle" or obj.Name == "BadgeText" or obj.Name == "LoaderTitle") and FONT_BOLD or FONT
 		if obj.Name == "SectionLabel" or obj.Name == "TabLabel" then
 			obj.TextColor3 = Color3.fromRGB(92, 96, 106)
 		elseif obj.Name == "GameTitle" or obj.Name == "Daysleft" or obj.Name == "HeaderLabel" or obj.Name == "SearchEmptyState" then
@@ -6053,14 +6053,103 @@ end
 		end
 	end)
 
-	MainFrame.BackgroundTransparency = 1
-	Tween(MainFrame, { BackgroundTransparency = 0.25 }, 0.18)
-
-
-
+	if Library.ShowLoader ~= false then
+		-- The loader toast opens the window when it finishes (see below).
+		guiOpen = false
+		MainFrame.Visible = false
+		local part = AcrylicBlur.Instances and AcrylicBlur.Instances.Part
+		if part then part.Transparency = 1 end
+		if AcrylicBlur.Instances and AcrylicBlur.Instances.DepthOfField then AcrylicBlur.Instances.DepthOfField.Enabled = false end
+	else
+		-- The glass part only tracks the window while this runs; it used to start
+		-- on the first RShift toggle, so the blur showed up late.
+		if not AcrylicBlur.Signal then
+			AcrylicBlur.Signal = game:GetService("RunService").RenderStepped:Connect(AcrylicBlur.Update)
+		end
+		MainFrame.BackgroundTransparency = 1
+		Tween(MainFrame, { BackgroundTransparency = 0.25 }, 0.18)
+	end
 end
 WindowObj._setupWindowToggle()
 WindowObj._setupWindowToggle = nil
+
+-- Neverlose-style loader toast: NL badge, "neverlose", progress "k of 10" and an
+-- accent gradient running around the border. Opens the window when done.
+-- Set Library.ShowLoader = false before AddWindow to skip it.
+if Library.ShowLoader ~= false then task.spawn(function()
+	local toast = New("Frame", {
+		Name = "NeverloseLoader",
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(1, 20, 1, -24),
+		Size = UDim2.fromOffset(300, 58),
+		BackgroundColor3 = Color3.fromRGB(14, 15, 22),
+		BackgroundTransparency = 0.04,
+		BorderSizePixel = 0,
+		ZIndex = Z_BASE + 990,
+	}, NeverloseCS2)
+	New("UICorner", { CornerRadius = UDim.new(0, 10) }, toast)
+	local ring = Instance.new("UIStroke")
+	ring.Thickness = 1.5
+	ring.Color = Color3.fromRGB(255, 255, 255)
+	ring.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	ring.Parent = toast
+	local sweep = Instance.new("UIGradient")
+	sweep.Color = ColorSequence.new(mainColor)
+	sweep.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.9),
+		NumberSequenceKeypoint.new(0.42, 0.9),
+		NumberSequenceKeypoint.new(0.5, 0),
+		NumberSequenceKeypoint.new(0.58, 0.9),
+		NumberSequenceKeypoint.new(1, 0.9),
+	})
+	sweep.Parent = ring
+	local badge = New("Frame", {
+		Name = "Badge", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 12, 0.5, 0),
+		Size = UDim2.fromOffset(36, 36), BackgroundColor3 = Color3.fromRGB(22, 25, 38), BorderSizePixel = 0, ZIndex = Z_BASE + 991,
+	}, toast)
+	New("UICorner", { CornerRadius = UDim.new(0, 8) }, badge)
+	New("TextLabel", {
+		Name = "BadgeText", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "NL",
+		TextColor3 = Color3.fromRGB(235, 240, 255), TextSize = 14, Font = FONT_BOLD, ZIndex = Z_BASE + 992,
+	}, badge)
+	New("TextLabel", {
+		Name = "LoaderTitle", Position = UDim2.fromOffset(60, 11), Size = UDim2.new(1, -140, 0, 18), BackgroundTransparency = 1,
+		Text = string.lower(tostring(hubTitle)), TextColor3 = Color3.fromRGB(240, 241, 246), TextSize = 15, Font = FONT_BOLD,
+		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 991,
+	}, toast)
+	local status = New("TextLabel", {
+		Name = "LoaderStatus", Position = UDim2.fromOffset(60, 30), Size = UDim2.new(1, -72, 0, 16), BackgroundTransparency = 1,
+		Text = "Initialization in progress", TextColor3 = Color3.fromRGB(140, 144, 158), TextSize = 13,
+		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 991,
+	}, toast)
+	local counter = New("TextLabel", {
+		Name = "LoaderCounter", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 11), Size = UDim2.fromOffset(70, 18),
+		BackgroundTransparency = 1, Text = "0 of 10", TextColor3 = Color3.fromRGB(140, 144, 158), TextSize = 13,
+		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = Z_BASE + 991,
+	}, toast)
+
+	local spinning = true
+	task.spawn(function()
+		while spinning and toast.Parent do
+			sweep.Rotation = (sweep.Rotation + 4) % 360
+			RunService.RenderStepped:Wait()
+		end
+	end)
+	Tween(toast, { Position = UDim2.new(1, -20, 1, -24) }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	for step = 1, 10 do
+		task.wait(0.14 + math.random() * 0.08)
+		counter.Text = tostring(step) .. " of 10"
+	end
+	status.Text = "Welcome back, " .. tostring(LocalPlayer.Name or "user")
+	counter.Text = "Ready"
+	task.wait(0.5)
+	if AcrylicBlur.toggleGui then AcrylicBlur.toggleGui() end
+	task.wait(0.6)
+	Tween(toast, { Position = UDim2.new(1, 320, 1, -24) }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+	task.wait(0.32)
+	spinning = false
+	toast:Destroy()
+end) end
 
 
 	function WindowObj:AddTabLabel(text)
