@@ -5,7 +5,8 @@
 local FONT = Enum.Font.SourceSansSemibold
 local FONT_BOLD = Enum.Font.SourceSansBold
 pcall(function()
-	FONT = Enum.Font.BuilderSans
+	-- Medium matches Neverlose's Inter weight better than Regular.
+	FONT = Enum.Font.BuilderSansMedium
 	FONT_BOLD = Enum.Font.BuilderSansBold
 end)
 local LoadAcrylic = function()
@@ -569,6 +570,10 @@ local function New(class, props, parent)
 		obj.BackgroundColor3 = Color3.fromRGB(40, 42, 54)
 	elseif type(obj.Name) == "string" and obj.Name:match("^Dot%d$") and obj:IsA("Frame") then
 		obj.BackgroundColor3 = Color3.fromRGB(150, 154, 166)
+		-- Neverlose's "..." are round dots, not squares.
+		local dotCorner = Instance.new("UICorner")
+		dotCorner.CornerRadius = UDim.new(1, 0)
+		dotCorner.Parent = obj
 	end
 	if obj:IsA("UIStroke") then
 		obj.Color = STROKE.Color
@@ -1820,6 +1825,83 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	-- Neverlose option lists open instantly, centred on the field that opened
 	-- them (overlapping it), not dropped below with a grow animation. Kept on
 	-- WindowObj instead of a local: AddWindow is near Luau's register cap.
+	-- Neverlose sidebar glyphs drawn from frames, sized in scale so they fit any
+	-- icon box (tabs and sub-tabs). The parts follow the ImageLabel's own
+	-- ImageColor3/ImageTransparency, so every existing tint tween drives them.
+	-- Returns true when `kind` has a drawn glyph.
+	WindowObj._drawTabGlyph = function(kind, icon)
+		kind = string.lower(tostring(kind or ""))
+		local CUT = Color3.fromRGB(20, 22, 30)
+		local fills, rings = {}, {}
+		local function part(parent, size, pos, corner, isCut)
+			local f = Instance.new("Frame")
+			f.AnchorPoint = Vector2.new(0.5, 0.5)
+			f.Size = size
+			f.Position = pos
+			f.BorderSizePixel = 0
+			f.BackgroundColor3 = isCut and CUT or icon.ImageColor3
+			f.ZIndex = icon.ZIndex + (isCut and 2 or 1)
+			f.Parent = parent
+			if corner then local c = Instance.new("UICorner"); c.CornerRadius = corner; c.Parent = f end
+			if not isCut then table.insert(fills, f) end
+			return f
+		end
+		local S, C = UDim2.fromScale, UDim.new
+		if kind == "crosshair" or kind == "rage" or kind == "aimbot" then
+			local ring = Instance.new("Frame")
+			ring.AnchorPoint = Vector2.new(0.5, 0.5)
+			ring.Position = S(0.5, 0.5)
+			ring.Size = S(0.64, 0.64)
+			ring.BackgroundTransparency = 1
+			ring.ZIndex = icon.ZIndex + 1
+			ring.Parent = icon
+			local rc = Instance.new("UICorner"); rc.CornerRadius = C(1, 0); rc.Parent = ring
+			local stroke = Instance.new("UIStroke"); stroke.Thickness = 1.6; stroke.Color = icon.ImageColor3; stroke.Parent = ring
+			table.insert(rings, stroke)
+			-- ticks centred on the ring edge, so they stay symmetric at any size
+			part(ring, S(0.17, 0.42), S(0.5, 0), nil)
+			part(ring, S(0.17, 0.42), S(0.5, 1), nil)
+			part(ring, S(0.42, 0.17), S(0, 0.5), nil)
+			part(ring, S(0.42, 0.17), S(1, 0.5), nil)
+			part(ring, S(0.24, 0.24), S(0.5, 0.5), C(1, 0))
+		elseif kind == "mouse" or kind == "legit" then
+			local body = part(icon, S(0.6, 0.84), S(0.5, 0.5), C(0.45, 0))
+			part(body, UDim2.new(1, 0, 0, 1), S(0.5, 0.38), nil, true)
+			part(body, UDim2.new(0, 1, 0.38, 0), S(0.5, 0.19), nil, true)
+		elseif kind == "user" or kind == "player" or kind == "players" then
+			part(icon, S(0.44, 0.44), S(0.5, 0.28), C(1, 0))
+			part(icon, S(0.84, 0.4), S(0.5, 0.8), C(0.45, 0))
+		elseif kind == "earth" or kind == "world" or kind == "globe" then
+			local globe = part(icon, S(0.88, 0.88), S(0.5, 0.5), C(1, 0))
+			part(globe, S(0.36, 0.3), S(0.34, 0.36), C(1, 0), true)
+			part(globe, S(0.42, 0.24), S(0.66, 0.72), C(1, 0), true)
+			part(globe, S(0.2, 0.18), S(0.74, 0.3), C(1, 0), true)
+		elseif kind == "gear" or kind == "misc" or kind == "miscellaneous" or kind == "settings" then
+			local plate = part(icon, S(0.84, 0.84), S(0.5, 0.5), C(0.24, 0))
+			part(plate, S(0.62, 0.1), S(0.5, 0.36), nil, true)
+			part(plate, S(0.62, 0.1), S(0.5, 0.64), nil, true)
+			part(plate, S(0.2, 0.2), S(0.32, 0.36), C(0.3, 0), true)
+			part(plate, S(0.2, 0.2), S(0.68, 0.64), C(0.3, 0), true)
+		else
+			return false
+		end
+		icon.Image = ""
+		local function sync()
+			for _, f in ipairs(fills) do
+				f.BackgroundColor3 = icon.ImageColor3
+				f.BackgroundTransparency = icon.ImageTransparency
+			end
+			for _, r in ipairs(rings) do
+				r.Color = icon.ImageColor3
+				r.Transparency = icon.ImageTransparency
+			end
+		end
+		icon:GetPropertyChangedSignal("ImageColor3"):Connect(sync)
+		icon:GetPropertyChangedSignal("ImageTransparency"):Connect(sync)
+		sync()
+		return true
+	end
+
 	-- Small line icons drawn from frames (no image assets needed).
 	WindowObj._drawGlyph = function(kind, host, color)
 		local function bar(x, y, w, h, rot)
@@ -1856,12 +1938,12 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			box(1, 4, 8, 9)
 			box(5, 1, 8, 9)
 		elseif kind == "trash" then
-			-- lid, handle and a centred bin with two slats
-			bar(7, 3.4, 10, 1.6, 0)
-			bar(7, 1.6, 4, 1.4, 0)
-			box(3.5, 5.2, 7, 8)
-			bar(5.8, 9.2, 1.2, 4.2, 0)
-			bar(8.2, 9.2, 1.2, 4.2, 0)
+			-- lid, handle and a centred bin with two slats, on whole pixels
+			bar(7, 3, 11, 2, 0)
+			bar(7, 1, 5, 2, 0)
+			box(3, 5, 8, 8)
+			bar(6, 9, 1, 4, 0)
+			bar(8, 9, 1, 4, 0)
 		elseif kind == "restore" then
 			-- circular arrow: three quarters of a ring plus an arrow head
 			local ring = Instance.new("Frame")
@@ -3363,11 +3445,11 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WindowSettingsFrame.Name = "WindowSettingsFrame"
 	WindowSettingsFrame.AnchorPoint = Vector2.new(0, 1)
 	WindowSettingsFrame.Position = UDim2.new(0, 168, 1, -13)
-	WindowSettingsFrame.Size = UDim2.fromOffset(220, 0)
+	WindowSettingsFrame.Size = UDim2.fromOffset(240, 0)
 	WindowSettingsFrame.AutomaticSize = Enum.AutomaticSize.Y
 	WindowSettingsFrame.ClipsDescendants = false
-	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 28)
-	WindowSettingsFrame.BackgroundTransparency = 0.045
+	WindowSettingsFrame.BackgroundColor3 = Color3.fromRGB(24, 25, 33) -- Neverlose profile popover
+	WindowSettingsFrame.BackgroundTransparency = 0
 	WindowSettingsFrame.ZIndex = 101
 	do Stroke(WindowSettingsFrame) end
 	WindowSettingsFrame.Visible = false
@@ -3517,7 +3599,9 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 			-- Neverlose separates row groups with spacing, not divider lines.
 			for _, spacerOrder in ipairs({ 5, 55, 65, 85 }) do
-				New("Frame", { Name = "ProfileGroupGap", Size = UDim2.new(1, 0, 0, 6), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = spacerOrder }, SettingsContainer)
+				local gap = New("Frame", { Name = "ProfileGroupGap", Size = UDim2.new(1, 0, 0, 9), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = spacerOrder }, SettingsContainer)
+				-- Neverlose separates the groups with a hairline.
+				New("Frame", { Name = "GroupLine", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(1, -8, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.93, BorderSizePixel = 0 }, gap)
 			end
 		end
 
@@ -3531,14 +3615,14 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	local WSColorpicker = Instance.new("Frame")
 	WSColorpicker.Name = "Colorpicker"
 	-- Fixed row height prevents a circular AutoSize dependency with the popup.
-	WSColorpicker.Size = UDim2.new(1, 0, 0, 27)
+	WSColorpicker.Size = UDim2.new(1, 0, 0, 31)
 	WSColorpicker.BackgroundTransparency = 1
 	WSColorpicker.BorderSizePixel = 0
 	WSColorpicker.ZIndex = 130
 	WSColorpicker.LayoutOrder = 60
 	WSColorpicker.Parent = SettingsContainer
 	do
-		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = Library.ProfileIcons.style, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSColorpicker)
+		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = Library.ProfileIcons.style, ImageColor3 = Color3.fromRGB(200,200,206), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSColorpicker)
 		local lbl = Instance.new("TextLabel")
 		lbl.Name = "colorpickerLabel"
 		lbl.Position = UDim2.fromOffset(34, 0)
@@ -3546,7 +3630,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		lbl.AnchorPoint = Vector2.new(0,0)
 		lbl.BackgroundTransparency = 1
 		lbl.Text = "Style"
-		lbl.TextColor3 = Color3.fromRGB(200,204,218)
+		lbl.TextColor3 = Color3.fromRGB(205,205,211)
 		lbl.TextScaled = false
 		lbl.TextSize = 14
 		lbl.Font = FONT
@@ -3588,7 +3672,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local WSScaleRow = Instance.new("Frame")
 	WSScaleRow.Name = "Selection"
-	WSScaleRow.Size = UDim2.new(1,0,0,27)
+	WSScaleRow.Size = UDim2.new(1,0,0,31)
 	WSScaleRow.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	WSScaleRow.BackgroundTransparency = 1
 	WSScaleRow.ZIndex = 120
@@ -3596,13 +3680,13 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WSScaleRow.Parent = SettingsContainer
 
 	do
-		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = Library.ProfileIcons.menuScale, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSScaleRow)
+		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = Library.ProfileIcons.menuScale, ImageColor3 = Color3.fromRGB(200,200,206), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSScaleRow)
 		local lbl = Instance.new("TextLabel"); lbl.Name = "Text"
 		lbl.Position = UDim2.fromOffset(34, 0)
 		lbl.Size = UDim2.new(1, -104, 1, 0)
 		lbl.AnchorPoint = Vector2.new(0,0)
 		lbl.BackgroundTransparency = 1
-		lbl.Text = "Menu Scale"; lbl.TextColor3 = Color3.fromRGB(200,204,218)
+		lbl.Text = "Menu Scale"; lbl.TextColor3 = Color3.fromRGB(205,205,211)
 		lbl.TextScaled = false; lbl.TextSize = 14; lbl.Font = FONT
 		lbl.TextTransparency = 0; lbl.ZIndex = 130
 		lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = WSScaleRow
@@ -3632,7 +3716,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	ScaleDefault.Text = "Auto"
 	ScaleDefault:SetAttribute("FullText", ScaleDefault.Text)
 	
-	ScaleDefault.TextColor3 = Color3.fromRGB(150,155,172)
+	ScaleDefault.TextColor3 = Color3.fromRGB(216,216,221)
 	ScaleDefault.TextScaled = false
 	ScaleDefault.TextSize = 13
 	ScaleDefault.Font = FONT
@@ -3680,7 +3764,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 	local WSLangRow = Instance.new("Frame")
 	WSLangRow.Name = "Selection"
-	WSLangRow.Size = UDim2.new(1,0,0,27)
+	WSLangRow.Size = UDim2.new(1,0,0,31)
 	WSLangRow.BackgroundColor3 = Color3.fromRGB(162,162,162)
 	WSLangRow.BackgroundTransparency = 1
 	WSLangRow.ZIndex = 120
@@ -3688,13 +3772,13 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WSLangRow.Parent = SettingsContainer
 
 	do
-		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = Library.ProfileIcons.language, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSLangRow)
+		New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = Library.ProfileIcons.language, ImageColor3 = Color3.fromRGB(200,200,206), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, WSLangRow)
 		local lbl = Instance.new("TextLabel"); lbl.Name = "Text"
 		lbl.Position = UDim2.fromOffset(34, 0)
 		lbl.Size = UDim2.new(1, -104, 1, 0)
 		lbl.AnchorPoint = Vector2.new(0,0)
 		lbl.BackgroundTransparency = 1
-		lbl.Text = "Language"; lbl.TextColor3 = Color3.fromRGB(200,204,218)
+		lbl.Text = "Language"; lbl.TextColor3 = Color3.fromRGB(205,205,211)
 		lbl.TextScaled = false; lbl.TextSize = 14; lbl.Font = FONT
 		lbl.TextTransparency = 0; lbl.ZIndex = 130
 		lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = WSLangRow
@@ -3724,7 +3808,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	LangDefault.Text = "English"
 	LangDefault:SetAttribute("FullText", LangDefault.Text)
 	
-	LangDefault.TextColor3 = Color3.fromRGB(150,155,172)
+	LangDefault.TextColor3 = Color3.fromRGB(216,216,221)
 	LangDefault.TextScaled = false
 	LangDefault.TextSize = 13
 	LangDefault.Font = FONT
@@ -3834,7 +3918,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 
 		local function closeScaleDropdown()
 			scaleOpen = false
-			Tween(ScaleArrow, {ImageTransparency = 0.4, Rotation = -90}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(ScaleArrow, {ImageTransparency = 0.15, Rotation = -90}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			UnregisterPopup(ScaleDownBar)
 			SmoothClose(ScaleDownBar, 0.18)
 		end
@@ -3933,7 +4017,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		-- WindowObj rather than as a local: AddWindow sits near Luau's register cap.
 		WindowObj._closeLangDropdown = function()
 			langOpen = false
-			Tween(LangArrow, {ImageTransparency = 0.4, Rotation = -90}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Tween(LangArrow, {ImageTransparency = 0.15, Rotation = -90}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			UnregisterPopup(LangDownBar)
 			SmoothClose(LangDownBar, 0.18)
 		end
@@ -4013,10 +4097,10 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			RowBtn.MouseButton1Click:Connect(selectLang)
 		end
 local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
-	local row = New("Frame", { Name = "Profile_" .. name, Size = UDim2.new(1, 0, 0, 27), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = order, ZIndex = 120 }, SettingsContainer)
-	New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = iconAsset, ImageColor3 = Color3.fromRGB(150,155,172), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, row)
+	local row = New("Frame", { Name = "Profile_" .. name, Size = UDim2.new(1, 0, 0, 31), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = order, ZIndex = 120 }, SettingsContainer)
+	New("ImageLabel", { Name = "ProfileIcon", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, Image = iconAsset, ImageColor3 = Color3.fromRGB(200,200,206), ScaleType = Enum.ScaleType.Fit, ZIndex = 130 }, row)
 	local labelWidth = (kind == "switch-off" or kind == "switch-on") and UDim2.new(1, -72, 1, 0) or UDim2.new(1, -104, 1, 0)
-	New("TextLabel", { Name = "ProfileLabel", Position = UDim2.fromOffset(34, 0), Size = labelWidth, BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(200,204,218), TextScaled = false, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
+	New("TextLabel", { Name = "ProfileLabel", Position = UDim2.fromOffset(34, 0), Size = labelWidth, BackgroundTransparency = 1, Text = title, TextColor3 = Color3.fromRGB(205,205,211), TextScaled = false, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
 	if kind == "switch-off" or kind == "switch-on" then
 		local on = kind == "switch-on"
 		local track = New("Frame", { Name = "Switch", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(28, 14), BackgroundColor3 = on and mainColor or Color3.fromRGB(8, 10, 16), BorderSizePixel = 0, ZIndex = 131 }, row)
@@ -4025,10 +4109,10 @@ local function AddProfileDisplayRow(order, name, title, value, iconAsset, kind)
 		New("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
 	else
 		if value and value ~= "" then
-			New("TextLabel", { Name = "ProfileValue", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, kind == "arrow" and -18 or -8, 0.5, 0), Size = UDim2.fromOffset(70, 27), BackgroundTransparency = 1, Text = value, TextColor3 = Color3.fromRGB(150,155,172), TextScaled = false, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
+			New("TextLabel", { Name = "ProfileValue", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, kind == "arrow" and -18 or -8, 0.5, 0), Size = UDim2.fromOffset(70, 27), BackgroundTransparency = 1, Text = value, TextColor3 = Color3.fromRGB(216,216,221), TextScaled = false, TextSize = 14, Font = FONT, TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 130 }, row)
 		end
 		if kind == "arrow" then
-			New("ImageLabel", { Name = "Chevron", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0), Size = UDim2.fromOffset(10, 10), BackgroundTransparency = 1, Image = "rbxassetid://10709790948", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 0.4, Rotation = -90, ScaleType = Enum.ScaleType.Fit, ZIndex = 131 }, row)
+			New("ImageLabel", { Name = "Chevron", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0), Size = UDim2.fromOffset(10, 10), BackgroundTransparency = 1, Image = "rbxassetid://10709790948", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 0.15, Rotation = -90, ScaleType = Enum.ScaleType.Fit, ZIndex = 131 }, row)
 		end
 	end
 	return row
@@ -4274,7 +4358,7 @@ end
 					WSScale.Scale = 0.955
 					WindowSettingsFrame.Visible = true
 					ApplyZIndexLadder(WindowSettingsFrame, NextPopupZ())
-					SmoothOpen(WindowSettingsFrame, 0.01, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					SmoothOpen(WindowSettingsFrame, 0, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(WSScale, { Scale = 1 }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(WindowSettingsFrame, { Position = settled }, 0.17, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					RegisterPopup(WindowSettingsFrame, closeWS, WindowSettings)
@@ -6172,26 +6256,32 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 		end)
 	end
 
-	RecentlyDeletedBtn.MouseButton1Click:Connect(function()
-		UnregisterPopup(ConfigMainFrame)
-		Tween(ConfigMainFrame, {BackgroundTransparency = 1}, 0.2)
-		task.delay(0.22, function()
-			if not configOpen then return end
-			ConfigMainFrame.Visible = false
+	-- Neverlose opens the recently-deleted list beside the presets panel (to
+	-- its right) and keeps the presets panel open.
+	do
+		local function closeDeleted()
+			UnregisterPopup(RecentlyDeletedPanel)
+			SmoothClose(RecentlyDeletedPanel, 0.12)
+		end
+		RecentlyDeletedBtn.MouseButton1Click:Connect(function()
+			if RecentlyDeletedPanel.Visible then closeDeleted() return end
 			RefreshDeletedList()
-			RecentlyDeletedPanel.BackgroundTransparency = 1
-			RecentlyDeletedPanel.Visible = false
+			UpdateConfigPanelHeight()
+			RecentlyDeletedPanel.Position = UDim2.fromOffset(
+				ConfigMainFrame.Position.X.Offset + ConfigMainFrame.Size.X.Offset + 8,
+				ConfigMainFrame.Position.Y.Offset)
 			ApplyZIndexLadder(RecentlyDeletedPanel, NextPopupZ())
-			RecentlyDeletedPanel.Visible = true
-			ConstrainPopupToMainFrame(RecentlyDeletedPanel); task.defer(function() ConstrainPopupToMainFrame(RecentlyDeletedPanel) end); RegisterPopup(RecentlyDeletedPanel, closeConfigPanel, RecentlyDeletedBtn)
-			Tween(RecentlyDeletedPanel, { BackgroundTransparency = 0.045 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			RememberPopupClipping(RecentlyDeletedPanel)
+			SmoothOpen(RecentlyDeletedPanel, 0, 0.16)
 			local rdScale = GetPopupScale(RecentlyDeletedPanel)
 			if rdScale then
-				rdScale.Scale = 0.975
-				Tween(rdScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				rdScale.Scale = 0.92
+				Tween(rdScale, { Scale = 1 }, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			end
+			task.defer(function() ConstrainPopupToMainFrame(RecentlyDeletedPanel) end)
+			RegisterPopup(RecentlyDeletedPanel, closeDeleted, RecentlyDeletedBtn)
 		end)
-	end)
+	end
 
 	closeConfigPanel = function()
 		configOpen = false
@@ -6758,24 +6848,25 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		ZIndex = Z_BASE + 990,
 	}, NeverloseCS2)
 	New("UICorner", { CornerRadius = UDim.new(0, 20) }, toast)
+	AttachShadow(toast, { radius = 20, layers = 6, step = 2, bias = 5 })
 	local edge = Instance.new("UIStroke")
-	edge.Thickness = 1.2
+	edge.Thickness = 1.4
 	edge.Color = mainColor
-	edge.Transparency = 0.35
+	edge.Transparency = 0.1
 	edge.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	edge.Parent = toast
 
 	-- Glow: stacked rounded layers in the accent colour, fading outwards. Each
 	-- carries a gradient so one side is brighter; rotating it moves the light.
 	local glowGradients = {}
-	for i = 1, 7 do
-		local spread = i * 1.6
+	for i = 1, 9 do
+		local spread = i * 2
 		local layer = New("Frame", {
 			Name = "LoaderGlow" .. i,
 			Position = UDim2.fromOffset(-spread, -spread),
 			Size = UDim2.new(1, spread * 2, 1, spread * 2),
 			BackgroundColor3 = mainColor,
-			BackgroundTransparency = 0.62 + i * 0.05,
+			BackgroundTransparency = 0.45 + i * 0.055,
 			BorderSizePixel = 0,
 			ZIndex = Z_BASE + 989 - i,
 		}, toast)
@@ -6847,9 +6938,35 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		while not done and waited < 1.5 do waited = waited + task.wait() end
 	end
 	Tween(toast, { Position = UDim2.new(1, -22, 0, 22) }, 0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	for step = 1, 10 do
-		task.wait(0.14 + math.random() * 0.08)
-		counter.Text = tostring(step) .. " of 10"
+	-- Real work behind the counter: every image the interface uses is
+	-- preloaded in batches (one step each), then fonts and configs.
+	do
+		local seen, assets = {}, {}
+		for _, d in ipairs(NeverloseCS2:GetDescendants()) do
+			if (d:IsA("ImageLabel") or d:IsA("ImageButton")) and d.Image ~= "" and not seen[d.Image] then
+				seen[d.Image] = true
+				table.insert(assets, d)
+			end
+		end
+		local stepNames = { "Loading interface", "Loading icons", "Loading icons", "Loading icons", "Loading images",
+			"Loading images", "Loading avatar", "Loading fonts", "Loading configs", "Finishing" }
+		local per = math.max(1, math.ceil(#assets / 8))
+		local ContentProvider = game:GetService("ContentProvider")
+		for step = 1, 10 do
+			status.Text = stepNames[step] .. "..."
+			local started = os.clock()
+			if step <= 8 then
+				local batch = {}
+				for i = (step - 1) * per + 1, math.min(step * per, #assets) do table.insert(batch, assets[i]) end
+				if #batch > 0 then pcall(function() ContentProvider:PreloadAsync(batch) end) end
+			elseif step == 9 and type(listfiles) == "function" then
+				pcall(listfiles, "")
+			end
+			-- keep each step readable even when it finished instantly
+			local left = 0.12 - (os.clock() - started)
+			if left > 0 then task.wait(left) end
+			counter.Text = tostring(step) .. " of 10"
+		end
 	end
 	status.Text = "Initialization complete"
 	task.wait(0.5)
@@ -6914,14 +7031,7 @@ end) end
 	function WindowObj:AddTab(name, icon)
 		local function TintTabIcon(iconObject, color, transparency, duration, style, direction)
 			Tween(iconObject, { ImageColor3 = color, ImageTransparency = transparency }, duration, style, direction)
-			-- Drawn glyphs (Rage crosshair, Legit mouse) follow the same tint.
-			for _, part in ipairs(iconObject:GetDescendants()) do
-				if part:GetAttribute("TabGlyphFill") then
-					Tween(part, { BackgroundColor3 = color, BackgroundTransparency = transparency }, duration, style, direction)
-				elseif part:IsA("UIStroke") and part.Parent and part.Parent:GetAttribute("TabGlyphRing") then
-					Tween(part, { Color = color, Transparency = transparency }, duration, style, direction)
-				end
-			end
+			-- Drawn glyphs follow ImageColor3 on their own (see _drawTabGlyph).
 		end
 		name = tostring(name or "Tab")
 		if icon ~= nil and type(icon) ~= "string" then icon = "" end
@@ -6967,44 +7077,9 @@ end) end
 		if icon and icon ~= "" then
 			GetImageData(icon, TabIcon)
 		end
-		-- Neverlose draws Rage as a ring crosshair and Legit as a filled mouse;
-		-- build both from frames so they match the reference.
-		do
-			local lowerIcon = type(icon) == "string" and string.lower(icon) or ""
-			local tint = isFirst and mainColor or Color3.fromRGB(150, 155, 172)
-			local function fill(props)
-				local part = New("Frame", props, TabIcon)
-				part.BorderSizePixel = 0
-				part:SetAttribute("TabGlyphFill", true)
-				part.BackgroundColor3 = tint
-				return part
-			end
-			if lowerIcon == "crosshair" or lowerIcon == "rage" or lowerIcon == "aimbot" then
-				TabIcon.Image = ""
-				local ring = New("Frame", {
-					Name = "CrossRing", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-					Size = UDim2.fromOffset(12, 12), BackgroundTransparency = 1, BorderSizePixel = 0,
-				}, TabIcon)
-				ring:SetAttribute("TabGlyphRing", true)
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, ring)
-				local ringStroke = Instance.new("UIStroke")
-				ringStroke.Thickness = 1.7
-				ringStroke.Color = tint
-				ringStroke.Parent = ring
-				for _, spec in ipairs({ { 0.5, 0.1, 2, 5 }, { 0.5, 0.9, 2, 5 }, { 0.1, 0.5, 5, 2 }, { 0.9, 0.5, 5, 2 } }) do
-					fill({ Name = "CrossTick", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(spec[1], spec[2]), Size = UDim2.fromOffset(spec[3], spec[4]) })
-				end
-				local dot = fill({ Name = "CrossDot", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(3, 3) })
-				New("UICorner", { CornerRadius = UDim.new(1, 0) }, dot)
-			elseif lowerIcon == "mouse" or lowerIcon == "legit" then
-				TabIcon.Image = ""
-				local body = fill({ Name = "MouseBody", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(11, 15) })
-				New("UICorner", { CornerRadius = UDim.new(0, 5) }, body)
-				-- dark cuts: button split and wheel gap
-				New("Frame", { Name = "MouseSplit", Position = UDim2.fromOffset(0, 5), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(14, 16, 22), BorderSizePixel = 0 }, body)
-				New("Frame", { Name = "MouseWheel", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0), Size = UDim2.new(0, 1, 0, 5), BackgroundColor3 = Color3.fromRGB(14, 16, 22), BorderSizePixel = 0 }, body)
-			end
-		end
+		-- Neverlose sidebar glyphs (Rage crosshair, Legit mouse, Misc...) drawn
+		-- from frames; other names keep their image asset.
+		WindowObj._drawTabGlyph(icon, TabIcon)
 		table.insert(_coloredElements, { type = "tabicon", ref = TabIcon })
 New("UIAspectRatioConstraint", {
 			AspectRatio = 1,
@@ -10768,6 +10843,7 @@ New("Frame", {
 				}, STRow)
 				New("UIAspectRatioConstraint", { AspectRatio = 1 }, iconRef)
 				GetImageData(icon, iconRef)
+				WindowObj._drawTabGlyph(icon, iconRef)
 			end
 
 			local STLabel = New("TextLabel", {
