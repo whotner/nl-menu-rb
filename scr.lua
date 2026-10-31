@@ -516,7 +516,7 @@ local function New(class, props, parent)
 			TextToggle = 14, TextDropdown = 14, TextDefault = 13, TopBar = 14, SliderValue = 12,
 			Username = 14, Daysleft = 12, SaveText = 14, HeaderLabel = 11, SearchBox = 14 }
 		obj.TextSize = roleSizes[obj.Name] or ((props and props.TextSize) or 13)
-		obj.Font = (obj.Name == "Title" or obj.Name == "PlateTitle" or obj.Name == "HeaderTitle" or obj.Name == "BadgeText" or obj.Name == "LoaderTitle") and FONT_BOLD or FONT
+		obj.Font = (obj.Name == "Title" or obj.Name == "HeaderTitle" or obj.Name == "BadgeText" or obj.Name == "LoaderTitle") and FONT_BOLD or FONT
 		if obj.Name == "SectionLabel" or obj.Name == "TabLabel" then
 			obj.TextColor3 = Color3.fromRGB(92, 96, 106)
 		elseif obj.Name == "GameTitle" or obj.Name == "Daysleft" or obj.Name == "HeaderLabel" or obj.Name == "SearchEmptyState" then
@@ -550,6 +550,17 @@ local function New(class, props, parent)
 		fieldStroke.Thickness = 1
 		fieldStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 		fieldStroke.Parent = obj
+	elseif obj.Name == "TextDefault" and obj:IsA("TextLabel") and obj.Parent and obj.Parent.Name == "Selection" then
+		-- Plate selects read "Label .... Value >" like Neverlose ("Scaling  Horizontal >").
+		obj.AnchorPoint = Vector2.new(1, 0.5)
+		obj.Position = UDim2.new(1, -24, 0.5, 0)
+		obj.Size = UDim2.new(0.5, 0, 1, 0)
+		obj.TextXAlignment = Enum.TextXAlignment.Right
+		obj.TextColor3 = Color3.fromRGB(200, 203, 213)
+	elseif obj.Name == "TextArrow" and obj:IsA("ImageLabel") and obj.Parent and obj.Parent.Name == "Selection" then
+		obj.Position = UDim2.new(1, -8, 0.5, 0)
+		obj.Rotation = -90
+		obj.ImageTransparency = 0.3
 	elseif obj.Name == "Arrow" and obj:IsA("ImageLabel") then
 		-- Neverlose chevron: a touch larger and brighter, and it does not flip.
 		obj.Size = UDim2.fromOffset(12, 12)
@@ -610,7 +621,8 @@ CenterElement = function(el)
 	local function placeText(child, center, h)
 		if not child or not (child:IsA("TextLabel") or child:IsA("TextButton")) then return end
 		child.TextYAlignment = Enum.TextYAlignment.Center
-		child.TextXAlignment = Enum.TextXAlignment.Left
+		-- Right-aligned values (plate selects) keep their alignment.
+		if child.TextXAlignment ~= Enum.TextXAlignment.Right then child.TextXAlignment = Enum.TextXAlignment.Left end
 		place(child, center, h)
 	end
 	for _, name in ipairs({ "TextToggle", "TextDefault", "TextAccordion", "TextDropdown", "TextAccordionLabel" }) do
@@ -888,14 +900,15 @@ local function StartPlateGroup(container)
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = Color3.fromRGB(27, 27, 36),
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		LayoutOrder = order * 1000,
 		ZIndex = container.ZIndex,
 	}, container)
 	New("UICorner", { CornerRadius = UDim.new(0, 10) }, card)
-	Stroke(card, "CardOutline")
+	Stroke(card, "CardOutline").Transparency = 0.955
 	New("UIListLayout", { Padding = UDim.new(0, 0), SortOrder = Enum.SortOrder.LayoutOrder }, card)
-	New("UIPadding", { PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2) }, card)
+	New("UIPadding", { PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, card)
 	return card
 end
 
@@ -4741,7 +4754,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local ConfigMainFrame = Instance.new("Frame")
 	ConfigMainFrame.Name = "ConfigMainFrame"
 	ConfigMainFrame.Position = UDim2.fromOffset(11, 47)
-	ConfigMainFrame.Size = UDim2.fromOffset(250, 104)
+	ConfigMainFrame.Size = UDim2.fromOffset(320, 104) -- Neverlose presets panel is ~320 wide
 	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26) -- Neverlose presets panel
 	ConfigMainFrame.BackgroundTransparency = 0.045
 	ConfigMainFrame.BorderSizePixel = 0
@@ -4760,9 +4773,10 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local CMHeader = Instance.new("Frame")
 	CMHeader.Name = "Header"
-	CMHeader.Size = UDim2.new(1, 0, 0, 46)
+	CMHeader.Size = UDim2.new(1, 0, 0, 44)
 	CMHeader.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
-	CMHeader.BackgroundTransparency = 0
+	-- Same surface as the panel: an opaque header read as a separate band.
+	CMHeader.BackgroundTransparency = 1
 	CMHeader.BorderSizePixel = 0
 	CMHeader.ClipsDescendants = true
 	CMHeader.ZIndex = 100
@@ -4825,7 +4839,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CMHeaderRight.Name = "HeaderRight"
 	CMHeaderRight.AnchorPoint = Vector2.new(1, 0)
 	CMHeaderRight.Position = UDim2.new(1, -14, 0, 0)
-	CMHeaderRight.Size = UDim2.fromOffset(96, 46)
+	CMHeaderRight.Size = UDim2.fromOffset(96, 44)
 	CMHeaderRight.BackgroundTransparency = 1
 	CMHeaderRight.ZIndex = 1000
 	CMHeaderRight.Parent = CMHeader
@@ -4874,8 +4888,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local SearchContainer = Instance.new("Frame")
 	SearchContainer.Name = "SearchContainer"
-	SearchContainer.Position = UDim2.new(0, 14, 0, 54)
-	SearchContainer.Size = UDim2.new(1, -28, 0, 34)
+	SearchContainer.Position = UDim2.new(0, 12, 0, 50)
+	SearchContainer.Size = UDim2.new(1, -52, 0, 30) -- room for the sort button on the right
 	SearchContainer.BackgroundColor3 = Color3.fromRGB(26, 26, 38)
 	SearchContainer.BorderSizePixel = 0
 	SearchContainer.ZIndex = 1000
@@ -4913,9 +4927,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local NameInputContainer = Instance.new("Frame")
 	NameInputContainer.Name = "NameInputContainer"
-	NameInputContainer.Position = UDim2.new(0, 14, 0, 56)
-	NameInputContainer.Size = UDim2.new(1, -28, 0, 34)
-	NameInputContainer.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	NameInputContainer.Position = UDim2.new(0, 12, 0, 50)
+	NameInputContainer.Size = UDim2.new(1, -52, 0, 30)
+	NameInputContainer.BackgroundColor3 = Color3.fromRGB(26, 26, 38)
 	NameInputContainer.BorderSizePixel = 0
 	NameInputContainer.ZIndex = 1001
 	NameInputContainer.Visible = false
@@ -4956,8 +4970,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local ListContainer = Instance.new("ScrollingFrame")
 	ListContainer.Name = "ListContainer"
-	ListContainer.Position = UDim2.new(0, 14, 0, 96)
-	ListContainer.Size = UDim2.new(1, -28, 1, -104)
+	ListContainer.Position = UDim2.new(0, 10, 0, 90)
+	ListContainer.Size = UDim2.new(1, -16, 1, -98)
 	ListContainer.BackgroundTransparency = 1
 	ListContainer.BorderSizePixel = 0
 	ListContainer.ZIndex = 100
@@ -4965,16 +4979,53 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ListContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	ListContainer.CanvasSize = UDim2.new()
 	ListContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-	ListContainer.ScrollBarThickness = 3
-	ListContainer.ScrollBarImageColor3 = Color3.fromRGB(120, 128, 160)
+	ListContainer.ScrollBarThickness = 2
+	ListContainer.ScrollBarImageColor3 = Color3.fromRGB(110, 112, 124)
 	ListContainer.ScrollBarImageTransparency = 0.3
 	ListContainer.Parent = ConfigMainFrame
 	ListContainer.ClipsDescendants = true
 	do
 		local ll = Instance.new("UIListLayout")
 		ll.Name = "UIListLayout"
-		ll.Padding = UDim.new(0, 2)
+		ll.Padding = UDim.new(0, 4)
+		ll.SortOrder = Enum.SortOrder.LayoutOrder
 		ll.Parent = ListContainer
+		New("UIPadding", { PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 2), PaddingLeft = UDim.new(0, 2) }, ListContainer)
+	end
+	-- Sort button beside the search field (Neverlose has one): A-Z / Z-A by name.
+	do
+		local sortDesc = false
+		local function applyConfigSort()
+			local rows = {}
+			for _, c in ipairs(ListContainer:GetChildren()) do
+				if c:IsA("Frame") and string.sub(c.Name, 1, 10) == "ConfigRow_" then table.insert(rows, c) end
+			end
+			table.sort(rows, function(a, b)
+				local x, y = string.lower(a.Name), string.lower(b.Name)
+				if sortDesc then return x > y end
+				return x < y
+			end)
+			for index, row in ipairs(rows) do row.LayoutOrder = index end
+		end
+		ListContainer.ChildAdded:Connect(function() task.defer(applyConfigSort) end)
+		local sortBtn = New("TextButton", {
+			Name = "SortButton",
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, -10, 0, 50),
+			Size = UDim2.fromOffset(30, 30),
+			BackgroundTransparency = 1,
+			Text = "⇅",
+			TextColor3 = Color3.fromRGB(150, 154, 166),
+			TextSize = 17,
+			AutoButtonColor = false,
+			ZIndex = 1000,
+		}, ConfigMainFrame)
+		sortBtn.MouseEnter:Connect(function() Tween(sortBtn, { TextColor3 = Color3.fromRGB(235, 236, 241) }, 0.1) end)
+		sortBtn.MouseLeave:Connect(function() Tween(sortBtn, { TextColor3 = Color3.fromRGB(150, 154, 166) }, 0.12) end)
+		sortBtn.MouseButton1Click:Connect(function()
+			sortDesc = not sortDesc
+			applyConfigSort()
+		end)
 	end
 
 	local Space = Instance.new("Frame")
@@ -5211,7 +5262,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	local function MakeConfigButton(name)
 		local row = Instance.new("Frame")
 		row.Name = "ConfigRow_" .. name
-		row.Size = UDim2.new(1, 0, 0, 36)
+		row.Size = UDim2.new(1, 0, 0, 38)
 		row.BackgroundColor3 = Color3.fromRGB(21, 21, 29)
 		row.BackgroundTransparency = 0
 		row.BorderSizePixel = 0
@@ -5453,7 +5504,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 	local function UpdateConfigPanelHeight()
 		local frame2H = Frame2.AbsoluteSize.Y
-		local maxH = math.min(370, math.max(104, (frame2H > 0 and frame2H or 480) - 53))
+		local maxH = math.min(400, math.max(104, (frame2H > 0 and frame2H or 480) - 53))
 		local function countRows(container)
 			local count = 0
 			for _, c in ipairs(container:GetChildren()) do
@@ -5461,9 +5512,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			end
 			return count
 		end
-		local cfgH = 104 + math.min(countRows(ListContainer), 7) * 38
+		local cfgH = 100 + math.min(countRows(ListContainer), 7) * 42
 		local rdH = 88 + countRows(RDList) * 34
-		ConfigMainFrame.Size = UDim2.fromOffset(250, math.clamp(cfgH, 104, maxH))
+		ConfigMainFrame.Size = UDim2.fromOffset(320, math.clamp(cfgH, 104, maxH))
 		RecentlyDeletedPanel.Size = UDim2.new(0.34, 0, 0, math.clamp(rdH, 180, maxH))
 	end
 	ListContainer.ChildAdded:Connect(function() task.defer(UpdateConfigPanelHeight) end)
@@ -6133,32 +6184,55 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	local toast = New("Frame", {
 		Name = "NeverloseLoader",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 20, 0, 20),
-		Size = UDim2.fromOffset(300, 58),
+		Position = UDim2.new(1, 340, 0, 20), -- starts off-screen, slides in
+		Size = UDim2.fromOffset(320, 64),
 		BackgroundColor3 = Color3.fromRGB(14, 15, 22),
 		BackgroundTransparency = 0.04,
 		BorderSizePixel = 0,
 		ZIndex = Z_BASE + 990,
 	}, NeverloseCS2)
 	New("UICorner", { CornerRadius = UDim.new(0, 10) }, toast)
+	-- Border sweep: a wide accent arc (bright core, soft tails) running round
+	-- the frame, plus a blurred-looking halo ring behind it using the same arc.
+	local function makeSweep(parentStroke, tail)
+		local g = Instance.new("UIGradient")
+		g.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, mainColor),
+			ColorSequenceKeypoint.new(0.5, mainColor:Lerp(Color3.new(1, 1, 1), 0.45)),
+			ColorSequenceKeypoint.new(1, mainColor),
+		})
+		g.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.22, 1),
+			NumberSequenceKeypoint.new(0.4, tail),
+			NumberSequenceKeypoint.new(0.5, 0),
+			NumberSequenceKeypoint.new(0.6, tail),
+			NumberSequenceKeypoint.new(0.78, 1),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		g.Parent = parentStroke
+		return g
+	end
 	local ring = Instance.new("UIStroke")
-	ring.Thickness = 1.5
+	ring.Thickness = 2
 	ring.Color = Color3.fromRGB(255, 255, 255)
 	ring.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	ring.Parent = toast
-	local sweep = Instance.new("UIGradient")
-	sweep.Color = ColorSequence.new(mainColor)
-	sweep.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.9),
-		NumberSequenceKeypoint.new(0.42, 0.9),
-		NumberSequenceKeypoint.new(0.5, 0),
-		NumberSequenceKeypoint.new(0.58, 0.9),
-		NumberSequenceKeypoint.new(1, 0.9),
-	})
-	sweep.Parent = ring
+	local sweep = makeSweep(ring, 0.55)
+	local halo = New("Frame", {
+		Name = "LoaderHalo", Position = UDim2.fromOffset(-3, -3), Size = UDim2.new(1, 6, 1, 6),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = Z_BASE + 989,
+	}, toast)
+	New("UICorner", { CornerRadius = UDim.new(0, 13) }, halo)
+	local haloStroke = Instance.new("UIStroke")
+	haloStroke.Thickness = 5
+	haloStroke.Transparency = 0.55
+	haloStroke.Color = Color3.fromRGB(255, 255, 255)
+	haloStroke.Parent = halo
+	local haloSweep = makeSweep(haloStroke, 0.8)
 	local badge = New("Frame", {
 		Name = "Badge", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 12, 0.5, 0),
-		Size = UDim2.fromOffset(36, 36), BackgroundColor3 = Color3.fromRGB(22, 25, 38), BorderSizePixel = 0, ZIndex = Z_BASE + 991,
+		Size = UDim2.fromOffset(38, 38), BackgroundColor3 = Color3.fromRGB(22, 25, 38), BorderSizePixel = 0, ZIndex = Z_BASE + 991,
 	}, toast)
 	New("UICorner", { CornerRadius = UDim.new(0, 8) }, badge)
 	New("TextLabel", {
@@ -6166,17 +6240,17 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		TextColor3 = Color3.fromRGB(235, 240, 255), TextSize = 14, Font = FONT_BOLD, ZIndex = Z_BASE + 992,
 	}, badge)
 	New("TextLabel", {
-		Name = "LoaderTitle", Position = UDim2.fromOffset(60, 11), Size = UDim2.new(1, -140, 0, 18), BackgroundTransparency = 1,
+		Name = "LoaderTitle", Position = UDim2.fromOffset(62, 14), Size = UDim2.new(1, -140, 0, 18), BackgroundTransparency = 1,
 		Text = string.lower(tostring(hubTitle)), TextColor3 = Color3.fromRGB(240, 241, 246), TextSize = 15, Font = FONT_BOLD,
 		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 991,
 	}, toast)
 	local status = New("TextLabel", {
-		Name = "LoaderStatus", Position = UDim2.fromOffset(60, 30), Size = UDim2.new(1, -72, 0, 16), BackgroundTransparency = 1,
+		Name = "LoaderStatus", Position = UDim2.fromOffset(62, 34), Size = UDim2.new(1, -72, 0, 16), BackgroundTransparency = 1,
 		Text = "Initialization in progress", TextColor3 = Color3.fromRGB(140, 144, 158), TextSize = 13,
 		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 991,
 	}, toast)
 	local counter = New("TextLabel", {
-		Name = "LoaderCounter", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 11), Size = UDim2.fromOffset(70, 18),
+		Name = "LoaderCounter", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.fromOffset(70, 18),
 		BackgroundTransparency = 1, Text = "0 of 10", TextColor3 = Color3.fromRGB(140, 144, 158), TextSize = 13,
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = Z_BASE + 991,
 	}, toast)
@@ -6201,7 +6275,8 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	task.spawn(function()
 		while spinning and toast.Parent do
 			local dt = RunService.RenderStepped:Wait()
-			sweep.Rotation = (sweep.Rotation + dt * 220) % 360
+			sweep.Rotation = (sweep.Rotation + dt * 160) % 360
+			haloSweep.Rotation = sweep.Rotation
 		end
 	end)
 	Tween(toast, { Position = UDim2.new(1, -20, 0, 20) }, 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -6217,7 +6292,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	WindowObj._loaderActive = false
 	if watermarkFrame and WindowObj.Watermark.applyLayout then WindowObj.Watermark.applyLayout(nil, nil) end
 	task.wait(0.6)
-	Tween(toast, { Position = UDim2.new(1, 320, 0, 20) }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+	Tween(toast, { Position = UDim2.new(1, 360, 0, 20) }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 	task.wait(0.37)
 	spinning = false
 	toast:Destroy()
@@ -6657,7 +6732,7 @@ end
 				SettingsFrame.Name = "SettingsFrame"
 				SettingsFrame.Position = UDim2.new(0.02, 0, 1, 4)
 				SettingsFrame.Size = UDim2.new(0.96, 0, 0, 0)
-				SettingsFrame.BackgroundColor3 = THEME.plate
+				SettingsFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 25) -- Neverlose plate
 				SettingsFrame.BackgroundTransparency = 0.045
 				SettingsFrame.BorderSizePixel = 0
 				SettingsFrame.Visible = false
@@ -6676,17 +6751,16 @@ end
 				local UIStroke = Stroke(SettingsFrame, "UIStroke")
 
 				-- PATCH 4: settings plate header + no divider watcher
-				-- Neverlose shows the plate title as a white heading, larger than row text.
-				local PLATE_HEADER = 34
+				-- Neverlose plate title: regular weight, light grey, larger than rows.
+				local PLATE_HEADER = 40
 				New("TextLabel", {
 					Name = "PlateTitle",
-					Position = UDim2.new(0, 14, 0, 12),
-					Size = UDim2.new(1, -28, 0, 18),
+					Position = UDim2.new(0, 16, 0, 13),
+					Size = UDim2.new(1, -32, 0, 20),
 					BackgroundTransparency = 1,
 					Text = label,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
-					TextSize = 15,
-					Font = FONT_BOLD,
+					TextColor3 = Color3.fromRGB(226, 227, 233),
+					TextSize = 16,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTruncate = Enum.TextTruncate.AtEnd,
 					ZIndex = 5001,
@@ -6699,7 +6773,8 @@ end
 				SFContainer.Size = UDim2.new(0.92, 0, 1, -(PLATE_HEADER + 10 / GetMainFrameScale()))
 				-- Neverlose plates group their rows on an inner card, without dividers.
 				SFContainer.BackgroundColor3 = Color3.fromRGB(27, 27, 36)
-				SFContainer.BackgroundTransparency = 0
+				-- The inner card is the plate colour with only a hairline border.
+				SFContainer.BackgroundTransparency = 1
 				SFContainer.LayoutOrder = 1
 				SFContainer.ZIndex = 5001
 				SFContainer.Active = true
@@ -6726,8 +6801,8 @@ end
 				end
 
 				do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = SFContainer end
-				Stroke(SFContainer, "CardOutline")
-				New("UIPadding", { PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2) }, SFContainer)
+				Stroke(SFContainer, "CardOutline").Transparency = 0.955
+				New("UIPadding", { PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, SFContainer)
 
 				local function UpdateSettingsLayout()
 					local scale = GetMainFrameScale()
@@ -6752,7 +6827,7 @@ end
 					UpdateSettingsLayout()
 					local scale = GetMainFrameScale()
 					local contentVisual = GetSettingsContentHeight()
-					local desiredVisual = math.max(34 * scale, contentVisual + (14 + PLATE_HEADER) * scale)
+					local desiredVisual = math.max(34 * scale, contentVisual + (18 + PLATE_HEADER) * scale)
 					return desiredVisual / scale
 				end
 
@@ -6762,7 +6837,7 @@ end
 					local mainSize = MainFrame.AbsoluteSize
 					local mainPosition = MainFrame.AbsolutePosition
 					local minHeight = 30
-					local width = 270
+					local width = 280
 					local edge = 5 * scale
 					height = math.max(minHeight, type(height) == "number" and height == height and height or minHeight)
 					local parentPosition = parentFrame.AbsolutePosition
@@ -7298,7 +7373,7 @@ New("Frame", {
 
 					local function closeDropdown()
 						dropOpen = false
-						Tween(SelArrow, {Rotation = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Tween(SelArrow, {Rotation = -90}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 					end
@@ -9080,7 +9155,7 @@ New("Frame", {
 				Section2Frame.Name = "AccordionFrame"
 				Section2Frame.Position = UDim2.new(0.02, 0, 1, 2 / GetMainFrameScale())
 				Section2Frame.Size = UDim2.new(0.96, 0, 0, 0)
-				Section2Frame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
+				Section2Frame.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
 				Section2Frame.BackgroundTransparency = 0
 				Section2Frame.BorderSizePixel = 0
 				Section2Frame.Visible = false
@@ -9098,16 +9173,16 @@ New("Frame", {
 				local UIStroke = Stroke(Section2Frame, "UIStroke")
 
 				-- Plate header like the "..." settings plate: title, then the rows.
-				local ACC_HEADER = 34
-				local ACC_WIDTH = 270
+				local ACC_HEADER = 40
+				local ACC_WIDTH = 280
 				New("TextLabel", {
 					Name = "PlateTitle",
-					Position = UDim2.new(0, 14, 0, 12),
-					Size = UDim2.new(1, -28, 0, 18),
+					Position = UDim2.new(0, 16, 0, 13),
+					Size = UDim2.new(1, -32, 0, 20),
 					BackgroundTransparency = 1,
 					Text = text,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
-					TextSize = 15,
+					TextColor3 = Color3.fromRGB(226, 227, 233),
+					TextSize = 16,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTruncate = Enum.TextTruncate.AtEnd,
 					ZIndex = 5001,
@@ -9119,7 +9194,7 @@ New("Frame", {
 				Container.Size = UDim2.new(0.92, 0, 1, -(ACC_HEADER + 10 / GetMainFrameScale()))
 				-- Same inner card as the "..." plate: rows grouped, no dividers.
 				Container.BackgroundColor3 = Color3.fromRGB(27, 27, 36)
-				Container.BackgroundTransparency = 0
+				Container.BackgroundTransparency = 1
 				Container.AnchorPoint = Vector2.new(0, 0)
 				Container.LayoutOrder = 1
 				Container.ZIndex = 5001
@@ -9139,8 +9214,8 @@ New("Frame", {
 				UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				UIListLayout.Parent = Container
 				do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = Container end
-				Stroke(Container, "CardOutline")
-				New("UIPadding", { PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2) }, Container)
+				Stroke(Container, "CardOutline").Transparency = 0.955
+				New("UIPadding", { PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }, Container)
 				Container.DescendantAdded:Connect(function(d)
 					if d.Name == "Lines" and d:IsA("GuiObject") then d.Visible = false end
 				end)
@@ -9200,7 +9275,7 @@ New("Frame", {
 					UpdateAccordionLayout()
 					local scale = GetMainFrameScale()
 					local contentVisual = GetAccordionContentHeight()
-					local desiredVisual = math.max((ACC_HEADER + 34) * scale, contentVisual + (ACC_HEADER + 16) * scale)
+					local desiredVisual = math.max((ACC_HEADER + 34) * scale, contentVisual + (ACC_HEADER + 20) * scale)
 					local maxVisual = math.max(34 * scale, MainFrame.AbsoluteSize.Y * 0.92)
 					return math.min(desiredVisual, maxVisual) / scale
 				end
@@ -9554,7 +9629,7 @@ New("Frame", {
 
 					local function closeDropdown2()
 						dropOpen = false
-						Tween(SelArrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+						Tween(SelArrow, { Rotation = -90 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 						UnregisterPopup(DropPopup)
 						SmoothClose(DropPopup, 0.18)
 						if _openAccordionDropdown == closeDropdown2 then _openAccordionDropdown = nil end
