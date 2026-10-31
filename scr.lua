@@ -2565,8 +2565,9 @@ GameInfo.Position = UDim2.new(1, -6, 0, 2)
 -- dividers; small caps text, accent icons, avatar at the end.
 GameInfo.Size = UDim2.fromOffset(0, 36)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
-GameInfo.BackgroundColor3 = Color3.fromRGB(8, 10, 17)
-GameInfo.BackgroundTransparency = 0.25
+-- Window glass under the content panel, mixed into one plate (as the lists).
+GameInfo.BackgroundColor3 = Color3.fromRGB(12, 14, 21)
+GameInfo.BackgroundTransparency = 0.13
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
@@ -3133,7 +3134,9 @@ New("UIListLayout", {
 -- Plates use the menu window's own recipe: its glass colour and
 -- transparency over an acrylic blur, hairline outline, layered shadow.
 -- OV.entry stays the dark knob colour of the switch glyph.
-local OV = { h = 22, head = 30, header = 0.25, entryAlpha = 0.35, glass = Color3.fromRGB(8, 10, 17), entry = Color3.fromRGB(23, 23, 31) }
+-- The menu reads as two glass layers (window 8,10,17 at 0.25 under the
+-- content panel 15,17,24 at 0.5); one plate at their mix looks the same.
+local OV = { h = 22, head = 30, header = 0.13, entryAlpha = 0.2, glass = Color3.fromRGB(12, 14, 21), entry = Color3.fromRGB(23, 23, 31) }
 function OV.pill(name, parent, alpha, radius, height)
 	local pill = New("Frame", {
 		Name = name, Size = UDim2.fromOffset(height or OV.h, height or OV.h), BackgroundColor3 = OV.glass,
@@ -3401,7 +3404,7 @@ function OV.modeGlyph(pill, mode, off)
 end
 
 local function BuildBindRow(entry, order)
-	local row, leftPill = OV.row(KBRows, order, entry.label, entry.value, true)
+	local row, leftPill = OV.row(KBRows, order, entry.label, entry.value)
 	row.Name = "BindRow"
 	if not entry.value then OV.modeGlyph(leftPill, entry.mode, entry.on == false) end
 	return row
@@ -5736,7 +5739,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		ll.Padding = UDim.new(0, 4)
 		ll.SortOrder = Enum.SortOrder.LayoutOrder
 		ll.Parent = ListContainer
-		New("UIPadding", { PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 2), PaddingLeft = UDim.new(0, 2) }, ListContainer)
+		-- Bottom padding: without it the last row's outline sat on the clip edge
+		-- and was cut off.
+		New("UIPadding", { PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 2), PaddingLeft = UDim.new(0, 2), PaddingBottom = UDim.new(0, 6) }, ListContainer)
 	end
 	-- Sort button beside the search field (Neverlose has one): A-Z / Z-A by name.
 	do
@@ -6500,7 +6505,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			end
 			return count
 		end
-		local cfgH = 100 + math.min(countRows(ListContainer), 7) * 42
+		local cfgH = 106 + math.min(countRows(ListContainer), 7) * 42
 		local rdH = 16 + math.max(countRows(RDList), 1) * 42
 		ConfigMainFrame.Size = UDim2.fromOffset(320, math.clamp(cfgH, 104, maxH))
 		if countRows(ListContainer) <= 7 then ListContainer.CanvasPosition = Vector2.new(0, 0) end
