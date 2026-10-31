@@ -1249,14 +1249,45 @@ end
 		table.insert(_openPopups, {frame = frame, closeFn = closeFn, trigger = trigger, parent = parentFrame, connection = connection})
 	end
 
+	-- True when `frame` was opened (directly or further down) from `root`.
+	local function IsLogicalChild(frame, root)
+		local guard = 0
+		while frame and guard < 16 do
+			guard = guard + 1
+			local parentFrame
+			for _, entry in ipairs(_openPopups) do
+				if entry.frame == frame then parentFrame = entry.parent end
+			end
+			if parentFrame == root then return true end
+			frame = parentFrame
+		end
+		return false
+	end
+
 	UnregisterPopup = function(frame)
-		RestorePopupClipping(frame)
+		-- Close what was opened from this popup first (a list or picker opened
+		-- from a plate must not outlive the plate).
+		local copy = {}
+		for i, entry in ipairs(_openPopups) do copy[i] = entry end
+		for _, entry in ipairs(copy) do
+			if entry.frame ~= frame and IsLogicalChild(entry.frame, frame) and type(entry.closeFn) == "function" then
+				pcall(entry.closeFn)
+			end
+		end
 		for i = #_openPopups, 1, -1 do
 			if _openPopups[i].frame == frame then
 				if _openPopups[i].connection then pcall(function() _openPopups[i].connection:Disconnect() end) end
 				table.remove(_openPopups, i)
 			end
 		end
+		-- Re-enable the column clipping only after the close animation; doing it
+		-- at once cut the fading plate off behind the column edge.
+		task.delay(0.22, function()
+			for _, entry in ipairs(_openPopups) do
+				if entry.frame == frame then return end
+			end
+			RestorePopupClipping(frame)
+		end)
 	end
 
 	-- Marks every open popup that must stay because a kept popup was opened from it.
@@ -1325,7 +1356,8 @@ end
 		local copy = {}
 		for i, entry in ipairs(_openPopups) do copy[i] = entry end
 		for _, entry in ipairs(copy) do
-			if entry.frame and entry.frame ~= root and IsPopupAncestor(root, entry.frame) and type(entry.closeFn) == "function" then
+			if entry.frame and entry.frame ~= root and (IsPopupAncestor(root, entry.frame) or IsLogicalChild(entry.frame, root))
+				and type(entry.closeFn) == "function" then
 				pcall(entry.closeFn)
 			end
 		end
@@ -1824,9 +1856,31 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			box(1, 4, 8, 9)
 			box(5, 1, 8, 9)
 		elseif kind == "trash" then
-			bar(7, 3, 11, 1.6, 0)
-			bar(7, 1.4, 4, 1.4, 0)
-			box(3, 5, 8, 8)
+			-- lid, handle and a centred bin with two slats
+			bar(7, 3.4, 10, 1.6, 0)
+			bar(7, 1.6, 4, 1.4, 0)
+			box(3.5, 5.2, 7, 8)
+			bar(5.8, 9.2, 1.2, 4.2, 0)
+			bar(8.2, 9.2, 1.2, 4.2, 0)
+		elseif kind == "restore" then
+			-- circular arrow: three quarters of a ring plus an arrow head
+			local ring = Instance.new("Frame")
+			ring.Position = UDim2.fromOffset(2, 2)
+			ring.Size = UDim2.fromOffset(10, 10)
+			ring.BackgroundTransparency = 1
+			ring.ZIndex = host.ZIndex + 1
+			ring.Parent = host
+			local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = ring
+			local o = Instance.new("UIStroke"); o.Color = color; o.Thickness = 1.5; o.Parent = ring
+			local g = Instance.new("UIGradient")
+			g.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.72, 0),
+				NumberSequenceKeypoint.new(0.74, 1), NumberSequenceKeypoint.new(1, 1),
+			})
+			g.Rotation = -45
+			g.Parent = o
+			bar(3, 2.4, 4, 1.5, 0)
+			bar(1.6, 3.8, 1.5, 4, 0)
 		end
 	end
 
@@ -3319,7 +3373,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = WindowSettingsFrame end
-	AttachShadow(WindowSettingsFrame, { radius = 13, layers = 3, step = 1.2, bias = 2 })
+	AttachShadow(WindowSettingsFrame, { radius = 12, layers = 6, step = 1.8, bias = 4 })
 
 
 	local WSScale = New("UIScale", { Scale = 1 }, WindowSettingsFrame)
@@ -3747,6 +3801,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 					if (object:IsA("TextLabel") or object:IsA("TextButton")) and isAccent(object.TextColor3) then
 						object.TextColor3 = c
 					end
+					if object:IsA("UIStroke") and isAccent(object.Color) then object.Color = c end
 				end) end
 			end
 			mainColor = c
@@ -5409,50 +5464,59 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	RDList.Parent = RecentlyDeletedPanel
 	do local ll = Instance.new("UIListLayout"); ll.Padding = UDim.new(0, 6); ll.Parent = RDList end
 
+	-- Neverlose recently-deleted list: plain cards with the name, a red bin
+	-- (delete for good) and a restore arrow; no header bar.
+	RDHeader.Visible = false
+	RDList.Position = UDim2.fromOffset(8, 8)
+	RDList.Size = UDim2.new(1, -16, 1, -16)
+	RDList.ScrollBarThickness = 2
+	RecentlyDeletedPanel.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+	RecentlyDeletedPanel.BackgroundTransparency = 0
 	local function RefreshDeletedList()
 		for _, c in ipairs(RDList:GetChildren()) do
-			if c:IsA("Frame") then c:Destroy() end
+			if c:IsA("GuiObject") then c:Destroy() end
+		end
+		if #_deletedConfigs == 0 then
+			New("TextLabel", {
+				Name = "EmptyState", Size = UDim2.new(1, 0, 0, 38), BackgroundTransparency = 1,
+				Text = "Nothing deleted", TextColor3 = Color3.fromRGB(130, 134, 148), TextSize = 14, ZIndex = 123,
+			}, RDList)
 		end
 		for i = #_deletedConfigs, 1, -1 do
 			local entry = _deletedConfigs[i]
-			local drow = Instance.new("Frame")
-			drow.Name = "DeletedRow"
-			drow.Size = UDim2.new(1, 0, 0, 36)
-			drow.BackgroundColor3 = Color3.fromRGB(35,18,18)
-			drow.BackgroundTransparency = 0.25
-			drow.BorderSizePixel = 0
-			drow.ZIndex = 122
-			drow.Parent = RDList
-			do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = drow end
-			do Stroke(drow) end
-
-			local dlbl = Instance.new("TextLabel")
-			dlbl.Position = UDim2.new(0.04, 0, 0, 0)
-			dlbl.Size = UDim2.new(0.6, 0, 1, 0)
-			dlbl.BackgroundTransparency = 1
-			dlbl.Text = entry.name
-			dlbl.TextColor3 = Color3.fromRGB(220, 180, 180)
-			dlbl.TextSize = 14
-			dlbl.Font = FONT
-			dlbl.ZIndex = 123
-			dlbl.TextXAlignment = Enum.TextXAlignment.Left
-			dlbl.Parent = drow
-
-			local restoreBtn = Instance.new("TextButton")
-			restoreBtn.Name = "Restore"
-			restoreBtn.Position = UDim2.new(0.72, 0, 0.15, 0)
-			restoreBtn.Size = UDim2.new(0.24, 0, 0.7, 0)
-			restoreBtn.BackgroundColor3 = mainColor
-			restoreBtn.BackgroundTransparency = 0.15
-			restoreBtn.Text = "Restore"
-			restoreBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-			restoreBtn.TextSize = 12
-			restoreBtn.Font = FONT
-			restoreBtn.ZIndex = 123
-			restoreBtn.Parent = drow
-			do local c = Instance.new("UICorner"); c.Parent = restoreBtn end
+			local drow = New("Frame", {
+				Name = "DeletedRow", Size = UDim2.new(1, 0, 0, 38), BackgroundColor3 = Color3.fromRGB(21, 21, 29),
+				BorderSizePixel = 0, ZIndex = 122,
+			}, RDList)
+			New("UICorner", { CornerRadius = UDim.new(0, 8) }, drow)
+			Stroke(drow).Transparency = 0.95
+			New("TextLabel", {
+				Name = "DeletedName", Position = UDim2.fromOffset(14, 0), Size = UDim2.new(1, -80, 1, 0), BackgroundTransparency = 1,
+				Text = entry.name, TextColor3 = Color3.fromRGB(214, 216, 224), TextSize = 14,
+				TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 123,
+			}, drow)
+			local function iconButton(kind, color, x)
+				local btn = New("TextButton", {
+					Name = kind, AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, x, 0.5, 0), Size = UDim2.fromOffset(22, 22),
+					BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 1, AutoButtonColor = false, Text = "", ZIndex = 124,
+				}, drow)
+				New("UICorner", { CornerRadius = UDim.new(0, 6) }, btn)
+				local glyph = New("Frame", { Name = "Glyph", Position = UDim2.fromOffset(4, 4), Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1, ZIndex = 125 }, btn)
+				WindowObj._drawGlyph(kind, glyph, color)
+				btn.MouseEnter:Connect(function() Tween(btn, { BackgroundTransparency = 0.93 }, 0.08) end)
+				btn.MouseLeave:Connect(function() Tween(btn, { BackgroundTransparency = 1 }, 0.1) end)
+				return btn
+			end
+			local purgeBtn = iconButton("trash", Color3.fromRGB(233, 90, 110), -36)
+			local restoreBtn = iconButton("restore", Color3.fromRGB(200, 203, 213), -10)
 
 			local idx = i
+			purgeBtn.MouseButton1Click:Connect(function()
+				-- Already removed from disk on delete; this only forgets the backup.
+				table.remove(_deletedConfigs, idx)
+				SaveDeletedList()
+				RefreshDeletedList()
+			end)
 			restoreBtn.MouseButton1Click:Connect(function()
 				local restored = false
 				local encodedOk, encoded = pcall(game:GetService("HttpService").JSONEncode, game:GetService("HttpService"), entry.data)
@@ -6002,9 +6066,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			return count
 		end
 		local cfgH = 100 + math.min(countRows(ListContainer), 7) * 42
-		local rdH = 88 + countRows(RDList) * 34
+		local rdH = 16 + math.max(countRows(RDList), 1) * 42
 		ConfigMainFrame.Size = UDim2.fromOffset(320, math.clamp(cfgH, 104, maxH))
-		RecentlyDeletedPanel.Size = UDim2.new(0.34, 0, 0, math.clamp(rdH, 180, maxH))
+		RecentlyDeletedPanel.Size = UDim2.fromOffset(280, math.clamp(rdH, 54, maxH))
 	end
 	ListContainer.ChildAdded:Connect(function() task.defer(UpdateConfigPanelHeight) end)
 	ListContainer.ChildRemoved:Connect(function() task.defer(UpdateConfigPanelHeight) end)
@@ -6771,6 +6835,17 @@ if Library.ShowLoader ~= false then task.spawn(function()
 			for _, g in ipairs(glowGradients) do g.Rotation = angle end
 		end
 	end)
+	-- Wait for the logo texture first (max ~1.5 s) so the toast never slides in
+	-- with an empty badge.
+	do
+		local done = false
+		task.spawn(function()
+			pcall(function() game:GetService("ContentProvider"):PreloadAsync({ badgeLogo }) end)
+			done = true
+		end)
+		local waited = 0
+		while not done and waited < 1.5 do waited = waited + task.wait() end
+	end
 	Tween(toast, { Position = UDim2.new(1, -22, 0, 22) }, 0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	for step = 1, 10 do
 		task.wait(0.14 + math.random() * 0.08)
@@ -6839,11 +6914,13 @@ end) end
 	function WindowObj:AddTab(name, icon)
 		local function TintTabIcon(iconObject, color, transparency, duration, style, direction)
 			Tween(iconObject, { ImageColor3 = color, ImageTransparency = transparency }, duration, style, direction)
-			local outline = iconObject and iconObject:FindFirstChild("MouseOutline")
-			if not outline then return end
-			for _, partName in ipairs({ "MouseSplit", "MouseWheel" }) do
-				local part = outline:FindFirstChild(partName)
-				if part then Tween(part, { BackgroundColor3 = color, BackgroundTransparency = transparency }, duration, style, direction) end
+			-- Drawn glyphs (Rage crosshair, Legit mouse) follow the same tint.
+			for _, part in ipairs(iconObject:GetDescendants()) do
+				if part:GetAttribute("TabGlyphFill") then
+					Tween(part, { BackgroundColor3 = color, BackgroundTransparency = transparency }, duration, style, direction)
+				elseif part:IsA("UIStroke") and part.Parent and part.Parent:GetAttribute("TabGlyphRing") then
+					Tween(part, { Color = color, Transparency = transparency }, duration, style, direction)
+				end
 			end
 		end
 		name = tostring(name or "Tab")
@@ -6890,32 +6967,43 @@ end) end
 		if icon and icon ~= "" then
 			GetImageData(icon, TabIcon)
 		end
-		if type(icon) == "string" and string.lower(icon) == "legit" then
-			local MouseOutline = New("Frame", {
-				Name = "MouseOutline",
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Position = UDim2.new(0.5, 0, 0.5, 0),
-				Size = UDim2.fromOffset(10, 15),
-				BackgroundTransparency = 1,
-				BorderSizePixel = 0,
-			}, TabIcon)
-			New("UICorner", { CornerRadius = UDim.new(0.5, 0) }, MouseOutline)
-			Stroke(MouseOutline, "MouseOutlineStroke")
-			New("Frame", {
-				Name = "MouseSplit",
-				Position = UDim2.new(0, 0, 0, 4),
-				Size = UDim2.new(1, 0, 0, 1),
-				BackgroundColor3 = isFirst and mainColor or Color3.fromRGB(150, 155, 172),
-				BorderSizePixel = 0,
-			}, MouseOutline)
-			New("Frame", {
-				Name = "MouseWheel",
-				AnchorPoint = Vector2.new(0.5, 0),
-				Position = UDim2.new(0.5, 0, 0, 0),
-				Size = UDim2.new(0, 1, 0, 4),
-				BackgroundColor3 = isFirst and mainColor or Color3.fromRGB(150, 155, 172),
-				BorderSizePixel = 0,
-			}, MouseOutline)
+		-- Neverlose draws Rage as a ring crosshair and Legit as a filled mouse;
+		-- build both from frames so they match the reference.
+		do
+			local lowerIcon = type(icon) == "string" and string.lower(icon) or ""
+			local tint = isFirst and mainColor or Color3.fromRGB(150, 155, 172)
+			local function fill(props)
+				local part = New("Frame", props, TabIcon)
+				part.BorderSizePixel = 0
+				part:SetAttribute("TabGlyphFill", true)
+				part.BackgroundColor3 = tint
+				return part
+			end
+			if lowerIcon == "crosshair" or lowerIcon == "rage" or lowerIcon == "aimbot" then
+				TabIcon.Image = ""
+				local ring = New("Frame", {
+					Name = "CrossRing", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+					Size = UDim2.fromOffset(12, 12), BackgroundTransparency = 1, BorderSizePixel = 0,
+				}, TabIcon)
+				ring:SetAttribute("TabGlyphRing", true)
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, ring)
+				local ringStroke = Instance.new("UIStroke")
+				ringStroke.Thickness = 1.7
+				ringStroke.Color = tint
+				ringStroke.Parent = ring
+				for _, spec in ipairs({ { 0.5, 0.1, 2, 5 }, { 0.5, 0.9, 2, 5 }, { 0.1, 0.5, 5, 2 }, { 0.9, 0.5, 5, 2 } }) do
+					fill({ Name = "CrossTick", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(spec[1], spec[2]), Size = UDim2.fromOffset(spec[3], spec[4]) })
+				end
+				local dot = fill({ Name = "CrossDot", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(3, 3) })
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, dot)
+			elseif lowerIcon == "mouse" or lowerIcon == "legit" then
+				TabIcon.Image = ""
+				local body = fill({ Name = "MouseBody", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(11, 15) })
+				New("UICorner", { CornerRadius = UDim.new(0, 5) }, body)
+				-- dark cuts: button split and wheel gap
+				New("Frame", { Name = "MouseSplit", Position = UDim2.fromOffset(0, 5), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(14, 16, 22), BorderSizePixel = 0 }, body)
+				New("Frame", { Name = "MouseWheel", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0), Size = UDim2.new(0, 1, 0, 5), BackgroundColor3 = Color3.fromRGB(14, 16, 22), BorderSizePixel = 0 }, body)
+			end
 		end
 		table.insert(_coloredElements, { type = "tabicon", ref = TabIcon })
 New("UIAspectRatioConstraint", {
@@ -7035,7 +7123,7 @@ New("UIAspectRatioConstraint", {
 		-- Hover feedback is limited to real navigation items. Transparent hit targets elsewhere stay inert.
 		TabButtonFrame.MouseEnter:Connect(function()
 			if activeTabIndex == tabIndex then return end
-			Tween(TabButtonFrame, { BackgroundTransparency = 0.55 }, 0.11, Enum.EasingStyle.Sine)
+			Tween(TabButtonFrame, { BackgroundTransparency = 0.8 }, 0.11, Enum.EasingStyle.Sine)
 			TintTabIcon(TabIcon, mainColor, 0.24, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(TabText, { TextTransparency = 0.22 }, 0.11, Enum.EasingStyle.Sine)
 		end)
@@ -10758,7 +10846,7 @@ New("Frame", {
 			STClick.MouseButton1Click:Connect(ActivateSubTab)
 			STRow.MouseEnter:Connect(function()
 				if activeSubTabIndex == stIndex then return end
-				Tween(STRow, { BackgroundTransparency = 0.55 }, 0.11, Enum.EasingStyle.Sine)
+				Tween(STRow, { BackgroundTransparency = 0.8 }, 0.11, Enum.EasingStyle.Sine)
 				Tween(STLabel, { TextColor3 = Color3.fromRGB(220, 222, 230) }, 0.11, Enum.EasingStyle.Sine)
 				if iconRef then Tween(iconRef, { ImageColor3 = mainColor, ImageTransparency = 0.24 }, 0.11, Enum.EasingStyle.Sine) end
 			end)
