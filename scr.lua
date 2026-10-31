@@ -4648,16 +4648,30 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CloudIcon.ScaleType = Enum.ScaleType.Fit
 	CloudIcon.ZIndex = 1000
 	CloudIcon.Parent = CMHeader
+	do
+		local tabPill = Instance.new("Frame")
+		tabPill.Name = "PresetsTabPill"
+		tabPill.AnchorPoint = Vector2.new(0, 0.5)
+		tabPill.Position = UDim2.new(0, 9, 0.5, 0)
+		tabPill.Size = UDim2.fromOffset(104, 28)
+		tabPill.BackgroundColor3 = mainColor
+		tabPill.BackgroundTransparency = 0.86
+		tabPill.BorderSizePixel = 0
+		tabPill.ZIndex = 999
+		tabPill.Parent = CMHeader
+		local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 7); c.Parent = tabPill
+	end
 
 	local CMTitle = Instance.new("TextLabel")
 	CMTitle.Name = "TitleLabel"
 	CMTitle.Position = UDim2.new(0, 44, 0, 0)
 	CMTitle.Size = UDim2.new(1, -154, 1, 0)
 	CMTitle.BackgroundTransparency = 1
-	CMTitle.Text = "Presets"
-	CMTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-	CMTitle.TextSize = 14
-	CMTitle.Font = FONT
+	-- Neverlose shows the active tab as an accent-tinted pill: cloud + "PRESETS".
+	CMTitle.Text = "PRESETS"
+	CMTitle.TextColor3 = mainColor
+	CMTitle.TextSize = 13
+	CMTitle.Font = FONT_BOLD
 	CMTitle.TextTransparency = 0.05
 	CMTitle.ZIndex = 1000
 	CMTitle.TextXAlignment = Enum.TextXAlignment.Left
