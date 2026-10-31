@@ -2772,6 +2772,8 @@ do
 	brandText.Font = FONT_BOLD
 	brandText.ZIndex = Z_BASE + 901
 	brandText.Parent = BrandCell
+	-- Bold caps read 1px low next to the items: lift them by 1px.
+	do local pd = Instance.new("UIPadding"); pd.PaddingBottom = UDim.new(0, 2); pd.Parent = brandText end
 	-- Lavender copy 1px left/down under the white letters, as on Neverlose.
 	brandText.ZIndex = Z_BASE + 903
 	local brandShade = brandText:Clone()
@@ -3099,7 +3101,7 @@ WindowObj._buildWatermarkUI = function()
 	local settingsFrame, itemsFrame, colorSwatch, avatarSwitch, positionFrame, positionValue
 	-- Position presets. The ScreenGui keeps Roblox's top-bar inset, so top
 	-- presets subtract it: the strip sits 8px under the real screen edge.
-	local PRESETS = { "Top Right", "Top Center", "Top Left", "Bottom Right", "Bottom Center", "Bottom Left" }
+	local PRESETS = { "Top Right", "Top Center", "Top Left", "Bottom Right", "Bottom Center", "Bottom Left", "Custom" }
 	local function topInset()
 		local ok, inset = pcall(function() return game:GetService("GuiService"):GetGuiInset() end)
 		WindowObj._topInset = ok and inset and inset.Y or 0
@@ -3115,6 +3117,18 @@ WindowObj._buildWatermarkUI = function()
 			["Bottom Center"] = { Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -8) },
 			["Bottom Left"] = { Vector2.new(0, 1), UDim2.new(0, 8, 1, -8) },
 		}
+		-- Custom: the last dragged place (or stay put); dragging sets it.
+		if name == "Custom" then
+			local saved = WindowObj._wmCustom
+			if saved then
+				GameInfo.AnchorPoint = saved[1]
+				GameInfo.Position = saved[2]
+			end
+			GameInfo:SetAttribute("Dragged", true)
+			GameInfo:SetAttribute("Preset", "Custom")
+			if positionValue then positionValue.Text = "Custom" end
+			return
+		end
 		local spot = spots[name]
 		if not spot then return end
 		GameInfo.AnchorPoint = spot[1]
@@ -3335,7 +3349,11 @@ WindowObj._buildWatermarkUI = function()
 		setSwitch(avatarSwitch, WMShowMap.user == true)
 		if positionValue then positionValue.Text = GameInfo:GetAttribute("Preset") or "Custom" end
 		-- Opens under the strip at the click's x (kept on screen), sliding down.
-		openFrame(settingsFrame, point.X - 20, GameInfo.AbsolutePosition.Y + GameInfo.AbsoluteSize.Y + 4, GameInfo, function()
+		-- Below the strip, or above it when the strip sits in the lower half.
+		local gui = GameInfo.Parent
+		local low = gui and gui.AbsoluteSize.Y > 0 and GameInfo.AbsolutePosition.Y > gui.AbsoluteSize.Y / 2
+		local y = low and (GameInfo.AbsolutePosition.Y - settingsFrame.AbsoluteSize.Y - 4) or (GameInfo.AbsolutePosition.Y + GameInfo.AbsoluteSize.Y + 4)
+		openFrame(settingsFrame, point.X - 20, y, GameInfo, function()
 				if itemsFrame then closeFrame(itemsFrame) end
 				if positionFrame then closeFrame(positionFrame) end
 				closeFrame(settingsFrame)
@@ -3388,6 +3406,7 @@ WindowObj._buildWatermarkUI = function()
 			GameInfo.Position = UDim2.new(drag.pos.X.Scale, drag.pos.X.Offset + d.X, drag.pos.Y.Scale, drag.pos.Y.Offset + d.Y)
 			GameInfo:SetAttribute("Dragged", true)
 			GameInfo:SetAttribute("Preset", "Custom")
+			WindowObj._wmCustom = { GameInfo.AnchorPoint, GameInfo.Position }
 		end
 	end)
 	UserInputService.InputEnded:Connect(function(input)
@@ -3412,6 +3431,7 @@ WindowObj._buildWatermarkUI = function()
 			GameInfo.Position = UDim2.new(v[1], v[2], v[3], v[4])
 			GameInfo:SetAttribute("Dragged", true)
 			GameInfo:SetAttribute("Preset", "Custom")
+			WindowObj._wmCustom = { GameInfo.AnchorPoint, GameInfo.Position }
 		end,
 	}
 	WindowObj._configExtras.watermark = {
@@ -5965,28 +5985,37 @@ SaveText.Parent = Save
 	end
 	UpdateSavePillWidth(SaveText.Text)
 
-	-- Saved: the save icon turns into a check that pops in, holds, then the
-	-- save icon returns.
-	local function FlashSaved()
-		if not SaveIcon then return end
-		local pop = SaveIcon:FindFirstChild("SavedPop") or New("UIScale", { Name = "SavedPop", Scale = 1 }, SaveIcon)
-		local token = (SaveIcon:GetAttribute("SavedToken") or 0) + 1
-		SaveIcon:SetAttribute("SavedToken", token)
-		if not SaveIcon:GetAttribute("SaveImage") then SaveIcon:SetAttribute("SaveImage", SaveIcon.Image) end
-		SaveIcon.Image = "rbxassetid://10709790644" -- lucide check
-		SaveIcon.ImageColor3 = Color3.fromRGB(120, 220, 150)
+	-- Saved: an icon turns into a green check that pops in, holds, then the
+	-- icon (and its colour) returns. Used by the header save button and the
+	-- loaded preset's save button.
+	WindowObj._savedCheck = function(icon)
+		if not icon then return end
+		local pop = icon:FindFirstChild("SavedPop") or New("UIScale", { Name = "SavedPop", Scale = 1 }, icon)
+		local token = (icon:GetAttribute("SavedToken") or 0) + 1
+		icon:SetAttribute("SavedToken", token)
+		if token == 1 or not icon:GetAttribute("Checking") then
+			icon:SetAttribute("RestImage", icon.Image)
+			icon:SetAttribute("RestColor", icon.ImageColor3)
+		end
+		icon:SetAttribute("Checking", true)
+		icon.Image = "rbxassetid://10709790644" -- lucide check
+		icon.ImageColor3 = Color3.fromRGB(120, 220, 150)
 		pop.Scale = 0.4
 		Tween(pop, { Scale = 1 }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		task.delay(1.3, function()
-			if SaveIcon:GetAttribute("SavedToken") ~= token then return end
+			if icon:GetAttribute("SavedToken") ~= token then return end
 			Tween(pop, { Scale = 0.6 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			task.delay(0.12, function()
-				if SaveIcon:GetAttribute("SavedToken") ~= token then return end
-				SaveIcon.Image = SaveIcon:GetAttribute("SaveImage")
-				SaveIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+				if icon:GetAttribute("SavedToken") ~= token then return end
+				icon.Image = icon:GetAttribute("RestImage")
+				icon.ImageColor3 = icon:GetAttribute("RestColor")
+				icon:SetAttribute("Checking", false)
 				Tween(pop, { Scale = 1 }, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			end)
 		end)
+	end
+	local function FlashSaved()
+		WindowObj._savedCheck(SaveIcon)
 	end
 	local function ShowSavedName()
 		if not SaveText then return end
@@ -6015,7 +6044,7 @@ Lines_2.BorderSizePixel = 0
 Lines_2.Parent = SaveText
 
 local SaveArrow = Instance.new('ImageLabel')
-SaveArrow.Name = "Arrow"
+SaveArrow.Name = "PresetArrow"
 SaveArrow.AnchorPoint = Vector2.new(1, 0.5)
 SaveArrow.Position = UDim2.new(1, -17, 0.5, 0)
 SaveArrow.Size = UDim2.fromOffset(10, 10)
@@ -7081,11 +7110,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 		LoadConfigBtn.MouseButton1Click:Connect(function()
 			if activeRow == row then
-				SaveNamedConfig(name)
-				Tween(LoadConfigBtn, {ImageColor3 = Color3.fromRGB(80, 255, 140)}, 0.1)
-				task.delay(0.6, function()
-					Tween(LoadConfigBtn, {ImageColor3 = Color3.fromRGB(205, 208, 218)}, 0.3)
-				end)
+				if SaveNamedConfig(name) then WindowObj._savedCheck(LoadConfigBtn) end
 			else
 				local loaded = LoadNamedConfig(name)
 				if not loaded then
