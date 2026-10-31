@@ -517,8 +517,9 @@ local function New(class, props, parent)
 			Username = 14, Daysleft = 12, SaveText = 14, HeaderLabel = 11, SearchBox = 14 }
 		obj.TextSize = roleSizes[obj.Name] or ((props and props.TextSize) or 13)
 		obj.Font = (obj.Name == "Title" or obj.Name == "PlateTitle" or obj.Name == "HeaderTitle") and FONT_BOLD or FONT
-		if obj.Name == "GameTitle" or obj.Name == "TabLabel" or obj.Name == "SectionLabel"
-			or obj.Name == "Daysleft" or obj.Name == "HeaderLabel" or obj.Name == "SearchEmptyState" then
+		if obj.Name == "SectionLabel" or obj.Name == "TabLabel" then
+			obj.TextColor3 = Color3.fromRGB(92, 96, 106)
+		elseif obj.Name == "GameTitle" or obj.Name == "Daysleft" or obj.Name == "HeaderLabel" or obj.Name == "SearchEmptyState" then
 			obj.TextColor3 = Color3.fromRGB(112, 116, 138)
 		elseif obj.Name == "TextToggle" or obj.Name == "TextDropdown" or obj.Name == "TextDefault" or obj.Name == "TopBar" or obj.Name == "SaveText" then
 			obj.TextColor3 = Color3.fromRGB(226, 228, 236)
@@ -536,7 +537,7 @@ local function New(class, props, parent)
 	elseif obj.Name == "TopBarText" and obj:IsA("TextLabel") then
 		obj.TextColor3 = Color3.fromRGB(205, 208, 218)
 	elseif (obj.Name == "TopBar" or obj.Name == "SliderValue") and obj:IsA("GuiObject") then
-		obj.BackgroundColor3 = Color3.fromRGB(27, 28, 38)
+		obj.BackgroundColor3 = Color3.fromRGB(26, 26, 36)
 		obj.BackgroundTransparency = 0
 		if obj:IsA("TextLabel") then
 			obj.TextColor3 = Color3.fromRGB(205, 208, 218)
@@ -549,6 +550,10 @@ local function New(class, props, parent)
 		fieldStroke.Thickness = 1
 		fieldStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 		fieldStroke.Parent = obj
+	elseif obj.Name == "Arrow" and obj:IsA("ImageLabel") then
+		-- Neverlose chevron: a touch larger and brighter, and it does not flip.
+		obj.Size = UDim2.fromOffset(12, 12)
+		obj.ImageTransparency = 0.15
 	elseif obj.Name == "Line" and obj:IsA("Frame") then
 		obj.BackgroundColor3 = Color3.fromRGB(40, 42, 54)
 	elseif type(obj.Name) == "string" and obj.Name:match("^Dot%d$") and obj:IsA("Frame") then
@@ -937,7 +942,8 @@ local function RefreshRowDividers(listFrame)
 				divider.Position = UDim2.new(0, 14, 1, -1)
 				divider.Size = UDim2.new(1, -28, 0, 1)
 				divider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				divider.BackgroundTransparency = 0.93
+				-- Neverlose row lines sit only ~7 levels above the card (28 on 21).
+				divider.BackgroundTransparency = 0.965
 				divider.BorderSizePixel = 0
 				table.insert(rows, divider)
 			end
@@ -1436,7 +1442,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		font = FONT,
 		textColor = Color3.fromRGB(226, 228, 236),
 		sectionTitleSize = 11,
-		sectionTitleColor = Color3.fromRGB(112, 116, 138),
+		sectionTitleColor = Color3.fromRGB(92, 96, 106), -- Neverlose section caps: neutral grey
 		sectionTitleTransparency = 0,
 		watermarkText = "NEVERLOSE  •  UI",
 		watermarkVisible = false,
@@ -1726,6 +1732,22 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 				end
 			end)
 		end
+	end
+
+	-- Neverlose option lists open instantly, centred on the field that opened
+	-- them (overlapping it), not dropped below with a grow animation. Kept on
+	-- WindowObj instead of a local: AddWindow is near Luau's register cap.
+	WindowObj._centerPopupOnField = function(popup, field)
+		if not popup or not popup.Parent or not field or not field.Parent then return end
+		RememberPopupClipping(popup)
+		ForceLiftClipping(popup)
+		local size = popup.AbsoluteSize
+		local fieldPos, fieldSize = field.AbsolutePosition, field.AbsoluteSize
+		if size.X <= 0 or size.Y <= 0 or fieldSize.X <= 0 then return end
+		local x = fieldPos.X + (fieldSize.X - size.X) / 2
+		local y = fieldPos.Y + (fieldSize.Y - size.Y) / 2
+		MovePopupToAbsolute(popup, x, y)
+		ConstrainPopupToMainFrame(popup, 6)
 	end
 
 	AcrylicBlur.CreateColorPicker = function(anchorButton, initialColor, onChange)
@@ -2994,8 +3016,8 @@ Aspect.AspectRatio = 798 / 610
 	-- could only clip to a hard rectangle).
 	local HubIcon = New("Frame", {
 		Name = "HubIcon",
-		Position = UDim2.fromOffset(14, 9),
-		Size = UDim2.fromOffset(34, 34),
+		Position = UDim2.fromOffset(13, 7),
+		Size = UDim2.fromOffset(38, 38),
 		-- The logo image has a semi-transparent dark square. On the glass window
 		-- the game showed through it; an opaque backing in the old window colour
 		-- keeps the logo looking as it did on the solid window.
@@ -4409,7 +4431,7 @@ end
 	-- Glass: the sidebar shows the blurred game through MainFrame (0.25); the
 	-- content panel stacks 0.5 on top so it reads denser, as in Neverlose.
 	do local panelStroke = Stroke(Frame2, "PanelOutline"); panelStroke.Transparency = 0.94 end
-	New("Frame", { Name = "HeaderDivider", Position = UDim2.new(0, 11, 0, 53), Size = UDim2.new(1, -22, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.93, BorderSizePixel = 0 }, Frame2)
+	New("Frame", { Name = "HeaderDivider", Position = UDim2.new(0, 11, 0, 53), Size = UDim2.new(1, -22, 0, 1), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.95, BorderSizePixel = 0 }, Frame2)
 
 	local Header = New("Frame", {
 		Name = "Header",
@@ -6100,7 +6122,7 @@ WindowObj._setupWindowToggle = nil
 			Size = UDim2.new(1, 0, 0, 32),
 			-- Neverlose selected tab: a solid grey plate (~44,45,54). A faint white
 			-- tint let the game behind the glass show through it.
-			BackgroundColor3 = Color3.fromRGB(44, 45, 56),
+			BackgroundColor3 = Color3.fromRGB(35, 38, 50),
 			BackgroundTransparency = isFirst and 0.08 or 1,
 			LayoutOrder = tabOrder,
 		}, Tab)
@@ -6257,7 +6279,7 @@ New("UIAspectRatioConstraint", {
 				end
 			end
 			Tween(TabButtonFrame, {
-				BackgroundColor3 = Color3.fromRGB(44, 45, 56),
+				BackgroundColor3 = Color3.fromRGB(35, 38, 50),
 				BackgroundTransparency = 0.08,
 			}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			Tween(TabIndicator, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -8416,15 +8438,9 @@ New("Frame", {
 				local function closeDropdown()
 					if not dropOpen and not DownBar.Visible then return end
 					dropOpen = false
-					Tween(Arrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-					-- The dropdown outline stays on the shared Stroke() value (0.92).
-					Tween(DownBar, { Size = UDim2.fromOffset(math.max(TopBar.AbsoluteSize.X, 150), 0) }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					UnregisterPopup(DownBar)
-					local closeToken = (DownBar:GetAttribute("CloseToken") or 0) + 1
-					DownBar:SetAttribute("CloseToken", closeToken)
-					task.delay(0.16, function()
-						if DownBar.Parent and not dropOpen and DownBar:GetAttribute("CloseToken") == closeToken then DownBar.Visible = false end
-					end)
+					DownBar:SetAttribute("CloseToken", (DownBar:GetAttribute("CloseToken") or 0) + 1)
+					DownBar.Visible = false
 					if _openDropdown == closeDropdown then _openDropdown = nil end
 				end
 
@@ -8488,13 +8504,10 @@ New("Frame", {
 						local finalSize = UDim2.fromOffset(popupWidth, h)
 						local knownSize = Vector2.new(popupWidth, math.min(h, math.max(MainFrame.AbsoluteSize.Y, 1)))
 						DownBar.Size = finalSize
+						DownBar.BackgroundTransparency = 0
 						DownBar.Visible = true
-						PositionPopupWithinMain(DownBar, true, 4, TopBar, knownSize)
-						DownBar.Size = UDim2.fromOffset(math.max(TopBar.AbsoluteSize.X, 150), 0)
-						Tween(DownBar, { Size = finalSize }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-						-- Keep the dropdown outline on Stroke()'s shared opacity.
-						Tween(Arrow, { Rotation = 180 }, 0.13, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-						task.delay(0.24, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true, 4, TopBar) end end)
+						WindowObj._centerPopupOnField(DownBar, TopBar)
+						task.defer(function() if DownBar.Visible then WindowObj._centerPopupOnField(DownBar, TopBar) end end)
 						RegisterPopup(DownBar, closeDropdown, TopBar)
 					end
 				end)
@@ -8672,9 +8685,7 @@ New("Frame", {
 				end
 				local function closeDropdown()
 					dropOpen = false
-					Tween(Arrow, { Rotation = 0 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-					Tween(DownBar, { Size = UDim2.fromOffset(math.max(TopBar.AbsoluteSize.X, 150), 0) }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-					task.delay(0.15, function() if not dropOpen then DownBar.Visible = false end end)
+					DownBar.Visible = false
 					UnregisterPopup(DownBar)
 					if _openDropdown == closeDropdown then _openDropdown = nil end
 				end
@@ -8747,11 +8758,8 @@ New("Frame", {
 					DownBar.Size = finalSize
 					DownBar.Visible = true
 					ApplyZIndexLadder(DownBar, NextPopupZ())
-					PositionPopupWithinMain(DownBar, true, 4, TopBar, knownSize)
-					DownBar.Size = UDim2.fromOffset(popupWidth, 0)
-					Tween(DownBar, { Size = finalSize }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-					Tween(Arrow, { Rotation = 180 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-					task.delay(0.2, function() if DownBar.Visible then PositionPopupWithinMain(DownBar, true, 4, TopBar) end end)
+					WindowObj._centerPopupOnField(DownBar, TopBar)
+					task.defer(function() if DownBar.Visible then WindowObj._centerPopupOnField(DownBar, TopBar) end end)
 					RegisterPopup(DownBar, closeDropdown, TopBar)
 				end
 				TopBar.MouseButton1Click:Connect(openDropdown)
@@ -9809,7 +9817,7 @@ New("Frame", {
 				-- in the same frame caused a visible flash on every tab switch.
 				if activeTabIndex == tabIndex then
 					Tween(TabButtonFrame, {
-						BackgroundColor3 = Color3.fromRGB(44, 45, 56),
+						BackgroundColor3 = Color3.fromRGB(35, 38, 50),
 						BackgroundTransparency = 0.08,
 					}, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
