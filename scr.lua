@@ -2772,9 +2772,6 @@ do
 	brandText.Font = FONT_BOLD
 	brandText.ZIndex = Z_BASE + 901
 	brandText.Parent = BrandCell
-	-- Bold caps sit high next to the 15px items; 2px top padding centres
-	-- them on the same line.
-	do local pd = Instance.new("UIPadding"); pd.PaddingTop = UDim.new(0, 2); pd.Parent = brandText end
 	-- Lavender copy 1px left/down under the white letters, as on Neverlose.
 	brandText.ZIndex = Z_BASE + 903
 	local brandShade = brandText:Clone()
@@ -3156,11 +3153,13 @@ WindowObj._buildWatermarkUI = function()
 		UnregisterPopup(frame)
 		SmoothClose(frame, 0.14)
 	end
-	local function openFrame(frame, x, y, trigger, closeFn)
+	local function openFrame(frame, x, y, trigger, closeFn, free)
 		ApplyZIndexLadder(frame, NextPopupZ())
 		SmoothOpen(frame, 0, 0.2)
 		MovePopupToAbsolute(frame, x, y)
-		ConstrainPopupToMainFrame(frame, 8)
+		-- free: placed exactly (the settings plate hugs the strip); the
+		-- screen clamp pushed it down by the top-bar inset.
+		if not free then ConstrainPopupToMainFrame(frame, 8) end
 		local settled = frame.Position
 		frame.Position = UDim2.new(settled.X.Scale, settled.X.Offset, settled.Y.Scale, settled.Y.Offset - 8)
 		TweenService:Create(frame, TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = settled }):Play()
@@ -3336,11 +3335,11 @@ WindowObj._buildWatermarkUI = function()
 		setSwitch(avatarSwitch, WMShowMap.user == true)
 		if positionValue then positionValue.Text = GameInfo:GetAttribute("Preset") or "Custom" end
 		-- Opens under the strip at the click's x (kept on screen), sliding down.
-		openFrame(settingsFrame, point.X - 20, GameInfo.AbsolutePosition.Y + GameInfo.AbsoluteSize.Y + 6, GameInfo, function()
+		openFrame(settingsFrame, point.X - 20, GameInfo.AbsolutePosition.Y + GameInfo.AbsoluteSize.Y + 4, GameInfo, function()
 				if itemsFrame then closeFrame(itemsFrame) end
 				if positionFrame then closeFrame(positionFrame) end
 				closeFrame(settingsFrame)
-			end)
+			end, true)
 	end
 
 	-- ------------------------------------------------- click / drag / reorder
@@ -3755,6 +3754,10 @@ local function MakeOverlayPanel(name, iconAsset, title)
 	local headerW = math.ceil(14 + 15 + 8 + 1 + 8 + MeasureText(title, 14, FONT_BOLD) + 14)
 	header.Size = UDim2.fromOffset(headerW, OV.head)
 	panel:SetAttribute("HeaderWidth", headerW)
+	-- Anchored by the left edge so new rows grow the list to the right instead
+	-- of pushing it left; starts so the header ends 8px from the screen edge.
+	panel.AnchorPoint = Vector2.new(0, 0)
+	panel.Position = UDim2.new(1, -8 + OV.pad - (headerW + OV.pad * 2), panel.Position.Y.Scale, panel.Position.Y.Offset)
 	if WindowObj._makeDraggable then WindowObj._makeDraggable(header, panel, name) end
 
 	local rows = New("Frame", {
@@ -3871,6 +3874,15 @@ function OV.layout(panel, rows)
 	panel:SetAttribute("TargetW", w)
 	panel:SetAttribute("TargetH", h)
 	local size = UDim2.fromOffset(w + OV.pad * 2, h + OV.pad * 2)
+	-- Only if the wider list would leave the screen, step left just enough.
+	local gui = panel.Parent
+	if gui and gui.AbsoluteSize.X > 0 and panel.AbsoluteSize.X > 0 then
+		local over = panel.AbsolutePosition.X + size.X.Offset - (gui.AbsoluteSize.X - 2)
+		if over > 0 then
+			local pos = panel.Position
+			panel.Position = UDim2.new(pos.X.Scale, pos.X.Offset - over, pos.Y.Scale, pos.Y.Offset)
+		end
+	end
 	if panel.Visible then TweenService:Create(panel, OV.ease, { Size = size }):Play() else panel.Size = size end
 	if OV.place then OV.place(true) end
 end
@@ -5773,6 +5785,9 @@ asss.Parent = SearchBtn
 		local ok, encoded = pcall(http.JSONEncode, http, data)
 		if not ok or type(encoded) ~= "string" then return false end
 		local writeOk, writeResult = pcall(writefile, GetConfigPath(name), encoded)
+		if writeOk and writeResult ~= false then
+			pcall(writefile, "NeverloseConfig_" .. windowConfigId .. "__last.txt", SanitizeConfigName(name))
+		end
 		return writeOk and writeResult ~= false
 	end
 
@@ -5786,6 +5801,7 @@ asss.Parent = SearchBtn
 		local http = game:GetService("HttpService")
 		local decodedOk, data = pcall(http.JSONDecode, http, content)
 		if not decodedOk or type(data) ~= "table" then return false end
+		pcall(writefile, "NeverloseConfig_" .. windowConfigId .. "__last.txt", SanitizeConfigName(name))
 		local success = true
 		for _, entry in ipairs(_registeredElements) do
 			local saved = data[entry.key]
@@ -5949,12 +5965,27 @@ SaveText.Parent = Save
 	end
 	UpdateSavePillWidth(SaveText.Text)
 
+	-- Saved: the save icon turns into a check that pops in, holds, then the
+	-- save icon returns.
 	local function FlashSaved()
-		local box = WindowObj._saveBox
-		if not box then return end
-		Tween(box, { BackgroundColor3 = mainColor }, 0.09)
-		task.delay(0.1, function()
-			if box then Tween(box, { BackgroundColor3 = Color3.fromRGB(20, 23, 34) }, 0.22) end
+		if not SaveIcon then return end
+		local pop = SaveIcon:FindFirstChild("SavedPop") or New("UIScale", { Name = "SavedPop", Scale = 1 }, SaveIcon)
+		local token = (SaveIcon:GetAttribute("SavedToken") or 0) + 1
+		SaveIcon:SetAttribute("SavedToken", token)
+		if not SaveIcon:GetAttribute("SaveImage") then SaveIcon:SetAttribute("SaveImage", SaveIcon.Image) end
+		SaveIcon.Image = "rbxassetid://10709790644" -- lucide check
+		SaveIcon.ImageColor3 = Color3.fromRGB(120, 220, 150)
+		pop.Scale = 0.4
+		Tween(pop, { Scale = 1 }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		task.delay(1.3, function()
+			if SaveIcon:GetAttribute("SavedToken") ~= token then return end
+			Tween(pop, { Scale = 0.6 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+			task.delay(0.12, function()
+				if SaveIcon:GetAttribute("SavedToken") ~= token then return end
+				SaveIcon.Image = SaveIcon:GetAttribute("SaveImage")
+				SaveIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+				Tween(pop, { Scale = 1 }, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			end)
 		end)
 	end
 	local function ShowSavedName()
@@ -6740,6 +6771,19 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		UpdateSavePillWidth(SaveText.Text)
 	end
 
+	-- Loads the preset saved or loaded last (remembered in "__last.txt") once
+	-- the interface is up, so a re-run starts with the same settings.
+	WindowObj._autoLoad = function()
+		if WindowObj._autoLoaded or type(readfile) ~= "function" or type(isfile) ~= "function" then return end
+		WindowObj._autoLoaded = true
+		local path = "NeverloseConfig_" .. windowConfigId .. "__last.txt"
+		local okExists, exists = pcall(isfile, path)
+		if not okExists or not exists then return end
+		local ok, name = pcall(readfile, path)
+		if not ok or type(name) ~= "string" or name == "" then return end
+		if LoadNamedConfig(name) and name ~= "Default" then SetActiveConfigName(name) end
+	end
+
 	local function ClearActiveConfig()
 		activeRow = nil
 		activeLoadBtn = nil
@@ -7268,7 +7312,6 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 		Tween(RecentlyDeletedPanel, { BackgroundTransparency = 1 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 		local rdScale = RecentlyDeletedPanel:FindFirstChild("_PopScale")
 		if rdScale and rdScale:IsA("UIScale") then Tween(rdScale, { Scale = 0.94 }, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In) end
-		Tween(SaveArrow, { Rotation = 0 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		task.delay(0.22, function()
 			if configOpen then return end
 			ConfigMainFrame.Visible = false
@@ -7304,7 +7347,6 @@ ConfirmAddBtn.MouseButton1Click:Connect(function()
 			local cfgSettled = ConfigMainFrame.Position
 			ConfigMainFrame.Position = UDim2.new(cfgSettled.X.Scale, cfgSettled.X.Offset, cfgSettled.Y.Scale, cfgSettled.Y.Offset - 5)
 			Tween(ConfigMainFrame, { Position = cfgSettled }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		Tween(SaveArrow, { Rotation = 180 }, 0.16, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 		else
 			closeConfigPanel()
 		end
@@ -7692,6 +7734,20 @@ Line9.Parent = MainFrame
 	Line9.Visible = false
 
 	MakeDraggable(MainFrame, DragHandle)
+	WindowObj._configExtras.pos_menu = {
+		get = function()
+			local pos, size = MainFrame.Position, windowTargetSize
+			return { pos.X.Scale, pos.X.Offset, pos.Y.Scale, pos.Y.Offset, size.X.Scale, size.X.Offset, size.Y.Scale, size.Y.Offset }
+		end,
+		set = function(v)
+			if type(v) ~= "table" or type(v[4]) ~= "number" then return end
+			MainFrame.Position = UDim2.new(v[1], v[2], v[3], v[4])
+			if type(v[8]) == "number" then
+				windowTargetSize = UDim2.new(v[5], v[6], v[7], v[8])
+				MainFrame.Size = windowTargetSize
+			end
+		end,
+	}
 
 	
 	local ToggleBtn = Instance.new("TextButton")
@@ -7945,6 +8001,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	task.wait(0.5)
 	if AcrylicBlur.toggleGui then AcrylicBlur.toggleGui() end
 	WindowObj._loaderActive = false
+	if WindowObj._autoLoad then task.defer(WindowObj._autoLoad) end
 	if watermarkFrame and WindowObj.Watermark.applyLayout then WindowObj.Watermark.applyLayout(nil, nil) end
 	if WindowObj.KeybindList then WindowObj.KeybindList.refresh() end
 	if WindowObj.SpectatorList then WindowObj.SpectatorList.refresh() end
@@ -12423,6 +12480,10 @@ New("Frame", {
 			if preloader.Parent then preloader:Destroy() end
 		end)
 	end)
+
+	if Library.ShowLoader == false then
+		task.delay(1, function() if WindowObj._autoLoad then WindowObj._autoLoad() end end)
+	end
 
 	return WindowObj
 end
