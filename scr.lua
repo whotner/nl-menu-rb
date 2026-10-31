@@ -848,6 +848,10 @@ local function ApplyZIndexLadder(root, base)
 			instance.ZIndex = base + depth
 			if instance:GetAttribute("IsShadowLayer") then
 				instance.ZIndex = base + depth - 2
+			elseif instance.Name == "InputSink" then
+				-- Same level as its popup, under the rows: on a reopen the sink
+				-- shared the rows' level and, added last, swallowed their clicks.
+				instance.ZIndex = base + depth - 1
 			end
 		end
 		for _, child in ipairs(instance:GetChildren()) do
@@ -2972,7 +2976,7 @@ end
 -- Watermark items, settings and reordering (Neverlose): right-click the strip
 -- while the menu is open for its settings (Items, Additional Colors, Display
 -- Avatar, Position); Items picks what the strip shows; dragging an item along
--- the strip reorders it, dragging elsewhere (the NL logo, the edges) moves it.
+-- the strip (the NL logo too) reorders it, dragging the strip's ends moves it.
 -- Built inside a function so its locals live in their own register frame
 -- (AddWindow is close to Luau's register limit).
 WindowObj._buildWatermarkUI = function()
@@ -3062,7 +3066,8 @@ WindowObj._buildWatermarkUI = function()
 	local PRESETS = { "Top Right", "Top Center", "Top Left", "Bottom Right", "Bottom Center", "Bottom Left" }
 	local function topInset()
 		local ok, inset = pcall(function() return game:GetService("GuiService"):GetGuiInset() end)
-		return ok and inset and inset.Y or 0
+		WindowObj._topInset = ok and inset and inset.Y or 0
+		return WindowObj._topInset
 	end
 	WindowObj._wmPlace = function(name)
 		local top = 8 - topInset()
@@ -3283,13 +3288,13 @@ WindowObj._buildWatermarkUI = function()
 		end)
 	end
 
-	local function openSettings()
+	local function openSettings(point)
 		if not settingsFrame then buildSettings() end
 		if settingsFrame.Visible then closeFrame(settingsFrame) return end
 		setSwitch(avatarSwitch, WMShowMap.user == true)
 		if positionValue then positionValue.Text = GameInfo:GetAttribute("Preset") or "Custom" end
-		openFrame(settingsFrame, GameInfo.AbsolutePosition.X + GameInfo.AbsoluteSize.X - settingsFrame.AbsoluteSize.X,
-			GameInfo.AbsolutePosition.Y + GameInfo.AbsoluteSize.Y + 8, GameInfo, function()
+		-- Opens where the strip was clicked (kept on screen).
+		openFrame(settingsFrame, point.X + 2, point.Y + 2, GameInfo, function()
 				if itemsFrame then closeFrame(itemsFrame) end
 				if positionFrame then closeFrame(positionFrame) end
 				closeFrame(settingsFrame)
@@ -3300,7 +3305,7 @@ WindowObj._buildWatermarkUI = function()
 	local drag
 	local function cellAt(point)
 		for key, cell in pairs(WMCells) do
-			if key ~= "brand" and cell.Visible and IsPointInside(cell, point) then return key end
+			if cell.Visible and IsPointInside(cell, point) then return key end
 		end
 		return nil
 	end
@@ -3324,7 +3329,7 @@ WindowObj._buildWatermarkUI = function()
 	GameInfo.InputBegan:Connect(function(input)
 		if not MainFrame.Visible then return end
 		if input.UserInputType == Enum.UserInputType.MouseButton2 then
-			openSettings()
+			openSettings(input.Position)
 			return
 		end
 		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
@@ -7664,7 +7669,8 @@ Line9.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = ToggleBtn end
 	-- The loader (outside this function) hides it until loading ends.
 	WindowObj._toggleBtn = ToggleBtn
-	ToggleBtn.Visible = not WindowObj._loaderActive
+	-- Not shown: RShift toggles the menu; the button stays for scripts.
+	ToggleBtn.Visible = false
 	
 
 
@@ -7765,7 +7771,9 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	local toast = New("Frame", {
 		Name = "NeverloseLoader",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 360, 0, 22), -- starts off-screen, slides in
+		-- Top right like the watermark, 8px under the real screen top (the
+		-- ScreenGui keeps the top-bar inset); starts off-screen, slides in.
+		Position = UDim2.new(1, 360, 0, 8 - (WindowObj._topInset or 0)),
 		Size = UDim2.fromOffset(330, 64),
 		BackgroundColor3 = Color3.fromRGB(19, 22, 27),
 		BackgroundTransparency = 0,
@@ -7859,7 +7867,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		local waited = 0
 		while not done and waited < 1.5 do waited = waited + task.wait() end
 	end
-	Tween(toast, { Position = UDim2.new(1, -22, 0, 22) }, 0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	Tween(toast, { Position = UDim2.new(1, -8, 0, 8 - (WindowObj._topInset or 0)) }, 0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	-- Real work behind the counter: every image the interface uses is
 	-- preloaded in batches (one step each), then fonts and configs.
 	do
@@ -7894,12 +7902,11 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	task.wait(0.5)
 	if AcrylicBlur.toggleGui then AcrylicBlur.toggleGui() end
 	WindowObj._loaderActive = false
-	if WindowObj._toggleBtn then WindowObj._toggleBtn.Visible = true end
 	if watermarkFrame and WindowObj.Watermark.applyLayout then WindowObj.Watermark.applyLayout(nil, nil) end
 	if WindowObj.KeybindList then WindowObj.KeybindList.refresh() end
 	if WindowObj.SpectatorList then WindowObj.SpectatorList.refresh() end
 	task.wait(0.8)
-	Tween(toast, { Position = UDim2.new(1, 380, 0, 22) }, 0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+	Tween(toast, { Position = UDim2.new(1, 380, 0, 8 - (WindowObj._topInset or 0)) }, 0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 	task.wait(0.42)
 	spinning = false
 	toast:Destroy()
