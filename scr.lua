@@ -2656,7 +2656,7 @@ GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = GameInfo end
 if WindowObj._attachBlur then WindowObj._attachBlur(GameInfo) end
 WindowObj._makeDraggable(GameInfo, GameInfo, "watermark")
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 12); pd.PaddingRight = UDim.new(0, 5); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 14); pd.PaddingRight = UDim.new(0, 5); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
 local ICON_LAYERS   = "rbxassetid://114499998778667"
@@ -2676,7 +2676,7 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	cell.BorderSizePixel = 0
 	cell.ZIndex = Z_BASE + 901
 	cell.Parent = GameInfo
-	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
+	do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 7); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = cell end
 	do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 7); pd.PaddingRight = UDim.new(0, 7); pd.Parent = cell end
 	local icon
 	if iconAsset then
@@ -2737,7 +2737,7 @@ BrandCell.BorderSizePixel = 0
 BrandCell.ZIndex = Z_BASE + 901
 BrandCell.Parent = GameInfo
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 8); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = BrandCell end
-do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 0); pd.PaddingRight = UDim.new(0, 9); pd.Parent = BrandCell end
+do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 0); pd.PaddingRight = UDim.new(0, 7); pd.Parent = BrandCell end
 
 local NeverIcon = Instance.new("ImageLabel")
 NeverIcon.Name = "NeverIcon"
@@ -3220,7 +3220,7 @@ New("UIListLayout", {
 -- The menu reads as two glass layers (window 8,10,17 at 0.25 under the
 -- content panel 15,17,24 at 0.5); one plate at their mix looks the same.
 local OV = { h = 24, head = 32, header = 0.62, entryAlpha = 0.66, glass = Color3.fromRGB(8, 9, 12), entry = Color3.fromRGB(23, 23, 31) }
-function OV.pill(name, parent, alpha, radius, height)
+function OV.pill(name, parent, alpha, radius, height, flat)
 	-- Same capsule as the watermark: nearly clear plate, melting edge shadow,
 	-- blur behind. (`radius` only sets how far the blur pulls in.)
 	local pill = New("Frame", {
@@ -3229,7 +3229,8 @@ function OV.pill(name, parent, alpha, radius, height)
 	}, parent)
 	pill:SetAttribute("PillAlpha", alpha)
 	New("UICorner", { CornerRadius = UDim.new(1, 0) }, pill)
-	WindowObj._edgeShadow(pill, Z_BASE + 890)
+	-- flat: entry pills under the header carry no shadow, as on Neverlose.
+	if not flat then WindowObj._edgeShadow(pill, Z_BASE + 890) end
 	if WindowObj._attachBlur then WindowObj._attachBlur(pill, math.floor(radius * 0.6)) end
 	return pill
 end
@@ -3298,7 +3299,7 @@ function OV.row(rows, order, text, leftText, iconRight)
 		Name = "OverlayRow", Size = UDim2.fromOffset(leftW + 4 + nameW, OV.h), BackgroundTransparency = 1,
 		LayoutOrder = order, ZIndex = Z_BASE + 891,
 	}, rows)
-	local leftPill = OV.pill("IconPill", row, OV.entryAlpha, 12)
+	local leftPill = OV.pill("IconPill", row, OV.entryAlpha, 12, nil, true)
 	leftPill.Size = UDim2.fromOffset(leftW, OV.h)
 	local iconX, nameX = 0, leftW + 4
 	if iconRight then iconX, nameX = nameW + 4, 0 end
@@ -3310,7 +3311,7 @@ function OV.row(rows, order, text, leftText, iconRight)
 			ZIndex = Z_BASE + 892,
 		}, leftPill)
 	end
-	local namePill = OV.pill("NamePill", row, OV.entryAlpha, 12)
+	local namePill = OV.pill("NamePill", row, OV.entryAlpha, 12, nil, true)
 	namePill.Position = UDim2.fromOffset(nameX, 0)
 	namePill.Size = UDim2.fromOffset(nameW, OV.h)
 	New("TextLabel", {
