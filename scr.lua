@@ -2377,7 +2377,10 @@ for key in pairs(WMCells) do WMDividers[key] = WMDivider() end
 -- ============================================================================
 local WMShadowSync
 
+local WMLastOrder
 local function ApplyWatermarkLayout(orderList, showMap)
+	-- A re-apply without an order (e.g. after the loader) keeps the last one.
+	if type(orderList) == "table" and #orderList > 0 then WMLastOrder = orderList else orderList = WMLastOrder end
 	if type(showMap) == "table" then
 		for key in pairs(WMShowMap) do
 			if showMap[key] ~= nil then WMShowMap[key] = showMap[key] == true end
@@ -2406,7 +2409,7 @@ local function ApplyWatermarkLayout(orderList, showMap)
 	end
 	-- No dividers: Neverlose separates the stats with spacing only.
 	for _, divider in pairs(WMDividers) do divider.Visible = false end
-	GameInfo.Visible = #shown > 0
+	GameInfo.Visible = #shown > 0 and not WindowObj._loaderActive
 	if WMShadowSync then WMShadowSync() end
 end
 ApplyWatermarkLayout(nil, nil)
@@ -4739,7 +4742,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	ConfigMainFrame.Name = "ConfigMainFrame"
 	ConfigMainFrame.Position = UDim2.fromOffset(11, 47)
 	ConfigMainFrame.Size = UDim2.fromOffset(250, 104)
-	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(17, 19, 27)
+	ConfigMainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26) -- Neverlose presets panel
 	ConfigMainFrame.BackgroundTransparency = 0.045
 	ConfigMainFrame.BorderSizePixel = 0
 	ConfigMainFrame.ZIndex = 110
@@ -4810,7 +4813,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	CMTitle.BackgroundTransparency = 1
 	-- Neverlose shows the active tab as an accent-tinted pill: cloud + "PRESETS".
 	CMTitle.Text = "PRESETS"
-	CMTitle.TextColor3 = mainColor
+	CMTitle.TextColor3 = mainColor:Lerp(Color3.new(1, 1, 1), 0.35)
 	CMTitle.TextSize = 13
 	CMTitle.Font = FONT_BOLD
 	CMTitle.TextTransparency = 0.05
@@ -4873,7 +4876,7 @@ UIAspectRatioConstraint.Parent = SaveArrow
 	SearchContainer.Name = "SearchContainer"
 	SearchContainer.Position = UDim2.new(0, 14, 0, 54)
 	SearchContainer.Size = UDim2.new(1, -28, 0, 34)
-	SearchContainer.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	SearchContainer.BackgroundColor3 = Color3.fromRGB(26, 26, 38)
 	SearchContainer.BorderSizePixel = 0
 	SearchContainer.ZIndex = 1000
 	SearchContainer.Parent = ConfigMainFrame
@@ -5194,8 +5197,13 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		SetActiveConfigName(nil)
 	end
 
+	-- Neverlose preset rows: 21,21,29 cards; the loaded one is lighter with an
+	-- accent outline.
+	-- (Literal colours, not locals: AddWindow is near Luau's register cap.)
 	local function DeactivateRow(rowFrame, loadBtn)
-		Tween(rowFrame, {BackgroundTransparency = 0.25}, 0.15)
+		Tween(rowFrame, {BackgroundColor3 = Color3.fromRGB(21, 21, 29)}, 0.15)
+		local outline = rowFrame:FindFirstChild("ConfigRowStroke")
+		if outline then Tween(outline, { Color = STROKE.Color, Transparency = STROKE.Transparency }, 0.15) end
 		loadBtn.Image = LOAD_ICON
 		Tween(loadBtn, {ImageColor3 = Color3.fromRGB(180, 180, 200)}, 0.15)
 	end
@@ -5204,8 +5212,8 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		local row = Instance.new("Frame")
 		row.Name = "ConfigRow_" .. name
 		row.Size = UDim2.new(1, 0, 0, 36)
-		row.BackgroundColor3 = Color3.fromRGB(16, 18, 27)
-		row.BackgroundTransparency = 0.25
+		row.BackgroundColor3 = Color3.fromRGB(21, 21, 29)
+		row.BackgroundTransparency = 0
 		row.BorderSizePixel = 0
 		row.ZIndex = 1000
 		row.Parent = ListContainer
@@ -5213,10 +5221,10 @@ UIAspectRatioConstraint.Parent = SaveArrow
 
 		Stroke(row, "ConfigRowStroke")
 		row.MouseEnter:Connect(function()
-			Tween(row, { BackgroundTransparency = 0.12 }, 0.1, Enum.EasingStyle.Sine)
+			Tween(row, { BackgroundColor3 = Color3.fromRGB(27, 27, 35) }, 0.1, Enum.EasingStyle.Sine)
 		end)
 		row.MouseLeave:Connect(function()
-			Tween(row, { BackgroundTransparency = activeRow == row and 0.5 or 0.25 }, 0.13, Enum.EasingStyle.Sine)
+			Tween(row, { BackgroundColor3 = activeRow == row and Color3.fromRGB(27, 27, 35) or Color3.fromRGB(21, 21, 29) }, 0.13, Enum.EasingStyle.Sine)
 		end)
 
 		local Rename = Instance.new("TextBox")
@@ -5430,7 +5438,9 @@ UIAspectRatioConstraint.Parent = SaveArrow
 				activeRow = row
 				activeLoadBtn = LoadConfigBtn
 				SetActiveConfigName(name)
-				Tween(row, {BackgroundTransparency = 0.5}, 0.2)
+				Tween(row, {BackgroundColor3 = Color3.fromRGB(27, 27, 35)}, 0.2)
+				local outline = row:FindFirstChild("ConfigRowStroke")
+				if outline then Tween(outline, { Color = mainColor, Transparency = 0.55 }, 0.2) end
 				LoadConfigBtn.Image = SAVE_ICON
 				Tween(LoadConfigBtn, {ImageColor3 = mainColor}, 0.2)
 			end
@@ -6122,8 +6132,8 @@ WindowObj._setupWindowToggle = nil
 if Library.ShowLoader ~= false then task.spawn(function()
 	local toast = New("Frame", {
 		Name = "NeverloseLoader",
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, 20, 1, -24),
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, 20, 0, 20),
 		Size = UDim2.fromOffset(300, 58),
 		BackgroundColor3 = Color3.fromRGB(14, 15, 22),
 		BackgroundTransparency = 0.04,
@@ -6171,25 +6181,44 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = Z_BASE + 991,
 	}, toast)
 
+	-- Thin progress bar along the bottom edge, filled step by step.
+	local bar = New("Frame", {
+		Name = "LoaderBar", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 12, 1, -6), Size = UDim2.new(1, -24, 0, 2),
+		BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92, BorderSizePixel = 0, ZIndex = Z_BASE + 991,
+	}, toast)
+	New("UICorner", { CornerRadius = UDim.new(1, 0) }, bar)
+	local fill = New("Frame", {
+		Name = "LoaderFill", Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = mainColor, BorderSizePixel = 0, ZIndex = Z_BASE + 992,
+	}, bar)
+	New("UICorner", { CornerRadius = UDim.new(1, 0) }, fill)
+	-- The watermark waits for the loader, like Neverlose's.
+	-- (Later SetWatermark calls stay hidden too: ApplyWatermarkLayout checks the flag.)
+	WindowObj._loaderActive = true
+	local watermarkFrame = WindowObj.Watermark and WindowObj.Watermark.frame
+	if watermarkFrame then watermarkFrame.Visible = false end
+
 	local spinning = true
 	task.spawn(function()
 		while spinning and toast.Parent do
-			sweep.Rotation = (sweep.Rotation + 4) % 360
-			RunService.RenderStepped:Wait()
+			local dt = RunService.RenderStepped:Wait()
+			sweep.Rotation = (sweep.Rotation + dt * 220) % 360
 		end
 	end)
-	Tween(toast, { Position = UDim2.new(1, -20, 1, -24) }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	Tween(toast, { Position = UDim2.new(1, -20, 0, 20) }, 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	for step = 1, 10 do
 		task.wait(0.14 + math.random() * 0.08)
 		counter.Text = tostring(step) .. " of 10"
+		Tween(fill, { Size = UDim2.new(step / 10, 0, 1, 0) }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	end
 	status.Text = "Welcome back, " .. tostring(LocalPlayer.Name or "user")
 	counter.Text = "Ready"
 	task.wait(0.5)
 	if AcrylicBlur.toggleGui then AcrylicBlur.toggleGui() end
+	WindowObj._loaderActive = false
+	if watermarkFrame and WindowObj.Watermark.applyLayout then WindowObj.Watermark.applyLayout(nil, nil) end
 	task.wait(0.6)
-	Tween(toast, { Position = UDim2.new(1, 320, 1, -24) }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-	task.wait(0.32)
+	Tween(toast, { Position = UDim2.new(1, 320, 0, 20) }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+	task.wait(0.37)
 	spinning = false
 	toast:Destroy()
 end) end
@@ -6750,16 +6779,10 @@ end
 					local leftX = SettingsBtn.AbsolutePosition.X + SettingsBtn.AbsoluteSize.X + 8 * scale
 					leftX = math.clamp(leftX, mainLeft + edge, math.max(mainLeft + edge, mainRight - panelWidth - edge))
 
-					local belowY = parentPosition.Y + parentSize.Y + edge
-					local aboveY = parentPosition.Y - visualHeight - edge
-					local y
-					if belowY + visualHeight <= mainBottom - edge then
-						y = belowY
-					elseif aboveY >= mainTop + edge then
-						y = aboveY
-					else
-						y = mainTop + edge
-					end
+					-- Neverlose: the plate opens just right of the dots, its top a little
+					-- above the row, and is pushed up only if it would leave the window.
+					local y = parentPosition.Y - 6 * scale
+					y = math.clamp(y, mainTop + edge, math.max(mainTop + edge, mainBottom - visualHeight - edge))
 
 					SettingsFrame.Position = UDim2.new(0, (leftX - parentPosition.X) / scale, 0, (y - parentPosition.Y) / scale)
 					SettingsFrame.Size = UDim2.fromOffset(width, height)
@@ -6774,8 +6797,10 @@ end
 					settingsOpen = false
 					ClosePopupsUnder(SettingsFrame)
 					UnregisterPopup(SettingsFrame)
-					Tween(SettingsFrame, {Size = UDim2.new(0.96, 0, 0, 0), BackgroundTransparency = 1}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-					task.delay(0.21, function() if not settingsOpen then SettingsFrame.Visible = false end end)
+					-- Fade out in place; shrinking the height used to cut the plate off.
+					SmoothClose(SettingsFrame, 0.13)
+					Tween(SFScale, {Scale = 0.97}, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					Tween(SettingsBtn, { BackgroundTransparency = 1 }, 0.12)
 				end
 				local SettingsObj = {}
 				SettingsHit.MouseButton1Click:Connect(function()
@@ -6797,17 +6822,20 @@ end
 					CloseAllPopupsExcept(SettingsFrame)
 					RememberPopupClipping(SettingsFrame)
 					ForceLiftClipping(SettingsFrame)
-					SettingsFrame.BackgroundTransparency = 0.045
 					SettingsFrame.Visible = false
-					SFScale.Scale = 0.94
+					SFScale.Scale = 0.96
 					ApplyZIndexLadder(SettingsFrame, NextPopupZ())
 					placeSettings(getSettingsHeight())
-					SettingsFrame.Visible = true
+					SmoothOpen(SettingsFrame, 0.045, 0.18)
+					Tween(SFScale, {Scale = 1}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					-- The dots stay highlighted while their plate is open, as in Neverlose.
+					if not SettingsBtn:FindFirstChildOfClass("UICorner") then New("UICorner", { CornerRadius = UDim.new(0, 5) }, SettingsBtn) end
+					SettingsBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+					Tween(SettingsBtn, { BackgroundTransparency = 0.9 }, 0.12)
 					RegisterPopup(SettingsFrame, closeSF, SettingsBtn)
 					local function settle()
 						if not settingsOpen or not SettingsFrame.Parent then return end
 						placeSettings(getSettingsHeight())
-						Tween(SFScale, {Scale = 1}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					end
 					task.defer(settle)
 					task.delay(0.05, settle)
