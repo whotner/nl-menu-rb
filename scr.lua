@@ -538,16 +538,18 @@ local function New(class, props, parent)
 	elseif obj.Name == "TopBarText" and obj:IsA("TextLabel") then
 		obj.TextColor3 = Color3.fromRGB(205, 208, 218)
 	elseif (obj.Name == "TopBar" or obj.Name == "SliderValue") and obj:IsA("GuiObject") then
-		obj.BackgroundColor3 = Color3.fromRGB(26, 26, 36)
+		local isValue = obj.Name == "SliderValue"
+		-- Slider readouts stay quiet in Neverlose: dimmer text and outline.
+		obj.BackgroundColor3 = isValue and Color3.fromRGB(22, 22, 31) or Color3.fromRGB(26, 26, 36)
 		obj.BackgroundTransparency = 0
 		if obj:IsA("TextLabel") then
-			obj.TextColor3 = Color3.fromRGB(205, 208, 218)
+			obj.TextColor3 = isValue and Color3.fromRGB(176, 178, 188) or Color3.fromRGB(205, 208, 218)
 			obj.TextTransparency = 0
 		end
 		local fieldStroke = Instance.new("UIStroke")
 		fieldStroke.Name = "FieldOutline"
 		fieldStroke.Color = Color3.fromRGB(255, 255, 255)
-		fieldStroke.Transparency = 0.93
+		fieldStroke.Transparency = isValue and 0.96 or 0.93
 		fieldStroke.Thickness = 1
 		fieldStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 		fieldStroke.Parent = obj
@@ -695,16 +697,24 @@ SizeSliderChip = function(effect, line, value)
 	value.AnchorPoint = Vector2.new(1, 0.5)
 	value.Position = UDim2.new(1, 0, 0.5, 0)
 	value.Size = UDim2.fromOffset(chipWidth, 22)
-	value.BackgroundColor3 = Color3.fromRGB(14, 16, 24)
+	-- Quiet readout, as in Neverlose (matches the New() SliderValue role).
+	value.BackgroundColor3 = Color3.fromRGB(22, 22, 31)
 	value.TextScaled = false
-	value.TextSize = 14
+	value.TextSize = 13
 	value.Font = FONT
-	value.TextColor3 = Color3.fromRGB(255, 255, 255)
+	value.TextColor3 = Color3.fromRGB(176, 178, 188)
 	value.TextTransparency = 0
 	value.TextXAlignment = Enum.TextXAlignment.Center
 	effect.AnchorPoint = Vector2.new(0, 0.5)
-	effect.Position = UDim2.new(0, 150, 0.5, 0)
-	effect.Size = UDim2.new(1, -164, 0, 22)
+	-- Plates are narrow: start the slider earlier there so the track stays long.
+	local inPlate = effect:FindFirstAncestor("SettingsFrame") or effect:FindFirstAncestor("AccordionFrame")
+	if inPlate then
+		effect.Position = UDim2.new(0, 104, 0.5, 0)
+		effect.Size = UDim2.new(1, -116, 0, 22)
+	else
+		effect.Position = UDim2.new(0, 150, 0.5, 0)
+		effect.Size = UDim2.new(1, -164, 0, 22)
+	end
 	line.AnchorPoint = Vector2.new(0, 0.5)
 	line.Position = UDim2.new(0, 0, 0.5, 0)
 	line.Size = UDim2.new(1, -(chipWidth + 10), 0, 3)
@@ -1825,65 +1835,86 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	-- Neverlose option lists open instantly, centred on the field that opened
 	-- them (overlapping it), not dropped below with a grow animation. Kept on
 	-- WindowObj instead of a local: AddWindow is near Luau's register cap.
-	-- Neverlose sidebar glyphs drawn from frames, sized in scale so they fit any
-	-- icon box (tabs and sub-tabs). The parts follow the ImageLabel's own
-	-- ImageColor3/ImageTransparency, so every existing tint tween drives them.
+	-- Neverlose sidebar glyphs drawn on an 18x18 pixel grid (even sizes,
+	-- whole-pixel positions, centred on 9) so they stay crisp; a UIScale fits
+	-- the grid to the icon box (tabs and sub-tabs differ). The parts follow the
+	-- ImageLabel's ImageColor3/ImageTransparency, so every tint tween drives them.
 	-- Returns true when `kind` has a drawn glyph.
 	WindowObj._drawTabGlyph = function(kind, icon)
 		kind = string.lower(tostring(kind or ""))
+		local isRage = kind == "crosshair" or kind == "rage" or kind == "aimbot"
+		local isMouse = kind == "mouse" or kind == "legit"
+		local isUser = kind == "user" or kind == "player" or kind == "players"
+		local isGlobe = kind == "earth" or kind == "world" or kind == "globe"
+		local isMisc = kind == "gear" or kind == "misc" or kind == "miscellaneous" or kind == "settings"
+		if not (isRage or isMouse or isUser or isGlobe or isMisc) then return false end
+
 		local CUT = Color3.fromRGB(20, 22, 30)
+		local grid = Instance.new("Frame")
+		grid.Name = "GlyphGrid"
+		grid.AnchorPoint = Vector2.new(0.5, 0.5)
+		grid.Position = UDim2.fromScale(0.5, 0.5)
+		grid.Size = UDim2.fromOffset(18, 18)
+		grid.BackgroundTransparency = 1
+		grid.ZIndex = icon.ZIndex + 1
+		grid.Parent = icon
+		local fit = Instance.new("UIScale")
+		fit.Parent = grid
+		-- Ratio of on-screen sizes, so the window's own UIScale is not applied twice.
+		local function refit()
+			local gw, iw = grid.AbsoluteSize.X, icon.AbsoluteSize.X
+			if gw > 0 and iw > 0 then fit.Scale = fit.Scale * iw / gw end
+		end
+		icon:GetPropertyChangedSignal("AbsoluteSize"):Connect(refit)
+		task.defer(refit)
+
 		local fills, rings = {}, {}
-		local function part(parent, size, pos, corner, isCut)
+		local function part(parent, x, y, w, h, radius, isCut)
 			local f = Instance.new("Frame")
-			f.AnchorPoint = Vector2.new(0.5, 0.5)
-			f.Size = size
-			f.Position = pos
+			f.Position = UDim2.fromOffset(x, y)
+			f.Size = UDim2.fromOffset(w, h)
 			f.BorderSizePixel = 0
 			f.BackgroundColor3 = isCut and CUT or icon.ImageColor3
-			f.ZIndex = icon.ZIndex + (isCut and 2 or 1)
+			f.ZIndex = icon.ZIndex + (isCut and 3 or 2)
 			f.Parent = parent
-			if corner then local c = Instance.new("UICorner"); c.CornerRadius = corner; c.Parent = f end
+			if radius then local c = Instance.new("UICorner"); c.CornerRadius = radius; c.Parent = f end
 			if not isCut then table.insert(fills, f) end
 			return f
 		end
-		local S, C = UDim2.fromScale, UDim.new
-		if kind == "crosshair" or kind == "rage" or kind == "aimbot" then
+		local ROUND = UDim.new(1, 0)
+		if isRage then
 			local ring = Instance.new("Frame")
-			ring.AnchorPoint = Vector2.new(0.5, 0.5)
-			ring.Position = S(0.5, 0.5)
-			ring.Size = S(0.64, 0.64)
+			ring.Position = UDim2.fromOffset(3, 3)
+			ring.Size = UDim2.fromOffset(12, 12)
 			ring.BackgroundTransparency = 1
-			ring.ZIndex = icon.ZIndex + 1
-			ring.Parent = icon
-			local rc = Instance.new("UICorner"); rc.CornerRadius = C(1, 0); rc.Parent = ring
-			local stroke = Instance.new("UIStroke"); stroke.Thickness = 1.6; stroke.Color = icon.ImageColor3; stroke.Parent = ring
+			ring.ZIndex = icon.ZIndex + 2
+			ring.Parent = grid
+			local rc = Instance.new("UICorner"); rc.CornerRadius = ROUND; rc.Parent = ring
+			local stroke = Instance.new("UIStroke"); stroke.Thickness = 2; stroke.Color = icon.ImageColor3; stroke.Parent = ring
 			table.insert(rings, stroke)
-			-- ticks centred on the ring edge, so they stay symmetric at any size
-			part(ring, S(0.17, 0.42), S(0.5, 0), nil)
-			part(ring, S(0.17, 0.42), S(0.5, 1), nil)
-			part(ring, S(0.42, 0.17), S(0, 0.5), nil)
-			part(ring, S(0.42, 0.17), S(1, 0.5), nil)
-			part(ring, S(0.24, 0.24), S(0.5, 0.5), C(1, 0))
-		elseif kind == "mouse" or kind == "legit" then
-			local body = part(icon, S(0.6, 0.84), S(0.5, 0.5), C(0.45, 0))
-			part(body, UDim2.new(1, 0, 0, 1), S(0.5, 0.38), nil, true)
-			part(body, UDim2.new(0, 1, 0.38, 0), S(0.5, 0.19), nil, true)
-		elseif kind == "user" or kind == "player" or kind == "players" then
-			part(icon, S(0.44, 0.44), S(0.5, 0.28), C(1, 0))
-			part(icon, S(0.84, 0.4), S(0.5, 0.8), C(0.45, 0))
-		elseif kind == "earth" or kind == "world" or kind == "globe" then
-			local globe = part(icon, S(0.88, 0.88), S(0.5, 0.5), C(1, 0))
-			part(globe, S(0.36, 0.3), S(0.34, 0.36), C(1, 0), true)
-			part(globe, S(0.42, 0.24), S(0.66, 0.72), C(1, 0), true)
-			part(globe, S(0.2, 0.18), S(0.74, 0.3), C(1, 0), true)
-		elseif kind == "gear" or kind == "misc" or kind == "miscellaneous" or kind == "settings" then
-			local plate = part(icon, S(0.84, 0.84), S(0.5, 0.5), C(0.24, 0))
-			part(plate, S(0.62, 0.1), S(0.5, 0.36), nil, true)
-			part(plate, S(0.62, 0.1), S(0.5, 0.64), nil, true)
-			part(plate, S(0.2, 0.2), S(0.32, 0.36), C(0.3, 0), true)
-			part(plate, S(0.2, 0.2), S(0.68, 0.64), C(0.3, 0), true)
-		else
-			return false
+			part(grid, 8, 0, 2, 5)      -- top tick
+			part(grid, 8, 13, 2, 5)     -- bottom tick
+			part(grid, 0, 8, 5, 2)      -- left tick
+			part(grid, 13, 8, 5, 2)     -- right tick
+			part(grid, 8, 8, 2, 2)      -- centre dot
+		elseif isMouse then
+			local body = part(grid, 4, 1, 10, 16, UDim.new(0, 5))
+			part(body, 0, 6, 10, 1, nil, true)  -- button split
+			part(body, 4, 0, 2, 6, nil, true)   -- wheel gap
+		elseif isUser then
+			part(grid, 5, 1, 8, 8, ROUND)                 -- head
+			part(grid, 2, 10, 14, 7, UDim.new(0, 5))      -- shoulders
+		elseif isGlobe then
+			local globe = part(grid, 1, 1, 16, 16, ROUND)
+			part(globe, 3, 3, 5, 4, ROUND, true)
+			part(globe, 8, 10, 6, 3, ROUND, true)
+			part(globe, 10, 3, 3, 3, ROUND, true)
+		elseif isMisc then
+			local plate = part(grid, 2, 2, 14, 14, UDim.new(0, 4))
+			part(plate, 3, 4, 8, 2, nil, true)       -- upper slider line
+			part(plate, 3, 8, 8, 2, nil, true)       -- lower slider line
+			part(plate, 8, 3, 4, 4, ROUND, true)     -- upper knob (right)
+			part(plate, 2, 7, 4, 4, ROUND, true)     -- lower knob (left)
 		end
 		icon.Image = ""
 		local function sync()
@@ -1927,42 +1958,42 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			local o = Instance.new("UIStroke"); o.Color = color; o.Thickness = 1.4; o.Parent = f
 			return f
 		end
+		-- Pixel-aligned shapes only (no rotation, whole-pixel sizes) so the small
+		-- icons stay crisp; bin and restore use the image assets the bind menu
+		-- already uses for Delete and Reset.
+		local function pix(x, y, w, h)
+			local f = Instance.new("Frame")
+			f.Position = UDim2.fromOffset(x, y)
+			f.Size = UDim2.fromOffset(w, h)
+			f.BackgroundColor3 = color
+			f.BorderSizePixel = 0
+			f.ZIndex = host.ZIndex + 1
+			f.Parent = host
+			return f
+		end
+		local function image(asset)
+			local img = Instance.new("ImageLabel")
+			img.Size = UDim2.fromScale(1, 1)
+			img.BackgroundTransparency = 1
+			img.Image = asset
+			img.ImageColor3 = color
+			img.ScaleType = Enum.ScaleType.Fit
+			img.ZIndex = host.ZIndex + 1
+			img.Parent = host
+			return img
+		end
 		if kind == "share" then
-			-- arrow out of a corner: shaft + head, over an open tray
-			bar(8, 6, 1.6, 9, 45)
-			bar(10.2, 2.6, 5, 1.6, 0)
-			bar(12, 4.4, 1.6, 5, 0)
-			bar(4, 12.2, 7, 1.6, 0)
-			bar(1.2, 9.6, 1.6, 6, 0)
+			-- box with an arrow leaving its top-right corner
+			pix(1, 5, 2, 8); pix(1, 12, 8, 2); pix(7, 9, 2, 5); pix(1, 5, 4, 2)
+			pix(8, 1, 5, 2); pix(11, 1, 2, 5)
+			pix(9, 3, 2, 2); pix(7, 5, 2, 2); pix(5, 7, 2, 2)
 		elseif kind == "copy" then
 			box(1, 4, 8, 9)
 			box(5, 1, 8, 9)
 		elseif kind == "trash" then
-			-- lid, handle and a centred bin with two slats, on whole pixels
-			bar(7, 3, 11, 2, 0)
-			bar(7, 1, 5, 2, 0)
-			box(3, 5, 8, 8)
-			bar(6, 9, 1, 4, 0)
-			bar(8, 9, 1, 4, 0)
+			image("rbxassetid://116396312853810")
 		elseif kind == "restore" then
-			-- circular arrow: three quarters of a ring plus an arrow head
-			local ring = Instance.new("Frame")
-			ring.Position = UDim2.fromOffset(2, 2)
-			ring.Size = UDim2.fromOffset(10, 10)
-			ring.BackgroundTransparency = 1
-			ring.ZIndex = host.ZIndex + 1
-			ring.Parent = host
-			local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = ring
-			local o = Instance.new("UIStroke"); o.Color = color; o.Thickness = 1.5; o.Parent = ring
-			local g = Instance.new("UIGradient")
-			g.Transparency = NumberSequence.new({
-				NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.72, 0),
-				NumberSequenceKeypoint.new(0.74, 1), NumberSequenceKeypoint.new(1, 1),
-			})
-			g.Rotation = -45
-			g.Parent = o
-			bar(3, 2.4, 4, 1.5, 0)
-			bar(1.6, 3.8, 1.5, 4, 0)
+			image("rbxassetid://106497040962250")
 		end
 	end
 
@@ -2823,7 +2854,9 @@ local function AttachShadow(frame, opts)
 	for i = 1, layers do
 		local spread = math.floor(i * step + 0.5)
 		-- Keep the inner edge subtle; outer layers fade instead of forming a black halo.
-		local alpha = math.clamp(0.76 + (i - 1) * (0.22 / math.max(1, layers - 1)), 0.76, 0.98)
+		-- opts.strength sets the innermost alpha (lower = darker), default 0.76.
+		local inner = opts.strength or 0.76
+		local alpha = math.clamp(inner + (i - 1) * ((0.98 - inner) / math.max(1, layers - 1)), inner, 0.98)
 		local shadow = New("Frame", {
 			Name = "ShadowLayer" .. i,
 			Position = UDim2.new(0, -spread, 0, bias - spread),
@@ -3455,7 +3488,8 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 	WindowSettingsFrame.Visible = false
 	WindowSettingsFrame.Parent = MainFrame
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = WindowSettingsFrame end
-	AttachShadow(WindowSettingsFrame, { radius = 12, layers = 6, step = 1.8, bias = 4 })
+	-- Neverlose's profile popover casts a wide, soft, clearly visible shadow.
+	AttachShadow(WindowSettingsFrame, { radius = 14, layers = 8, step = 2.6, bias = 6, strength = 0.5 })
 
 
 	local WSScale = New("UIScale", { Scale = 1 }, WindowSettingsFrame)
@@ -6058,8 +6092,11 @@ UIAspectRatioConstraint.Parent = SaveArrow
 			if activeRow == row then
 				ClearActiveConfig()
 			end
-			Tween(row, {BackgroundTransparency = 1}, 0.2)
-			task.delay(0.22, function() row:Destroy() end)
+			-- Fade and fold the row away so the list closes the gap smoothly.
+			row.ClipsDescendants = true
+			FadePopupContent(row, false, 0.18)
+			Tween(row, {BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+			task.delay(0.24, function() row:Destroy() end)
 		end)
 
 		closeSfRow = function()
@@ -6152,11 +6189,36 @@ UIAspectRatioConstraint.Parent = SaveArrow
 		local cfgH = 100 + math.min(countRows(ListContainer), 7) * 42
 		local rdH = 16 + math.max(countRows(RDList), 1) * 42
 		ConfigMainFrame.Size = UDim2.fromOffset(320, math.clamp(cfgH, 104, maxH))
+		if countRows(ListContainer) <= 7 then ListContainer.CanvasPosition = Vector2.new(0, 0) end
+		RDList.CanvasPosition = Vector2.new(0, 0)
 		RecentlyDeletedPanel.Size = UDim2.fromOffset(280, math.clamp(rdH, 54, maxH))
 	end
 	ListContainer.ChildAdded:Connect(function() task.defer(UpdateConfigPanelHeight) end)
 	ListContainer.ChildRemoved:Connect(function() task.defer(UpdateConfigPanelHeight) end)
 	RDList.ChildAdded:Connect(function() task.defer(UpdateConfigPanelHeight) end)
+	-- Rows added while a panel is open were created at a low ZIndex and drew
+	-- behind the panel (it sits on a popup z-ladder), so a new preset or the
+	-- next deleted entry only showed after reopening. Lift them onto the
+	-- panel's ladder and grow them in.
+	do
+		local function liftAndAnimate(panel, list, child)
+			if not panel.Visible or not child:IsA("GuiObject") then return end
+			task.defer(function()
+				if not child.Parent or not panel.Visible then return end
+				ApplyZIndexLadder(panel, panel.ZIndex)
+				if child:IsA("Frame") and child.Name ~= "Space" then
+					local full = child.Size
+					child.ClipsDescendants = true
+					child.Size = UDim2.new(full.X.Scale, full.X.Offset, 0, 0)
+					Tween(child, { Size = full }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					FadePopupContent(child, true, 0.22)
+					task.delay(0.24, function() if child.Parent then child.ClipsDescendants = false end end)
+				end
+			end)
+		end
+		ListContainer.ChildAdded:Connect(function(child) liftAndAnimate(ConfigMainFrame, ListContainer, child) end)
+		RDList.ChildAdded:Connect(function(child) liftAndAnimate(RecentlyDeletedPanel, RDList, child) end)
+	end
 	RDList.ChildRemoved:Connect(function() task.defer(UpdateConfigPanelHeight) end)
 
 	local function RefreshConfigList()
@@ -6849,12 +6911,6 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	}, NeverloseCS2)
 	New("UICorner", { CornerRadius = UDim.new(0, 20) }, toast)
 	AttachShadow(toast, { radius = 20, layers = 6, step = 2, bias = 5 })
-	local edge = Instance.new("UIStroke")
-	edge.Thickness = 1.4
-	edge.Color = mainColor
-	edge.Transparency = 0.1
-	edge.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	edge.Parent = toast
 
 	-- Glow: stacked rounded layers in the accent colour, fading outwards. Each
 	-- carries a gradient so one side is brighter; rotating it moves the light.
