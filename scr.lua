@@ -7010,6 +7010,9 @@ Line9.Parent = MainFrame
 	ToggleBtn.ZIndex = 999
 	ToggleBtn.Parent = NeverloseCS2
 	do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = ToggleBtn end
+	-- The loader (outside this function) hides it until loading ends.
+	WindowObj._toggleBtn = ToggleBtn
+	ToggleBtn.Visible = not WindowObj._loaderActive
 	
 
 
@@ -7181,7 +7184,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	WindowObj._loaderActive = true
 	local watermarkFrame = WindowObj.Watermark and WindowObj.Watermark.frame
 	if watermarkFrame then watermarkFrame.Visible = false end
-	ToggleBtn.Visible = false
+	if WindowObj._toggleBtn then WindowObj._toggleBtn.Visible = false end
 
 	local spinning = true
 	task.spawn(function()
@@ -7238,7 +7241,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	task.wait(0.5)
 	if AcrylicBlur.toggleGui then AcrylicBlur.toggleGui() end
 	WindowObj._loaderActive = false
-	ToggleBtn.Visible = true
+	if WindowObj._toggleBtn then WindowObj._toggleBtn.Visible = true end
 	if watermarkFrame and WindowObj.Watermark.applyLayout then WindowObj.Watermark.applyLayout(nil, nil) end
 	if WindowObj.KeybindList then WindowObj.KeybindList.refresh() end
 	if WindowObj.SpectatorList then WindowObj.SpectatorList.refresh() end
