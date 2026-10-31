@@ -351,6 +351,14 @@ local function SerializeValue(v)
 		return v
 	elseif typeof(v) == "Color3" then
 		return { __type = "Color3", r = v.R, g = v.G, b = v.B }
+	elseif t == "table" then
+		-- Multi-select dropdowns: a plain list of strings/numbers/booleans.
+		local items = {}
+		for _, item in ipairs(v) do
+			local it = type(item)
+			if it == "string" or it == "number" or it == "boolean" then table.insert(items, item) end
+		end
+		return { __type = "List", v = items }
 	end
 	return nil
 end
@@ -359,6 +367,8 @@ local function DeserializeValue(v)
 	if type(v) == "table" and v.__type == "Color3" then
 		local ok, color = pcall(Color3.new, tonumber(v.r) or 1, tonumber(v.g) or 1, tonumber(v.b) or 1)
 		if ok then return color end
+	elseif type(v) == "table" and v.__type == "List" then
+		return type(v.v) == "table" and v.v or {}
 	end
 	return v
 end
@@ -1536,6 +1546,11 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local activeTabIndex = nil
 	local tabOrder = 0
 	local WindowObj = {}
+	-- Config extras: state that is not an element value (hotkeys, overlay
+	-- positions). key -> { get = fn() -> json value, set = fn(value) }, saved
+	-- as "__extra_<key>" next to the element values. A field, not a local:
+	-- AddWindow is close to the register limit.
+	WindowObj._configExtras = {}
 	-- Set from the start so nothing (watermark, lists, toggle button) shows
 	-- before the loader finishes.
 	WindowObj._loaderActive = Library.ShowLoader ~= false
@@ -1650,7 +1665,21 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	-- Drag `target` by `handle` (watermark, hotkey and spectator lists). Only
 	-- while the menu is open, so game clicks are never taken. Sets the
 	-- "Dragged" attribute so automatic placement leaves the frame alone.
-	WindowObj._makeDraggable = function(handle, target)
+	WindowObj._makeDraggable = function(handle, target, saveKey)
+		if saveKey then
+			WindowObj._configExtras["pos_" .. saveKey] = {
+				get = function()
+					if not target:GetAttribute("Dragged") then return nil end
+					local p = target.Position
+					return { p.X.Scale, p.X.Offset, p.Y.Scale, p.Y.Offset }
+				end,
+				set = function(v)
+					if type(v) ~= "table" or type(v[4]) ~= "number" then return end
+					target.Position = UDim2.new(v[1], v[2], v[3], v[4])
+					target:SetAttribute("Dragged", true)
+				end,
+			}
+		end
 		local drag
 		handle.InputBegan:Connect(function(input)
 			if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
@@ -1670,6 +1699,29 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		UserInputService.InputEnded:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then drag = nil end
 		end)
+	end
+
+	-- Soft drop shadow: the common 9-slice shadow image (rbxassetid 6014261993,
+	-- slice 49..450), `spread` px larger than the frame and 2px lower. Its
+	-- resting alpha is kept in "ImageAlpha" for fades.
+	WindowObj._softShadow = function(frame, alpha, spread)
+		spread = spread or 18
+		local img = Instance.new("ImageLabel")
+		img.Name = "SoftShadow"
+		img.AnchorPoint = Vector2.new(0.5, 0.5)
+		img.Position = UDim2.new(0.5, 0, 0.5, 2)
+		img.Size = UDim2.new(1, spread, 1, spread)
+		img.BackgroundTransparency = 1
+		img.Image = "rbxassetid://6014261993"
+		img.ImageColor3 = Color3.new(0, 0, 0)
+		img.ImageTransparency = alpha or 0.5
+		img.ScaleType = Enum.ScaleType.Slice
+		img.SliceCenter = Rect.new(49, 49, 450, 450)
+		img.SliceScale = spread / 60
+		img.ZIndex = math.max(1, frame.ZIndex - 1)
+		img:SetAttribute("ImageAlpha", img.ImageTransparency)
+		img.Parent = frame
+		return img
 	end
 
 	-- The glass is rectangular: `inset` pulls it in from the left/right ends so
@@ -2520,8 +2572,9 @@ GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = GameInfo end
--- Neverlose's strip is a plain dark plate: no glass blur behind it.
-WindowObj._makeDraggable(GameInfo, GameInfo)
+-- Plain dark plate with the menu's hairline outline; no glass blur.
+Stroke(GameInfo)
+WindowObj._makeDraggable(GameInfo, GameInfo, "watermark")
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 14); pd.PaddingRight = UDim.new(0, 7); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
 
@@ -2568,7 +2621,7 @@ local function WMCell(name, order, iconAsset, text, iconSize, iconCorner)
 	label.BackgroundTransparency = 1
 	label.BorderSizePixel = 0
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(184, 186, 195)
+	label.TextColor3 = Color3.fromRGB(214, 216, 224)
 	label.TextTransparency = 0
 	label.TextScaled = false
 	label.TextSize = 15
@@ -2789,22 +2842,10 @@ do
 	WMShadowHost.ZIndex = Z_BASE + 899
 	WMShadowHost.Parent = NeverloseCS2
 
-	-- Watermark shadow: more overlapping, low-contrast layers read as a soft
-	-- ambient shadow instead of four separate dark outlines.
+	-- Watermark shadow: one soft 9-slice shadow on the sibling host (the strip
+	-- itself owns a list layout, which would swallow the image).
 	local layers = {}
-	local shadowLayerCount = 2
-	for i = 1, shadowLayerCount do
-		local layer = Instance.new("Frame")
-		layer.Name = "Layer" .. i
-		layer.BackgroundColor3 = Color3.new(0, 0, 0)
-		-- Strongest near the watermark, gradually fading outward.
-		layer.BackgroundTransparency = 0.82 + (i - 1) * 0.08
-		layer.BorderSizePixel = 0
-		layer.ZIndex = Z_BASE + 899
-		layer.Parent = WMShadowHost
-		do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = layer end
-		layers[i] = layer
-	end
+	WindowObj._softShadow(WMShadowHost, 0.45, 22)
 
 	WMShadowSync = function()
 		local w, h = GameInfo.AbsoluteSize.X, GameInfo.AbsoluteSize.Y
@@ -3079,29 +3120,14 @@ function OV.pill(name, parent, color, radius, height)
 	pill:SetAttribute("PillAlpha", 0.04)
 	New("UICorner", { CornerRadius = UDim.new(0, radius) }, pill)
 	Stroke(pill)
-	-- Shadow from strokes (drawn only outside the shape): thin rings flush
-	-- with the plate edge, no offset, so nothing sticks out on one side.
-	for i = 1, 3 do
-		local ring = New("Frame", {
-			Name = "ShadowRing" .. i, Position = UDim2.fromOffset(0, 0), Size = UDim2.fromScale(1, 1),
-			BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = Z_BASE + 890,
-		}, pill)
-		New("UICorner", { CornerRadius = UDim.new(0, radius) }, ring)
-		local st = Instance.new("UIStroke")
-		st.Name = "ShadowStroke"
-		st.Color = Color3.new(0, 0, 0)
-		st.Thickness = i
-		st.Transparency = 0.84 + i * 0.04
-		st:SetAttribute("StrokeAlpha", st.Transparency)
-		st.Parent = ring
-	end
+	if WindowObj._softShadow then WindowObj._softShadow(pill, 0.6) end
 	return pill
 end
 
 -- The panel is a CanvasGroup: showing/hiding is one GroupTransparency tween,
--- so header, rows, outlines and shadows fade together (and cheaply). A 6px
--- margin (OV.pad) keeps the shadow rings inside the group's clip.
-OV.pad = 6
+-- so header, rows, outlines and shadows fade together (and cheaply). A 12px
+-- margin (OV.pad) keeps the soft shadows inside the group's clip.
+OV.pad = 12
 local function MakeOverlayPanel(name, iconAsset, title)
 	local panel = New("CanvasGroup", {
 		Name = name,
@@ -3142,7 +3168,7 @@ local function MakeOverlayPanel(name, iconAsset, title)
 	local headerW = math.ceil(11 + 15 + 8 + 1 + 8 + MeasureText(title, 14, FONT_BOLD) + 12)
 	header.Size = UDim2.fromOffset(headerW, OV.head)
 	panel:SetAttribute("HeaderWidth", headerW)
-	if WindowObj._makeDraggable then WindowObj._makeDraggable(header, panel) end
+	if WindowObj._makeDraggable then WindowObj._makeDraggable(header, panel, name) end
 
 	local rows = New("Frame", {
 		Name = "Rows", Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
@@ -3152,9 +3178,10 @@ local function MakeOverlayPanel(name, iconAsset, title)
 	return panel, rows
 end
 
--- Entry row: left pill (value text, or a glyph drawn by the caller when
--- leftText is nil) + name pill, sized to their text. Returns row, left pill.
-function OV.row(rows, order, text, leftText)
+-- Entry row: icon pill (value text, or a glyph drawn by the caller when
+-- leftText is nil) and name pill, sized to their text. iconRight puts the
+-- name first and the icon pill after it (hotkeys). Returns row, icon pill.
+function OV.row(rows, order, text, leftText, iconRight)
 	local leftW = leftText and math.max(OV.h, math.ceil(MeasureText(leftText, 12, FONT) + 14)) or OV.h
 	local nameW = math.ceil(MeasureText(text, 12, FONT) + 18)
 	local row = New("Frame", {
@@ -3163,6 +3190,9 @@ function OV.row(rows, order, text, leftText)
 	}, rows)
 	local leftPill = OV.pill("IconPill", row, OV.entry, 6)
 	leftPill.Size = UDim2.fromOffset(leftW, OV.h)
+	local iconX, nameX = 0, leftW + 4
+	if iconRight then iconX, nameX = nameW + 4, 0 end
+	leftPill.Position = UDim2.fromOffset(iconX, 0)
 	if leftText then
 		New("TextLabel", {
 			Name = "EntryValue", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = leftText,
@@ -3171,7 +3201,7 @@ function OV.row(rows, order, text, leftText)
 		}, leftPill)
 	end
 	local namePill = OV.pill("NamePill", row, OV.entry, 6)
-	namePill.Position = UDim2.fromOffset(leftW + 4, 0)
+	namePill.Position = UDim2.fromOffset(nameX, 0)
 	namePill.Size = UDim2.fromOffset(nameW, OV.h)
 	New("TextLabel", {
 		Name = "EntryName", Position = UDim2.fromOffset(9, 0), Size = UDim2.new(1, -18, 1, 0),
@@ -3179,7 +3209,8 @@ function OV.row(rows, order, text, leftText)
 		TextSize = 12, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = Z_BASE + 892,
 	}, namePill)
-	row:SetAttribute("NameX", leftW + 4)
+	row:SetAttribute("NameX", nameX)
+	row:SetAttribute("IconX", iconX)
 	return row, leftPill
 end
 
@@ -3195,7 +3226,7 @@ local function FadeOverlayContents(root, show)
 			go(node, { TextTransparency = show and 0 or 1 })
 		elseif node:IsA("ImageLabel") then
 			if show then node.ImageTransparency = 1 end
-			go(node, { ImageTransparency = show and 0 or 1 })
+			go(node, { ImageTransparency = show and (node:GetAttribute("ImageAlpha") or 0) or 1 })
 		elseif node:IsA("UIStroke") then
 			if show then node.Transparency = 1 end
 			go(node, { Transparency = show and (node:GetAttribute("StrokeAlpha") or STROKE.Transparency) or 1 })
@@ -3215,16 +3246,17 @@ end
 function OV.animateRow(row, show, onGone)
 	local icon, name = row:FindFirstChild("IconPill"), row:FindFirstChild("NamePill")
 	local nameX = row:GetAttribute("NameX") or 0
+	local iconX = row:GetAttribute("IconX") or 0
 	local width = row.Size.X.Offset
 	local info = show and OV.ease or OV.easeIn
 	FadeOverlayContents(row, show)
 	if show then
 		row.Size = UDim2.fromOffset(width, 0)
-		if icon then icon.Position = UDim2.fromOffset(12, 0) end
+		if icon then icon.Position = UDim2.fromOffset(iconX + 12, 0) end
 		if name then name.Position = UDim2.fromOffset(nameX + 12, 0) end
 	end
 	TweenService:Create(row, info, { Size = UDim2.fromOffset(width, show and OV.h or 0) }):Play()
-	if icon then TweenService:Create(icon, info, { Position = UDim2.fromOffset(show and 0 or 12, 0) }):Play() end
+	if icon then TweenService:Create(icon, info, { Position = UDim2.fromOffset(iconX + (show and 0 or 12), 0) }):Play() end
 	if name then TweenService:Create(name, info, { Position = UDim2.fromOffset(nameX + (show and 0 or 12), 0) }):Play() end
 	if not show then
 		task.delay(info.Time, function()
@@ -3343,7 +3375,7 @@ function OV.modeGlyph(pill, mode, off)
 end
 
 local function BuildBindRow(entry, order)
-	local row, leftPill = OV.row(KBRows, order, entry.label, entry.value)
+	local row, leftPill = OV.row(KBRows, order, entry.label, entry.value, true)
 	row.Name = "BindRow"
 	if not entry.value then OV.modeGlyph(leftPill, entry.mode, entry.on == false) end
 	return row
@@ -4993,6 +5025,7 @@ end
 			if not silent then InvokeCallback(callback, val) end
 		end
 		function obj:Get() return selected end
+		RegisterConfigElement("usage_selection_", text, obj)
 		MakeReadableText(Row, 10, 18)
 		return obj
 	end
@@ -5044,6 +5077,7 @@ end
 			InvokeCallback(callback, normalized)
 		end
 		function obj:Get() return picker.Get() end
+		RegisterConfigElement("usage_colorpicker_", text, obj)
 		MakeReadableText(Row, 10, 18)
 		return obj
 	end
@@ -5136,6 +5170,10 @@ asss.Parent = SearchBtn
 				end
 			end
 		end
+		for key, extra in pairs(WindowObj._configExtras) do
+			local okGet, value = pcall(extra.get)
+			if okGet and value ~= nil then data["__extra_" .. key] = value end
+		end
 		local http = game:GetService("HttpService")
 		local ok, encoded = pcall(http.JSONEncode, http, data)
 		if not ok or type(encoded) ~= "string" then return false end
@@ -5164,6 +5202,11 @@ asss.Parent = SearchBtn
 					if not setOk then success = false end
 				end
 			end
+		end
+		-- Extras after the values, so hotkeys see the loaded functions.
+		for key, extra in pairs(WindowObj._configExtras) do
+			local saved = data["__extra_" .. key]
+			if saved ~= nil then pcall(extra.set, saved) end
 		end
 		return success
 	end
@@ -9042,6 +9085,13 @@ New("Frame", {
 					max = max,
 				}
 				target.binds = {}
+				-- Stable id for the config: kind + label + occurrence.
+				bindRefs.keyCounts = bindRefs.keyCounts or {}
+				do
+					local base = tostring(kind) .. ":" .. target.label
+					bindRefs.keyCounts[base] = (bindRefs.keyCounts[base] or 0) + 1
+					target.cfgKey = base .. "#" .. bindRefs.keyCounts[base]
+				end
 				_contextTargets[row] = target
 				local dots = row:FindFirstChild("ContextDots")
 				target.dots = dots
@@ -9061,6 +9111,52 @@ New("Frame", {
 				end
 				function obj:GetBind() return target.binds[1] and target.binds[1].key end
 			end
+
+			-- Hotkeys in the config: per function, each hotkey's key ("Enum.KeyCode.F"
+			-- or a wheel token), mode, Visible (h = hidden) and Value switches.
+			WindowObj._configExtras.hotkeys = {
+				get = function()
+					local out = {}
+					for _, target in pairs(_contextTargets) do
+						if target.cfgKey and target.binds and #target.binds > 0 then
+							local list = {}
+							for _, b in ipairs(target.binds) do
+								local k = rawget(b, "key")
+								local text = typeof(k) == "EnumItem" and tostring(k) or (type(k) == "string" and k or nil)
+								table.insert(list, { k = text, m = rawget(b, "bindMode"), h = rawget(b, "hideInList") == true, v = rawget(b, "showValue") == true })
+							end
+							out[target.cfgKey] = list
+						end
+					end
+					return out
+				end,
+				set = function(saved)
+					if type(saved) ~= "table" then return end
+					for _, target in pairs(_contextTargets) do
+						while target.binds and target.binds[1] do bindRefs.removeBind(target.binds[1]) end
+						local list = target.cfgKey and saved[target.cfgKey]
+						if type(list) == "table" then
+							for _, item in ipairs(list) do
+								local b = bindRefs.newBind(target)
+								b.bindMode = item.m
+								b.hideInList = item.h == true
+								b.showValue = item.v == true
+								local key
+								if type(item.k) == "string" then
+									local enumType, enumName = item.k:match("^Enum%.(%w+)%.(%w+)$")
+									if enumType then
+										pcall(function() key = Enum[enumType][enumName] end)
+									else
+										key = item.k
+									end
+								end
+								if key then SetTargetBind(b, key) end
+							end
+						end
+					end
+					if RefreshKeybindOverlay then task.defer(RefreshKeybindOverlay) end
+				end,
+			}
 
 			local function IsExtraMouseType(t)
 				-- Roblox's standard enum only exposes MouseButton1/2/3.
