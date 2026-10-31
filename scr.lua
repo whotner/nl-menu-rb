@@ -46,9 +46,12 @@ local LoadAcrylic = function()
 		end)
 		if ok and effect then
 			effect.Enabled = true
-			effect.FarIntensity = 1
-			effect.FocusDistance = 0
-			effect.InFocusRadius = 500
+			-- Acrylic trick: blur only the near range, where the Glass part sits in
+			-- front of the camera; the world from ~1.6 studs on stays sharp. The old
+			-- 500-stud focus radius kept everything in focus, so nothing blurred.
+			effect.FarIntensity = 0
+			effect.FocusDistance = 51.6
+			effect.InFocusRadius = 50
 			effect.NearIntensity = 1
 			effect.Name = "NeverloseDepthOfField"
 			sharedDepthOfField = effect
@@ -85,9 +88,9 @@ local LoadAcrylic = function()
 
 		if DepthOfField then
 			DepthOfField.Enabled = true
-			DepthOfField.FarIntensity = 1
-			DepthOfField.FocusDistance = 0
-			DepthOfField.InFocusRadius = 500
+			DepthOfField.FarIntensity = 0
+			DepthOfField.FocusDistance = 51.6
+			DepthOfField.InFocusRadius = 50
 			DepthOfField.NearIntensity = 1
 		end
 
@@ -1350,7 +1353,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		table.insert(_registeredElements, {key = base .. "#" .. count, obj = object})
 	end
 
-	local mainColor = Color3.fromRGB(78, 131, 255)
+	local mainColor = Color3.fromRGB(78, 139, 255)
 	local tabs = {}
 	local activeTabIndex = nil
 	local tabOrder = 0
@@ -1990,7 +1993,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 local Stats = game:GetService('Stats')
 
 local FPSText, MSText, TimeText, RamText, SignalImage
-local ACCENT = mainColor or Color3.fromRGB(78, 131, 255)
+local ACCENT = mainColor or Color3.fromRGB(78, 139, 255)
 local GOOD = Color3.fromRGB(120, 220, 140)
 local WARN = Color3.fromRGB(240, 180, 80)
 local BAD = Color3.fromRGB(233, 90, 130)
