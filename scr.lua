@@ -1789,6 +1789,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		end
 		task.delay(6, function()
 			if not img.Parent or img.IsLoaded then return end
+			if img:FindFirstChild("ImageFallback") then return end
 			local label = Instance.new("TextLabel")
 			label.Name = "ImageFallback"
 			label.Size = UDim2.fromScale(1, 1)
@@ -1803,7 +1804,37 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			pad.PaddingLeft = UDim.new(0.15, 0); pad.PaddingRight = UDim.new(0.15, 0)
 			pad.Parent = label
 			label.Parent = img
+			-- A late load (thumbnails can take a while) replaces the letter.
+			local function check()
+				if img.IsLoaded and label.Parent then label:Destroy() end
+			end
+			img:GetPropertyChangedSignal("IsLoaded"):Connect(check)
+			img:GetPropertyChangedSignal("Image"):Connect(function() task.delay(1, check) end)
+			check()
 		end)
+	end
+
+	-- Default NL logo: the logo image when it loads, the drawn "NL" under it
+	-- until then (and for good if it never loads).
+	WindowObj._logoWithFallback = function(parent, textSize, z, corner)
+		local text = WindowObj._textLogo(parent, textSize, z)
+		local img = Instance.new("ImageLabel")
+		img.Name = "HubGlyph"
+		img.Size = UDim2.fromScale(1, 1)
+		img.BackgroundTransparency = 1
+		img.Image = "rbxthumb://type=Asset&id=118608145176297&w=420&h=420"
+		img.ImageRectOffset = Vector2.new(48, 48)
+		img.ImageRectSize = Vector2.new(324, 324)
+		img.ScaleType = Enum.ScaleType.Stretch
+		img.ZIndex = z + 2
+		img.Parent = parent
+		local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, corner or 8); c.Parent = img
+		local function check()
+			if img.IsLoaded then text.Visible = false end
+		end
+		img:GetPropertyChangedSignal("IsLoaded"):Connect(check)
+		check()
+		return img
 	end
 
 	-- The glass is rectangular: `inset` pulls it in from the left/right ends so
@@ -4207,8 +4238,7 @@ Aspect.AspectRatio = 798 / 610
 		New("UICorner", { CornerRadius = UDim.new(0, 8) }, HubIcon:FindFirstChild("HubGlyph"))
 		WindowObj._imageFallback(HubIcon:FindFirstChild("HubGlyph"), "NL")
 	else
-		-- The thumbnail-based logo did not load for everyone; draw it.
-		WindowObj._textLogo(HubIcon, 19, HubIcon.ZIndex + 1)
+		WindowObj._logoWithFallback(HubIcon, 19, HubIcon.ZIndex + 1, 8)
 	end
 
 	New("TextLabel", {
@@ -8000,7 +8030,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		}, badge)
 		New("UICorner", { CornerRadius = UDim.new(0, 10) }, badgeLogo)
 	else
-		WindowObj._textLogo(badge, 20, Z_BASE + 992)
+		WindowObj._logoWithFallback(badge, 20, Z_BASE + 992, 10)
 	end
 	New("TextLabel", {
 		Name = "LoaderTitle", Position = UDim2.fromOffset(66, 13), Size = UDim2.new(1, -150, 0, 20), BackgroundTransparency = 1,
