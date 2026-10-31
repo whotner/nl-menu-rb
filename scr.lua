@@ -3826,7 +3826,8 @@ end
 
 -- One easing for every list animation.
 OV.ease = TweenInfo.new(0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-OV.easeIn = TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+-- Hiding matches the window's 0.2s close, so lists and menu go together.
+OV.easeIn = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
 local function FadeOverlayContents(root, show)
 	local info = show and OV.ease or OV.easeIn
 	local function go(node, props) TweenService:Create(node, info, props):Play() end
@@ -4011,7 +4012,9 @@ RefreshKeybindOverlay = function()
 		if ok and type(result) == "table" then snapshot = result end
 	end
 	-- Shown while the menu is open, and without it while any bind is active.
-	local target = kbEnabled and not WindowObj._loaderActive and (MainFrame.Visible or #snapshot > 0)
+	local menuShown = WindowObj._menuOpen
+	if menuShown == nil then menuShown = MainFrame.Visible end
+	local target = kbEnabled and not WindowObj._loaderActive and (menuShown or #snapshot > 0)
 	local entries = {}
 	for i, entry in ipairs(snapshot) do
 		entries[i] = {
@@ -4076,7 +4079,9 @@ end
 
 local function RefreshSpectatorOverlay()
 	if not SpecPanel.Parent then return end
-	local target = specEnabled and not WindowObj._loaderActive and (MainFrame.Visible or #specList > 0)
+	local menuShown = WindowObj._menuOpen
+	if menuShown == nil then menuShown = MainFrame.Visible end
+	local target = specEnabled and not WindowObj._loaderActive and (menuShown or #specList > 0)
 	local entries = {}
 	for i, person in ipairs(specList) do
 		entries[i] = { id = tostring(person.id) .. ":" .. person.name, sig = "", data = person }
@@ -7803,26 +7808,72 @@ Line9.Parent = MainFrame
 
 	local guiOpen = true
 
+	-- Fades every descendant of `root` (backgrounds, text, images, outlines)
+	-- together. Closing remembers each value ("FadeBase_<prop>") and tweens it
+	-- to clear; opening tweens back to the remembered values.
+	WindowObj._fadeTree = function(root, show, dur)
+		if show == (root:GetAttribute("TreeFaded") ~= true) then return end
+		root:SetAttribute("TreeFaded", not show)
+		local info = TweenInfo.new(dur, Enum.EasingStyle.Sine, show and Enum.EasingDirection.Out or Enum.EasingDirection.In)
+		for _, d in ipairs(root:GetDescendants()) do
+			local props
+			if d:IsA("GuiObject") then
+				props = { "BackgroundTransparency" }
+				if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then table.insert(props, "TextTransparency") end
+				if d:IsA("ImageLabel") or d:IsA("ImageButton") then table.insert(props, "ImageTransparency") end
+			elseif d:IsA("UIStroke") then
+				props = { "Transparency" }
+			end
+			if props then
+				local goal
+				for _, prop in ipairs(props) do
+					local key = "FadeBase_" .. prop
+					if show then
+						local base = d:GetAttribute(key)
+						if base ~= nil then
+							goal = goal or {}
+							goal[prop] = base
+							d:SetAttribute(key, nil)
+						end
+					elseif d[prop] < 1 then
+						d:SetAttribute(key, d[prop])
+						goal = goal or {}
+						goal[prop] = 1
+					end
+				end
+				if goal then TweenService:Create(d, info, goal):Play() end
+			end
+		end
+	end
+
+	-- Opening/closing: the window, everything in it (open plates, presets,
+	-- profile, pickers) and the hotkey/spectator lists fade on one timeline.
 	local function AnimateWindow(open)
-		local dur = open and 0.2 or 0.16
+		local dur = 0.2
 		local part = AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.Part
 		local dof = AcrylicBlur and AcrylicBlur.Instances and AcrylicBlur.Instances.DepthOfField
+		WindowObj._menuOpen = open
+		if WindowObj.KeybindList then pcall(WindowObj.KeybindList.refresh) end
+		if WindowObj.SpectatorList then pcall(WindowObj.SpectatorList.refresh) end
 		if open then
 			MainFrame.Visible = true
+			WindowObj._fadeTree(MainFrame, true, dur)
 			MainFrame.BackgroundTransparency = 1
 			MainFrame.Size = windowAnimSize
 			Tween(MainFrame, { BackgroundTransparency = 0.25 }, dur, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(MainFrame, { Size = windowTargetSize }, dur, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		else
-			HideAllPopupsNow(true)
-			if ConfigMainFrame then ConfigMainFrame.Visible = false end
-			if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
-			if Save then Save.Visible = false end
-			if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
+			WindowObj._fadeTree(MainFrame, false, dur)
 			Tween(MainFrame, { BackgroundTransparency = 1 }, dur, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
 			Tween(MainFrame, { Size = windowAnimSize }, dur, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			task.delay(dur + 0.02, function()
 				if guiOpen then return end
+				-- Plates close only once everything has faded with the window.
+				HideAllPopupsNow(true)
+				if ConfigMainFrame then ConfigMainFrame.Visible = false end
+				if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
+				if Save then Save.Visible = false end
+				if RecentlyDeletedPanel then RecentlyDeletedPanel.Visible = false end
 				MainFrame.Visible = false
 				MainFrame.Size = windowTargetSize
 				if part then part.Transparency = 1 end
