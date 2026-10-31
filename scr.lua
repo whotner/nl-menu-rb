@@ -8345,47 +8345,58 @@ New("UIAspectRatioConstraint", {
 
 			-- Left side: team switch, agent, gear slots.
 			local side = New("Frame", { Name = "AgentSide", Size = UDim2.new(0.32, 0, 1, 0), BackgroundTransparency = 1 }, page)
-			-- Team switch as on CS2: the open team's pill shows its logo and
-			-- "X Loadout", the other team sits beside it as a round logo only;
-			-- clicking that logo switches.
-			local function teamLogo(parent, which, size)
+			-- Team switch as on CS2: CT on the left, T on the right, always. The
+			-- open team's pill widens to show "X Loadout"; the other stays a
+			-- round logo. Clicking the round one opens that team. 2px down so
+			-- the outlines are not clipped by the column.
+			local teamButtons = {}
+			for index, which in ipairs({ "CT", "T" }) do
+				local b = New("TextButton", {
+					Name = "Team_" .. which, Position = UDim2.fromOffset(0, 2), Size = UDim2.fromOffset(28, 28),
+					BackgroundColor3 = CARD, BackgroundTransparency = 0.2, AutoButtonColor = false, Text = "", BorderSizePixel = 0,
+					ClipsDescendants = true,
+				}, side)
+				New("UICorner", { CornerRadius = UDim.new(1, 0) }, b)
+				Stroke(b)
 				local logo = New("Frame", {
-					Name = "TeamLogo", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 4, 0.5, 0), Size = UDim2.fromOffset(size, size),
+					Name = "TeamLogo", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 4, 0.5, 0), Size = UDim2.fromOffset(20, 20),
 					BackgroundColor3 = TEAM_COLOR[which], BackgroundTransparency = 0.78, BorderSizePixel = 0,
-				}, parent)
+				}, b)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, logo)
 				New("ImageLabel", {
 					Name = "TeamLogoIcon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(12, 12),
 					BackgroundTransparency = 1, Image = TEAM_ICON[which], ImageColor3 = TEAM_COLOR[which], ScaleType = Enum.ScaleType.Fit,
 				}, logo)
-				return logo
+				local title = New("TextLabel", {
+					Name = "TeamTitle", Position = UDim2.fromOffset(30, 0), Size = UDim2.new(0, 96, 1, 0), BackgroundTransparency = 1,
+					Text = which .. " Loadout", TextColor3 = TEXT, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left,
+					TextTransparency = 1,
+				}, b)
+				b.MouseEnter:Connect(function() if team ~= which then Tween(b, { BackgroundTransparency = 0 }, 0.1) end end)
+				b.MouseLeave:Connect(function() Tween(b, { BackgroundTransparency = 0.2 }, 0.14) end)
+				teamButtons[which] = { button = b, title = title, index = index }
 			end
-			local switch = New("Frame", {
-				Name = "TeamSwitch", Size = UDim2.fromOffset(130, 28), BackgroundColor3 = CARD, BackgroundTransparency = 0.2, BorderSizePixel = 0,
-			}, side)
-			New("UICorner", { CornerRadius = UDim.new(1, 0) }, switch)
-			Stroke(switch)
-			local badge = teamLogo(switch, team, 20)
-			local badgeText = badge:FindFirstChild("TeamLogoIcon")
-			local switchText = New("TextLabel", {
-				Name = "TeamTitle", Position = UDim2.fromOffset(30, 0), Size = UDim2.new(1, -36, 1, 0), BackgroundTransparency = 1,
-				Text = team .. " Loadout", TextColor3 = TEXT, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left,
-			}, switch)
-			local other = New("TextButton", {
-				Name = "OtherTeam", Position = UDim2.fromOffset(136, 0), Size = UDim2.fromOffset(28, 28), BackgroundColor3 = CARD,
-				BackgroundTransparency = 0.2, AutoButtonColor = false, Text = "", BorderSizePixel = 0,
-			}, side)
-			New("UICorner", { CornerRadius = UDim.new(1, 0) }, other)
-			Stroke(other)
-			local otherLogo = teamLogo(other, team == "CT" and "T" or "CT", 20)
-			otherLogo.AnchorPoint = Vector2.new(0.5, 0.5)
-			otherLogo.Position = UDim2.fromScale(0.5, 0.5)
-			local otherText = otherLogo:FindFirstChild("TeamLogoIcon")
-			other.MouseEnter:Connect(function() Tween(other, { BackgroundTransparency = 0 }, 0.1) end)
-			other.MouseLeave:Connect(function() Tween(other, { BackgroundTransparency = 0.2 }, 0.14) end)
+			local function layoutTeams(instant)
+				local x = 0
+				for _, which in ipairs({ "CT", "T" }) do
+					local entry = teamButtons[which]
+					local open = which == team
+					local size = UDim2.fromOffset(open and 126 or 28, 28)
+					local pos = UDim2.fromOffset(x, 2)
+					if instant then
+						entry.button.Size, entry.button.Position = size, pos
+						entry.title.TextTransparency = open and 0 or 1
+					else
+						Tween(entry.button, { Size = size, Position = pos }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+						Tween(entry.title, { TextTransparency = open and 0 or 1 }, 0.18)
+					end
+					x = x + (open and 126 or 28) + 6
+				end
+			end
+			layoutTeams(true)
 
 			-- The agent stands free on the page (no plate behind it).
-			local agent = New("Frame", { Name = "Agent", Position = UDim2.fromOffset(0, 36), BackgroundTransparency = 1, Active = true }, side)
+			local agent = New("Frame", { Name = "Agent", Position = UDim2.fromOffset(0, 38), BackgroundTransparency = 1, Active = true }, side)
 			local viewport = New("ViewportFrame", {
 				Name = "AgentView", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
 				Ambient = Color3.fromRGB(150, 150, 165), LightColor = Color3.fromRGB(255, 255, 255), LightDirection = Vector3.new(-0.6, -1, -0.8),
@@ -8404,12 +8415,8 @@ New("UIAspectRatioConstraint", {
 				local slot = card(gear, "Gear_" .. item[1])
 				slot.LayoutOrder = i
 				New("ImageLabel", {
-					Name = "GearIcon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.42), Size = UDim2.fromOffset(18, 18),
+					Name = "GearIcon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(18, 18),
 					BackgroundTransparency = 1, Image = item[2], ImageColor3 = MUTED, ImageTransparency = 0.3,
-				}, slot)
-				New("TextLabel", {
-					Name = "GearName", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -4), Size = UDim2.new(1, -6, 0, 14),
-					BackgroundTransparency = 1, Text = item[1], TextColor3 = MUTED, TextSize = 10, Font = FONT,
 				}, slot)
 				slot.MouseButton1Click:Connect(function()
 					if type(options.onSelect) == "function" then pcall(options.onSelect, team, "Gear", i, item[1]) end
@@ -8418,7 +8425,7 @@ New("UIAspectRatioConstraint", {
 			-- Agent card fills the space between the switch and the gear slots.
 			local function fitAgent()
 				local gearH = gear.AbsoluteSize.Y
-				if gearH > 0 then agent.Size = UDim2.new(1, 0, 1, -(36 + gearH + 8)) end
+				if gearH > 0 then agent.Size = UDim2.new(1, 0, 1, -(38 + gearH + 8)) end
 			end
 			gear:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitAgent)
 			task.defer(fitAgent)
@@ -8463,6 +8470,35 @@ New("UIAspectRatioConstraint", {
 				end
 				local humanoid = clone:FindFirstChildOfClass("Humanoid")
 				if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
+				-- Idle pose: the clone carries the live animation frame (mid-step).
+				-- Rebuild every part from the root through its joints at rest
+				-- (Motor6D/Weld: C0 * C1^-1; WeldConstraint: the offset it had).
+				do
+					local root = clone:FindFirstChild("HumanoidRootPart") or clone.PrimaryPart
+					local links = {}
+					for _, j in ipairs(clone:GetDescendants()) do
+						if (j:IsA("Motor6D") or j:IsA("Weld")) and j.Part0 and j.Part1 then
+							table.insert(links, { a = j.Part0, b = j.Part1, rel = j.C0 * j.C1:Inverse() })
+						elseif j:IsA("WeldConstraint") and j.Part0 and j.Part1 then
+							table.insert(links, { a = j.Part0, b = j.Part1, rel = j.Part0.CFrame:ToObjectSpace(j.Part1.CFrame) })
+						end
+					end
+					if root then
+						local placed, progress = { [root] = true }, true
+						while progress do
+							progress = false
+							for _, l in ipairs(links) do
+								if placed[l.a] and not placed[l.b] then
+									l.b.CFrame = l.a.CFrame * l.rel
+									placed[l.b], progress = true, true
+								elseif placed[l.b] and not placed[l.a] then
+									l.a.CFrame = l.b.CFrame * l.rel:Inverse()
+									placed[l.a], progress = true, true
+								end
+							end
+						end
+					end
+				end
 				clone.Parent = world
 				model = clone
 				pose()
@@ -8505,7 +8541,6 @@ New("UIAspectRatioConstraint", {
 				CellSize = UDim2.new(1 / 3, -8, 0.2, -8), CellPadding = UDim2.fromOffset(8, 8),
 				FillDirection = Enum.FillDirection.Vertical, FillDirectionMaxCells = 5, SortOrder = Enum.SortOrder.LayoutOrder,
 			}, slots)
-			local nameLabels = {}
 			for c, category in ipairs(CATEGORIES) do
 				for i = 1, 5 do
 					local slot = card(slots, category .. "_" .. i)
@@ -8515,12 +8550,8 @@ New("UIAspectRatioConstraint", {
 						Name = "Rule", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -5), Size = UDim2.new(1, -16, 0, 2),
 						BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.82, BorderSizePixel = 0,
 					}, slot)
-					local label = New("TextLabel", {
-						Name = "WeaponName", Position = UDim2.fromOffset(9, 0), Size = UDim2.new(1, -18, 1, -10),
-						BackgroundTransparency = 1, Text = WEAPONS[team][category][i], TextColor3 = MUTED, TextSize = 12, Font = FONT,
-						TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Bottom,
-					}, slot)
-					nameLabels[#nameLabels + 1] = { label = label, category = category, index = i }
+					-- Blank template: the weapon is known (onSelect gets its name) but
+					-- not written on the card.
 					slot.MouseButton1Click:Connect(function()
 						if type(options.onSelect) == "function" then
 							pcall(options.onSelect, team, category, i, WEAPONS[team][category][i])
@@ -8533,27 +8564,13 @@ New("UIAspectRatioConstraint", {
 			function api:GetTeam() return team end
 			function api:SetTeam(newTeam)
 				team = newTeam == "T" and "T" or "CT"
-				switchText.Text = team .. " Loadout"
-				badgeText.Image = TEAM_ICON[team]
-				Tween(badge, { BackgroundColor3 = TEAM_COLOR[team] }, 0.2)
-				Tween(badgeText, { ImageColor3 = TEAM_COLOR[team] }, 0.2)
-				local otherTeam = team == "CT" and "T" or "CT"
-				otherText.Image = TEAM_ICON[otherTeam]
-				Tween(otherLogo, { BackgroundColor3 = TEAM_COLOR[otherTeam] }, 0.2)
-				Tween(otherText, { ImageColor3 = TEAM_COLOR[otherTeam] }, 0.2)
-				-- Weapon names cross-fade to the other team's set.
-				for _, entry in ipairs(nameLabels) do
-					local label = entry.label
-					Tween(label, { TextTransparency = 1 }, 0.1)
-					task.delay(0.1, function()
-						label.Text = WEAPONS[team][entry.category][entry.index]
-						Tween(label, { TextTransparency = 0 }, 0.16)
-					end)
-				end
+				layoutTeams(false)
 				if type(options.onTeam) == "function" then pcall(options.onTeam, team) end
 				return self
 			end
-			other.MouseButton1Click:Connect(function() api:SetTeam(team == "CT" and "T" or "CT") end)
+			for which, entry in pairs(teamButtons) do
+				entry.button.MouseButton1Click:Connect(function() if team ~= which then api:SetTeam(which) end end)
+			end
 			return api
 		end
 
