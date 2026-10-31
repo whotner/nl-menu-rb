@@ -853,6 +853,45 @@ local function AddInputSink(frame)
 	}, frame)
 end
 
+-- Plate groups: Neverlose splits a settings plate into several cards (one per
+-- feature, e.g. "Override FOV" + "Value"). The plate container starts as a single
+-- card; the first group call turns it into a transparent stack of cards, moving
+-- the rows added so far into the first card. Returns the card new rows go into.
+local function StartPlateGroup(container)
+	if not container:GetAttribute("NLGrouped") then
+		container:SetAttribute("NLGrouped", true)
+		container.BackgroundTransparency = 1
+		local outline = container:FindFirstChild("CardOutline")
+		if outline then outline.Enabled = false end
+		local layout = container:FindFirstChildOfClass("UIListLayout")
+		if layout then layout.Padding = UDim.new(0, 8) end
+		local rows = {}
+		for _, child in ipairs(container:GetChildren()) do
+			if child:IsA("GuiObject") then table.insert(rows, child) end
+		end
+		if #rows > 0 then
+			local first = StartPlateGroup(container)
+			for _, row in ipairs(rows) do row.Parent = first end
+		end
+	end
+	local order = (container:GetAttribute("NLGroupCount") or 0) + 1
+	container:SetAttribute("NLGroupCount", order)
+	local card = New("Frame", {
+		Name = "PlateGroup" .. order,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundColor3 = Color3.fromRGB(24, 27, 37),
+		BorderSizePixel = 0,
+		LayoutOrder = order * 1000,
+		ZIndex = container.ZIndex,
+	}, container)
+	New("UICorner", { CornerRadius = UDim.new(0, 10) }, card)
+	Stroke(card, "CardOutline")
+	New("UIListLayout", { Padding = UDim.new(0, 0), SortOrder = Enum.SortOrder.LayoutOrder }, card)
+	New("UIPadding", { PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2) }, card)
+	return card
+end
+
 local function MeasureRowsHeight(container)
 	local count = 0
 	local total = 0
@@ -6553,6 +6592,12 @@ end
 				local settingsElemCount = 0
 				local SettingsFrame_Container = SFContainer
 
+				-- Starts a new card in the plate; following Add* calls land in it.
+				function SettingsObj:AddGroup()
+					SettingsFrame_Container = StartPlateGroup(SFContainer)
+					return self
+				end
+
 				function SettingsObj:Open()
 					if settingsOpen then return self end
 					settingsOpen = true
@@ -7526,14 +7571,16 @@ New("Frame", {
 				contextItemOrder = 0
 				local layout = _contextMenu:FindFirstChildOfClass("UIListLayout")
 				if not layout then New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, _contextMenu) end
-				AddContextItem("Settings", "rbxassetid://109485777305919", function(current)
-					if current.obj and current.obj.AddSettings then
-						local settings = current.obj:AddSettings()
-						if settings and settings.Open then settings:Open() end
+				-- Neverlose right-click menu: All Hotkeys / New Hotkey / Reset.
+				AddContextItem("All Hotkeys", "rbxassetid://121978468376124", function(current)
+					if current.key then
+						OpenBindMenu(current)
+					elseif WindowObj.KeybindList then
+						WindowObj.KeybindList.setEnabled(true)
 					end
 				end)
-				AddContextItem("Unbind", "rbxassetid://116396312853810", function(current)
-					SetTargetBind(current, nil)
+				AddContextItem("New Hotkey", "rbxassetid://101123124881873", function(current)
+					OpenBindMenu(current)
 				end)
 				New("Frame", {
 					Name = "ContextDivider", LayoutOrder = 3,
@@ -7681,7 +7728,7 @@ New("Frame", {
 					end
 					for row, target in pairs(_contextTargets) do
 						if row.Parent and row.Visible and IsPointInsideTree(row, point) then
-							OpenBindMenu(target)
+							OpenContextMenu(target, point)
 							return
 						end
 					end
@@ -9027,6 +9074,12 @@ New("Frame", {
 				end)
 
 				local AccordionObj = {}
+				-- Rows go into the plate card; AddGroup starts a new card (see StartPlateGroup).
+				local AccordionTarget = Container
+				function AccordionObj:AddGroup()
+					AccordionTarget = StartPlateGroup(Container)
+					return self
+				end
 				local accordionElemCount = 0
 
 				function AccordionObj:AddToggle(text2, default, callback)
@@ -9039,7 +9092,7 @@ New("Frame", {
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 1,
 						LayoutOrder = accordionElemCount,
-					}, Container)
+					}, AccordionTarget)
 
 New("Frame", {
 						Name = "Lines",
@@ -9124,7 +9177,7 @@ New("Frame", {
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 1,
 						LayoutOrder = accordionElemCount,
-					}, Container)
+					}, AccordionTarget)
 					local CheckBox = New("Frame", {
 						Name = "CheckBox",
 						Position = UDim2.new(0.04, 0, 0.3, 0),
@@ -9204,7 +9257,7 @@ New("Frame", {
 						LayoutOrder = accordionElemCount,
 						ClipsDescendants = false,
 						ZIndex = 100,
-					}, Container)
+					}, AccordionTarget)
 					New("Frame", {
 						Name = "Lines",
 						Position = UDim2.new(0.05000000074505806, 0, 1, 0),
@@ -9448,7 +9501,7 @@ New("Frame", {
 						BackgroundTransparency = 1,
 						LayoutOrder = accordionElemCount,
 						ZIndex = 100,
-					}, Container)
+					}, AccordionTarget)
 
 New("Frame", {
 						Name = "Lines",
@@ -9620,7 +9673,7 @@ New("Frame", {
 						LayoutOrder = accordionElemCount,
 						ClipsDescendants = false,
 						ZIndex = 100,
-					}, Container)
+					}, AccordionTarget)
 					New("Frame", {
 						Name = "Lines",
 						Position = UDim2.new(0.06, 0, 1, -1),

@@ -158,6 +158,17 @@ local Slider = Section:AddSlider("FOV", 0, 120, 80, function(value)
 end, "")
 ```
 
+### Settings:AddGroup() / Accordion:AddGroup()
+
+Начинает новую карточку внутри плашки «…» или аккордеона, как в Neverlose. Следующие элементы попадают в неё.
+
+```lua
+local S = Toggle:AddSettings()
+S:AddToggle("Override FOV", false)
+S:AddGroup()
+S:AddToggle("Disable Landing Bob", false)
+```
+
 ## Методы элементов
 
 У большинства элементов есть методы:
