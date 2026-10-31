@@ -1788,34 +1788,6 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	-- Neverlose option lists open instantly, centred on the field that opened
 	-- them (overlapping it), not dropped below with a grow animation. Kept on
 	-- WindowObj instead of a local: AddWindow is near Luau's register cap.
-	-- Dims the menu under an open plate ("..." settings, accordion). Counted, so
-	-- nested plates keep it on until the last one closes. The dim layer sits
-	-- above the menu content but below popups, and lets clicks through.
-	WindowObj._dimOwners = setmetatable({}, { __mode = "k" })
-	WindowObj._setDim = function(owner, on)
-		-- Keyed by plate, so a repeated close of an already closed plate is harmless.
-		WindowObj._dimOwners[owner] = on and true or nil
-		local count = 0
-		for _ in pairs(WindowObj._dimOwners) do count = count + 1 end
-		WindowObj._dimCount = count
-		local dim = WindowObj._dimFrame
-		if not dim then
-			dim = New("Frame", {
-				Name = "PlateDim", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(4, 5, 9),
-				BackgroundTransparency = 1, BorderSizePixel = 0, Active = false, Visible = false, ZIndex = Z_BASE - 1,
-			}, MainFrame)
-			New("UICorner", { CornerRadius = UDim.new(0, 14) }, dim)
-			WindowObj._dimFrame = dim
-		end
-		if WindowObj._dimCount > 0 then
-			dim.Visible = true
-			Tween(dim, { BackgroundTransparency = 0.55 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		else
-			Tween(dim, { BackgroundTransparency = 1 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-			task.delay(0.16, function() if WindowObj._dimCount == 0 then dim.Visible = false end end)
-		end
-	end
-
 	WindowObj._centerPopupOnField = function(popup, field)
 		if not popup or not popup.Parent or not field or not field.Parent then return end
 		if WindowObj._styleListPopup then WindowObj._styleListPopup(popup) end
@@ -6154,11 +6126,6 @@ Line9.Parent = MainFrame
 			Tween(MainFrame, { Size = windowTargetSize }, dur, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		else
 			HideAllPopupsNow(true)
-			-- Plates hidden this way skip their close handlers; drop the dim too.
-			if WindowObj._dimOwners then
-				table.clear(WindowObj._dimOwners)
-				WindowObj._setDim(MainFrame, false)
-			end
 			if ConfigMainFrame then ConfigMainFrame.Visible = false end
 			if WindowSettingsFrame then WindowSettingsFrame.Visible = false end
 			if Save then Save.Visible = false end
@@ -6916,7 +6883,6 @@ end
 					UnregisterPopup(SettingsFrame)
 					-- Fade out in place; shrinking the height used to cut the plate off.
 					SmoothClose(SettingsFrame, 0.13)
-					WindowObj._setDim(SettingsFrame, false)
 					Tween(SFScale, {Scale = 0.97}, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 					Tween(SettingsBtn, { BackgroundTransparency = 1 }, 0.12)
 				end
@@ -6945,7 +6911,6 @@ end
 					ApplyZIndexLadder(SettingsFrame, NextPopupZ())
 					placeSettings(getSettingsHeight())
 					SmoothOpen(SettingsFrame, 0, 0.18)
-					WindowObj._setDim(SettingsFrame, true)
 					Tween(SFScale, {Scale = 1}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					-- The dots stay highlighted while their plate is open, as in Neverlose.
 					if not SettingsBtn:FindFirstChildOfClass("UICorner") then New("UICorner", { CornerRadius = UDim.new(0, 5) }, SettingsBtn) end
@@ -9340,7 +9305,6 @@ New("Frame", {
 					ClosePopupsUnder(Section2Frame)
 					UnregisterPopup(Section2Frame)
 					SmoothClose(Section2Frame, 0.14)
-					WindowObj._setDim(Section2Frame, false)
 					Tween(TextArrow, {ImageTransparency = 0.3}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 					if _openAccordion == closeAccordion then _openAccordion = nil end
 				end
@@ -9361,7 +9325,6 @@ New("Frame", {
 						Section2Frame.Size = UDim2.fromOffset(ACC_WIDTH, accordionHeight)
 						placeAccordion(accordionHeight)
 						SmoothOpen(Section2Frame, 0, 0.17)
-						WindowObj._setDim(Section2Frame, true)
 						Tween(TextArrow, {ImageTransparency = 0}, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 						RegisterPopup(Section2Frame, closeAccordion, Open)
 						local function settle()
