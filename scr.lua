@@ -6047,7 +6047,9 @@ local SaveArrow = Instance.new('ImageLabel')
 SaveArrow.Name = "PresetArrow"
 SaveArrow.AnchorPoint = Vector2.new(1, 0.5)
 SaveArrow.Position = UDim2.new(1, -17, 0.5, 0)
-SaveArrow.Size = UDim2.fromOffset(10, 10)
+-- Full white, 12px: at 10px the thin chevron read grey.
+SaveArrow.Size = UDim2.fromOffset(12, 12)
+SaveArrow.ImageTransparency = 0
 SaveArrow.BackgroundTransparency = 1
 SaveArrow.Image = "rbxassetid://10709790948"
 SaveArrow.ImageColor3 = Color3.fromRGB(255,255,255)
