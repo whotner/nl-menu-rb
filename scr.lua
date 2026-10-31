@@ -1738,7 +1738,8 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		end
 		local ok, blur = pcall(AcrylicLib.new, area)
 		if not ok or not blur then return end
-		table.insert(WindowObj._blurs, { frame = frame, blur = blur })
+		-- Frames inside a CanvasGroup fade with the group, not their own alpha.
+		table.insert(WindowObj._blurs, { frame = frame, blur = blur, group = frame:FindFirstAncestorWhichIsA("CanvasGroup") })
 		if WindowObj._blurLoop then return end
 		WindowObj._blurLoop = RunService.RenderStepped:Connect(function()
 			local list = WindowObj._blurs
@@ -1748,7 +1749,8 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 				if not e.frame.Parent or not part.Parent then
 					pcall(e.blur.Destroy)
 					table.remove(list, i)
-				elseif e.frame.Visible and e.frame.BackgroundTransparency < 0.98 and IsAncestorVisible(e.frame) then
+				elseif e.frame.Visible and e.frame.BackgroundTransparency < 0.98 and IsAncestorVisible(e.frame)
+					and not (e.group and e.group.GroupTransparency > 0.6) then
 					pcall(e.blur.Update)
 					part.Transparency = part:GetAttribute("TargetTransparency") or 0.8
 				else
@@ -2563,8 +2565,8 @@ GameInfo.Position = UDim2.new(1, -6, 0, 2)
 -- dividers; small caps text, accent icons, avatar at the end.
 GameInfo.Size = UDim2.fromOffset(0, 36)
 GameInfo.AutomaticSize = Enum.AutomaticSize.X
-GameInfo.BackgroundColor3 = Color3.fromRGB(11, 11, 15)
-GameInfo.BackgroundTransparency = 0.06
+GameInfo.BackgroundColor3 = Color3.fromRGB(8, 10, 17)
+GameInfo.BackgroundTransparency = 0.25
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
@@ -2572,8 +2574,10 @@ GameInfo.ClipsDescendants = false
 GameInfo.Parent = NeverloseCS2
 GameInfo.ZIndex = Z_BASE + 900
 do local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = GameInfo end
--- Plain dark plate with the menu's hairline outline; no glass blur.
+-- The menu's glass: its colour and transparency over an acrylic blur, with
+-- its hairline outline.
 Stroke(GameInfo)
+if WindowObj._attachBlur then WindowObj._attachBlur(GameInfo) end
 WindowObj._makeDraggable(GameInfo, GameInfo, "watermark")
 do local pd = Instance.new("UIPadding"); pd.PaddingLeft = UDim.new(0, 14); pd.PaddingRight = UDim.new(0, 7); pd.PaddingTop = UDim.new(0, 0); pd.PaddingBottom = UDim.new(0, 0); pd.Parent = GameInfo end
 do local ly = Instance.new("UIListLayout"); ly.FillDirection = Enum.FillDirection.Horizontal; ly.HorizontalAlignment = Enum.HorizontalAlignment.Left; ly.VerticalAlignment = Enum.VerticalAlignment.Center; ly.Padding = UDim.new(0, 0); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = GameInfo end
@@ -2846,15 +2850,16 @@ do
 	-- further down, so built here the same way) on the sibling host; the
 	-- strip itself owns a list layout, which would swallow the layers.
 	local layers = {}
-	-- Three layers reaching 3px, hugging the strip like the list plates.
-	for i = 1, 3 do
-		local spread = i
+	-- The window's shadow (6 layers, 2px steps, 2px down), built here
+	-- because AttachShadow is defined further down.
+	for i = 1, 6 do
+		local spread = i * 2
 		local layer = Instance.new("Frame")
 		layer.Name = "ShadowLayer" .. i
-		layer.Position = UDim2.new(0, -spread, 0, 1 - spread)
+		layer.Position = UDim2.new(0, -spread, 0, 2 - spread)
 		layer.Size = UDim2.new(1, spread * 2, 1, spread * 2)
 		layer.BackgroundColor3 = Color3.new(0, 0, 0)
-		layer.BackgroundTransparency = 0.8 + (i - 1) * 0.08
+		layer.BackgroundTransparency = 0.76 + (i - 1) * 0.044
 		layer.BorderSizePixel = 0
 		layer.ZIndex = Z_BASE + 898
 		layer.Parent = WMShadowHost
@@ -3125,18 +3130,20 @@ New("UIListLayout", {
 -- slide in and out; each list is dragged by its header while the menu is
 -- open. Pills keep their resting alpha in "PillAlpha" for the fades.
 -- Kept in one table: AddWindow is close to the Luau register limit.
-local OV = { h = 22, head = 30, header = Color3.fromRGB(18, 18, 25), entry = Color3.fromRGB(23, 23, 31) }
-function OV.pill(name, parent, color, radius, height)
+-- Plates use the menu window's own recipe: its glass colour and
+-- transparency over an acrylic blur, hairline outline, layered shadow.
+-- OV.entry stays the dark knob colour of the switch glyph.
+local OV = { h = 22, head = 30, header = 0.25, entryAlpha = 0.35, glass = Color3.fromRGB(8, 10, 17), entry = Color3.fromRGB(23, 23, 31) }
+function OV.pill(name, parent, alpha, radius, height)
 	local pill = New("Frame", {
-		Name = name, Size = UDim2.fromOffset(height or OV.h, height or OV.h), BackgroundColor3 = color,
-		BackgroundTransparency = 0.04, BorderSizePixel = 0, ZIndex = Z_BASE + 891,
+		Name = name, Size = UDim2.fromOffset(height or OV.h, height or OV.h), BackgroundColor3 = OV.glass,
+		BackgroundTransparency = alpha, BorderSizePixel = 0, ZIndex = Z_BASE + 891,
 	}, parent)
-	pill:SetAttribute("PillAlpha", 0.04)
+	pill:SetAttribute("PillAlpha", alpha)
 	New("UICorner", { CornerRadius = UDim.new(0, radius) }, pill)
 	Stroke(pill)
-	-- The menu's layered shadow, scaled to these small plates: three layers
-	-- reaching 3px, so it hugs the edge instead of spreading outward.
-	AttachShadow(pill, { radius = radius, layers = 3, step = 1, bias = 1, strength = 0.8 })
+	AttachShadow(pill, { radius = radius, layers = 4, step = 1.6, bias = 2 })
+	if WindowObj._attachBlur then WindowObj._attachBlur(pill, math.floor(radius * 0.6)) end
 	return pill
 end
 
@@ -3204,7 +3211,7 @@ function OV.row(rows, order, text, leftText, iconRight)
 		Name = "OverlayRow", Size = UDim2.fromOffset(leftW + 4 + nameW, OV.h), BackgroundTransparency = 1,
 		LayoutOrder = order, ZIndex = Z_BASE + 891,
 	}, rows)
-	local leftPill = OV.pill("IconPill", row, OV.entry, 6)
+	local leftPill = OV.pill("IconPill", row, OV.entryAlpha, 6)
 	leftPill.Size = UDim2.fromOffset(leftW, OV.h)
 	local iconX, nameX = 0, leftW + 4
 	if iconRight then iconX, nameX = nameW + 4, 0 end
@@ -3216,7 +3223,7 @@ function OV.row(rows, order, text, leftText, iconRight)
 			ZIndex = Z_BASE + 892,
 		}, leftPill)
 	end
-	local namePill = OV.pill("NamePill", row, OV.entry, 6)
+	local namePill = OV.pill("NamePill", row, OV.entryAlpha, 6)
 	namePill.Position = UDim2.fromOffset(nameX, 0)
 	namePill.Size = UDim2.fromOffset(nameW, OV.h)
 	New("TextLabel", {
@@ -3438,7 +3445,8 @@ local specRowCache = {}
 
 -- animated: glide (list resized); otherwise follow at once (Hotkeys dragged).
 function OV.place(animated)
-	if SpecPanel:GetAttribute("Dragged") then return end
+	-- Follows Hotkeys only until either list is moved by hand.
+	if SpecPanel:GetAttribute("Dragged") or KBPanel:GetAttribute("Dragged") then return end
 	local kb = KBPanel.Position
 	local shown = KBPanel:GetAttribute("Shown") == true
 	local below = shown and ((KBPanel:GetAttribute("TargetH") or OV.head) + 10) or 0
