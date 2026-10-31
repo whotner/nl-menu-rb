@@ -2846,14 +2846,15 @@ do
 	-- further down, so built here the same way) on the sibling host; the
 	-- strip itself owns a list layout, which would swallow the layers.
 	local layers = {}
-	for i = 1, 6 do
-		local spread = math.floor(i * 2 + 0.5)
+	-- Three layers reaching 3px, hugging the strip like the list plates.
+	for i = 1, 3 do
+		local spread = i
 		local layer = Instance.new("Frame")
 		layer.Name = "ShadowLayer" .. i
-		layer.Position = UDim2.new(0, -spread, 0, 2 - spread)
+		layer.Position = UDim2.new(0, -spread, 0, 1 - spread)
 		layer.Size = UDim2.new(1, spread * 2, 1, spread * 2)
 		layer.BackgroundColor3 = Color3.new(0, 0, 0)
-		layer.BackgroundTransparency = math.clamp(0.76 + (i - 1) * ((0.98 - 0.76) / 5), 0.76, 0.98)
+		layer.BackgroundTransparency = 0.8 + (i - 1) * 0.08
 		layer.BorderSizePixel = 0
 		layer.ZIndex = Z_BASE + 898
 		layer.Parent = WMShadowHost
@@ -3133,8 +3134,9 @@ function OV.pill(name, parent, color, radius, height)
 	pill:SetAttribute("PillAlpha", 0.04)
 	New("UICorner", { CornerRadius = UDim.new(0, radius) }, pill)
 	Stroke(pill)
-	-- Same layered shadow as the menu window and its popups.
-	AttachShadow(pill, { radius = radius, layers = 5, step = 1.6, bias = 2 })
+	-- The menu's layered shadow, scaled to these small plates: three layers
+	-- reaching 3px, so it hugs the edge instead of spreading outward.
+	AttachShadow(pill, { radius = radius, layers = 3, step = 1, bias = 1, strength = 0.8 })
 	return pill
 end
 
