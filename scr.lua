@@ -4657,20 +4657,6 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 		lbl.Parent = WSColorpicker
 	end
 
-	local styleGear = New("TextLabel", {
-		Name = "StyleOptionsIcon",
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -28, 0.5, 0),
-		Size = UDim2.fromOffset(12, 12),
-		BackgroundTransparency = 1,
-		Text = "⚙",
-		TextColor3 = Color3.fromRGB(150, 155, 172),
-		TextSize = 11,
-		Font = FONT,
-		TextXAlignment = Enum.TextXAlignment.Center,
-		TextYAlignment = Enum.TextYAlignment.Center,
-		ZIndex = 130,
-	}, WSColorpicker)
 	local wsColorBtn = New("ImageButton", {
 		Name = "colorpickerButton",
 		AnchorPoint = Vector2.new(1, 0.5),
@@ -4879,11 +4865,22 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 					end
 				end)
 			end
-			-- Recolour only what currently shows the old accent. The old check
-			-- skipped pure black only, so off switches (8,10,16) turned accent too.
+			-- Recolour only what currently shows the old accent. A dragged picker
+			-- passes through white and greys: matching those recoloured every
+			-- white title, name and arrow. So a match counts only when the old
+			-- accent is a real colour, or when that property was recoloured as
+			-- accent before ("AccentTint_<prop>").
 			local old = mainColor
-			local function isAccent(color)
-				return math.abs(color.R - old.R) < 0.02 and math.abs(color.G - old.G) < 0.02 and math.abs(color.B - old.B) < 0.02
+			local _, oldSat, oldVal = old:ToHSV()
+			local oldIsColour = oldSat > 0.2 and oldVal > 0.2
+			local function isAccent(color, object, prop)
+				local same = math.abs(color.R - old.R) < 0.02 and math.abs(color.G - old.G) < 0.02 and math.abs(color.B - old.B) < 0.02
+				if not same then return false end
+				if oldIsColour or object:GetAttribute("AccentTint_" .. prop) then
+					object:SetAttribute("AccentTint_" .. prop, true)
+					return true
+				end
+				return false
 			end
 			for _, object in ipairs(NeverloseCS2:GetDescendants()) do
 				-- Colour swatches show a user's chosen value, not the theme.
@@ -4893,16 +4890,16 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 				if not isSwatch then pcall(function()
 					if object.Name == "InLine" and object:IsA("Frame") then
 						object.BackgroundColor3 = c
-					elseif object:IsA("GuiObject") and object.BackgroundTransparency < 1 and isAccent(object.BackgroundColor3) then
+					elseif object:IsA("GuiObject") and object.BackgroundTransparency < 1 and isAccent(object.BackgroundColor3, object, "Bg") then
 						object.BackgroundColor3 = c
 					end
-					if (object:IsA("ImageLabel") or object:IsA("ImageButton")) and isAccent(object.ImageColor3) then
+					if (object:IsA("ImageLabel") or object:IsA("ImageButton")) and isAccent(object.ImageColor3, object, "Image") then
 						object.ImageColor3 = c
 					end
-					if (object:IsA("TextLabel") or object:IsA("TextButton")) and isAccent(object.TextColor3) then
+					if (object:IsA("TextLabel") or object:IsA("TextButton")) and isAccent(object.TextColor3, object, "Text") then
 						object.TextColor3 = c
 					end
-					if object:IsA("UIStroke") and isAccent(object.Color) then object.Color = c end
+					if object:IsA("UIStroke") and isAccent(object.Color, object, "Stroke") then object.Color = c end
 				end) end
 			end
 			mainColor = c
@@ -8063,7 +8060,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		ZIndex = Z_BASE + 990,
 	}, NeverloseCS2)
 	-- Rounded card, not a capsule (Neverlose loader).
-	New("UICorner", { CornerRadius = UDim.new(0, 14) }, toast)
+	New("UICorner", { CornerRadius = UDim.new(0, 18) }, toast)
 	if WindowObj._attachBlur then WindowObj._attachBlur(toast, 8) end
 	-- Glow: faint capsule layers in the accent colour fading outwards, each
 	-- with a gradient so one side is brighter; rotating it moves the light.
@@ -8074,7 +8071,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 			Name = "LoaderGlow" .. i, Position = UDim2.fromOffset(-spread, -spread), Size = UDim2.new(1, spread * 2, 1, spread * 2),
 			BackgroundColor3 = mainColor, BackgroundTransparency = 0.72 + i * 0.026, BorderSizePixel = 0, ZIndex = Z_BASE + 989 - i,
 		}, toast)
-		New("UICorner", { CornerRadius = UDim.new(0, 14 + spread) }, layer)
+		New("UICorner", { CornerRadius = UDim.new(0, 18 + spread) }, layer)
 		local g = Instance.new("UIGradient")
 		g.Transparency = NumberSequence.new({
 			NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.5, 0.45), NumberSequenceKeypoint.new(1, 0.85),
@@ -8096,7 +8093,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		Name = "Badge", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 10, 0.5, 0),
 		Size = UDim2.fromOffset(38, 38), BackgroundColor3 = Color3.fromRGB(14, 17, 30), BorderSizePixel = 0, ZIndex = Z_BASE + 991,
 	}, toast)
-	New("UICorner", { CornerRadius = UDim.new(0, 9) }, badge)
+	New("UICorner", { CornerRadius = UDim.new(0, 11) }, badge)
 	-- Same logo as the window badge: custom image, or the drawn "NL".
 	if hubImage ~= "" then
 		local badgeLogo = New("ImageLabel", {
@@ -8105,7 +8102,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		}, badge)
 		New("UICorner", { CornerRadius = UDim.new(0, 10) }, badgeLogo)
 	else
-		WindowObj._logoWithFallback(badge, 17, Z_BASE + 992, 9)
+		WindowObj._logoWithFallback(badge, 17, Z_BASE + 992, 11)
 	end
 	New("TextLabel", {
 		Name = "LoaderTitle", Position = UDim2.fromOffset(60, 11), Size = UDim2.new(1, -140, 0, 20), BackgroundTransparency = 1,
@@ -8793,15 +8790,12 @@ New("UIAspectRatioConstraint", {
 		-- Hover feedback is limited to real navigation items. Transparent hit targets elsewhere stay inert.
 		TabButtonFrame.MouseEnter:Connect(function()
 			if activeTabIndex == tabIndex then return end
+			-- Hover lights the plate only; the icon keeps its colour.
 			Tween(TabButtonFrame, { BackgroundTransparency = 0.8 }, 0.11, Enum.EasingStyle.Sine)
-			TintTabIcon(TabIcon, mainColor, 0.24, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-			Tween(TabText, { TextTransparency = 0.22 }, 0.11, Enum.EasingStyle.Sine)
 		end)
 		TabButtonFrame.MouseLeave:Connect(function()
 			if activeTabIndex == tabIndex then return end
 			Tween(TabButtonFrame, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Sine)
-			TintTabIcon(TabIcon, Color3.fromRGB(150, 155, 172), 0, 0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-			Tween(TabText, { TextTransparency = 0 }, 0.14, Enum.EasingStyle.Sine)
 		end)
 
 		table.insert(tabs, {
@@ -13067,14 +13061,10 @@ New("Frame", {
 			STRow.MouseEnter:Connect(function()
 				if activeSubTabIndex == stIndex then return end
 				Tween(STRow, { BackgroundTransparency = 0.8 }, 0.11, Enum.EasingStyle.Sine)
-				Tween(STLabel, { TextColor3 = Color3.fromRGB(220, 222, 230) }, 0.11, Enum.EasingStyle.Sine)
-				if iconRef then Tween(iconRef, { ImageColor3 = mainColor, ImageTransparency = 0.24 }, 0.11, Enum.EasingStyle.Sine) end
 			end)
 			STRow.MouseLeave:Connect(function()
 				if activeSubTabIndex == stIndex then return end
 				Tween(STRow, { BackgroundTransparency = 1 }, 0.14, Enum.EasingStyle.Sine)
-				Tween(STLabel, { TextColor3 = Color3.fromRGB(150, 155, 172) }, 0.14, Enum.EasingStyle.Sine)
-				if iconRef then Tween(iconRef, { ImageColor3 = Color3.fromRGB(150, 155, 172), ImageTransparency = 0 }, 0.14, Enum.EasingStyle.Sine) end
 			end)
 
 			if isFirstST and activeTabIndex == tabIndex then
