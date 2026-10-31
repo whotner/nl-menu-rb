@@ -433,6 +433,7 @@ Library.ProfileIcons = {
 	sync         = "rbxassetid://104941258142372",
 	about        = "rbxassetid://136533241128438",
 	chat         = "rbxassetid://121978468376124",
+	developer    = "rbxassetid://137998322875646",
 }
 -- nil = "Lifetime"; a number shows "N days left" and "Till: <date>" in the profile.
 Library.DaysLeft = nil
@@ -529,7 +530,7 @@ local function New(class, props, parent)
 	-- copies of a control all match: grey regular labels, value fields on a dark
 	-- fill with a hairline border, muted "..." dots.
 	if obj.Name == "TextToggle" and obj:IsA("TextLabel") then
-		obj.TextColor3 = Color3.fromRGB(200, 203, 213)
+		obj.TextColor3 = Color3.fromRGB(214, 214, 219)
 	elseif obj.Name == "TopBarText" and obj:IsA("TextLabel") then
 		obj.TextColor3 = Color3.fromRGB(205, 208, 218)
 	elseif (obj.Name == "TopBar" or obj.Name == "SliderValue") and obj:IsA("GuiObject") then
@@ -834,8 +835,12 @@ end
 local function AddInputSink(frame)
 	if not frame or not frame:IsA("GuiObject") or frame:IsA("ScrollingFrame") then return end
 	if frame:FindFirstChild("InputSink") then return end
-	-- A layout would treat the sink as one more row.
-	if frame:FindFirstChildOfClass("UIListLayout") or frame:FindFirstChildOfClass("UIGridLayout") then return end
+	-- A layout would treat the sink as one more row; an Active frame sinks the
+	-- clicks itself instead (color picker, laid-out lists).
+	if frame:FindFirstChildOfClass("UIListLayout") or frame:FindFirstChildOfClass("UIGridLayout") then
+		frame.Active = true
+		return
+	end
 	New("TextButton", {
 		Name = "InputSink",
 		Size = UDim2.fromScale(1, 1),
@@ -1690,7 +1695,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		local frame = New("Frame", {
 			Name = "ColorPickerFrame",
 			Position = UDim2.fromOffset(0, 0),
-			Size = UDim2.fromOffset(212, 214),
+			Size = UDim2.fromOffset(212, 246),
 			BackgroundColor3 = Color3.fromRGB(17, 19, 28),
 			BackgroundTransparency = 0.02,
 			BorderSizePixel = 0,
@@ -1907,6 +1912,51 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			ZIndex = Z_BASE + 804,
 		}, copyButton)
 		New("UICorner", { CornerRadius = UDim.new(0, 2) }, copyFront)
+		-- Borders do not draw on rounded frames, which left the copy button empty.
+		for _, part in ipairs({ copyBack, copyFront }) do
+			part.BorderSizePixel = 0
+			local outline = Instance.new("UIStroke")
+			outline.Color = Color3.fromRGB(226, 228, 236)
+			outline.Thickness = 1
+			outline.Parent = part
+		end
+		for _, field in ipairs({ hexField, copyButton }) do
+			field.BackgroundColor3 = Color3.fromRGB(27, 28, 38)
+			local outline = Instance.new("UIStroke")
+			outline.Color = Color3.fromRGB(255, 255, 255)
+			outline.Transparency = 0.93
+			outline.Thickness = 1
+			outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+			outline.Parent = field
+		end
+
+		-- Recently picked colours, shared by every picker (Neverlose keeps a swatch
+		-- row under the hex field). Click one to apply it.
+		Library._recentColors = Library._recentColors or {}
+		local swatchRow = New("Frame", {
+			Name = "RecentSwatches",
+			Size = UDim2.fromOffset(192, 22),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			LayoutOrder = 4,
+			ZIndex = Z_BASE + 801,
+		}, frame)
+		New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, swatchRow)
+		local swatchButtons = {}
+		for i = 1, 7 do
+			local swatch = New("TextButton", {
+				Name = "Swatch" .. i,
+				Size = UDim2.fromOffset(22, 22),
+				BackgroundColor3 = Color3.fromRGB(27, 28, 38),
+				BorderSizePixel = 0,
+				AutoButtonColor = false,
+				Text = "",
+				LayoutOrder = i,
+				ZIndex = Z_BASE + 802,
+			}, swatchRow)
+			New("UICorner", { CornerRadius = UDim.new(0, 5) }, swatch)
+			swatchButtons[i] = swatch
+		end
 
 		local function refreshDisplay(notify)
 			currentColor = Color3.fromHSV(hue, saturation, value)
@@ -1926,6 +1976,33 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			currentColor = NormalizeColor(color)
 			hue, saturation, value = Color3.toHSV(currentColor)
 			refreshDisplay(false)
+		end
+
+		local function refreshSwatches()
+			for i, swatch in ipairs(swatchButtons) do
+				local color = Library._recentColors[i]
+				swatch.BackgroundColor3 = color or Color3.fromRGB(27, 28, 38)
+				swatch.Active = color ~= nil
+			end
+		end
+
+		local function pushRecent(color)
+			local list = Library._recentColors
+			for i = #list, 1, -1 do
+				if ColorToHex(list[i]) == ColorToHex(color) then table.remove(list, i) end
+			end
+			table.insert(list, 1, color)
+			while #list > #swatchButtons do table.remove(list) end
+			refreshSwatches()
+		end
+
+		for i, swatch in ipairs(swatchButtons) do
+			swatch.MouseButton1Click:Connect(function()
+				local color = Library._recentColors[i]
+				if not color then return end
+				setColor(color)
+				InvokeCallback(onChange, currentColor)
+			end)
 		end
 
 		local function updateSV(input)
@@ -1953,7 +2030,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			if safeSize.X <= 0 or safeSize.Y <= 0 then return end
 			local anchorPos, anchorSize = anchorButton.AbsolutePosition, anchorButton.AbsoluteSize
 			local popupW = frame.AbsoluteSize.X > 0 and frame.AbsoluteSize.X or 212
-			local popupH = frame.AbsoluteSize.Y > 0 and frame.AbsoluteSize.Y or 214
+			local popupH = frame.AbsoluteSize.Y > 0 and frame.AbsoluteSize.Y or 246
 			local x = anchorPos.X + anchorSize.X - popupW
 			local y = anchorPos.Y + anchorSize.Y + 6
 			if y + popupH > safePos.Y + safeSize.Y - 6 then y = anchorPos.Y - popupH - 6 end
@@ -1976,6 +2053,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			frame.Visible = true
 			ApplyZIndexLadder(frame, NextPopupZ())
 			positionFrame()
+			refreshSwatches()
 			SmoothOpen(frame, 0.02, 0.16)
 			task.defer(function()
 				if frame.Visible and isOpen then positionFrame() end
@@ -2005,7 +2083,10 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 			end
 		end)
 		UserInputService.InputEnded:Connect(function(input)
-			if dragPart and IsPrimaryInput(input) then dragPart = nil end
+			if dragPart and IsPrimaryInput(input) then
+				dragPart = nil
+				pushRecent(currentColor)
+			end
 		end)
 		copyButton.MouseButton1Click:Connect(function()
 			if setclipboard then setclipboard(hexLabel.Text) end
@@ -3172,7 +3253,7 @@ UIAspectRatioConstraint.Parent = SettingsArrow
 			plan.Size = UDim2.new(1, -56, 0, 14)
 			plan.BackgroundTransparency = 1
 			plan.BorderSizePixel = 0
-			plan.Text = type(daysLeft) == "number" and ("Till: " .. os.date("%B %d %Y", os.time() + daysLeft * 86400)) or "Lifetime"
+			plan.Text = type(daysLeft) == "number" and ("Till: " .. os.date("%B %d %Y", os.time() + daysLeft * 86400)) or "Till: Lifetime"
 			plan.TextColor3 = Color3.fromRGB(151, 157, 175)
 			plan.TextSize = 12
 			plan.Font = FONT
@@ -3704,6 +3785,7 @@ AddProfileDisplayRow(40, "WindowsScale", "Windows Scale", "Auto", Library.Profil
 AddProfileDisplayRow(50, "Units", "Units", "Auto", Library.ProfileIcons.units, "arrow")
 AddProfileDisplayRow(70, "SafeMode", "Safe Mode", "Automatic", Library.ProfileIcons.safeMode, "arrow")
 AddProfileDisplayRow(80, "Synchronization", "Synchronization", nil, Library.ProfileIcons.sync, "switch-on")
+AddProfileDisplayRow(82, "DeveloperMode", "Developer Mode", nil, Library.ProfileIcons.developer, "switch-off")
 -- About and Chat have no chevron in the reference.
 AddProfileDisplayRow(90, "About", "About", nil, Library.ProfileIcons.about, "plain")
 AddProfileDisplayRow(100, "Chat", "Chat", nil, Library.ProfileIcons.chat, "plain")
