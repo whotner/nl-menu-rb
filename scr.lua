@@ -1747,6 +1747,29 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		end
 	end
 
+	-- Neverlose's logo is bold white "NL" with a lavender shade 1px left/down
+	-- (as on the watermark). Text, so it never depends on an image loading;
+	-- used whenever no custom hub image is given.
+	WindowObj._textLogo = function(parent, textSize, z)
+		local label = Instance.new("TextLabel")
+		label.Name = "LogoText"
+		label.Size = UDim2.fromScale(1, 1)
+		label.BackgroundTransparency = 1
+		label.Text = "NL"
+		label.TextColor3 = Color3.fromRGB(240, 240, 250)
+		label.TextSize = textSize
+		label.Font = FONT_BOLD
+		label.ZIndex = z + 1
+		label.Parent = parent
+		local shade = label:Clone()
+		shade.Name = "LogoShade"
+		shade.Position = UDim2.fromOffset(-1, 1)
+		shade.TextColor3 = Color3.fromRGB(150, 164, 255)
+		shade.ZIndex = z
+		shade.Parent = label
+		return label
+	end
+
 	-- Thumbnails (rbxthumb://) sometimes never load. Avatars get the URL from
 	-- GetUserThumbnailAsync, which waits until the thumbnail is ready; any
 	-- image still not loaded after 6s shows `fallbackText` instead.
@@ -2986,10 +3009,8 @@ function WindowObj:SetWatermark(options)
 	if type(options.backgroundTransparency) == "number" then
 		wm.frame.BackgroundTransparency = options.backgroundTransparency
 	end
-	if type(options.cornerRadius) == "number" then
-		local corner = wm.frame:FindFirstChildOfClass("UICorner")
-		if corner then corner.CornerRadius = UDim.new(0, options.cornerRadius) end
-	end
+	-- cornerRadius is ignored: the Neverlose strip is always a full capsule
+	-- (old scripts passed 5 or 8 and squared its ends).
 	if type(options.title) == "string" and wm.title then
 		wm.title.Text = options.title
 	end
@@ -3658,21 +3679,23 @@ Aspect.AspectRatio = 798 / 610
 		BorderSizePixel = 0,
 	}, MainFrame)
 	New("UICorner", { CornerRadius = UDim.new(0, 8) }, HubIcon)
-	New("ImageLabel", {
-		Name = "HubGlyph",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.fromScale(1, 1),
-		BackgroundTransparency = 1,
-		BorderSizePixel = 0,
-		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
-		-- Default thumbnail is 420px; show its centre 324px (about 1.3x zoom).
-		ImageRectOffset = hubImage ~= "" and Vector2.new(0, 0) or Vector2.new(48, 48),
-		ImageRectSize = hubImage ~= "" and Vector2.new(0, 0) or Vector2.new(324, 324),
-		ScaleType = Enum.ScaleType.Stretch,
-	}, HubIcon)
-	New("UICorner", { CornerRadius = UDim.new(0, 8) }, HubIcon:FindFirstChild("HubGlyph"))
-	WindowObj._imageFallback(HubIcon:FindFirstChild("HubGlyph"), "NL")
+	if hubImage ~= "" then
+		New("ImageLabel", {
+			Name = "HubGlyph",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Image = hubImage,
+			ScaleType = Enum.ScaleType.Stretch,
+		}, HubIcon)
+		New("UICorner", { CornerRadius = UDim.new(0, 8) }, HubIcon:FindFirstChild("HubGlyph"))
+		WindowObj._imageFallback(HubIcon:FindFirstChild("HubGlyph"), "NL")
+	else
+		-- The thumbnail-based logo did not load for everyone; draw it.
+		WindowObj._textLogo(HubIcon, 19, HubIcon.ZIndex + 1)
+	end
 
 	New("TextLabel", {
 		Name = "Title",
@@ -7336,15 +7359,16 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		Size = UDim2.fromOffset(40, 40), BackgroundColor3 = Color3.fromRGB(14, 17, 30), BorderSizePixel = 0, ZIndex = Z_BASE + 991,
 	}, toast)
 	New("UICorner", { CornerRadius = UDim.new(0, 10) }, badge)
-	-- The real NL logo (same image and zoom as the window badge), rounded.
-	local badgeLogo = New("ImageLabel", {
-		Name = "BadgeLogo", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
-		Image = hubImage ~= "" and hubImage or "rbxthumb://type=Asset&id=118608145176297&w=420&h=420",
-		ImageRectOffset = hubImage ~= "" and Vector2.new(0, 0) or Vector2.new(48, 48),
-		ImageRectSize = hubImage ~= "" and Vector2.new(0, 0) or Vector2.new(324, 324),
-		ScaleType = Enum.ScaleType.Stretch, ZIndex = Z_BASE + 992,
-	}, badge)
-	New("UICorner", { CornerRadius = UDim.new(0, 10) }, badgeLogo)
+	-- Same logo as the window badge: custom image, or the drawn "NL".
+	if hubImage ~= "" then
+		local badgeLogo = New("ImageLabel", {
+			Name = "BadgeLogo", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+			Image = hubImage, ScaleType = Enum.ScaleType.Stretch, ZIndex = Z_BASE + 992,
+		}, badge)
+		New("UICorner", { CornerRadius = UDim.new(0, 10) }, badgeLogo)
+	else
+		WindowObj._textLogo(badge, 20, Z_BASE + 992)
+	end
 	New("TextLabel", {
 		Name = "LoaderTitle", Position = UDim2.fromOffset(66, 13), Size = UDim2.new(1, -150, 0, 20), BackgroundTransparency = 1,
 		Text = string.lower(tostring(hubTitle)), TextColor3 = Color3.fromRGB(222, 223, 228), TextSize = 16,
