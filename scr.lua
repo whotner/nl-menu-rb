@@ -513,9 +513,10 @@ local function New(class, props, parent)
 		obj.TextYAlignment = Enum.TextYAlignment.Center
 		obj.TextScaled = false
 		-- Sized for BuilderSans/Inter metrics (SourceSans needed ~2px more for the same look).
-		local roleSizes = { Title = 16, GameTitle = 11, TabLabel = 11, TabText = 15, STLabel = 14, SectionLabel = 11,
-			TextToggle = 14, TextDropdown = 14, TextDefault = 13, TopBar = 14, SliderValue = 12,
-			Username = 14, Daysleft = 12, SaveText = 14, HeaderLabel = 11, SearchBox = 14 }
+		-- One step up from the first BuilderSans pass: Neverlose text reads larger.
+		local roleSizes = { Title = 17, GameTitle = 12, TabLabel = 12, TabText = 16, STLabel = 15, SectionLabel = 12,
+			TextToggle = 15, TextDropdown = 15, TextDefault = 14, TopBar = 15, SliderValue = 13,
+			Username = 15, Daysleft = 12, SaveText = 15, HeaderLabel = 12, SearchBox = 15 }
 		obj.TextSize = roleSizes[obj.Name] or ((props and props.TextSize) or 13)
 		obj.Font = (obj.Name == "Title" or obj.Name == "HeaderTitle" or obj.Name == "BadgeText" or obj.Name == "LoaderTitle") and FONT_BOLD or FONT
 		if obj.Name == "SectionLabel" or obj.Name == "TabLabel" then
@@ -1540,7 +1541,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 	local customization = {
 		font = FONT,
 		textColor = Color3.fromRGB(226, 228, 236),
-		sectionTitleSize = 11,
+		sectionTitleSize = 12,
 		sectionTitleColor = Color3.fromRGB(92, 96, 106), -- Neverlose section caps: neutral grey
 		sectionTitleTransparency = 0,
 		watermarkText = "NEVERLOSE  •  UI",
@@ -1846,7 +1847,8 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		local isRage = kind == "crosshair" or kind == "rage" or kind == "aimbot"
 		local isMouse = kind == "mouse" or kind == "legit"
 		local isUser = kind == "user" or kind == "player" or kind == "players"
-		local isGlobe = kind == "earth" or kind == "world" or kind == "globe"
+		-- World keeps its image icon; the drawn globe did not read well.
+		local isGlobe = false
 		local isMisc = kind == "gear" or kind == "misc" or kind == "miscellaneous" or kind == "settings"
 		if not (isRage or isMouse or isUser or isGlobe or isMisc) then return false end
 
@@ -1901,8 +1903,9 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		elseif isMouse then
 			-- Neverlose mouse: an egg-shaped solid body (fully rounded ends), a
 			-- thin line under the buttons and a thin divider between them.
-			local body = part(grid, 4, 1, 10, 16, UDim.new(0.5, 0))
-			part(body, 0, 6, 10, 1, nil, true)   -- button split
+			-- Odd width so the 1px divider sits exactly in the middle.
+			local body = part(grid, 4, 1, 11, 16, UDim.new(0.5, 0))
+			part(body, 0, 6, 11, 1, nil, true)   -- button split
 			part(body, 5, 0, 1, 6, nil, true)    -- left/right button divider
 		elseif isUser then
 			part(grid, 5, 1, 8, 8, ROUND)                 -- head
@@ -6928,19 +6931,24 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		ZIndex = Z_BASE + 990,
 	}, NeverloseCS2)
 	New("UICorner", { CornerRadius = UDim.new(0, 20) }, toast)
-	AttachShadow(toast, { radius = 20, layers = 6, step = 2, bias = 5 })
+	-- Dark drop shadow under the glow (pushed below the glow layers).
+	AttachShadow(toast, { radius = 20, layers = 8, step = 2.5, bias = 8, strength = 0.45 })
+	for _, layer in ipairs(toast:GetChildren()) do
+		if layer:GetAttribute("IsShadowLayer") then layer.ZIndex = Z_BASE + 975 end
+	end
 
 	-- Glow: stacked rounded layers in the accent colour, fading outwards. Each
 	-- carries a gradient so one side is brighter; rotating it moves the light.
 	local glowGradients = {}
-	for i = 1, 6 do
-		local spread = i * 1.5
+	-- Wide but soft: many faint layers reaching ~20px out.
+	for i = 1, 10 do
+		local spread = i * 2
 		local layer = New("Frame", {
 			Name = "LoaderGlow" .. i,
 			Position = UDim2.fromOffset(-spread, -spread),
 			Size = UDim2.new(1, spread * 2, 1, spread * 2),
 			BackgroundColor3 = mainColor,
-			BackgroundTransparency = 0.62 + i * 0.06,
+			BackgroundTransparency = 0.72 + i * 0.026,
 			BorderSizePixel = 0,
 			ZIndex = Z_BASE + 989 - i,
 		}, toast)
@@ -7563,8 +7571,8 @@ end
 				local function placeSettings(height)
 					local scale = GetMainFrameScale()
 					UpdateSettingsLayout()
-					local mainSize = MainFrame.AbsoluteSize
-					local mainPosition = MainFrame.AbsolutePosition
+					-- Bounded by the screen, not the window: plates may hang outside the menu.
+					local mainPosition, mainSize = PopupSafeArea()
 					local minHeight = 30
 					local width = 280
 					local edge = 5 * scale
@@ -9866,7 +9874,7 @@ New("Frame", {
 				-- Built without New(), so it missed the row text size (16) and stayed tiny.
 				Text.TextColor3 = Color3.fromRGB(226, 228, 236)
 				Text.TextScaled = false
-				Text.TextSize = 14
+				Text.TextSize = 15
 				Text.TextYAlignment = Enum.TextYAlignment.Center
 				Text.TextTruncate = Enum.TextTruncate.AtEnd
 				Text.Font = FONT
@@ -9978,8 +9986,8 @@ New("Frame", {
 					local scale = GetMainFrameScale()
 					local rowPosition = DropdownSection.AbsolutePosition
 					local rowSize = DropdownSection.AbsoluteSize
-					local mainPosition = MainFrame.AbsolutePosition
-					local mainSize = MainFrame.AbsoluteSize
+					-- Bounded by the screen, not the window: plates may hang outside the menu.
+					local mainPosition, mainSize = PopupSafeArea()
 					if rowSize.X <= 0 or mainSize.X <= 0 or mainSize.Y <= 0 then return end
 					local edge = 5 * scale
 					local panelWidth = ACC_WIDTH * scale
