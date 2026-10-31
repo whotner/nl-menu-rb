@@ -7932,6 +7932,15 @@ Line9.Parent = MainFrame
 		end
 	end
 
+	-- A column that just became visible fades in from clear (0.2s). Skipped
+	-- while the window itself is fading, so the two fades never overlap.
+	WindowObj._fadeColumn = function(column)
+		if MainFrame:GetAttribute("TreeFaded") then return end
+		WindowObj._fadeTree(column, true, 0)
+		WindowObj._fadeTree(column, false, 0)
+		WindowObj._fadeTree(column, true, 0.2)
+	end
+
 	-- Opening/closing: the window, everything in it (open plates, presets,
 	-- profile, pickers) and the hotkey/spectator lists fade on one timeline.
 	local function AnimateWindow(open)
@@ -8053,8 +8062,9 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		BorderSizePixel = 0,
 		ZIndex = Z_BASE + 990,
 	}, NeverloseCS2)
-	New("UICorner", { CornerRadius = UDim.new(1, 0) }, toast)
-	if WindowObj._attachBlur then WindowObj._attachBlur(toast, 18) end
+	-- Rounded card, not a capsule (Neverlose loader).
+	New("UICorner", { CornerRadius = UDim.new(0, 14) }, toast)
+	if WindowObj._attachBlur then WindowObj._attachBlur(toast, 8) end
 	-- Glow: faint capsule layers in the accent colour fading outwards, each
 	-- with a gradient so one side is brighter; rotating it moves the light.
 	local glowGradients = {}
@@ -8064,7 +8074,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 			Name = "LoaderGlow" .. i, Position = UDim2.fromOffset(-spread, -spread), Size = UDim2.new(1, spread * 2, 1, spread * 2),
 			BackgroundColor3 = mainColor, BackgroundTransparency = 0.72 + i * 0.026, BorderSizePixel = 0, ZIndex = Z_BASE + 989 - i,
 		}, toast)
-		New("UICorner", { CornerRadius = UDim.new(1, 0) }, layer)
+		New("UICorner", { CornerRadius = UDim.new(0, 14 + spread) }, layer)
 		local g = Instance.new("UIGradient")
 		g.Transparency = NumberSequence.new({
 			NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.5, 0.45), NumberSequenceKeypoint.new(1, 0.85),
@@ -8084,9 +8094,9 @@ if Library.ShowLoader ~= false then task.spawn(function()
 
 	local badge = New("Frame", {
 		Name = "Badge", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 10, 0.5, 0),
-		Size = UDim2.fromOffset(40, 40), BackgroundColor3 = Color3.fromRGB(14, 17, 30), BorderSizePixel = 0, ZIndex = Z_BASE + 991,
+		Size = UDim2.fromOffset(38, 38), BackgroundColor3 = Color3.fromRGB(14, 17, 30), BorderSizePixel = 0, ZIndex = Z_BASE + 991,
 	}, toast)
-	New("UICorner", { CornerRadius = UDim.new(1, 0) }, badge)
+	New("UICorner", { CornerRadius = UDim.new(0, 9) }, badge)
 	-- Same logo as the window badge: custom image, or the drawn "NL".
 	if hubImage ~= "" then
 		local badgeLogo = New("ImageLabel", {
@@ -8095,11 +8105,11 @@ if Library.ShowLoader ~= false then task.spawn(function()
 		}, badge)
 		New("UICorner", { CornerRadius = UDim.new(0, 10) }, badgeLogo)
 	else
-		WindowObj._logoWithFallback(badge, 18, Z_BASE + 992, 20)
+		WindowObj._logoWithFallback(badge, 17, Z_BASE + 992, 9)
 	end
 	New("TextLabel", {
 		Name = "LoaderTitle", Position = UDim2.fromOffset(60, 11), Size = UDim2.new(1, -140, 0, 20), BackgroundTransparency = 1,
-		Text = string.lower(tostring(hubTitle)), TextColor3 = Color3.fromRGB(235, 236, 241), TextSize = 16,
+		Text = tostring(hubTitle), TextColor3 = Color3.fromRGB(240, 241, 246), TextSize = 16, Font = FONT_BOLD,
 		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = Z_BASE + 991,
 	}, toast)
 	local status = New("TextLabel", {
@@ -8109,7 +8119,7 @@ if Library.ShowLoader ~= false then task.spawn(function()
 	}, toast)
 	local counter = New("TextLabel", {
 		Name = "LoaderCounter", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 11), Size = UDim2.fromOffset(70, 20),
-		BackgroundTransparency = 1, Text = "0 of 10", TextColor3 = Color3.fromRGB(160, 162, 172), TextSize = 13,
+		BackgroundTransparency = 1, Text = "0 of 10", TextColor3 = Color3.fromRGB(225, 227, 234), TextSize = 14, Font = FONT_BOLD,
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = Z_BASE + 991,
 	}, toast)
 
@@ -8741,6 +8751,8 @@ New("UIAspectRatioConstraint", {
 			Right.Visible = true
 			AnimateSectionColumn(Left)
 			AnimateSectionColumn(Right)
+			-- The new tab's content fades in while its columns rise.
+			if WindowObj._fadeColumn then WindowObj._fadeColumn(Left); WindowObj._fadeColumn(Right) end
 		end
 
 		local function ActivateTab()
@@ -12873,6 +12885,7 @@ New("Frame", {
 					st.right.Visible = true
 					AnimateSectionColumn(st.left)
 					AnimateSectionColumn(st.right)
+					if WindowObj._fadeColumn then WindowObj._fadeColumn(st.left); WindowObj._fadeColumn(st.right) end
 					end
 				elseif #subTabs > 0 then
 					subTabs[1].activate()
@@ -13025,6 +13038,7 @@ New("Frame", {
 				stRight.Visible = true
 				AnimateSectionColumn(stLeft)
 				AnimateSectionColumn(stRight)
+				if WindowObj._fadeColumn then WindowObj._fadeColumn(stLeft); WindowObj._fadeColumn(stRight) end
 
 				activeSubTabIndex = stIndex
 				if tabs[tabIndex] then
