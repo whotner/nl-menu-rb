@@ -1440,7 +1440,7 @@ function Library:AddWindow(hubTitle, hubImage, gameTitle)
 		sectionTitleTransparency = 0,
 		watermarkText = "NEVERLOSE  •  UI",
 		watermarkVisible = false,
-		cornerRadius = 12,
+		cornerRadius = 14, -- matches the window and panel UICorner
 		showContextDots = false,
 	}
 
@@ -6098,8 +6098,10 @@ WindowObj._setupWindowToggle = nil
 		local TabButtonFrame = New("Frame", {
 			Name = "TabButton",
 			Size = UDim2.new(1, 0, 0, 32),
-			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-			BackgroundTransparency = isFirst and 0.92 or 1,
+			-- Neverlose selected tab: a solid grey plate (~44,45,54). A faint white
+			-- tint let the game behind the glass show through it.
+			BackgroundColor3 = Color3.fromRGB(44, 45, 56),
+			BackgroundTransparency = isFirst and 0.08 or 1,
 			LayoutOrder = tabOrder,
 		}, Tab)
 		TabButtonFrame:SetAttribute("TabIndex", tabIndex)
@@ -6255,8 +6257,8 @@ New("UIAspectRatioConstraint", {
 				end
 			end
 			Tween(TabButtonFrame, {
-				BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-				BackgroundTransparency = 0.92,
+				BackgroundColor3 = Color3.fromRGB(44, 45, 56),
+				BackgroundTransparency = 0.08,
 			}, 0.13, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			Tween(TabIndicator, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			TintTabIcon(TabIcon, mainColor, 0, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
@@ -6276,7 +6278,7 @@ New("UIAspectRatioConstraint", {
 		-- Hover feedback is limited to real navigation items. Transparent hit targets elsewhere stay inert.
 		TabButtonFrame.MouseEnter:Connect(function()
 			if activeTabIndex == tabIndex then return end
-			Tween(TabButtonFrame, { BackgroundTransparency = 0.94 }, 0.11, Enum.EasingStyle.Sine)
+			Tween(TabButtonFrame, { BackgroundTransparency = 0.55 }, 0.11, Enum.EasingStyle.Sine)
 			TintTabIcon(TabIcon, mainColor, 0.24, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 			Tween(TabText, { TextTransparency = 0.22 }, 0.11, Enum.EasingStyle.Sine)
 		end)
@@ -9807,8 +9809,8 @@ New("Frame", {
 				-- in the same frame caused a visible flash on every tab switch.
 				if activeTabIndex == tabIndex then
 					Tween(TabButtonFrame, {
-						BackgroundColor3 = Color3.fromRGB(39, 43, 54),
-						BackgroundTransparency = 0.22,
+						BackgroundColor3 = Color3.fromRGB(44, 45, 56),
+						BackgroundTransparency = 0.08,
 					}, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 					Tween(TabIcon, { ImageColor3 = mainColor, ImageTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 					Tween(TabText, { TextTransparency = 0 }, 0.11, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
@@ -10124,13 +10126,21 @@ New("Frame", {
 				if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then fn(d) end
 			end
 		end
+		-- Only touch text that still has the previous customization colour: this
+		-- pass used to paint every label one colour (grey values, accent "Renew",
+		-- the NL row grey) and drop the bold font from titles.
+		local previousText = customization._appliedTextColor or Color3.fromRGB(226, 228, 236)
+		local function isPreviousText(color)
+			return math.abs(color.R - previousText.R) < 0.01 and math.abs(color.G - previousText.G) < 0.01 and math.abs(color.B - previousText.B) < 0.01
+		end
 		eachText(MainFrame, function(t)
-			t.Font = FONT
+			if t.Font ~= FONT_BOLD then t.Font = customization.font or FONT end
 			t.TextScaled = false
 			if t.Name ~= "GameTitle" and t.Name ~= "TabLabel" and t.Name ~= "SectionLabel"
 				and t.Name ~= "Daysleft" and t.Name ~= "HeaderLabel" and t.Name ~= "SearchEmptyState"
-				and t.Name ~= "TabText" and t.Name ~= "Watermark" then t.TextColor3 = customization.textColor end
+				and t.Name ~= "TabText" and t.Name ~= "Watermark" and isPreviousText(t.TextColor3) then t.TextColor3 = customization.textColor end
 		end)
+		customization._appliedTextColor = customization.textColor
 		for _, d in ipairs(MainFrame:GetDescendants()) do
 			if d:IsA("TextLabel") and d.Name == "SectionLabel" then
 				d.TextScaled = false
