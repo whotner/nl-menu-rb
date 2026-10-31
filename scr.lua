@@ -8315,8 +8315,9 @@ New("UIAspectRatioConstraint", {
 				{ "Knife", "rbxassetid://10734975486" }, { "Gloves", "rbxassetid://10723405649" }, { "Zeus", "rbxassetid://10734951847" },
 			}
 			local TEAM_COLOR = { CT = Color3.fromRGB(110, 150, 255), T = Color3.fromRGB(230, 180, 90) }
-			-- Team icons (Lucide): shield for CT, bomb for T.
-			local TEAM_ICON = { CT = "rbxassetid://10734951367", T = "rbxassetid://10709781460" }
+			-- Team emblems: grey placeholder discs unless options.icons gives
+			-- image ids ({ CT = "rbxassetid://...", T = "rbxassetid://..." }).
+			local TEAM_ICON = type(options.icons) == "table" and options.icons or {}
 			local CARD, MUTED, TEXT = Color3.fromRGB(23, 23, 31), Color3.fromRGB(150, 152, 162), Color3.fromRGB(235, 236, 241)
 			local team = options.team == "T" and "T" or "CT"
 
@@ -8359,24 +8360,28 @@ New("UIAspectRatioConstraint", {
 			-- the outlines are not clipped by the column.
 			local teamButtons = {}
 			for index, which in ipairs({ "CT", "T" }) do
+				-- 24px tall, centred on the 28px column headers (y 2..26).
 				local b = New("TextButton", {
-					Name = "Team_" .. which, Position = UDim2.fromOffset(0, 3), Size = UDim2.fromOffset(24, 24),
+					Name = "Team_" .. which, Position = UDim2.fromOffset(0, 2), Size = UDim2.fromOffset(24, 24),
 					BackgroundColor3 = Color3.fromRGB(32, 36, 50), BackgroundTransparency = 1, AutoButtonColor = false, Text = "", BorderSizePixel = 0,
 					ClipsDescendants = true,
 				}, side)
 				New("UICorner", { CornerRadius = UDim.new(0, 6) }, b)
 				local logo = New("Frame", {
 					Name = "TeamLogo", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 3, 0.5, 0), Size = UDim2.fromOffset(18, 18),
-					BackgroundColor3 = TEAM_COLOR[which], BackgroundTransparency = 0.78, BorderSizePixel = 0,
+					BackgroundColor3 = Color3.fromRGB(92, 96, 110), BackgroundTransparency = 0.35, BorderSizePixel = 0,
 				}, b)
 				New("UICorner", { CornerRadius = UDim.new(1, 0) }, logo)
-				New("ImageLabel", {
-					Name = "TeamLogoIcon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(12, 12),
-					BackgroundTransparency = 1, Image = TEAM_ICON[which], ImageColor3 = TEAM_COLOR[which], ScaleType = Enum.ScaleType.Fit,
-				}, logo)
+				if TEAM_ICON[which] then
+					logo.BackgroundTransparency = 1
+					New("ImageLabel", {
+						Name = "TeamLogoIcon", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Image = TEAM_ICON[which],
+						ScaleType = Enum.ScaleType.Fit,
+					}, logo)
+				end
 				local title = New("TextLabel", {
 					Name = "TeamTitle", Position = UDim2.fromOffset(26, 0), Size = UDim2.new(0, 90, 1, 0), BackgroundTransparency = 1,
-					Text = which .. " Loadout", TextColor3 = TEAM_COLOR[which]:Lerp(Color3.new(1, 1, 1), 0.35), TextSize = 14, Font = FONT,
+					Text = which .. " Loadout", TextColor3 = TEXT, TextSize = 14, Font = FONT,
 					TextXAlignment = Enum.TextXAlignment.Left, TextTransparency = 1,
 				}, b)
 				b.MouseEnter:Connect(function() if team ~= which then Tween(b, { BackgroundTransparency = 0.6 }, 0.1) end end)
@@ -8390,7 +8395,7 @@ New("UIAspectRatioConstraint", {
 					local open = which == team
 					local width = open and math.ceil(26 + MeasureText(which .. " Loadout", 14, FONT) + 10) or 24
 					local size = UDim2.fromOffset(width, 24)
-					local pos = UDim2.fromOffset(x, 3)
+					local pos = UDim2.fromOffset(x, 2)
 					local plate = open and 0 or 1
 					if instant then
 						entry.button.Size, entry.button.Position, entry.button.BackgroundTransparency = size, pos, plate
