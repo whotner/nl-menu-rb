@@ -2646,7 +2646,7 @@ GameInfo.AutomaticSize = Enum.AutomaticSize.X
 -- Neverlose watermark: a dark see-through capsule over the blur (the game
 -- shows through tinted), no outline.
 GameInfo.BackgroundColor3 = Color3.fromRGB(8, 9, 12)
-GameInfo.BackgroundTransparency = 0.62
+GameInfo.BackgroundTransparency = 0.3
 GameInfo.BorderSizePixel = 0
 GameInfo.Active = true
 GameInfo.Draggable = false
@@ -3219,7 +3219,7 @@ New("UIListLayout", {
 -- OV.entry stays the dark knob colour of the switch glyph.
 -- The menu reads as two glass layers (window 8,10,17 at 0.25 under the
 -- content panel 15,17,24 at 0.5); one plate at their mix looks the same.
-local OV = { h = 24, head = 32, header = 0.62, entryAlpha = 0.66, glass = Color3.fromRGB(8, 9, 12), entry = Color3.fromRGB(23, 23, 31) }
+local OV = { h = 24, head = 32, header = 0.3, entryAlpha = 0.38, glass = Color3.fromRGB(8, 9, 12), entry = Color3.fromRGB(23, 23, 31) }
 function OV.pill(name, parent, alpha, radius, height, flat)
 	-- Same capsule as the watermark: nearly clear plate, melting edge shadow,
 	-- blur behind. (`radius` only sets how far the blur pulls in.)
@@ -8772,7 +8772,16 @@ New("Frame", {
 				for key, target in pairs(_keybinds) do
 					if target and target.label and key and not target.hideInList then
 						local value
-						if target.showValue and target.obj and type(target.obj.Get) == "function" then
+						-- Number binds (Value set in the editor) are listed while
+						-- active and show the value they set, with the slider's unit.
+						local numberBind = rawget(target, "bindValue") ~= nil
+						if numberBind then
+							local n = rawget(target, "bindValue")
+							value = (n % 1 == 0) and tostring(n) or string.format("%.1f", n)
+							local readout = target.row and target.row:FindFirstChild("SliderValue", true)
+							local unit = readout and readout:IsA("TextLabel") and string.gsub(readout.Text, "[%d%.%-%s]", "") or ""
+							value = value .. unit
+						elseif target.showValue and target.obj and type(target.obj.Get) == "function" then
 							local ok, v = pcall(target.obj.Get, target.obj)
 							if ok and type(v) == "number" then
 								value = (v % 1 == 0) and tostring(v) or string.format("%.1f", v)
@@ -8780,15 +8789,16 @@ New("Frame", {
 								value = #v > 12 and (v:sub(1, 11) .. "…") or v
 							end
 						end
-						-- Switch functions are listed only while the bind has them away
-						-- from their default (default off: listed when on; default on:
-						-- listed as off once the bind turns it off).
+						-- Switch functions are listed only while on; number binds only
+						-- while their value is applied.
 						local state, listed = nil, true
-						if target.obj and type(target.obj.Get) == "function" then
+						if numberBind then
+							listed = rawget(target, "active") == true
+						elseif target.obj and type(target.obj.Get) == "function" then
 							local ok, v = pcall(target.obj.Get, target.obj)
 							if ok and type(v) == "boolean" then
 								state = v
-								listed = (target.defaultValue == true) and not v or (target.defaultValue ~= true and v)
+								listed = v
 							end
 						end
 						-- A generic name ("Enabled") is shown as its function: the
@@ -8859,6 +8869,21 @@ New("Frame", {
 				local item = bindRefs.itemFor and bindRefs.itemFor[target]
 				if item and item.Parent then item.Text = target.key and BindKeyName(target.key) or "None" end
 				bindRefs.setSwitch("value", target.showValue == true)
+				-- Slider functions show the number box instead of the switch.
+				local numeric = target.min ~= nil and target.max ~= nil
+				local valueSwitch = bindRefs.switches and bindRefs.switches.value
+				if valueSwitch then valueSwitch.track.Visible = not numeric end
+				if bindRefs.valueBox then
+					bindRefs.valueBox.Visible = numeric
+					if numeric then
+						if rawget(target, "bindValue") == nil then
+							local ok, v = pcall(target.obj.Get, target.obj)
+							target.bindValue = ok and tonumber(v) or target.min
+						end
+						local n = target.bindValue
+						bindRefs.valueBox.Text = (n % 1 == 0) and tostring(n) or string.format("%.1f", n)
+					end
+				end
 				bindRefs.setSwitch("visible", not target.hideInList)
 			end
 
@@ -8991,7 +9016,36 @@ New("Frame", {
 						if RefreshKeybindOverlay then task.defer(RefreshKeybindOverlay) end
 					end)
 				end
-				switchRow(4, "rbxassetid://10723426722", "Value", "value", function(t) t.showValue = not t.showValue end)
+				switchRow(4, "rbxassetid://10723426722", "Value", "value", function(t)
+					if t.min ~= nil and t.max ~= nil then
+						if bindRefs.valueBox then bindRefs.valueBox:CaptureFocus() end
+						return
+					end
+					t.showValue = not t.showValue
+				end)
+				-- Slider functions: the bind sets a number, typed here.
+				do
+					local valueRow = body:FindFirstChild("Row4")
+					local box = New("TextBox", {
+						Name = "ValueBox", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.fromOffset(52, 20),
+						BackgroundColor3 = Color3.fromRGB(28, 29, 39), BackgroundTransparency = 0, Text = "", PlaceholderText = "0",
+						TextColor3 = Color3.fromRGB(235, 236, 241), TextSize = 12, Font = FONT, ClearTextOnFocus = false,
+						Visible = false, ZIndex = Z_BASE + 954,
+					}, valueRow)
+					New("UICorner", { CornerRadius = UDim.new(0, 5) }, box)
+					bindRefs.valueBox = box
+					box.FocusLost:Connect(function()
+						local t = _bindTarget
+						if not t or t.min == nil or t.max == nil then return end
+						local n = tonumber((string.gsub(box.Text, "[^%d%.%-]", "")))
+						if n then
+							t.bindValue = math.clamp(n, t.min, t.max)
+							if t.active then t.obj:Set(t.bindValue) end
+						end
+						PaintBindMenu(t)
+						if RefreshKeybindOverlay then task.defer(RefreshKeybindOverlay) end
+					end)
+				end
 				switchRow(5, "rbxassetid://10723346959", "Visible", "visible", function(t) t.hideInList = not t.hideInList end)
 
 				gap(6)
@@ -9187,6 +9241,27 @@ New("Frame", {
 				if not target or not target.obj then return end
 				task.delay(0.05, function() if RefreshKeybindOverlay then pcall(RefreshKeybindOverlay) end end)
 				local value = target.obj.Get and target.obj:Get()
+				-- Number bind: toggle applies the bind's value and restores the
+				-- previous one on the next press; hold applies it while held.
+				if type(value) == "number" and rawget(target, "bindValue") ~= nil then
+					local function apply(on)
+						if on then
+							target.prevValue = value
+							target.obj:Set(target.bindValue)
+						else
+							target.obj:Set(target.prevValue or value)
+						end
+						target.active = on
+					end
+					if phase == "up" then
+						if target.bindMode == "hold" and target.active then apply(false) end
+					elseif target.bindMode == "hold" then
+						if not target.active then apply(true) end
+					else
+						apply(not target.active)
+					end
+					return
+				end
 				if phase == "up" then
 					if target.bindMode == "hold" and type(value) == "boolean" then
 						target.obj:Set(false)
@@ -9264,7 +9339,7 @@ New("Frame", {
 							for _, b in ipairs(target.binds) do
 								local k = rawget(b, "key")
 								local text = typeof(k) == "EnumItem" and tostring(k) or (type(k) == "string" and k or nil)
-								table.insert(list, { k = text, m = rawget(b, "bindMode"), h = rawget(b, "hideInList") == true, v = rawget(b, "showValue") == true })
+								table.insert(list, { k = text, m = rawget(b, "bindMode"), h = rawget(b, "hideInList") == true, v = rawget(b, "showValue") == true, n = rawget(b, "bindValue") })
 							end
 							out[target.cfgKey] = list
 						end
@@ -9282,6 +9357,7 @@ New("Frame", {
 								b.bindMode = item.m
 								b.hideInList = item.h == true
 								b.showValue = item.v == true
+								if type(item.n) == "number" then b.bindValue = item.n end
 								local key
 								if type(item.k) == "string" then
 									local enumType, enumName = item.k:match("^Enum%.(%w+)%.(%w+)$")
